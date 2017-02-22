@@ -1,7 +1,7 @@
 #ifndef CHAI_ResourceManager_HPP
 #define CHAI_ResourceManager_HPP
 
-#include "ExecutionSpaces.hpp"
+#include "chai/ExecutionSpaces.hpp"
 
 #include <map>
 #include <set>

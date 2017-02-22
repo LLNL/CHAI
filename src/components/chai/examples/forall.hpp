@@ -1,8 +1,8 @@
 #ifndef forall_HPP
 #define forall_HPP
 
-#include "ExecutionSpaces.hpp"
-#include "ResourceManager.hpp"
+#include "chai/ExecutionSpaces.hpp"
+#include "chai/ResourceManager.hpp"
 
 struct sequential {};
 struct cuda {};

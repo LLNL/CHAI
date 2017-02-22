@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "ManagedArray.hpp"
+#include "chai/ManagedArray.hpp"
 
 TEST(ManagedArray, DefaultConstructor) {
   chai::ManagedArray<float> array;

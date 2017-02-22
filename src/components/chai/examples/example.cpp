@@ -1,5 +1,5 @@
-#include "ExecutionSpaces.hpp"
-#include "ManagedArray.hpp"
+#include "chai/ManagedArray.hpp"
+
 #include "forall.hpp"
 
 #include <iostream>

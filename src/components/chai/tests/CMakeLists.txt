@@ -6,7 +6,7 @@ blt_add_executable(
 
 target_include_directories(
   managed_array_tests
-  PUBLIC ${PROJECT_SOURCE_DIR}/src/)
+  PUBLIC ${PROJECT_SOURCE_DIR}/src/components/chai)
 
 blt_add_test(
   NAME managed_array_test

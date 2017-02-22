@@ -1,8 +1,8 @@
 #ifndef CHAI_ManagedArray_HPP
 #define CHAI_ManagedArray_HPP
 
-#include "ChaiMacros.hpp"
-#include "ResourceManager.hpp"
+#include "chai/ChaiMacros.hpp"
+#include "chai/ResourceManager.hpp"
 
 namespace chai {
 
@@ -33,6 +33,6 @@ class ManagedArray {
 
 }
 
-#include "ManagedArray.cpp"
+#include "chai/ManagedArray.cpp"
 
 #endif

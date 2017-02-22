@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(CHAI LANGUAGES CXX)
+project(Chump LANGUAGES CXX)
 
 set(ENABLE_CUDA On)
+set(ENABLE_COPY_HEADERS On)
 
 ################################
 # BLT
@@ -20,5 +21,5 @@ include(blt/SetupBLT.cmake)
 include(cmake/ChaiBasics.cmake)
 
 add_subdirectory(src)
+
 add_subdirectory(tests)
-add_subdirectory(examples)

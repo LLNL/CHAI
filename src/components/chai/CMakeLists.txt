@@ -1,5 +1,7 @@
 set (chai_headers
+  ChaiMacros.hpp
   ExecutionSpaces.hpp
+  ManagedArray.cpp
   ManagedArray.hpp
   ResourceManager.hpp)
 
@@ -19,3 +21,4 @@ blt_add_library(
   USE_CUDA True)
 
 add_subdirectory(tests)
+add_subdirectory(examples)

@@ -14,11 +14,9 @@ ResourceManager* ResourceManager::getResourceManager() {
 }
 
 ResourceManager::ResourceManager() :
-  m_pointer_map(),
-  m_accessed_variables()
+  m_pointer_map()
 {
   m_pointer_map.clear();
-  m_accessed_variables.clear();
 }
 
 void ResourceManager::registerHostPointer(void* ptr, size_t size) {
