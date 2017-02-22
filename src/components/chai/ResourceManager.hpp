@@ -92,7 +92,6 @@ class ResourceManager
   ExecutionSpace m_current_execution_space;
 
   std::map<void *, PointerRecord> m_pointer_map;
-  std::set<void *> m_accessed_variables;
 };
 
 }

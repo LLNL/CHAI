@@ -20,6 +20,5 @@ include(blt/SetupBLT.cmake)
 include(cmake/ChaiBasics.cmake)
 
 add_subdirectory(src)
-
+add_subdirectory(tests)
 add_subdirectory(examples)
-

@@ -24,4 +24,5 @@ int main(int argc, char* argv[]) {
   forall(sequential(), 0, 10, [=] (int i) {
       std::cout << "array[ " << i << "] = " << array[i] << std::endl;
   });
+
 }
