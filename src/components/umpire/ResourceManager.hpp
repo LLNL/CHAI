@@ -1,14 +1,17 @@
-namespace sump {
+namespace umpire {
 
 class ResourceManager {
-  ResourceManager* getResourceManager();
- 
+  public:
+    ResourceManager* getResourceManager();
+
+    size_t getAvailableMemory();
+
 
   protected:
     ResourceManager();
 
   private: 
     ResourceManager* s_resource_manager_instance;
-}
+};
 
 }
