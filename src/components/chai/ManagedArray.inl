@@ -2,6 +2,7 @@
 #define CHAI_ManagedArray_CPP
 
 #include "ManagedArray.hpp"
+#include "ResourceManager.inl"
 
 namespace chai {
 
