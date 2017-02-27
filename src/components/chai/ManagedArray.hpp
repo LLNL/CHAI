@@ -16,6 +16,8 @@ class ManagedArray {
 
   CHAI_HOST_DEVICE ManagedArray(size_t size);
 
+  CHAI_HOST_DEVICE ManagedArray(size_t size, std::string location="default");
+
   CHAI_HOST_DEVICE ManagedArray(ManagedArray const& other);
 
   CHAI_HOST void allocate(size_t N);
@@ -33,6 +35,6 @@ class ManagedArray {
 
 }
 
-#include "chai/ManagedArray.cpp"
+#include "chai/ManagedArray.inl"
 
 #endif

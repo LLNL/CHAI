@@ -2,23 +2,12 @@
 #define CHAI_ResourceManager_HPP
 
 #include "chai/ExecutionSpaces.hpp"
+#include "chai/PointerRecord.hpp"
 
 #include <map>
 #include <set>
 
 namespace chai {
-
-struct PointerRecord 
-{
-  void * m_host_pointer;
-  void * m_device_pointer;
-
-  size_t m_size;
-
-  bool m_host_touched;
-  bool m_device_touched;
-};
-
 
 class ResourceManager
 {
