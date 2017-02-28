@@ -1,5 +1,5 @@
-#ifndef CHAI_ResourceManager_HPP
-#define CHAI_ResourceManager_HPP
+#ifndef CHAI_ArrayManager_HPP
+#define CHAI_ArrayManager_HPP
 
 #include "chai/ExecutionSpaces.hpp"
 #include "chai/PointerRecord.hpp"
@@ -9,12 +9,12 @@
 
 namespace chai {
 
-class ResourceManager
+class ArrayManager
 {
   public:
   static PointerRecord s_null_record;
 
-  static ResourceManager* getResourceManager();
+  static ArrayManager* getArrayManager();
 
   void registerHostPointer(void* ptr, size_t size);
 
@@ -38,11 +38,11 @@ class ResourceManager
 
   protected:
 
-  ResourceManager();
+  ArrayManager();
 
   private:
 
-  static ResourceManager* s_resource_manager_instance;
+  static ArrayManager* s_resource_manager_instance;
 
   ExecutionSpace m_current_execution_space;
 

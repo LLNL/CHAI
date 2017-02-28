@@ -1,11 +1,11 @@
-#include "chai/ResourceManager.hpp"
+#include "chai/ArrayManager.hpp"
 
-#ifndef CHAI_ResourceManager_INL
-#define CHAI_ResourceManager_INL
+#ifndef CHAI_ArrayManager_INL
+#define CHAI_ArrayManager_INL
 
 namespace chai {
 
-inline PointerRecord& ResourceManager::getPointerRecord(void* host_ptr) {
+inline PointerRecord& ArrayManager::getPointerRecord(void* host_ptr) {
   auto record = m_pointer_map.find(host_ptr);
   if (record != m_pointer_map.end()) {
     return record->second;
@@ -14,7 +14,7 @@ inline PointerRecord& ResourceManager::getPointerRecord(void* host_ptr) {
   }
 }
 
-inline void ResourceManager::move(PointerRecord& record, ExecutionSpace space) {
+inline void ArrayManager::move(PointerRecord& record, ExecutionSpace space) {
   if ( space == NONE ) {
     return;
   }
@@ -33,7 +33,7 @@ inline void ResourceManager::move(PointerRecord& record, ExecutionSpace space) {
 }
 
 template<typename T>
-void* ResourceManager::allocate(size_t size)
+void* ArrayManager::allocate(size_t size)
 {
   void * ret = nullptr;
 
@@ -43,7 +43,7 @@ void* ResourceManager::allocate(size_t size)
   return ret;
 }
 
-inline size_t ResourceManager::getSize(void* host_pointer) {
+inline size_t ArrayManager::getSize(void* host_pointer) {
   auto & pointer_record = getPointerRecord(host_pointer);
   return pointer_record.m_size;
 }

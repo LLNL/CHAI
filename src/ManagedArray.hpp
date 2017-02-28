@@ -2,7 +2,9 @@
 #define CHAI_ManagedArray_HPP
 
 #include "chai/ChaiMacros.hpp"
-#include "chai/ResourceManager.hpp"
+#include "chai/ArrayManager.hpp"
+
+#include "chai/Types.hpp"
 
 namespace chai {
 
@@ -14,13 +16,13 @@ class ManagedArray {
 
   CHAI_HOST_DEVICE  ManagedArray();
 
-  CHAI_HOST_DEVICE ManagedArray(size_t size);
+  CHAI_HOST_DEVICE ManagedArray(uint elems);
 
-  CHAI_HOST_DEVICE ManagedArray(size_t size, std::string location="default");
+  CHAI_HOST_DEVICE ManagedArray(uint elems, std::string location="default");
 
   CHAI_HOST_DEVICE ManagedArray(ManagedArray const& other);
 
-  CHAI_HOST void allocate(size_t N);
+  CHAI_HOST void allocate(uint elems);
   CHAI_HOST size_t getSize();
 
   CHAI_HOST_DEVICE T& operator[](const int i) const;
