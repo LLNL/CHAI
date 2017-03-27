@@ -2,7 +2,7 @@
 #define forall_HPP
 
 #include "chai/ExecutionSpaces.hpp"
-#include "chai/ResourceManager.hpp"
+#include "chai/ArrayManager.hpp"
 
 struct sequential {};
 struct cuda {};
@@ -17,7 +17,7 @@ void forall_kernel_cpu(int begin, int end, LOOP_BODY body)
 
 template <typename LOOP_BODY>
 void forall(sequential, int begin, int end, LOOP_BODY body) {
-  chai::ResourceManager* rm = chai::ResourceManager::getResourceManager();
+  chai::ArrayManager* rm = chai::ArrayManager::getArrayManager();
 
   rm->setExecutionSpace(chai::CPU);
 
@@ -37,7 +37,7 @@ __global__ void forall_kernel_gpu(int start, int length, LOOP_BODY body) {
 
 template <typename LOOP_BODY>
 void forall(cuda, int begin, int end, LOOP_BODY&& body) {
-  chai::ResourceManager* rm = chai::ResourceManager::getResourceManager();
+  chai::ArrayManager* rm = chai::ArrayManager::getArrayManager();
 
   rm->setExecutionSpace(chai::GPU);
 

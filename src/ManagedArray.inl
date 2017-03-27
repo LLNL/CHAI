@@ -2,6 +2,7 @@
 #define CHAI_ManagedArray_CPP
 
 #include "ManagedArray.hpp"
+#include "ResourceManager.inl"
 
 namespace chai {
 
@@ -15,7 +16,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
 }
 
 template<typename T>
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(size_t size):
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(uint elems):
   m_host_pointer(nullptr),
   m_device_pointer(nullptr),
   m_resource_manager(nullptr)
@@ -36,7 +37,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
   /*
    * Register touch
    */
-
   T_non_const* non_const_pointer = static_cast<T_non_const*>(other.m_host_pointer);
   if (non_const_pointer) {
     m_resource_manager->registerTouch(non_const_pointer);
@@ -45,7 +45,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 }
 
 template<typename T>
-CHAI_HOST void ManagedArray<T>::allocate(size_t N) {
+CHAI_HOST void ManagedArray<T>::allocate(uint elems) {
   m_host_pointer = static_cast<T*>(m_resource_manager->allocate<T>(N));
 }
 

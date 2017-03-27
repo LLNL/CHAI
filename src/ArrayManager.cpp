@@ -1,25 +1,25 @@
-#include "ResourceManager.hpp"
+#include "ArrayManager.hpp"
 
 namespace chai {
 
-ResourceManager* ResourceManager::s_resource_manager_instance = nullptr;
-PointerRecord ResourceManager::s_null_record = PointerRecord();
+ArrayManager* ArrayManager::s_resource_manager_instance = nullptr;
+PointerRecord ArrayManager::s_null_record = PointerRecord();
 
-ResourceManager* ResourceManager::getResourceManager() {
+ArrayManager* ArrayManager::getArrayManager() {
   if (!s_resource_manager_instance) {
-    s_resource_manager_instance = new ResourceManager();
+    s_resource_manager_instance = new ArrayManager();
   }
 
   return s_resource_manager_instance;
 }
 
-ResourceManager::ResourceManager() :
+ArrayManager::ArrayManager() :
   m_pointer_map()
 {
   m_pointer_map.clear();
 }
 
-void ResourceManager::registerHostPointer(void* ptr, size_t size) {
+void ArrayManager::registerHostPointer(void* ptr, size_t size) {
   auto found_pointer_record = m_pointer_map.find(ptr);
 
   if (found_pointer_record != m_pointer_map.end()) {
@@ -34,7 +34,7 @@ void ResourceManager::registerHostPointer(void* ptr, size_t size) {
   pointer_record.m_size = size;
 }
 
-void* ResourceManager::getDevicePointer(void* host_pointer)
+void* ArrayManager::getDevicePointer(void* host_pointer)
 {
   if (host_pointer == nullptr) {
     return nullptr;
@@ -55,11 +55,11 @@ void* ResourceManager::getDevicePointer(void* host_pointer)
   }
 }
 
-void ResourceManager::setExecutionSpace(ExecutionSpace space) {
+void ArrayManager::setExecutionSpace(ExecutionSpace space) {
   m_current_execution_space = space;
 }
 
-void* ResourceManager::move(void* host_pointer) {
+void* ArrayManager::move(void* host_pointer) {
   if (m_current_execution_space == NONE) {
     return nullptr;
   }
@@ -76,11 +76,11 @@ void* ResourceManager::move(void* host_pointer) {
   return pointer_record.m_device_pointer;
 }
 
-ExecutionSpace ResourceManager::getExecutionSpace() {
+ExecutionSpace ArrayManager::getExecutionSpace() {
   return m_current_execution_space;
 }
 
-void ResourceManager::registerTouch(void* host_pointer) {
+void ArrayManager::registerTouch(void* host_pointer) {
   auto & pointer_record = getPointerRecord(host_pointer);
 
   if (m_current_execution_space == CPU) {
