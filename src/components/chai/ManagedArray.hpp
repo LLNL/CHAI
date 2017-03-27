@@ -23,6 +23,8 @@ class ManagedArray {
 
   CHAI_HOST_DEVICE T& operator[](const int i) const;
 
+  CHAI_HOST_DEVICE operator T*() const;
+
   private:
 
   mutable T* m_host_pointer;

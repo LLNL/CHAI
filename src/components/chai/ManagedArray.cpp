@@ -51,7 +51,7 @@ CHAI_HOST void ManagedArray<T>::allocate(size_t N) {
 
 template<typename T>
 CHAI_HOST size_t ManagedArray<T>::getSize() {
-  return m_resource_manager->getSize(static_cast<void*>(m_host_pointer));
+  return m_resource_manager->getSize(m_host_pointer);
 }
 
 template<typename T>
@@ -60,6 +60,20 @@ CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const int i) const {
   return m_device_pointer[i];
 #else
   return m_host_pointer[i];
+#endif
+}
+
+template<typename T>
+CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
+#if !defined(__CUDA_ARCH__)
+
+  m_resource_manager->setExecutionSpace(CPU);
+  m_resource_manager->move(m_host_pointer);
+  m_resource_manager->registerTouch(m_host_pointer);
+
+  return m_host_pointer;
+#else
+  return m_device_pointer;
 #endif
 }
 

@@ -20,5 +20,11 @@ blt_add_library(
   HEADERS_OUTPUT_SUBDIR chai
   USE_CUDA True)
 
+install(EXPORT chai-targets DESTINATION share/chai/cmake)
+
+configure_file(chai-config.cmake.in ${PROJECT_BINARY_DIR}/chai-config.cmake)
+install(FILES ${PROJECT_BINARY_DIR}/chai-config.cmake
+  DESTINATION share/chai/cmake)
+
 add_subdirectory(tests)
 add_subdirectory(examples)

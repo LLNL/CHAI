@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.2)
 project(Chump LANGUAGES CXX)
 
 set(ENABLE_CUDA On)
+set(ENABLE_OPENMP On)
 set(ENABLE_COPY_HEADERS On)
 
 ################################
