@@ -28,6 +28,7 @@ int main(int argc, char* argv[]) {
 
   forall(cuda(), 0, 10, [=] __device__ (int i) {
       v2[i] = v1[i]*2.0f;
+      i1[i] = i;
   });
 
   std::cout << "v2 = [";

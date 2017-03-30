@@ -1,21 +1,27 @@
 set (chai_headers
+  ArrayManager.hpp
+  ArrayManager.inl
   ChaiMacros.hpp
   ExecutionSpaces.hpp
   ManagedArray.hpp
   ManagedArray.inl
-  ResourceManager.hpp
-  ResourceManager.inl
+  PointerRecord.hpp
+  Types.hpp
   )
 
 set (chai_sources
-  ResourceManager.cpp)
+  ArrayManager.cpp)
 
 blt_add_library(
   NAME chai
   SOURCES ${chai_sources}
   HEADERS ${chai_headers}
   HEADERS_OUTPUT_SUBDIR chai
-  USE_CUDA True)
+  DEPENDS_ON cuda)
+
+target_include_directories(
+  chai
+  PUBLIC ${PROJECT_BINARY_DIR}/include)
 
 add_subdirectory(tests)
 add_subdirectory(examples)

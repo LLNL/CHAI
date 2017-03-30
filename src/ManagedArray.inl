@@ -16,16 +16,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
 }
 
 template<typename T>
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(uint elems):
-  m_host_pointer(nullptr),
-  m_device_pointer(nullptr),
-  m_resource_manager(nullptr)
-{
-  m_resource_manager = ArrayManager::getArrayManager();
-  this->allocate(size);
-}
-
-template<typename T>
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
     uint elems, ExecutionSpace space):
   m_host_pointer(nullptr),
@@ -33,7 +23,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
   m_resource_manager(nullptr)
 {
   m_resource_manager = ArrayManager::getArrayManager();
-  this->allocate(size, space);
+  this->allocate(elems, space);
 }
 
 template<typename T>
@@ -58,9 +48,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 template<typename T>
 CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space) {
   if (space == CPU) {
-    m_host_pointer = static_cast<T*>(m_resource_manager->allocate<T>(N, space));
+    m_host_pointer = static_cast<T*>(m_resource_manager->allocate<T>(elems, space));
   } else if (space == GPU) {
-    m_host_pointer = static_cast<T*>(m_resource_manager->allocate<T>(N, space));
+    m_host_pointer = static_cast<T*>(m_resource_manager->allocate<T>(elems, space));
   }
 }
 

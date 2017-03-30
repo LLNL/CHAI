@@ -44,17 +44,17 @@ void* ArrayManager::getDevicePointer(void* host_pointer)
     return nullptr;
   }
 
-  auto& pointer_record = getPointerRecord(host_pointer);
+  auto pointer_record = getPointerRecord(host_pointer);
 
-  if (pointer_record.m_device_pointer != nullptr) {
-    return pointer_record.m_device_pointer;
+  if (pointer_record->m_device_pointer != nullptr) {
+    return pointer_record->m_device_pointer;
   } else {
-    size_t size = pointer_record.m_size;
+    size_t size = pointer_record->m_size;
     void* device_pointer;
 
     cudaMalloc(&device_pointer, size);
 
-    pointer_record.m_device_pointer = device_pointer;
+    pointer_record->m_device_pointer = device_pointer;
     return device_pointer;
   }
 }
@@ -72,12 +72,12 @@ void* ArrayManager::move(void* host_pointer) {
     getDevicePointer(host_pointer);
   } 
 
-  auto & pointer_record = getPointerRecord(host_pointer);
-  if (pointer_record.m_device_pointer) {
+  auto pointer_record = getPointerRecord(host_pointer);
+  if (pointer_record->m_device_pointer) {
     move(pointer_record, m_current_execution_space);
   }
 
-  return pointer_record.m_device_pointer;
+  return pointer_record->m_device_pointer;
 }
 
 ExecutionSpace ArrayManager::getExecutionSpace() {
@@ -85,14 +85,14 @@ ExecutionSpace ArrayManager::getExecutionSpace() {
 }
 
 void ArrayManager::registerTouch(void* host_pointer) {
-  auto & pointer_record = getPointerRecord(host_pointer);
+  auto pointer_record = getPointerRecord(host_pointer);
 
   if (m_current_execution_space == CPU) {
-    pointer_record.m_device_touched = false;
-    pointer_record.m_host_touched = true;
+    pointer_record->m_device_touched = false;
+    pointer_record->m_host_touched = true;
   } else if (m_current_execution_space == GPU) {
-    pointer_record.m_device_touched = true;
-    pointer_record.m_host_touched = false;
+    pointer_record->m_device_touched = true;
+    pointer_record->m_host_touched = false;
   }
 }
 

@@ -16,8 +16,6 @@ class ManagedArray {
 
   CHAI_HOST_DEVICE ManagedArray();
 
-  CHAI_HOST_DEVICE ManagedArray(uint elems);
-
   CHAI_HOST_DEVICE ManagedArray(uint elems, ExecutionSpace space=CPU);
 
   CHAI_HOST_DEVICE ManagedArray(ManagedArray const& other);

@@ -5,7 +5,8 @@ namespace chai {
 
 struct PointerRecord 
 {
-  void * m_pointer;
+  void * m_host_pointer;
+  void * m_device_pointer;
 
   size_t m_size;
 

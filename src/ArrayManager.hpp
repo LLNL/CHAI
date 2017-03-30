@@ -23,7 +23,7 @@ class ArrayManager
    */ 
   static ArrayManager* getArrayManager();
 
-  void registerHostPointer(void* ptr, size_t size);
+  void registerPointer(void* ptr, size_t size, ExecutionSpace space=CPU);
 
   void* getDevicePointer(void* host_ptr);
 
@@ -34,9 +34,9 @@ class ArrayManager
 
   void registerTouch(void* pointer);
 
-  PointerRecord& getPointerRecord(void* host_ptr);
+  PointerRecord* getPointerRecord(void* host_ptr);
 
-  void move(PointerRecord& record, ExecutionSpace space);
+  void move(const PointerRecord* record, ExecutionSpace space);
 
   template<typename T>
   void* allocate(size_t size, ExecutionSpace=CPU);
@@ -69,6 +69,8 @@ class ArrayManager
   std::map<void *, PointerRecord*> m_pointer_map;
 };
 
-}
+} // end of namespace chai
+
+#include "chai/ArrayManager.inl"
 
 #endif
