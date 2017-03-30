@@ -1,0 +1,1 @@
+add_sphinx_target(chai_docs)

@@ -9,6 +9,11 @@ int main(int argc, char* argv[]) {
   chai::ManagedArray<float> v1(10);
   chai::ManagedArray<float> v2(10);
 
+  /*
+   * Allocate an array on the device only
+   */
+  chai::ManagedArray<int> i1(10, chai::GPU);
+
   std::cout << "Created new array..." << std::endl;
 
   forall(sequential(), 0, 10, [=] (int i) {

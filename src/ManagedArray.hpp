@@ -14,15 +14,15 @@ class ManagedArray {
 
   using T_non_const = typename std::remove_const<T>::type;
 
-  CHAI_HOST_DEVICE  ManagedArray();
+  CHAI_HOST_DEVICE ManagedArray();
 
   CHAI_HOST_DEVICE ManagedArray(uint elems);
 
-  CHAI_HOST_DEVICE ManagedArray(uint elems, std::string location="default");
+  CHAI_HOST_DEVICE ManagedArray(uint elems, ExecutionSpace space=CPU);
 
   CHAI_HOST_DEVICE ManagedArray(ManagedArray const& other);
 
-  CHAI_HOST void allocate(uint elems);
+  CHAI_HOST void allocate(uint elems, ExecutionSpace space=CPU);
   CHAI_HOST size_t getSize();
 
   CHAI_HOST_DEVICE T& operator[](const int i) const;
@@ -34,7 +34,7 @@ class ManagedArray {
   mutable T* m_host_pointer;
   mutable T* m_device_pointer;
 
-  ResourceManager* m_resource_manager;
+  ArrayManager* m_resource_manager;
 };
 
 }

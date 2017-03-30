@@ -19,19 +19,23 @@ ArrayManager::ArrayManager() :
   m_pointer_map.clear();
 }
 
-void ArrayManager::registerHostPointer(void* ptr, size_t size) {
+void ArrayManager::registerPointer(void* ptr, size_t size, ExecutionSpace space) {
   auto found_pointer_record = m_pointer_map.find(ptr);
 
   if (found_pointer_record != m_pointer_map.end()) {
-    
   } else {
-    m_pointer_map[ptr] = PointerRecord();
+    m_pointer_map[ptr] = new PointerRecord();
   }
 
   auto & pointer_record = m_pointer_map[ptr];
 
-  pointer_record.m_host_pointer = ptr;
-  pointer_record.m_size = size;
+  if (space == CPU) {
+    pointer_record->m_host_pointer = ptr;
+  } else if (space == GPU) {
+    pointer_record->m_device_pointer = ptr;
+  }
+
+  pointer_record->m_size = size;
 }
 
 void* ArrayManager::getDevicePointer(void* host_pointer)

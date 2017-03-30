@@ -1,0 +1,1 @@
+add_doxygen_target(chai_doxgen)

@@ -33,13 +33,17 @@ inline void ArrayManager::move(PointerRecord& record, ExecutionSpace space) {
 }
 
 template<typename T>
-void* ArrayManager::allocate(size_t size)
+void* ArrayManager::allocate(size_t size, ExecutionSpace space)
 {
   void * ret = nullptr;
 
-  posix_memalign(static_cast<void **>(&ret), 64, sizeof(T) * size); 
-  registerHostPointer(ret, sizeof(T) * size);
+  if (space == CPU) {
+    posix_memalign(static_cast<void **>(&ret), 64, sizeof(T) * size); 
+  } else {
+    cudaMalloc(&ret, sizeof(T) * size);
+  }
 
+  registerPointer(ret, sizeof(T) * size, space);
   return ret;
 }
 
