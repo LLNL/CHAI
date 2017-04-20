@@ -1,5 +1,5 @@
-#ifndef CHAI_ManagedArray_CPP
-#define CHAI_ManagedArray_CPP
+#ifndef CHAI_ManagedArray_INL
+#define CHAI_ManagedArray_INL
 
 #include "ManagedArray.hpp"
 #include "ArrayManager.hpp"
@@ -8,8 +8,7 @@ namespace chai {
 
 template<typename T>
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
-  m_host_pointer(nullptr),
-  m_device_pointer(nullptr),
+  m_active_pointer(nullptr),
   m_resource_manager(nullptr)
 {
   m_resource_manager = ArrayManager::getArrayManager();
@@ -18,8 +17,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
 template<typename T>
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
     uint elems, ExecutionSpace space):
-  m_host_pointer(nullptr),
-  m_device_pointer(nullptr),
+  m_active_pointer(nullptr),
   m_resource_manager(nullptr)
 {
   m_resource_manager = ArrayManager::getArrayManager();
@@ -28,17 +26,16 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
 
 template<typename T>
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
-  m_host_pointer(other.m_host_pointer),
-  m_device_pointer(other.m_device_pointer),
+  m_active_pointer(other.m_active_pointer),
   m_resource_manager(other.m_resource_manager)
 {
 #if !defined(__CUDA_ARCH__)
-  m_device_pointer = static_cast<T*>(m_resource_manager->move(other.m_host_pointer));
+  m_active_pointer = static_cast<T*>(m_resource_manager->move(other.m_active_pointer));
 
   /*
    * Register touch
    */
-  T_non_const* non_const_pointer = static_cast<T_non_const*>(other.m_host_pointer);
+  T_non_const* non_const_pointer = static_cast<T_non_const*>(other.m_active_pointer);
   if (non_const_pointer) {
     m_resource_manager->registerTouch(non_const_pointer);
   }
@@ -47,40 +44,32 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 
 template<typename T>
 CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space) {
-  if (space == CPU) {
-    m_host_pointer = static_cast<T*>(m_resource_manager->allocate<T>(elems, space));
-  } else if (space == GPU) {
-    m_host_pointer = static_cast<T*>(m_resource_manager->allocate<T>(elems, space));
-  }
+  m_active_pointer = static_cast<T*>(m_resource_manager->allocate<T>(elems, space));
 }
 
 template<typename T>
 CHAI_HOST size_t ManagedArray<T>::getSize() {
-  return m_resource_manager->getSize(m_host_pointer);
+  return m_resource_manager->getSize(m_active_pointer);
 }
 
 template<typename T>
 CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const int i) const {
-#if defined(__CUDA_ARCH__)
-  return m_device_pointer[i];
-#else
-  return m_host_pointer[i];
-#endif
+  return m_active_pointer[i];
 }
 
 template<typename T>
 CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
 #if !defined(__CUDA_ARCH__)
   m_resource_manager->setExecutionSpace(CPU);
-  m_resource_manager->move(m_host_pointer);
-  m_resource_manager->registerTouch(m_host_pointer);
+  m_resource_manager->move(m_active_pointer);
+  m_resource_manager->registerTouch(m_active_pointer);
 
-  return m_host_pointer;
+  return m_active_pointer;
 #else
-  return m_device_pointer;
+  return m_active_pointer;
 #endif
 }
 
-} // end namespace chai
+} // end of namespace chai
 
-#endif
+#endif // CHAI_ManagedArray_INL

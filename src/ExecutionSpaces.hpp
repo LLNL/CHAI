@@ -3,8 +3,15 @@
 
 namespace chai {
 
-enum ExecutionSpace { NONE, CPU, GPU };
+enum ExecutionSpace { 
+  NONE,
+  CPU,
+  GPU,
+  /* 
+   * NUM_EXECUTION_SPACES should always be last!
+   */
+  NUM_EXECUTION_SPACES };
 
-}
+} // end of namespace chai
 
-#endif
+#endif // CHAI_ExecutionSpaces_HPP

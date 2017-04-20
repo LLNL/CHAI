@@ -18,6 +18,8 @@ a member of the ``chai`` LC group, you will be able to checkout a copy of the co
 
 To clone the repo into your local working space, type:
 
+.. code-block:: bash
+
   $ git clone --recursive 
 
 N.B.:
@@ -37,7 +39,9 @@ compiler loaded and the configuration is as simple as:
   $ cmake -DCUDA_TOOLKIT_ROOT_DIR=/path/to/cuda ../
 
 CMake will provide output about which compiler is being used, and what version
-of CUDA was detected. Once CMAke has completed, CHAI can be built with Make:
+of CUDA was detected. Once CMake has completed, CHAI can be built with Make:
+
+.. code-block:: bash
 
   $ make
 
@@ -50,4 +54,4 @@ The file ``src/examples/example.cpp`` contains a brief program that shows how
 CHAI can be used. Let's walk through this example, line-by-line:
 
 .. literalinclude:: ../../src/examples/example.cpp
-  :langauge: c++
+  :language: c++

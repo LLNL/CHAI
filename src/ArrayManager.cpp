@@ -29,16 +29,11 @@ void ArrayManager::registerPointer(void* ptr, size_t size, ExecutionSpace space)
 
   auto & pointer_record = m_pointer_map[ptr];
 
-  if (space == CPU) {
-    pointer_record->m_host_pointer = ptr;
-  } else if (space == GPU) {
-    pointer_record->m_device_pointer = ptr;
-  }
-
+  pointer_record->m_pointers[space] = ptr
   pointer_record->m_size = size;
 }
 
-void* ArrayManager::getDevicePointer(void* host_pointer)
+void* ArrayManager::getDevicePointer(void* pointer)
 {
   if (host_pointer == nullptr) {
     return nullptr;
@@ -63,7 +58,7 @@ void ArrayManager::setExecutionSpace(ExecutionSpace space) {
   m_current_execution_space = space;
 }
 
-void* ArrayManager::move(void* host_pointer) {
+void* ArrayManager::move(void* pointer) {
   if (m_current_execution_space == NONE) {
     return nullptr;
   }
@@ -77,7 +72,7 @@ void* ArrayManager::move(void* host_pointer) {
     move(pointer_record, m_current_execution_space);
   }
 
-  return pointer_record->m_device_pointer;
+  return pointer_record->m_pointers[space];
 }
 
 ExecutionSpace ArrayManager::getExecutionSpace() {
@@ -96,4 +91,4 @@ void ArrayManager::registerTouch(void* host_pointer) {
   }
 }
 
-}
+} // end of namespace chai

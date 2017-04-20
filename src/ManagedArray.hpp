@@ -29,14 +29,13 @@ class ManagedArray {
 
   private:
 
-  mutable T* m_host_pointer;
-  mutable T* m_device_pointer;
+  mutable T* m_active_pointer;
 
   ArrayManager* m_resource_manager;
 };
 
-}
+} // end of namespace chai
 
 #include "chai/ManagedArray.inl"
 
-#endif
+#endif // CHAI_ManagedArray_HPP

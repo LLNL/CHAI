@@ -6,8 +6,7 @@ set (chai_headers
   ManagedArray.hpp
   ManagedArray.inl
   PointerRecord.hpp
-  Types.hpp
-  )
+  Types.hpp)
 
 set (chai_sources
   ArrayManager.cpp)

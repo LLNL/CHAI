@@ -5,4 +5,4 @@
 #define CHAI_DEVICE __device__
 #define CHAI_HOST_DEVICE __device__ __host__
 
-#endif
+#endif // CHAI_ChaiMacros_HPP

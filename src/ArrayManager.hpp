@@ -4,8 +4,7 @@
 #include "chai/ExecutionSpaces.hpp"
 #include "chai/PointerRecord.hpp"
 
-#include <map>
-#include <set>
+#include <unordered_map>
 
 namespace chai {
 
@@ -15,15 +14,14 @@ namespace chai {
 class ArrayManager
 {
   public:
+
   static PointerRecord s_null_record;
 
-  /*
+  /**
    * \brief Get the singleton instance.
    *
    */ 
   static ArrayManager* getArrayManager();
-
-  void registerPointer(void* ptr, size_t size, ExecutionSpace space=CPU);
 
   void* getDevicePointer(void* host_ptr);
 
@@ -53,6 +51,11 @@ class ArrayManager
   private:
 
   /*
+   * \brief Register a new allocation with the ArrayManager.
+   */
+  void registerPointer(void* ptr, size_t size, ExecutionSpace space=CPU);
+
+  /*
    * \brief Pointer to singleton instance.
    */
   static ArrayManager* s_resource_manager_instance;
@@ -66,11 +69,11 @@ class ArrayManager
    * \brief Map of active ManagedArray pointers to their corresponding
    * PointerRecord.
    */
-  std::map<void *, PointerRecord*> m_pointer_map;
+  std::unordered_map<void *, PointerRecord*> m_pointer_map;
 };
 
 } // end of namespace chai
 
 #include "chai/ArrayManager.inl"
 
-#endif
+#endif // CHAI_ArrayManager_HPP

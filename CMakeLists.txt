@@ -2,10 +2,11 @@ cmake_minimum_required(VERSION 3.2)
 
 project(Chai LANGUAGES CXX)
 
-set(ENABLE_CUDA On)
-set(ENABLE_OPENMP On)
-set(ENABLE_COPY_HEADERS On)
-set(BLT_CXX_STD c++11)
+set(ENABLE_CUDA On CACHE BOOL "Enable CUDA")
+set(ENABLE_OPENMP On CACHE BOOL "Enable OpenMP")
+
+set(ENABLE_COPY_HEADERS On CACHE BOOL "")
+set(BLT_CXX_STD c++11 CACHE STRING "")
 
 ################################
 # BLT
@@ -23,3 +24,4 @@ include(blt/SetupBLT.cmake)
 include(cmake/ChaiBasics.cmake)
 
 add_subdirectory(src)
+add_subdirectory(docs)

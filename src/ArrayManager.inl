@@ -47,11 +47,11 @@ void* ArrayManager::allocate(size_t size, ExecutionSpace space)
   return ret;
 }
 
-inline size_t ArrayManager::getSize(void* host_pointer) {
-  auto pointer_record = getPointerRecord(host_pointer);
+inline size_t ArrayManager::getSize(void* ptr) {
+  auto pointer_record = getPointerRecord(ptr);
   return pointer_record->m_size;
 }
 
 } // end of namespace chai
 
-#endif
+#endif // CHAI_ArrayManager_INL
