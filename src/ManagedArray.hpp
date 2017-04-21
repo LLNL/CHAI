@@ -61,6 +61,11 @@ class ManagedArray {
   CHAI_HOST void allocate(uint elems, ExecutionSpace space=CPU);
 
   /*!
+   * \brief Free all data allocated by this ManagedArray.
+   */
+  CHAI_HOST void free();
+
+  /*!
    * \brief Get the number of elements in the array.
    */
   CHAI_HOST size_t getSize();

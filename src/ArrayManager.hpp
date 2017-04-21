@@ -82,6 +82,11 @@ class ArrayManager
   template<typename T>
   void* allocate(size_t elems, ExecutionSpace space=CPU);
 
+  /*!
+   * \brief Free all allocations associated with the given raw pointer.
+   */
+  void free(void* pointer);
+
   size_t getSize(void* host_pointer);
 
   protected:
@@ -96,7 +101,7 @@ class ArrayManager
 
   private:
 
-  /*
+  /*!
    * \brief Make a new allocation of the data described by the PointerRecord in
    * the given space.
    *
@@ -105,7 +110,7 @@ class ArrayManager
    */
   void* allocate(PointerRecord* pointer_record, ExecutionSpace space=CPU);
 
-  /*
+  /*!
    * \brief Registering adding a new allocation to an existing PointerRecord.
    *
    * \param pointer Pointer to the allocation to register.
@@ -115,7 +120,7 @@ class ArrayManager
   void registerPointer(
       void* pointer, PointerRecord* record, ExecutionSpace space);
 
-  /*
+  /*!
    * \brief Register a new allocation with the ArrayManager.
    *
    * \param pointer Pointer to the allocation to register.
@@ -123,6 +128,11 @@ class ArrayManager
    * \param space Space in which the pointer was allocated.
    */
   void registerPointer(void* pointer, size_t size, ExecutionSpace space=CPU);
+
+  /*!
+   * \brief Deregister a PointerRecord from the ArrayManager.
+   */
+  void deregisterPointer(PointerRecord* record);
 
   /*!
    * \brief Move data in PointerRecord to the corresponding ExecutionSpace.
