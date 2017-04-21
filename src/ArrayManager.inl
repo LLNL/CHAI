@@ -61,11 +61,10 @@ void* ArrayManager::allocate(size_t elems, ExecutionSpace space)
     cudaMalloc(&ret, sizeof(T) * elems);
   }
 
+  CHAI_LOG("ArrayManager", "Allocated array at: " << ret);
+
   registerPointer(ret, sizeof(T) * size, space);
 
-#ifdef DEBUG
-  std::cout << "[ArrayManager] Allocated array at: " << ret << std::endl;
-#endif
 
   return ret;
 }

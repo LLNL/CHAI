@@ -33,13 +33,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
   m_resource_manager(other.m_resource_manager)
 {
 #if !defined(__CUDA_ARCH__)
-#ifdef DEBUG
-  std::cout << "Moving " << m_active_pointer << " to ";
-#endif
+  CHAI_LOG("ManagedArray", "Moving " << m_active_pointer);
+
   m_active_pointer = static_cast<T*>(m_resource_manager->move(m_active_pointer));
-#ifdef DEBUG
-  std::cout << m_active_pointer << std::endl;
-#endif
 
 
   /*
@@ -55,15 +51,11 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space) {
-#ifdef DEBUG
-  std::cout << "Allocating array of size elems in space " << space << std::endl;
-#endif
+  CHAI_LOG("ManagedArray", "Allocating array of size elems in space " << space);
 
   m_active_pointer = static_cast<T*>(m_resource_manager->allocate<T>(elems, space));
 
-#ifdef DEBUG
-  std::cout << "allocated at address: " << m_active_pointer << std::endl;
-#endif
+  CHAI_LOG("ManagedArray", "m_active_ptr allocated at address: " << m_active_pointer);
 }
 
 template<typename T>

@@ -20,6 +20,8 @@ ArrayManager::ArrayManager() :
 }
 
 void ArrayManager::registerPointer(void* pointer, size_t size, ExecutionSpace space) {
+  CHAI_LOG("ArrayManager", "Registering " << pointer << " in space " << space);
+
   auto found_pointer_record = m_pointer_map.find(pointer);
 
   if (found_pointer_record != m_pointer_map.end()) {
@@ -29,9 +31,6 @@ void ArrayManager::registerPointer(void* pointer, size_t size, ExecutionSpace sp
 
   auto & pointer_record = m_pointer_map[pointer];
 
-#ifdef DEBUG
-  std::cout << "[ArrayManager] Registering " << pointer << " in space " << space << std::endl;
-#endif
 
   pointer_record->m_pointers[space] = pointer;
   pointer_record->m_size = size;
@@ -39,10 +38,8 @@ void ArrayManager::registerPointer(void* pointer, size_t size, ExecutionSpace sp
 
 void ArrayManager::registerPointer(void* pointer, PointerRecord* record, ExecutionSpace space) 
 {
+  CHAI_LOG("ArrayManager", "Registering " << pointer << " in space " << space);
 
-#ifdef DEBUG
-  std::cout << "[ArrayManager] Registering " << pointer << " in space" << space << std::endl;
-#endif
   record->m_pointers[space] = pointer;
 }
 
@@ -76,10 +73,7 @@ ExecutionSpace ArrayManager::getExecutionSpace() {
 }
 
 void ArrayManager::registerTouch(void* host_pointer) {
-#ifdef DEBUG
-  std::cout << "[ArrayManager] " << host_pointer << " touched in space ";
-  std::cout << m_current_execution_space << std::endl;
-#endif
+  CHAI_LOG("ArrayManager", host_pointer << " touched in space " << m_current_execution_space);
 
   auto pointer_record = getPointerRecord(host_pointer);
   pointer_record->m_touched[m_current_execution_space] = true;

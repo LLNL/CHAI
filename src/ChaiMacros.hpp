@@ -9,4 +9,11 @@
 
 #define CHAI_UNUSED_ARG(X) 
 
+#ifdef DEBUG
+#define CHAI_LOG(file, msg) \
+  std::cerr << "[" << file << "] " << msg << std::endl;
+#else
+#define CHAI_LOG(file, msg) 
+#endif
+
 #endif // CHAI_ChaiMacros_HPP
