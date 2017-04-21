@@ -90,6 +90,20 @@ void* ArrayManager::allocate(
   return ret;
 }
 
+CHAI_INLINE
+CHAI_HOST void free(void* pointer)
+{
+  auto pointer_record = getPointerRecord(pointer);
+
+  if (pointer_record->m_pointer[CPU]) {
+    ::free(&pointer_record->m_pointer[i]);
+  } 
+  
+  if (pointer_record->m_pointer[GPU]) {
+    cudaFree(&pointer_record->m_pointer[GPU]);
+  }
+}
+
 
 CHAI_INLINE
 size_t ArrayManager::getSize(void* ptr)

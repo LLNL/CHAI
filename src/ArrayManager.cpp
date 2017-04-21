@@ -46,6 +46,16 @@ void ArrayManager::registerPointer(void* pointer, PointerRecord* record, Executi
   record->m_pointers[space] = pointer;
 }
 
+void ArrayManager::deregisterPointer(PointerRecord* record)
+{
+  for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
+    if (pointer_record->m_pointer[i])
+      m_pointer_map.erase(pointer_record->m_pointer[i]);
+  }
+
+  delete record;
+}
+
 void ArrayManager::setExecutionSpace(ExecutionSpace space) {
   m_current_execution_space = space;
 }
