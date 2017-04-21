@@ -23,7 +23,5 @@ include(blt/SetupBLT.cmake)
 
 include(cmake/ChaiBasics.cmake)
 
-add_definitions(-DDEBUG=1)
-
 add_subdirectory(src)
 add_subdirectory(docs)

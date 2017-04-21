@@ -1,4 +1,4 @@
-#include "ArrayManager.hpp"
+#include "chai/ArrayManager.hpp"
 
 namespace chai {
 

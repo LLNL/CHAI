@@ -7,6 +7,7 @@
 namespace chai {
 
 template<typename T>
+CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
   m_active_pointer(nullptr),
   m_resource_manager(nullptr)
@@ -15,6 +16,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
 }
 
 template<typename T>
+CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
     uint elems, ExecutionSpace space):
   m_active_pointer(nullptr),
@@ -25,6 +27,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
 }
 
 template<typename T>
+CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
   m_active_pointer(other.m_active_pointer),
   m_resource_manager(other.m_resource_manager)
@@ -50,6 +53,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 }
 
 template<typename T>
+CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space) {
 #ifdef DEBUG
   std::cout << "Allocating array of size elems in space " << space << std::endl;
@@ -63,16 +67,19 @@ CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space) {
 }
 
 template<typename T>
+CHAI_INLINE
 CHAI_HOST size_t ManagedArray<T>::getSize() {
   return m_resource_manager->getSize(m_active_pointer);
 }
 
 template<typename T>
+CHAI_INLINE
 CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const int i) const {
   return m_active_pointer[i];
 }
 
 template<typename T>
+CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
 #if !defined(__CUDA_ARCH__)
   m_resource_manager->setExecutionSpace(CPU);

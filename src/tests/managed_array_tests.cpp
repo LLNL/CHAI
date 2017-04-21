@@ -11,3 +11,5 @@ TEST(ManagedArray, SizeConstructor) {
   chai::ManagedArray<float> array(10);
   ASSERT_EQ(array.getSize(), sizeof(float)*10);
 }
+
+

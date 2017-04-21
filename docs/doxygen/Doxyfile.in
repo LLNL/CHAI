@@ -17,13 +17,13 @@
 # The PROJECT_NAME tag is a single word (or a sequence of words surrounded 
 # by quotes) that should identify the project.
 
-PROJECT_NAME           = UMPIRE 
+PROJECT_NAME           = CHAI 
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. 
 # This could be handy for archiving the generated documentation or 
 # if some version control system is used.
 
-PROJECT_BRIEF = "Umpire: resource management and provision"
+PROJECT_BRIEF = "Chai: managed arrays for automatic data migration"
 
 PROJECT_NUMBER         = 
 
@@ -32,7 +32,7 @@ PROJECT_NUMBER         =
 # If a relative path is entered, it will be relative to the location 
 # where doxygen was started. If left blank the current directory will be used.
 
-#OUTPUT_DIRECTORY       = @dox_output_dir@asctoolkit-dox
+#OUTPUT_DIRECTORY       = @dox_output_dir@
 
 # If the CREATE_SUBDIRS tag is set to YES, then doxygen will create 
 # 4096 sub-directories (in 2 levels) under the output directory of each output 
@@ -441,28 +441,7 @@ WARN_LOGFILE           = dox.warnings
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = @PROJECT_SOURCE_DIR@/components/mainpage.md \
-                         @PROJECT_SOURCE_DIR@/components/common/src \
-                         @PROJECT_SOURCE_DIR@/components/common/README.md \
-                         @PROJECT_SOURCE_DIR@/components/lumberjack/src \
-                         @PROJECT_SOURCE_DIR@/components/lumberjack/README.md \
-                         @PROJECT_SOURCE_DIR@/components/quest/src/mesh \
-                         @PROJECT_SOURCE_DIR@/components/quest/src/geom \
-                         @PROJECT_SOURCE_DIR@/components/quest/README.md \
-                         @PROJECT_SOURCE_DIR@/components/sidre/src/core \
-                         @PROJECT_SOURCE_DIR@/components/sidre/src/capi \
-                         @PROJECT_SOURCE_DIR@/components/sidre/README.md \
-                         @PROJECT_SOURCE_DIR@/components/slam/src \
-                         @PROJECT_SOURCE_DIR@/components/slam/src/policies \
-                         @PROJECT_SOURCE_DIR@/components/slam/examples \
-                         @PROJECT_SOURCE_DIR@/components/slam/examples/lulesh2.0.3 \
-                         @PROJECT_SOURCE_DIR@/components/slam/examples/tinyHydro \
-                         @PROJECT_SOURCE_DIR@/components/slam/README.md \
-                         @PROJECT_SOURCE_DIR@/components/slic/src/core \
-                         @PROJECT_SOURCE_DIR@/components/slic/src/interface \
-                         @PROJECT_SOURCE_DIR@/components/slic/src/streams \
-                         @PROJECT_SOURCE_DIR@/components/slic/README.md \
-                         @PROJECT_SOURCE_DIR@/components/spio/README.md 
+INPUT                  = @PROJECT_SOURCE_DIR@/src
 
 # Allow Markdown files to provide the Doxygen main page
 

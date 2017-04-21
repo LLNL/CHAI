@@ -1,5 +1,5 @@
-#ifndef forall_HPP
-#define forall_HPP
+#ifndef CHAI_forall_HPP
+#define CHAI_forall_HPP
 
 #include "chai/ExecutionSpaces.hpp"
 #include "chai/ArrayManager.hpp"
@@ -15,6 +15,9 @@ void forall_kernel_cpu(int begin, int end, LOOP_BODY body)
   }
 }
 
+/*
+ * \brief Run forall kernel on CPU.
+ */
 template <typename LOOP_BODY>
 void forall(sequential, int begin, int end, LOOP_BODY body) {
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
@@ -35,6 +38,9 @@ __global__ void forall_kernel_gpu(int start, int length, LOOP_BODY body) {
   }
 }
 
+/*
+ * \brief Run forall kernel on GPU.
+ */
 template <typename LOOP_BODY>
 void forall(cuda, int begin, int end, LOOP_BODY&& body) {
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
@@ -49,4 +55,4 @@ void forall(cuda, int begin, int end, LOOP_BODY&& body) {
   rm->setExecutionSpace(chai::NONE);
 }
 
-#endif
+#endif // CHAI_forall_HPP

@@ -7,7 +7,9 @@
 
 namespace chai {
 
-inline PointerRecord* ArrayManager::getPointerRecord(void* host_ptr) {
+CHAI_INLINE
+PointerRecord* ArrayManager::getPointerRecord(void* host_ptr) 
+{
   auto record = m_pointer_map.find(host_ptr);
   if (record != m_pointer_map.end()) {
     return record->second;
@@ -16,7 +18,9 @@ inline PointerRecord* ArrayManager::getPointerRecord(void* host_ptr) {
   }
 }
 
-inline void ArrayManager::move(PointerRecord* record, ExecutionSpace space) {
+CHAI_INLINE
+void ArrayManager::move(PointerRecord* record, ExecutionSpace space) 
+{
   if ( space == NONE ) {
     return;
   }
@@ -46,14 +50,15 @@ inline void ArrayManager::move(PointerRecord* record, ExecutionSpace space) {
 }
 
 template<typename T>
-void* ArrayManager::allocate(size_t size, ExecutionSpace space)
+CHAI_INLINE
+void* ArrayManager::allocate(size_t elems, ExecutionSpace space)
 {
   void * ret = nullptr;
 
   if (space == CPU) {
-    posix_memalign(static_cast<void **>(&ret), 64, sizeof(T) * size); 
+    posix_memalign(static_cast<void **>(&ret), 64, sizeof(T) * elems); 
   } else {
-    cudaMalloc(&ret, sizeof(T) * size);
+    cudaMalloc(&ret, sizeof(T) * elems);
   }
 
   registerPointer(ret, sizeof(T) * size, space);
@@ -65,8 +70,9 @@ void* ArrayManager::allocate(size_t size, ExecutionSpace space)
   return ret;
 }
 
-inline 
-void* ArrayManager::allocate(PointerRecord* pointer_record, ExecutionSpace space)
+CHAI_INLINE
+void* ArrayManager::allocate(
+    PointerRecord* pointer_record, ExecutionSpace space)
 {
   void * ret = nullptr;
   auto size = pointer_record->m_size;
@@ -83,7 +89,9 @@ void* ArrayManager::allocate(PointerRecord* pointer_record, ExecutionSpace space
 }
 
 
-inline size_t ArrayManager::getSize(void* ptr) {
+CHAI_INLINE
+size_t ArrayManager::getSize(void* ptr)
+{
   auto pointer_record = getPointerRecord(ptr);
   return pointer_record->m_size;
 }

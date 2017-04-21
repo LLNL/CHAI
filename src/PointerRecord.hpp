@@ -5,6 +5,9 @@
 
 namespace chai {
 
+/*
+ * \brief Struct holding details about each pointer.
+ */
 struct PointerRecord 
 {
   size_t m_size;
@@ -12,6 +15,6 @@ struct PointerRecord
   bool m_touched[NUM_EXECUTION_SPACES];
 };
 
-}
+} // end of namespace chai
 
-#endif
+#endif // CHAI_PointerRecord_HPP
