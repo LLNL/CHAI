@@ -63,4 +63,8 @@ int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv)) {
       std::cout << " " << device_array[i];
   }
   std::cout << " ]" << std::endl;
+
+  v1.free();
+  v2.free();
+  device_array.free();
 }

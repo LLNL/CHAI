@@ -68,7 +68,7 @@ CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space) {
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST void free()
+CHAI_HOST void ManagedArray<T>::free()
 {
   m_resource_manager->free(m_active_pointer);
 }
