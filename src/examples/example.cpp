@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
   /*
    * Allocate an array on the device only
    */
-  // chai::ManagedArray<int> device_array(10, chai::GPU);
+  chai::ManagedArray<int> device_array(10, chai::GPU);
 
   std::cout << "Created new array..." << std::endl;
 
@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
 
   forall(cuda(), 0, 10, [=] __device__ (int i) {
       v2[i] = v1[i]*2.0f;
-    //  i1[i] = i;
+      device_array[i] = i;
   });
 
   std::cout << "v2 = [";
@@ -46,6 +46,13 @@ int main(int argc, char* argv[]) {
   std::cout << "raw_v2 = [";
   for (int i = 0; i < 10; i++ ) {
       std::cout << " " << raw_v2[i] << std::endl;
+  }
+  std::cout << "]" << std::endl;
+
+  int* raw_device_array = device_array;
+  std::cout  << "device_array (on host) = [";
+  for (int i = 0; i < 10; i++ ) {
+      std::cout << " " << device_array[i] << std::endl;
   }
   std::cout << "]" << std::endl;
 }

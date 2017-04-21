@@ -21,7 +21,7 @@ class ArrayManager
    * \brief Get the singleton instance.
    *
    */ 
-  static ArrayManager* getArrayManager();
+  static ArrayManager* getInstance();
 
   void setExecutionSpace(ExecutionSpace space);
   ExecutionSpace getExecutionSpace();

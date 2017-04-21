@@ -5,7 +5,7 @@ namespace chai {
 ArrayManager* ArrayManager::s_resource_manager_instance = nullptr;
 PointerRecord ArrayManager::s_null_record = PointerRecord();
 
-ArrayManager* ArrayManager::getArrayManager() {
+ArrayManager* ArrayManager::getInstance() {
   if (!s_resource_manager_instance) {
     s_resource_manager_instance = new ArrayManager();
   }
@@ -43,7 +43,6 @@ void ArrayManager::registerPointer(void* ptr, PointerRecord* record, ExecutionSp
 #ifdef DEBUG
   std::cout << "[ArrayManager] Registering " << ptr << " in space" << space << std::endl;
 #endif
-
   record->m_pointers[space] = ptr;
 }
 

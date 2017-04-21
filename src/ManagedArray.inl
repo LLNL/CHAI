@@ -11,7 +11,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
   m_active_pointer(nullptr),
   m_resource_manager(nullptr)
 {
-  m_resource_manager = ArrayManager::getArrayManager();
+  m_resource_manager = ArrayManager::getInstance();
 }
 
 template<typename T>
@@ -20,7 +20,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
   m_active_pointer(nullptr),
   m_resource_manager(nullptr)
 {
-  m_resource_manager = ArrayManager::getArrayManager();
+  m_resource_manager = ArrayManager::getInstance();
   this->allocate(elems, space);
 }
 
@@ -76,7 +76,9 @@ template<typename T>
 CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
 #if !defined(__CUDA_ARCH__)
   m_resource_manager->setExecutionSpace(CPU);
-  m_resource_manager->move(m_active_pointer);
+
+  m_active_pointer = static_cast<T*>(m_resource_manager->move(m_active_pointer));
+
   m_resource_manager->registerTouch(m_active_pointer);
 
   return m_active_pointer;
