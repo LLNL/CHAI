@@ -1,5 +1,7 @@
 #include "chai/ArrayManager.hpp"
 
+#include "chai/ChaiMacros.hpp"
+
 #ifndef CHAI_ArrayManager_INL
 #define CHAI_ArrayManager_INL
 
@@ -61,7 +63,7 @@ void* ArrayManager::allocate(size_t elems, ExecutionSpace space)
     cudaMalloc(&ret, sizeof(T) * elems);
   }
 
-  registerPointer(ret, sizeof(T) * size, space);
+  registerPointer(ret, sizeof(T) * elems, space);
 
 #ifdef DEBUG
   std::cout << "[ArrayManager] Allocated array at: " << ret << std::endl;
