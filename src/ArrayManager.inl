@@ -8,9 +8,9 @@
 namespace chai {
 
 CHAI_INLINE
-PointerRecord* ArrayManager::getPointerRecord(void* host_ptr) 
+PointerRecord* ArrayManager::getPointerRecord(void* pointer) 
 {
-  auto record = m_pointer_map.find(host_ptr);
+  auto record = m_pointer_map.find(pointer);
   if (record != m_pointer_map.end()) {
     return record->second;
   } else {

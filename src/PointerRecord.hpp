@@ -5,7 +5,7 @@
 
 namespace chai {
 
-/*
+/*!
  * \brief Struct holding details about each pointer.
  */
 struct PointerRecord 

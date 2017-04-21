@@ -4,14 +4,18 @@
 namespace chai {
 
 /*!
- * Enum listing possible execution spaces.
+ * \brief Enum listing possible execution spaces.
  */
 enum ExecutionSpace { 
-  NONE = 0, /**< Default, no execution space. */
-  CPU, /**< Executing in CPU space */
-  GPU, /**< Execution in GPU space */
+  /*! Default, no execution space. */
+  NONE = 0,
+  /*! Executing in CPU space */
+  CPU,
+  /*! Execution in GPU space */
+  GPU,
   // NUM_EXECUTION_SPACES should always be last!
-  NUM_EXECUTION_SPACES /**< Used to count total number of spaces */
+  /*! Used to count total number of spaces */
+  NUM_EXECUTION_SPACES
 };
 
 } // end of namespace chai

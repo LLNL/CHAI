@@ -22,11 +22,10 @@ To clone the repo into your local working space, type:
 
   $ git clone --recursive 
 
-N.B.:
 
-   * The ``--recursive`` argument is required to ensure that the *BLT*
-     submodule is also checked out. BLT is the build system we use for CHAI,
-     and is available on GitHub.
+The ``--recursive`` argument is required to ensure that the *BLT* submodule is
+also checked out. BLT is the build system we use for CHAI, and is available on
+GitHub.
 
 
 Building CHAI
@@ -34,6 +33,8 @@ Building CHAI
 
 CHAI uses CMake and BLT to handle builds. Make sure that you have a modern
 compiler loaded and the configuration is as simple as:
+
+.. code-block:: bash
 
   $ mkdir build && cd build
   $ cmake -DCUDA_TOOLKIT_ROOT_DIR=/path/to/cuda ../

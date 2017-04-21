@@ -19,31 +19,31 @@ ArrayManager::ArrayManager() :
   m_pointer_map.clear();
 }
 
-void ArrayManager::registerPointer(void* ptr, size_t size, ExecutionSpace space) {
-  auto found_pointer_record = m_pointer_map.find(ptr);
+void ArrayManager::registerPointer(void* pointer, size_t size, ExecutionSpace space) {
+  auto found_pointer_record = m_pointer_map.find(pointer);
 
   if (found_pointer_record != m_pointer_map.end()) {
   } else {
-    m_pointer_map[ptr] = new PointerRecord();
+    m_pointer_map[pointer] = new PointerRecord();
   }
 
-  auto & pointer_record = m_pointer_map[ptr];
+  auto & pointer_record = m_pointer_map[pointer];
 
 #ifdef DEBUG
-  std::cout << "[ArrayManager] Registering " << ptr << " in space " << space << std::endl;
+  std::cout << "[ArrayManager] Registering " << pointer << " in space " << space << std::endl;
 #endif
 
-  pointer_record->m_pointers[space] = ptr;
+  pointer_record->m_pointers[space] = pointer;
   pointer_record->m_size = size;
 }
 
-void ArrayManager::registerPointer(void* ptr, PointerRecord* record, ExecutionSpace space) 
+void ArrayManager::registerPointer(void* pointer, PointerRecord* record, ExecutionSpace space) 
 {
 
 #ifdef DEBUG
-  std::cout << "[ArrayManager] Registering " << ptr << " in space" << space << std::endl;
+  std::cout << "[ArrayManager] Registering " << pointer << " in space" << space << std::endl;
 #endif
-  record->m_pointers[space] = ptr;
+  record->m_pointers[space] = pointer;
 }
 
 void ArrayManager::setExecutionSpace(ExecutionSpace space) {

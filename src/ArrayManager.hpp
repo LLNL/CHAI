@@ -63,6 +63,11 @@ class ArrayManager
    */
   void* move(void* pointer);
 
+  /*!
+   * \brief Register a touch of the pointer in the current execution space.
+   *
+   * \param pointer Raw pointer to register a touch of.
+   */
   void registerTouch(void* pointer);
 
   /*!
@@ -82,7 +87,7 @@ class ArrayManager
   protected:
 
   /*!
-   * \brief Constructor.
+   * \brief Construct a new ArrayManager.
    *
    * The constructor is a protected member, ensuring that it can
    * only be called by the singleton getInstance method.
@@ -91,27 +96,65 @@ class ArrayManager
 
   private:
 
-  void* allocate(PointerRecord* pointer_record, ExecutionSpace=CPU);
+  /*
+   * \brief Make a new allocation of the data described by the PointerRecord in
+   * the given space.
+   *
+   * \param pointer_record 
+   * \param space Space in which to make the allocation.
+   */
+  void* allocate(PointerRecord* pointer_record, ExecutionSpace space=CPU);
 
-  void registerPointer(void* ptr, PointerRecord* record, ExecutionSpace space);
+  /*
+   * \brief Registering adding a new allocation to an existing PointerRecord.
+   *
+   * \param pointer Pointer to the allocation to register.
+   * \param record PointerRecord which this allocation is added to.
+   * \param space Space in which the pointer was allocated.
+   */
+  void registerPointer(
+      void* pointer, PointerRecord* record, ExecutionSpace space);
 
   /*
    * \brief Register a new allocation with the ArrayManager.
+   *
+   * \param pointer Pointer to the allocation to register.
+   * \param size Size of the allocation in bytes.
+   * \param space Space in which the pointer was allocated.
    */
-  void registerPointer(void* ptr, size_t size, ExecutionSpace space=CPU);
+  void registerPointer(void* pointer, size_t size, ExecutionSpace space=CPU);
 
+  /*!
+   * \brief Move data in PointerRecord to the corresponding ExecutionSpace.
+   *
+   * \param record
+   * \param space
+   */
   void move(PointerRecord* record, ExecutionSpace space);
 
-  PointerRecord* getPointerRecord(void* host_ptr);
+  /*!
+   * \brief Find the PointerRecord corresponding to the raw pointer.
+   *
+   * \param pointer Raw pointer to find the PointerRecord for.
+   *
+   * \return PointerRecord containing the raw pointer, or an empty
+   *         PointerRecord if none found.
+   */
+  PointerRecord* getPointerRecord(void* pointer);
 
+  /*!
+   * \brief Set touched to false in all spaces for the given PointerRecord.
+   *
+   * \param pointer_record PointerRecord to reset.
+   */
   void resetTouch(PointerRecord* pointer_record);
 
-  /*
+  /*!
    * Pointer to singleton instance.
    */
   static ArrayManager* s_resource_manager_instance;
 
-  /*
+  /*!
    * Current execution space.
    */
   ExecutionSpace m_current_execution_space;

@@ -66,12 +66,18 @@ class ManagedArray {
   CHAI_HOST size_t getSize();
 
   /*!
+   * \brief Return reference to i-th element of the ManagedArray.
    *
+   * \param i Element to return reference to.
+   *
+   * \return Reference to i-th element.
    */
   CHAI_HOST_DEVICE T& operator[](const int i) const;
 
   /*!
    * \brief Cast the ManagedArray to a raw pointer.
+   *
+   * \return Raw pointer to data.
    */
   CHAI_HOST_DEVICE operator T*() const;
 
@@ -79,7 +85,6 @@ class ManagedArray {
 
   /*! 
    * Currently active data pointer.
-   *
    */
   mutable T* m_active_pointer;
 
