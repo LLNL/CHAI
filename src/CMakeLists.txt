@@ -23,4 +23,5 @@ target_include_directories(
   PUBLIC ${PROJECT_BINARY_DIR}/include)
 
 add_subdirectory(tests)
+add_subdirectory(benchmarks)
 add_subdirectory(examples)
