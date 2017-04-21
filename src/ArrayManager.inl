@@ -3,6 +3,8 @@
 #ifndef CHAI_ArrayManager_INL
 #define CHAI_ArrayManager_INL
 
+#include <iostream>
+
 namespace chai {
 
 inline PointerRecord* ArrayManager::getPointerRecord(void* host_ptr) {
@@ -14,22 +16,33 @@ inline PointerRecord* ArrayManager::getPointerRecord(void* host_ptr) {
   }
 }
 
-inline void ArrayManager::move(const PointerRecord* record, ExecutionSpace space) {
+inline void ArrayManager::move(PointerRecord* record, ExecutionSpace space) {
   if ( space == NONE ) {
     return;
   }
 
-  if (record->m_host_pointer) {
-    if (space == GPU && record->m_host_touched) {
-      cudaMemcpy(record->m_device_pointer, record->m_host_pointer, 
+  if (space == GPU) {
+    if (!record->m_pointers[GPU]) {
+      allocate(record, GPU);
+    }
+    if (record->m_touched[CPU]) {
+      cudaMemcpy(record->m_pointers[GPU], record->m_pointers[CPU], 
           record->m_size, cudaMemcpyHostToDevice);
     }
+  }
 
-    if (space == CPU && record->m_device_touched) {
-      cudaMemcpy(record->m_host_pointer, record->m_device_pointer,
+  if (space == CPU) {
+    if (!record->m_pointers[CPU]) {
+      allocate(record, CPU);
+    }
+
+    if (record->m_touched[GPU]) {
+      cudaMemcpy(record->m_pointers[CPU], record->m_pointers[GPU],
           record->m_size, cudaMemcpyDeviceToHost);
     }
   }
+
+  resetTouch(record);
 }
 
 template<typename T>
@@ -44,8 +57,31 @@ void* ArrayManager::allocate(size_t size, ExecutionSpace space)
   }
 
   registerPointer(ret, sizeof(T) * size, space);
+
+#ifdef DEBUG
+  std::cout << "[ArrayManager] Allocated array at: " << ret << std::endl;
+#endif
+
   return ret;
 }
+
+inline 
+void* ArrayManager::allocate(PointerRecord* pointer_record, ExecutionSpace space)
+{
+  void * ret = nullptr;
+  auto size = pointer_record->m_size;
+
+  if (space == CPU) {
+    posix_memalign(static_cast<void **>(&ret), 64, size); 
+  } else {
+    cudaMalloc(&ret, size);
+  }
+
+  registerPointer(ret, pointer_record, space);
+
+  return ret;
+}
+
 
 inline size_t ArrayManager::getSize(void* ptr) {
   auto pointer_record = getPointerRecord(ptr);

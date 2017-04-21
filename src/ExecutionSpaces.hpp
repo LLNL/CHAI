@@ -4,7 +4,7 @@
 namespace chai {
 
 enum ExecutionSpace { 
-  NONE,
+  NONE = 0,
   CPU,
   GPU,
   /* 

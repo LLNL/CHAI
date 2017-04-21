@@ -23,18 +23,12 @@ class ArrayManager
    */ 
   static ArrayManager* getArrayManager();
 
-  void* getDevicePointer(void* host_ptr);
-
   void setExecutionSpace(ExecutionSpace space);
   ExecutionSpace getExecutionSpace();
 
-  void* move(void* host_pointer);
+  void* move(void* pointer);
 
   void registerTouch(void* pointer);
-
-  PointerRecord* getPointerRecord(void* host_ptr);
-
-  void move(const PointerRecord* record, ExecutionSpace space);
 
   template<typename T>
   void* allocate(size_t size, ExecutionSpace=CPU);
@@ -45,15 +39,27 @@ class ArrayManager
 
   /*
    * \brief Constructor.
+   *
+   * The constructor is a protected member, ensuring that it can
+   * only be called by the singleton getInstance method.
    */
   ArrayManager();
 
   private:
 
+  void* allocate(PointerRecord* pointer_record, ExecutionSpace=CPU);
+
+  void registerPointer(void* ptr, PointerRecord* record, ExecutionSpace space);
+
   /*
    * \brief Register a new allocation with the ArrayManager.
    */
   void registerPointer(void* ptr, size_t size, ExecutionSpace space=CPU);
+
+  void move(PointerRecord* record, ExecutionSpace space);
+  PointerRecord* getPointerRecord(void* host_ptr);
+
+  void resetTouch(PointerRecord* pointer_record);
 
   /*
    * \brief Pointer to singleton instance.

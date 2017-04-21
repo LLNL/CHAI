@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
   /*
    * Allocate an array on the device only
    */
-  chai::ManagedArray<int> i1(10, chai::GPU);
+  // chai::ManagedArray<int> device_array(10, chai::GPU);
 
   std::cout << "Created new array..." << std::endl;
 
@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
 
   forall(cuda(), 0, 10, [=] __device__ (int i) {
       v2[i] = v1[i]*2.0f;
-      i1[i] = i;
+    //  i1[i] = i;
   });
 
   std::cout << "v2 = [";

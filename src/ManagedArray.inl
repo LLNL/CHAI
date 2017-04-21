@@ -30,7 +30,14 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
   m_resource_manager(other.m_resource_manager)
 {
 #if !defined(__CUDA_ARCH__)
-  m_active_pointer = static_cast<T*>(m_resource_manager->move(other.m_active_pointer));
+#ifdef DEBUG
+  std::cout << "Moving " << m_active_pointer << " to ";
+#endif
+  m_active_pointer = static_cast<T*>(m_resource_manager->move(m_active_pointer));
+#ifdef DEBUG
+  std::cout << m_active_pointer << std::endl;
+#endif
+
 
   /*
    * Register touch
@@ -44,7 +51,15 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 
 template<typename T>
 CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space) {
+#ifdef DEBUG
+  std::cout << "Allocating array of size elems in space " << space << std::endl;
+#endif
+
   m_active_pointer = static_cast<T*>(m_resource_manager->allocate<T>(elems, space));
+
+#ifdef DEBUG
+  std::cout << "allocated at address: " << m_active_pointer << std::endl;
+#endif
 }
 
 template<typename T>

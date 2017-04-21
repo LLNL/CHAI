@@ -29,29 +29,22 @@ void ArrayManager::registerPointer(void* ptr, size_t size, ExecutionSpace space)
 
   auto & pointer_record = m_pointer_map[ptr];
 
-  pointer_record->m_pointers[space] = ptr
+#ifdef DEBUG
+  std::cout << "[ArrayManager] Registering " << ptr << " in space " << space << std::endl;
+#endif
+
+  pointer_record->m_pointers[space] = ptr;
   pointer_record->m_size = size;
 }
 
-void* ArrayManager::getDevicePointer(void* pointer)
+void ArrayManager::registerPointer(void* ptr, PointerRecord* record, ExecutionSpace space) 
 {
-  if (host_pointer == nullptr) {
-    return nullptr;
-  }
 
-  auto pointer_record = getPointerRecord(host_pointer);
+#ifdef DEBUG
+  std::cout << "[ArrayManager] Registering " << ptr << " in space" << space << std::endl;
+#endif
 
-  if (pointer_record->m_device_pointer != nullptr) {
-    return pointer_record->m_device_pointer;
-  } else {
-    size_t size = pointer_record->m_size;
-    void* device_pointer;
-
-    cudaMalloc(&device_pointer, size);
-
-    pointer_record->m_device_pointer = device_pointer;
-    return device_pointer;
-  }
+  record->m_pointers[space] = ptr;
 }
 
 void ArrayManager::setExecutionSpace(ExecutionSpace space) {
@@ -60,19 +53,13 @@ void ArrayManager::setExecutionSpace(ExecutionSpace space) {
 
 void* ArrayManager::move(void* pointer) {
   if (m_current_execution_space == NONE) {
-    return nullptr;
+    return pointer;
   }
 
-  if (m_current_execution_space == GPU) {
-    getDevicePointer(host_pointer);
-  } 
+  auto pointer_record = getPointerRecord(pointer);
+  move(pointer_record, m_current_execution_space);
 
-  auto pointer_record = getPointerRecord(host_pointer);
-  if (pointer_record->m_device_pointer) {
-    move(pointer_record, m_current_execution_space);
-  }
-
-  return pointer_record->m_pointers[space];
+  return pointer_record->m_pointers[m_current_execution_space];
 }
 
 ExecutionSpace ArrayManager::getExecutionSpace() {
@@ -80,14 +67,18 @@ ExecutionSpace ArrayManager::getExecutionSpace() {
 }
 
 void ArrayManager::registerTouch(void* host_pointer) {
-  auto pointer_record = getPointerRecord(host_pointer);
+#ifdef DEBUG
+  std::cout << "[ArrayManager] " << host_pointer << " touched in space ";
+  std::cout << m_current_execution_space << std::endl;
+#endif
 
-  if (m_current_execution_space == CPU) {
-    pointer_record->m_device_touched = false;
-    pointer_record->m_host_touched = true;
-  } else if (m_current_execution_space == GPU) {
-    pointer_record->m_device_touched = true;
-    pointer_record->m_host_touched = false;
+  auto pointer_record = getPointerRecord(host_pointer);
+  pointer_record->m_touched[m_current_execution_space] = true;
+}
+
+void ArrayManager::resetTouch(PointerRecord* pointer_record) {
+  for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
+    pointer_record->m_touched[i] = false;
   }
 }
 
