@@ -46,8 +46,8 @@ void ArrayManager::registerPointer(void* pointer, PointerRecord* record, Executi
 void ArrayManager::deregisterPointer(PointerRecord* record)
 {
   for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
-    if (pointer_record->m_pointer[i])
-      m_pointer_map.erase(pointer_record->m_pointer[i]);
+    if (record->m_pointers[i])
+      m_pointer_map.erase(record->m_pointers[i]);
   }
 
   delete record;

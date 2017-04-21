@@ -1,38 +1,66 @@
+#include <climits>
+
 #include "benchmark/benchmark_api.h"
+#include "chai/ArrayManager.hpp"
 
-#include "chai/ManagedArray.hpp"
+void benchmark_arraymanager_alloc_default(benchmark::State& state) {
+  chai::ArrayManager* manager = chai::ArrayManager::getInstance();
 
-void benchmark_managedarray_alloc_default(benchmark::State& state) {
-    while (state.KeepRunning()) {
-        for (int i=0; i < state.range_x(); ++i) {
-          benchmark::DoNotOptimize(chai::ManagedArray<double>(state.range_x()));
-      }
+  while (state.KeepRunning()) {
+    void* ptr = manager->allocate<char>(state.range_x());
+    manager->free(ptr);
   }
 
   state.SetItemsProcessed(state.iterations() * state.range_x());
 }
 
-void benchmark_managedarray_alloc_cpu(benchmark::State& state) {
-    while (state.KeepRunning()) {
-        for (int i=0; i < state.range_x(); ++i) {
-          benchmark::DoNotOptimize(chai::ManagedArray<double>(state.range_x(), chai::CPU));
-      }
+void benchmark_arraymanager_alloc_cpu(benchmark::State& state) {
+  chai::ArrayManager* manager = chai::ArrayManager::getInstance();
+
+  while (state.KeepRunning()) {
+    void* ptr = manager->allocate<char>(state.range_x(), chai::CPU);
+    manager->free(ptr);
   }
 
   state.SetItemsProcessed(state.iterations() * state.range_x());
 
 }
 
-void benchmark_managedarray_alloc_gpu(benchmark::State& state) {
-    while (state.KeepRunning()) {
-        for (int i=0; i < state.range_x(); ++i) {
-          benchmark::DoNotOptimize(chai::ManagedArray<double>(state.range_x(), chai::GPU));
-      }
+void benchmark_arraymanager_alloc_gpu(benchmark::State& state) {
+  chai::ArrayManager* manager = chai::ArrayManager::getInstance();
+
+  while (state.KeepRunning()) {
+    void* ptr = manager->allocate<char>(state.range_x(), chai::GPU);
+    manager->free(ptr);
   }
 
   state.SetItemsProcessed(state.iterations() * state.range_x());
 }
 
-BENCHMARK(benchmark_managedarray_alloc_default)->Range(8, 8<<12)
-BENCHMARK(benchmark_managedarray_alloc_cpu)->Range(8, 8<<12)
-BENCHMARK(benchmark_managedarray_alloc_gpu)->Range(8, 8<<12)
+void benchmark_arraymanager_move(benchmark::State& state)
+{
+  chai::ArrayManager* manager = chai::ArrayManager::getInstance();
+
+  void* ptr = manager->allocate<char>(state.range_x());
+  manager->setExecutionSpace(chai::CPU);
+  manager->registerTouch(ptr);
+  
+  while (state.KeepRunning()) {
+    manager->setExecutionSpace(chai::GPU);
+    manager->move(ptr);
+    manager->registerTouch(ptr);
+    manager->setExecutionSpace(chai::CPU);
+    manager->move(ptr);
+    manager->registerTouch(ptr);
+  }
+
+  manager->free(ptr);
+}
+
+BENCHMARK(benchmark_arraymanager_alloc_default)->Range(1, INT_MAX);
+BENCHMARK(benchmark_arraymanager_alloc_cpu)->Range(1, INT_MAX);
+BENCHMARK(benchmark_arraymanager_alloc_gpu)->Range(1, INT_MAX);
+
+BENCHMARK(benchmark_arraymanager_move)->Range(1, INT_MAX);
+
+BENCHMARK_MAIN();

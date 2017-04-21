@@ -1,5 +1,7 @@
 #include "chai/ArrayManager.hpp"
 
+#include "chai/ChaiMacros.hpp"
+
 #ifndef CHAI_ArrayManager_INL
 #define CHAI_ArrayManager_INL
 
@@ -63,7 +65,7 @@ void* ArrayManager::allocate(size_t elems, ExecutionSpace space)
 
   CHAI_LOG("ArrayManager", "Allocated array at: " << ret);
 
-  registerPointer(ret, sizeof(T) * size, space);
+  registerPointer(ret, sizeof(T) * elems, space);
 
 
   return ret;
@@ -88,16 +90,16 @@ void* ArrayManager::allocate(
 }
 
 CHAI_INLINE
-CHAI_HOST void free(void* pointer)
+void ArrayManager::free(void* pointer)
 {
   auto pointer_record = getPointerRecord(pointer);
 
-  if (pointer_record->m_pointer[CPU]) {
-    ::free(&pointer_record->m_pointer[i]);
+  if (pointer_record->m_pointers[CPU]) {
+    ::free(pointer_record->m_pointers[CPU]);
   } 
   
-  if (pointer_record->m_pointer[GPU]) {
-    cudaFree(&pointer_record->m_pointer[GPU]);
+  if (pointer_record->m_pointers[GPU]) {
+    cudaFree(pointer_record->m_pointers[GPU]);
   }
 }
 
