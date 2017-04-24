@@ -3,9 +3,6 @@
 #include "benchmark/benchmark_api.h"
 
 #include "chai/ManagedArray.hpp"
-
-#include "chai_benchmark_utils.hpp"
-
 #include "../util/forall.hpp"
 
 void benchmark_managedarray_alloc_default(benchmark::State& state) {
@@ -48,6 +45,11 @@ void benchmark_managedarray_move(benchmark::State& state)
       array[i] = 'b';
   });
 
+  /*
+   * Move data back and forth between CPU and GPU.
+   *
+   * Kernels just touch the data, but are still included in timing.
+   */
   while (state.KeepRunning()) {
     forall(cuda(), 0, 1, [=] __device__ (int i) {
         array[i] = 'a';
