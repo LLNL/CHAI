@@ -7,6 +7,9 @@ int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv)) {
    */
   chai::ManagedArray<double> array(50);
 
+  /*
+   * Fill data on the device
+   */
   forall(cuda(), 0, 50, [=] __device__ (int i) {
       array[i] = i*2.0f;
   });
