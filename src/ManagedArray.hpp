@@ -19,7 +19,7 @@ namespace chai {
  * is called, so the ManagedArray works best when used in co-operation with a
  * programming model like RAJA.
  *
- * \include examples/ex1.cpp
+ * \include ./examples/ex1.cpp
  *
  * \tparam T The type of elements stored in the ManagedArray.
  */
@@ -51,12 +51,17 @@ class ManagedArray {
    * The copy constructor interacts with the ArrayManager to move the
    * ManagedArray's data between execution spaces.
    *
-   * \param other The ManagedArray being copied.
+   * \param other ManagedArray being copied.
    */
   CHAI_HOST_DEVICE ManagedArray(ManagedArray const& other);
 
   /*!
    * \brief Allocate data for the ManagedArray in the specified space.
+   *
+   * The default space for allocations is the CPU.
+   *
+   * \param elems Number of elements to allocate.
+   * \param space Execution space in which to allocate data.
    */
   CHAI_HOST void allocate(uint elems, ExecutionSpace space=CPU);
 
@@ -67,6 +72,8 @@ class ManagedArray {
 
   /*!
    * \brief Get the number of elements in the array.
+   *
+   * \return The number of elements in the array
    */
   CHAI_HOST size_t getSize();
 
