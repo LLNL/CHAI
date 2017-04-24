@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 
-#include "chai/ResourceManager.hpp"
+#include "chai/ArrayManager.hpp"
 
-TEST(ResourceManager, Constructor) {
-  chai::ResourceManager* rm = chai::ResourceManager::getResourceManager();
+TEST(ArrayManager, Constructor) {
+  chai::ArrayManager* rm = chai::ArrayManager::getInstance();
   ASSERT_NEQ(rm, nullptr);
 }
