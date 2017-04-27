@@ -38,7 +38,7 @@ TEST(ManagedArray, SetOnHost) {
   });
 
   forall(sequential(), 0, 10, [=] (int i) {
-    ASSERT_EQ(array[i], i));
+    ASSERT_EQ(array[i], i);
   });
 }
 
@@ -50,7 +50,7 @@ CUDA_TEST(ManagedArray, SetOnDevice) {
   });
 
   forall(sequential(), 0, 10, [=] (int i) {
-    ASSERT_EQ(array[i], i));
+    ASSERT_EQ(array[i], i);
   });
 }
 
@@ -62,6 +62,6 @@ CUDA_TEST(ManagedArray, GetGpuOnHost) {
   });
 
   forall(sequential(), 0, 10, [=] (int i) {
-    ASSERT_EQ(array[i], i)*10);
+    ASSERT_EQ(array[i], i);
   });
 }
