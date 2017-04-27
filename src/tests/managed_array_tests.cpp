@@ -20,12 +20,12 @@ TEST(ManagedArray, SizeConstructor) {
   ASSERT_EQ(array.getSize(), sizeof(float)*10);
 }
 
-TEST(ManagedArray, SpaceConstructor) {
+TEST(ManagedArray, SpaceConstructorCPU) {
   chai::ManagedArray<float> array(10, chai::CPU);
   ASSERT_EQ(array.getSize(), sizeof(float)*10);
 }
 
-TEST(ManagedArray, SpaceConstructor) {
+TEST(ManagedArray, SpaceConstructorGPU) {
   chai::ManagedArray<float> array(10, chai::GPU);
   ASSERT_EQ(array.getSize(), sizeof(float)*10);
 }
@@ -38,7 +38,7 @@ TEST(ManagedArray, SetOnHost) {
   });
 
   forall(sequential(), 0, 10, [=] (int i) {
-    ASSERT_EQ(array[i], i)*10);
+    ASSERT_EQ(array[i], i));
   });
 }
 
@@ -50,14 +50,14 @@ CUDA_TEST(ManagedArray, SetOnDevice) {
   });
 
   forall(sequential(), 0, 10, [=] (int i) {
-    ASSERT_EQ(array[i], i)*10);
+    ASSERT_EQ(array[i], i));
   });
 }
 
 CUDA_TEST(ManagedArray, GetGpuOnHost) {
   chai::ManagedArray<float> array(10, chai::GPU);
 
-  forall(cuda(), 0, 10, [=] __device_ (int i) {
+  forall(cuda(), 0, 10, [=] __device__ (int i) {
       array[i] = i;
   });
 
