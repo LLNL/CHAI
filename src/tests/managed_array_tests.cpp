@@ -1,5 +1,11 @@
 #include "gtest/gtest.h"
 
+
+#define CUDA_TEST(X, Y) \
+static void cuda_test_ ## X ## Y();\
+TEST(X,Y) { cuda_test_ ## X ## Y();}\
+static void cuda_test_ ## X ## Y()
+
 #include "chai/ManagedArray.hpp"
 
 #include "../util/forall.hpp"
@@ -36,7 +42,7 @@ TEST(ManagedArray, SetOnHost) {
   });
 }
 
-TEST(ManagedArray, SetOnDevice) {
+CUDA_TEST(ManagedArray, SetOnDevice) {
   chai::ManagedArray<float> array(10);
 
   forall(cuda(), 0, 10, [=] __device__ (int i) {
@@ -48,7 +54,7 @@ TEST(ManagedArray, SetOnDevice) {
   });
 }
 
-TEST(ManagedArray, GetGpuOnHost) {
+CUDA_TEST(ManagedArray, GetGpuOnHost) {
   chai::ManagedArray<float> array(10, chai::GPU);
 
   forall(cuda(), 0, 10, [=] __device_ (int i) {
