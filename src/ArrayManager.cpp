@@ -17,6 +17,7 @@ ArrayManager::ArrayManager() :
   m_pointer_map()
 {
   m_pointer_map.clear();
+  m_current_execution_space = NONE;
 }
 
 void ArrayManager::registerPointer(void* pointer, size_t size, ExecutionSpace space) {
@@ -54,6 +55,8 @@ void ArrayManager::deregisterPointer(PointerRecord* record)
 }
 
 void ArrayManager::setExecutionSpace(ExecutionSpace space) {
+  CHAI_LOG("ArrayManager", "Setting execution space to " << space);
+
   m_current_execution_space = space;
 }
 
