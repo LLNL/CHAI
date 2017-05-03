@@ -20,7 +20,17 @@ blt_add_library(
 
 target_include_directories(
   chai
-  PUBLIC ${PROJECT_BINARY_DIR}/include)
+  PRIVATE ${PROJECT_BINARY_DIR}/include)
+
+configure_file(
+  ${PROJECT_SOURCE_DIR}/src/chai-config.cmake.in
+  ${PROJECT_BINARY_DIR}/share/chai/cmake/chai-config.cmake)
+
+install(
+  FILES ${PROJECT_BINARY_DIR}/share/chai/cmake/chai-config.cmake
+  DESTINATION share/chai/cmake/)
+
+install(EXPORT chai-targets DESTINATION share/chai/cmake/)
 
 add_subdirectory(tests)
 if (ENABLE_BENCHMARKS)
