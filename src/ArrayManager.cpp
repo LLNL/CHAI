@@ -32,7 +32,6 @@ void ArrayManager::registerPointer(void* pointer, size_t size, ExecutionSpace sp
 
   auto & pointer_record = m_pointer_map[pointer];
 
-
   pointer_record->m_pointers[space] = pointer;
   pointer_record->m_size = size;
 }
@@ -42,6 +41,7 @@ void ArrayManager::registerPointer(void* pointer, PointerRecord* record, Executi
   CHAI_LOG("ArrayManager", "Registering " << pointer << " in space " << space);
 
   record->m_pointers[space] = pointer;
+  m_pointer_map[pointer] = record;
 }
 
 void ArrayManager::deregisterPointer(PointerRecord* record)
