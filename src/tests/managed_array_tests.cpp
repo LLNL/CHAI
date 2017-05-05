@@ -13,7 +13,6 @@ static void cuda_test_ ## X ## Y()
 TEST(ManagedArray, DefaultConstructor) {
   chai::ManagedArray<float> array;
   ASSERT_EQ(array.getSize(), 0);
-  array.free();
 }
 
 TEST(ManagedArray, SizeConstructor) {

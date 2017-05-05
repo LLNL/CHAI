@@ -95,12 +95,20 @@ void ArrayManager::free(void* pointer)
   auto pointer_record = getPointerRecord(pointer);
 
   if (pointer_record->m_pointers[CPU]) {
-    ::free(pointer_record->m_pointers[CPU]);
+    void* cpu_ptr = pointer_record->m_pointers[CPU];
+    m_pointer_map.erase(cpu_ptr);
+    ::free(cpu_ptr);
+    pointer_record->m_pointers[CPU] = nullptr;
   } 
   
   if (pointer_record->m_pointers[GPU]) {
-    cudaFree(pointer_record->m_pointers[GPU]);
+    void* gpu_ptr = pointer_record->m_pointers[GPU];
+    m_pointer_map.erase(gpu_ptr);
+    cudaFree(gpu_ptr);
+    pointer_record->m_pointers[GPU] = nullptr;
   }
+
+  delete pointer_record;
 }
 
 

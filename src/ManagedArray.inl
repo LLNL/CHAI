@@ -37,11 +37,12 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 
   m_active_pointer = static_cast<T*>(m_resource_manager->move(m_active_pointer));
 
+  CHAI_LOG("ManagedArray", "Moved to " << m_active_pointer);
 
   /*
    * Register touch
    */
-  T_non_const* non_const_pointer = static_cast<T_non_const*>(other.m_active_pointer);
+  T_non_const* non_const_pointer = static_cast<T_non_const*>(m_active_pointer);
   if (non_const_pointer) {
     m_resource_manager->registerTouch(non_const_pointer);
   }
