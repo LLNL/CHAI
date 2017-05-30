@@ -74,8 +74,7 @@ CHAI_HOST void ManagedArray<T>::free()
 template<typename T>
 CHAI_INLINE
 CHAI_HOST size_t ManagedArray<T>::size() {
-  //return m_resource_manager->getSize(m_active_pointer)/sizeof(T);
-  return m_elems
+  return m_elems;
 }
 
 template<typename T>

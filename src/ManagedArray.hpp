@@ -75,7 +75,7 @@ class ManagedArray {
    *
    * \return The number of elements in the array
    */
-  CHAI_HOST size_t getSize();
+  CHAI_HOST size_t size();
 
   /*!
    * \brief Return reference to i-th element of the ManagedArray.
