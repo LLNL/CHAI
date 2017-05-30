@@ -104,6 +104,11 @@ class ManagedArray {
    * Pointer to ArrayManager instance.
    */
   ArrayManager* m_resource_manager;
+
+  /*!
+   * Number of elements in the ManagedArray.
+   */
+  size_t m_elems;
 };
 
 } // end of namespace chai

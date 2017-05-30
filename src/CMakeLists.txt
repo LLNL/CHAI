@@ -18,6 +18,8 @@ blt_add_library(
   HEADERS_OUTPUT_SUBDIR chai
   DEPENDS_ON cuda)
 
+install(FILES util/forall.hpp DESTINATION include/chai/util/)
+
 target_include_directories(
   chai
   PRIVATE ${PROJECT_BINARY_DIR}/include)
