@@ -12,24 +12,24 @@ static void cuda_test_ ## X ## Y()
 
 TEST(ManagedArray, DefaultConstructor) {
   chai::ManagedArray<float> array;
-  ASSERT_EQ(array.getSize(), 0);
+  ASSERT_EQ(array.size(), 0);
 }
 
 TEST(ManagedArray, SizeConstructor) {
   chai::ManagedArray<float> array(10);
-  ASSERT_EQ(array.getSize(), sizeof(float)*10);
+  ASSERT_EQ(array.size(), sizeof(float)*10);
   array.free();
 }
 
 TEST(ManagedArray, SpaceConstructorCPU) {
   chai::ManagedArray<float> array(10, chai::CPU);
-  ASSERT_EQ(array.getSize(), sizeof(float)*10);
+  ASSERT_EQ(array.size(), sizeof(float)*10);
   array.free();
 }
 
 TEST(ManagedArray, SpaceConstructorGPU) {
   chai::ManagedArray<float> array(10, chai::GPU);
-  ASSERT_EQ(array.getSize(), sizeof(float)*10);
+  ASSERT_EQ(array.size(), sizeof(float)*10);
   array.free();
 }
 

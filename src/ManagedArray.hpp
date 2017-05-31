@@ -75,7 +75,7 @@ class ManagedArray {
    *
    * \return The number of elements in the array
    */
-  CHAI_HOST size_t getSize();
+  CHAI_HOST const size_t size() const;
 
   /*!
    * \brief Return reference to i-th element of the ManagedArray.
@@ -110,6 +110,11 @@ class ManagedArray {
    * Pointer to ArrayManager instance.
    */
   ArrayManager* m_resource_manager;
+
+  /*!
+   * Number of elements in the ManagedArray.
+   */
+  size_t m_elems;
 };
 
 } // end of namespace chai

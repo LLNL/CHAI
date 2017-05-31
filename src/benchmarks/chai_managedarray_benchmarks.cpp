@@ -21,7 +21,6 @@ void benchmark_managedarray_alloc_cpu(benchmark::State& state) {
   }
 
   state.SetItemsProcessed(state.iterations() * state.range_x());
-
 }
 
 void benchmark_managedarray_alloc_gpu(benchmark::State& state) {
