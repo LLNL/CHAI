@@ -27,6 +27,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
     return;
   }
 
+#if defined(CHAI_ENABLE_CUDA)
   if (space == GPU) {
     if (!record->m_pointers[GPU]) {
       allocate(record, GPU);
@@ -47,6 +48,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
           record->m_size, cudaMemcpyDeviceToHost);
     }
   }
+#endif
 
   resetTouch(record);
 }
@@ -60,13 +62,14 @@ void* ArrayManager::allocate(size_t elems, ExecutionSpace space)
   if (space == CPU) {
     posix_memalign(static_cast<void **>(&ret), 64, sizeof(T) * elems); 
   } else {
+#if defined(CHAI_ENABLE_CUDA)
     cudaMalloc(&ret, sizeof(T) * elems);
+#endif
   }
 
   CHAI_LOG("ArrayManager", "Allocated array at: " << ret);
 
   registerPointer(ret, sizeof(T) * elems, space);
-
 
   return ret;
 }
@@ -81,7 +84,9 @@ void* ArrayManager::allocate(
   if (space == CPU) {
     posix_memalign(static_cast<void **>(&ret), 64, size); 
   } else {
+#if defined(CHAI_ENABLE_CUDA)
     cudaMalloc(&ret, size);
+#endif
   }
 
   registerPointer(ret, pointer_record, space);
@@ -101,12 +106,14 @@ void ArrayManager::free(void* pointer)
     pointer_record->m_pointers[CPU] = nullptr;
   } 
   
+#if defined(CHAI_ENABLE_CUDA)
   if (pointer_record->m_pointers[GPU]) {
     void* gpu_ptr = pointer_record->m_pointers[GPU];
     m_pointer_map.erase(gpu_ptr);
     cudaFree(gpu_ptr);
     pointer_record->m_pointers[GPU] = nullptr;
   }
+#endif
 
   delete pointer_record;
 }

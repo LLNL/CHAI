@@ -11,12 +11,19 @@ set (chai_headers
 set (chai_sources
   ArrayManager.cpp)
 
+set (chai_depends)
+
+if (ENABLE_CUDA)
+  set (chai_depends
+    cuda)
+endif ()
+
 blt_add_library(
   NAME chai
   SOURCES ${chai_sources}
   HEADERS ${chai_headers}
   HEADERS_OUTPUT_SUBDIR chai
-  DEPENDS_ON cuda)
+  DEPENDS_ON ${chai_depends})
 
 install(FILES util/forall.hpp DESTINATION include/chai/util/)
 

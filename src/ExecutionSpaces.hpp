@@ -11,8 +11,10 @@ enum ExecutionSpace {
   NONE = 0,
   /*! Executing in CPU space */
   CPU,
+#ifdef CHAI_ENABLE_CUDA
   /*! Execution in GPU space */
   GPU,
+#endif
   // NUM_EXECUTION_SPACES should always be last!
   /*! Used to count total number of spaces */
   NUM_EXECUTION_SPACES
