@@ -17,19 +17,19 @@ TEST(ManagedArray, DefaultConstructor) {
 
 TEST(ManagedArray, SizeConstructor) {
   chai::ManagedArray<float> array(10);
-  ASSERT_EQ(array.size(), sizeof(float)*10);
+  ASSERT_EQ(array.size(), 10);
   array.free();
 }
 
 TEST(ManagedArray, SpaceConstructorCPU) {
   chai::ManagedArray<float> array(10, chai::CPU);
-  ASSERT_EQ(array.size(), sizeof(float)*10);
+  ASSERT_EQ(array.size(), 10);
   array.free();
 }
 
 TEST(ManagedArray, SpaceConstructorGPU) {
   chai::ManagedArray<float> array(10, chai::GPU);
-  ASSERT_EQ(array.size(), sizeof(float)*10);
+  ASSERT_EQ(array.size(), 10);
   array.free();
 }
 

@@ -33,7 +33,7 @@ CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
   m_active_pointer(other.m_active_pointer),
   m_resource_manager(other.m_resource_manager),
-  m_elems(other.m_elems);
+  m_elems(other.m_elems)
 {
 #if !defined(__CUDA_ARCH__)
   CHAI_LOG("ManagedArray", "Moving " << m_active_pointer);
@@ -73,7 +73,7 @@ CHAI_HOST void ManagedArray<T>::free()
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST const size_t ManagedArray<T>::size() const {
+CHAI_HOST size_t ManagedArray<T>::size() const {
   return m_elems;
 }
 
