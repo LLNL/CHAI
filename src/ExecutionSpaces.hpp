@@ -11,7 +11,7 @@ enum ExecutionSpace {
   NONE = 0,
   /*! Executing in CPU space */
   CPU,
-#ifdef CHAI_ENABLE_CUDA
+#if defined(ENABLE_CUDA)
   /*! Execution in GPU space */
   GPU,
 #endif

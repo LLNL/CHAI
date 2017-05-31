@@ -16,20 +16,20 @@ TEST(ManagedArray, DefaultConstructor) {
 
 TEST(ManagedArray, SizeConstructor) {
   chai::ManagedArray<float> array(10);
-  ASSERT_EQ(array.size(), sizeof(float)*10);
+  ASSERT_EQ(array.size(), 10);
   array.free();
 }
 
 TEST(ManagedArray, SpaceConstructorCPU) {
   chai::ManagedArray<float> array(10, chai::CPU);
-  ASSERT_EQ(array.size(), sizeof(float)*10);
+  ASSERT_EQ(array.size(), 10);
   array.free();
 }
 
-#if defined(CHAI_ENABLE_GPU)
+#if defined(ENABLE_CUDA)
 TEST(ManagedArray, SpaceConstructorGPU) {
   chai::ManagedArray<float> array(10, chai::GPU);
-  ASSERT_EQ(array.size(), sizeof(float)*10);
+  ASSERT_EQ(array.size(), 10);
   array.free();
 }
 #endif
@@ -48,7 +48,7 @@ TEST(ManagedArray, SetOnHost) {
   array.free();
 }
 
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(ENABLE_CUDA)
 CUDA_TEST(ManagedArray, SetOnDevice) {
   chai::ManagedArray<float> array(10);
 

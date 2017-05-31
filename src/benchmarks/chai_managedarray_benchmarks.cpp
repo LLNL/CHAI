@@ -26,7 +26,7 @@ void benchmark_managedarray_alloc_cpu(benchmark::State& state) {
 BENCHMARK(benchmark_managedarray_alloc_default)->Range(1, INT_MAX);
 BENCHMARK(benchmark_managedarray_alloc_cpu)->Range(1, INT_MAX);
 
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(ENABLE_CUDA)
 void benchmark_managedarray_alloc_gpu(benchmark::State& state) {
   while (state.KeepRunning()) {
     chai::ManagedArray<char> array(state.range_x(), chai::GPU);
@@ -39,7 +39,7 @@ BENCHMARK(benchmark_managedarray_alloc_gpu)->Range(1, INT_MAX);
 #endif
 
 
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(ENABLE_CUDA)
 void benchmark_managedarray_move(benchmark::State& state)
 {
   chai::ManagedArray<char> array(state.range_x());

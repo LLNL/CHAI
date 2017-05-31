@@ -1,0 +1,7 @@
+#ifndef CHAI_config_HPP
+#define CHAI_config_HPP
+
+#cmakedefine ENABLE_CNMEM
+#cmakedefine ENABLE_CUDA
+
+#endif // CHAI_config_HPP
