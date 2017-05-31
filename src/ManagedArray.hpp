@@ -87,6 +87,12 @@ class ManagedArray {
   CHAI_HOST_DEVICE T& operator[](const int i) const;
 
   /*!
+   * \brief Set val to the value of element i in the ManagedArray.
+   *
+   */
+  // CHAI_HOST_DEVICE void pick(size_t i, T_non_const& val);
+
+  /*!
    * \brief Cast the ManagedArray to a raw pointer.
    *
    * \return Raw pointer to data.

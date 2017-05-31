@@ -1,9 +1,14 @@
-#include "chai/ArrayManager.hpp"
-
-#include "chai/ChaiMacros.hpp"
-
 #ifndef CHAI_ArrayManager_INL
 #define CHAI_ArrayManager_INL
+
+#include "chai/ArrayManager.hpp"
+#include "chai/ChaiMacros.hpp"
+
+#include "chai/config.hpp"
+
+#if defined(ENABLE_CNMEM)
+#include "cnmem.h"
+#endif
 
 #include <iostream>
 
@@ -60,7 +65,11 @@ void* ArrayManager::allocate(size_t elems, ExecutionSpace space)
   if (space == CPU) {
     posix_memalign(static_cast<void **>(&ret), 64, sizeof(T) * elems); 
   } else {
+#if defined(ENABLE_CNMEM)
+    cnmemMalloc(&ret, sizeof(T) * elems, NULL);
+#else
     cudaMalloc(&ret, sizeof(T) * elems);
+#endif
   }
 
   CHAI_LOG("ArrayManager", "Allocated array at: " << ret);
@@ -81,7 +90,11 @@ void* ArrayManager::allocate(
   if (space == CPU) {
     posix_memalign(static_cast<void **>(&ret), 64, size); 
   } else {
+#if defined(ENABLE_CNMEM)
+    cnmemMalloc(&ret, size, NULL);
+#else
     cudaMalloc(&ret, size);
+#endif
   }
 
   registerPointer(ret, pointer_record, space);
@@ -104,7 +117,11 @@ void ArrayManager::free(void* pointer)
   if (pointer_record->m_pointers[GPU]) {
     void* gpu_ptr = pointer_record->m_pointers[GPU];
     m_pointer_map.erase(gpu_ptr);
+#if defined(ENABLE_CNMEM)
+    cnmemFree(gpu_ptr, NULL);
+#else
     cudaFree(gpu_ptr);
+#endif
     pointer_record->m_pointers[GPU] = nullptr;
   }
 
