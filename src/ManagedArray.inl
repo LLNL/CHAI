@@ -73,7 +73,7 @@ CHAI_HOST void ManagedArray<T>::free()
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST size_t ManagedArray<T>::size() const {
+CHAI_HOST uint ManagedArray<T>::size() const {
   return m_elems;
 }
 
