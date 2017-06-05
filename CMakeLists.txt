@@ -5,7 +5,7 @@ project(Chai LANGUAGES CXX)
 set(ENABLE_CUDA On CACHE BOOL "Enable CUDA")
 set(ENABLE_OPENMP On CACHE BOOL "Enable OpenMP")
 set(ENABLE_BENCHMARKS On CACHE Bool "Enable benchmarks")
-option(ENABLE_CNMEM Off CACHE Bool "Enable cnemem for GPU allocation")
+option(ENABLE_CNMEM "Enable cnemem for GPU allocation" Off)
 
 set(ENABLE_COPY_HEADERS On CACHE BOOL "")
 set(BLT_CXX_STD c++11 CACHE STRING "")
