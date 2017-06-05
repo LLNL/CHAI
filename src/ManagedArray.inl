@@ -54,6 +54,15 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 
 template<typename T>
 CHAI_INLINE
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_manager, uint elems) :
+  m_active_ptr(data), 
+  m_resource_manager(array_manager),
+  m_elems(elems)
+{
+}
+
+template<typename T>
+CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space) {
   CHAI_LOG("ManagedArray", "Allocating array of size elems in space " << space);
 
@@ -109,6 +118,14 @@ CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
 #else
   return m_active_pointer;
 #endif
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+ManagedArray<T>::operator ManagedArray<const T> () const
+{
+  return ManagedArray<const T>(const_cast<const T*>(m_active_ptr), m_resource_manager, m_elems);
 }
 
 } // end of namespace chai

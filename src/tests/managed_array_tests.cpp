@@ -74,3 +74,17 @@ CUDA_TEST(ManagedArray, GetGpuOnHost) {
 
   array.free();
 }
+
+TEST(ManagedArray, Const) {
+  chai::ManagedArray<float> array(10);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  chai::ManagedArray<const float> array_const = array;
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      ASSERT_EQ(array_const[i], i);
+  })
+}

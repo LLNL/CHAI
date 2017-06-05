@@ -99,7 +99,15 @@ class ManagedArray {
    */
   CHAI_HOST_DEVICE operator T*() const;
 
+  /*!
+   * \brief 
+   *
+   */
+  CHAI_HOST_DEVICE operator ManagedArray<const T> () const;
+
   private:
+
+  CHAI_HOST_DEVICE ManagedArray(T* data, ArrayManager* array_manager, uint m_elems);
 
   /*! 
    * Currently active data pointer.
@@ -114,7 +122,7 @@ class ManagedArray {
   /*!
    * Number of elements in the ManagedArray.
    */
-  size_t m_elems;
+  uint m_elems;
 };
 
 } // end of namespace chai
