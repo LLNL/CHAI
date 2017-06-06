@@ -2,7 +2,9 @@
 
 #include "benchmark/benchmark_api.h"
 
+#include "chai/config.hpp"
 #include "chai/ManagedArray.hpp"
+
 #include "../util/forall.hpp"
 
 void benchmark_managedarray_alloc_default(benchmark::State& state) {

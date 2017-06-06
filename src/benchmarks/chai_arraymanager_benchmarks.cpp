@@ -1,6 +1,7 @@
 #include <climits>
 
 #include "benchmark/benchmark_api.h"
+
 #include "chai/ArrayManager.hpp"
 
 void benchmark_arraymanager_alloc_default(benchmark::State& state) {
@@ -29,7 +30,7 @@ void benchmark_arraymanager_alloc_cpu(benchmark::State& state) {
 BENCHMARK(benchmark_arraymanager_alloc_default)->Range(1, INT_MAX);
 BENCHMARK(benchmark_arraymanager_alloc_cpu)->Range(1, INT_MAX);
 
-#if defined(CHAI_ENABLE_GPU)
+#if defined(ENABLE_CUDA)
 void benchmark_arraymanager_alloc_gpu(benchmark::State& state) {
   chai::ArrayManager* manager = chai::ArrayManager::getInstance();
 
