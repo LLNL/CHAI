@@ -1,10 +1,10 @@
 #ifndef CHAI_ArrayManager_INL
 #define CHAI_ArrayManager_INL
 
+#include "chai/config.hpp"
+
 #include "chai/ArrayManager.hpp"
 #include "chai/ChaiMacros.hpp"
-
-#include "chai/config.hpp"
 
 #if defined(ENABLE_CNMEM)
 #include "cnmem.h"

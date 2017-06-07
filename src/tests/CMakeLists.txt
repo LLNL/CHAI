@@ -3,7 +3,7 @@ set (managed_array_test_depends
 
 if (ENABLE_CUDA)
   set (managed_array_test_depends
-    ${managed_array_depends}
+    ${managed_array_test_depends}
     cuda)
 endif ()
 

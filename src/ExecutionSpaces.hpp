@@ -1,6 +1,8 @@
 #ifndef CHAI_ExecutionSpaces_HPP
 #define CHAI_ExecutionSpaces_HPP
 
+#include "chai/config.hpp"
+
 namespace chai {
 
 /*!
