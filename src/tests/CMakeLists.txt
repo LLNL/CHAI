@@ -1,4 +1,4 @@
-set (managed_array_depends
+set (managed_array_test_depends
   chai gtest)
 
 if (ENABLE_CUDA)
@@ -10,7 +10,7 @@ endif ()
 blt_add_executable(
   NAME managed_array_tests
   SOURCES managed_array_tests.cpp
-  DEPENDS_ON ${managad_array_test_depends})
+  DEPENDS_ON ${managed_array_test_depends})
 
 target_include_directories(
   managed_array_tests

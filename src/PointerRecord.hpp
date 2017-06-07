@@ -3,6 +3,8 @@
 
 #include "chai/ExecutionSpaces.hpp"
 
+#include <cstddef>
+
 namespace chai {
 
 /*!
@@ -13,7 +15,7 @@ struct PointerRecord
   /*!
    * Size of pointer allocation in bytes
    */
-  size_t m_size;
+  std::size_t m_size;
 
   /*!
    * Array holding the pointer in each execution space.
