@@ -15,9 +15,12 @@ set (chai_headers
 set (chai_sources
   ArrayManager.cpp)
 
-set (chai_depends
-  cuda)
+set (chai_depends)
 
+if (ENABLE_CUDA)
+  set (chai_depends
+    cuda)
+endif ()
 if (ENABLE_CNMEM)
   set (chai_depends
     ${chai_depends}

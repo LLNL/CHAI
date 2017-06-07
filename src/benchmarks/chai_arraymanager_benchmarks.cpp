@@ -26,6 +26,10 @@ void benchmark_arraymanager_alloc_cpu(benchmark::State& state) {
 
 }
 
+BENCHMARK(benchmark_arraymanager_alloc_default)->Range(1, INT_MAX);
+BENCHMARK(benchmark_arraymanager_alloc_cpu)->Range(1, INT_MAX);
+
+#if defined(CHAI_ENABLE_GPU)
 void benchmark_arraymanager_alloc_gpu(benchmark::State& state) {
   chai::ArrayManager* manager = chai::ArrayManager::getInstance();
 
@@ -36,9 +40,7 @@ void benchmark_arraymanager_alloc_gpu(benchmark::State& state) {
 
   state.SetItemsProcessed(state.iterations() * state.range_x());
 }
-
-BENCHMARK(benchmark_arraymanager_alloc_default)->Range(1, INT_MAX);
-BENCHMARK(benchmark_arraymanager_alloc_cpu)->Range(1, INT_MAX);
 BENCHMARK(benchmark_arraymanager_alloc_gpu)->Range(1, INT_MAX);
+#endif
 
 BENCHMARK_MAIN();
