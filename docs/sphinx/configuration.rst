@@ -1,0 +1,7 @@
+.. _configuration:
+
+================
+Configuring CHAI
+================
+
+
