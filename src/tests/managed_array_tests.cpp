@@ -48,6 +48,21 @@ TEST(ManagedArray, SetOnHost) {
   array.free();
 }
 
+TEST(ManagedArray, Const) {
+  chai::ManagedArray<float> array(10);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  chai::ManagedArray<const float> array_const(array);
+  chai::ManagedArray<const float> array_const2 = array;
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      ASSERT_EQ(array_const[i], i);
+  });
+}
+
 #if defined(ENABLE_CUDA)
 CUDA_TEST(ManagedArray, SetOnDevice) {
   chai::ManagedArray<float> array(10);
