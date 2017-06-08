@@ -38,15 +38,16 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 #if !defined(__CUDA_ARCH__)
   CHAI_LOG("ManagedArray", "Moving " << m_active_pointer);
 
-  m_active_pointer = static_cast<T*>(m_resource_manager->move(static_cast<void *>(m_active_pointer)));
+  m_active_pointer = static_cast<T*>(m_resource_manager->move(const_cast<T_non_const*>(m_active_pointer)));
 
   CHAI_LOG("ManagedArray", "Moved to " << m_active_pointer);
 
   /*
    * Register touch
    */
-  T_non_const* non_const_pointer = static_cast<T_non_const*>(m_active_pointer);
-  if (non_const_pointer) {
+  if (!std::is_const<T>::value) {
+    CHAI_LOG("ManagedArray", "T is non-const, registering touch of pointer" << m_active_pointer);
+    T_non_const* non_const_pointer = const_cast<T_non_const*>(m_active_pointer);
     m_resource_manager->registerTouch(non_const_pointer);
   }
 #endif
