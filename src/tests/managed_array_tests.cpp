@@ -82,9 +82,10 @@ TEST(ManagedArray, Const) {
       array[i] = i;
   });
 
-  chai::ManagedArray<const float> array_const = array;
+  chai::ManagedArray<const float> array_const(array);
+  chai::ManagedArray<const float> array_const2 = array;
 
   forall(sequential(), 0, 10, [=] (int i) {
       ASSERT_EQ(array_const[i], i);
-  })
+  });
 }

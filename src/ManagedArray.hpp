@@ -103,11 +103,13 @@ class ManagedArray {
    * \brief 
    *
    */
+  template<bool B = std::is_const<T>::value,typename std::enable_if<!B, int>::type = 0>
   CHAI_HOST_DEVICE operator ManagedArray<const T> () const;
+
+  CHAI_HOST_DEVICE ManagedArray(T* data, ArrayManager* array_manager, uint m_elems);
 
   private:
 
-  CHAI_HOST_DEVICE ManagedArray(T* data, ArrayManager* array_manager, uint m_elems);
 
   /*! 
    * Currently active data pointer.
