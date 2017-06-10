@@ -55,12 +55,24 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space) {
-  CHAI_LOG("ManagedArray", "Allocating array of size elems in space " << space);
+  CHAI_LOG("ManagedArray", "Allocating array of size " << elems << " in space " << space);
 
   m_elems = elems;
   m_active_pointer = static_cast<T*>(m_resource_manager->allocate<T>(elems, space));
 
   CHAI_LOG("ManagedArray", "m_active_ptr allocated at address: " << m_active_pointer);
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST void ManagedArray<T>::reallocate(uint elems)
+{
+  CHAI_LOG("ManagedArray", "Reallocating array of size " << m_elems << " with new size" << elems);
+
+  m_elems = elems;
+  m_active_pointer = static_cast<T*>(m_resource_manager->reallocate<T>(m_active_pointer, elems));
+
+  CHAI_LOG("ManagedArray", "m_active_ptr reallocated at address: " << m_active_pointer);
 }
 
 template<typename T>

@@ -83,6 +83,52 @@ void* ArrayManager::allocate(size_t elems, ExecutionSpace space)
   return ret;
 }
 
+template<typename T>
+CHAI_INLINE
+void* ArrayManager::reallocate(void* pointer, size_t elems)
+{
+  auto pointer_record = getPointerRecord(pointer);
+
+#if defined(ENABLE_CUDA)
+  auto space = (pointer_record->m_pointers[CPU] == pointer) ? CPU : GPU; 
+#else
+  auto space = CPU;
+#endif
+
+  if (pointer_record->m_pointers[CPU]) {
+    void* old_ptr = pointer_record->m_pointers[CPU];
+    void* ptr = ::realloc(old_ptr, sizeof(T) * elems);
+    pointer_record->m_pointers[CPU] = ptr;
+
+    m_pointer_map.erase(old_ptr);
+    m_pointer_map[ptr] = pointer_record;
+  } 
+  
+#if defined(ENABLE_CUDA)
+  if (pointer_record->m_pointers[GPU]) {
+    void* old_ptr = pointer_record->m_pointers[GPU];
+#if defined(ENABLE_CNMEM)
+    void* ptr;
+    cnmemMalloc(&ptr, sizeof(T) * elems, NULL);
+    cudaMemcpy(ptr, old_ptr, pointer_record->m_size, cudaMemcpyDeviceToDevice);
+    cnmemFree(old_ptr, NULL);
+#else
+    void* ptr;
+    cudaMalloc(&ptr, sizeof(T) * elems);
+    cudaMemcpy(ptr, old_ptr, pointer_record->m_size, cudaMemcpyDeviceToDevice);
+    cudaFree(old_ptr);
+#endif
+    pointer_record->m_pointers[GPU] = ptr;
+
+    m_pointer_map.erase(old_ptr);
+    m_pointer_map[ptr] = pointer_record;
+  }
+#endif
+
+  pointer_record->m_size = sizeof(T) * elems;
+  return pointer_record->m_pointers[space];
+}
+
 CHAI_INLINE
 void* ArrayManager::allocate(
     PointerRecord* pointer_record, ExecutionSpace space)
