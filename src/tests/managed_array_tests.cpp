@@ -144,3 +144,18 @@ CUDA_TEST(ManagedArray, ReallocateGPU) {
   });
 }
 #endif
+
+TEST(ManagedArray, NullpointerConversions) {
+  chai::ManagedArray<float> a;
+  a = nullptr;
+
+  chai::ManagedArray<const float> b;
+  b = nullptr;
+
+  ASSERT_EQ(a.size(), 0);
+  ASSERT_EQ(b.size(), 0);
+
+  chai::ManagedArray<float> c(nullptr);
+
+  ASSERT_EQ(c.size(), 0);
+}

@@ -30,6 +30,16 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
 
 template<typename T>
 CHAI_INLINE
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t other) :
+  m_active_pointer(nullptr),
+  m_resource_manager(nullptr),
+  m_elems(0)
+{
+}
+
+
+template<typename T>
+CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
   m_active_pointer(other.m_active_pointer),
   m_resource_manager(other.m_resource_manager),
@@ -140,6 +150,16 @@ CHAI_HOST_DEVICE
 ManagedArray<T>::operator ManagedArray<const T> () const
 {
   return ManagedArray<const T>(const_cast<const T*>(m_active_pointer), m_resource_manager, m_elems);
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+ManagedArray<T>&
+ManagedArray<T>::operator= (std::nullptr_t from) {
+  m_active_pointer = from;
+  m_elems = 0;
+  return *this;
 }
 
 } // end of namespace chai

@@ -5,6 +5,8 @@
 #include "chai/ArrayManager.hpp"
 #include "chai/Types.hpp"
 
+#include <cstddef>
+
 namespace chai {
 
 /*!
@@ -54,6 +56,11 @@ class ManagedArray {
    * \param other ManagedArray being copied.
    */
   CHAI_HOST_DEVICE ManagedArray(ManagedArray const& other);
+
+  /*!
+   * \brief Construct a ManagedArray from a nullptr.
+   */
+  CHAI_HOST_DEVICE ManagedArray(std::nullptr_t other);
 
   /*!
    * \brief Allocate data for the ManagedArray in the specified space.
@@ -116,6 +123,8 @@ class ManagedArray {
   CHAI_HOST_DEVICE operator ManagedArray<const T> () const;
 
   CHAI_HOST_DEVICE ManagedArray(T* data, ArrayManager* array_manager, uint m_elems);
+
+  CHAI_HOST_DEVICE ManagedArray<T>& operator= (std::nullptr_t);
 
   private:
 
