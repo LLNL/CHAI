@@ -107,6 +107,7 @@ TEST(ManagedArray, ReallocateCPU) {
   });
 }
 
+#if defined(ENABLE_CUDA)
 CUDA_TEST(ManagedArray, ReallocateGPU) {
   chai::ManagedArray<float> array(10);
   ASSERT_EQ(array.size(), 10);
@@ -127,3 +128,4 @@ CUDA_TEST(ManagedArray, ReallocateGPU) {
       }
   });
 }
+#endif
