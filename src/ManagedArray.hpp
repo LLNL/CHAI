@@ -66,6 +66,15 @@ class ManagedArray {
   CHAI_HOST void allocate(uint elems, ExecutionSpace space=CPU);
 
   /*!
+   * \brief Reallocate data for the ManagedArray.
+   *
+   * Reallocation will happen in all spaces the data exists
+   *
+   * \param elems Number of elements to allocate.
+   */
+  CHAI_HOST void reallocate(uint elems);
+
+  /*!
    * \brief Free all data allocated by this ManagedArray.
    */
   CHAI_HOST void free();

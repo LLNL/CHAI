@@ -92,3 +92,55 @@ CUDA_TEST(ManagedArray, GetGpuOnHost) {
   array.free();
 }
 #endif
+
+TEST(ManagedArray, Allocate) {
+  chai::ManagedArray<float> array;
+  ASSERT_EQ(array.size(), 0);
+
+  array.allocate(10);
+  ASSERT_EQ(array.size(), 10);
+}
+
+TEST(ManagedArray, ReallocateCPU) {
+  chai::ManagedArray<float> array(10);
+  ASSERT_EQ(array.size(), 10);
+
+  forall(sequential(), 0, 10, [=](int i) {
+      array[i] = i;
+  });
+
+  array.reallocate(20);
+  ASSERT_EQ(array.size(), 20);
+
+  forall(sequential(), 0, 20, [=](int i) {
+      if (i < 10) {
+        ASSERT_EQ(array[i], i);
+      } else {
+        array[i] = i;
+        ASSERT_EQ(array[i], i);
+      }
+  });
+}
+
+#if defined(ENABLE_CUDA)
+CUDA_TEST(ManagedArray, ReallocateGPU) {
+  chai::ManagedArray<float> array(10);
+  ASSERT_EQ(array.size(), 10);
+
+  forall(cuda(), 0, 10, [=] __device__ (int i) {
+      array[i] = i;
+  });
+
+  array.reallocate(20);
+  ASSERT_EQ(array.size(), 20);
+
+  forall(sequential(), 0, 20, [=] (int i) {
+      if ( i < 10) {
+      ASSERT_EQ(array[i], i);
+      } else {
+        array[i] = i;
+        ASSERT_EQ(array[i], i);
+      }
+  });
+}
+#endif
