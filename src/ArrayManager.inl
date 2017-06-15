@@ -6,6 +6,10 @@
 #include "chai/ArrayManager.hpp"
 #include "chai/ChaiMacros.hpp"
 
+#if defined(ENABLE_CUDA)
+#include "cuda_runtime_api.h"
+#endif
+
 #if defined(ENABLE_CNMEM)
 #include "cnmem.h"
 #endif

@@ -19,7 +19,7 @@ set (chai_depends)
 
 if (ENABLE_CUDA)
   set (chai_depends
-    cuda)
+    cuda_runtime)
 endif ()
 if (ENABLE_CNMEM)
   set (chai_depends
