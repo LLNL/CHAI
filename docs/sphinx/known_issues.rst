@@ -1,4 +1,4 @@
-.. known_issues:
+.. _known_issues:
 
 ============
 Known Issues

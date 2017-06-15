@@ -1,4 +1,4 @@
-.. getting_started:
+.. _getting_started:
 
 ===============
 Getting Started
@@ -55,10 +55,43 @@ For more advanced configuration you can use standard CMake variables.
 Basic Usage
 -----------
 
-The file ``src/examples/example.cpp`` contains a brief program that shows how
-CHAI can be used. Let's walk through this example, line-by-line:
+Let's take a quick tour through CHAI's most important features. A complete
+listing you can compile is included at the bottom of the page. First, let's
+create a new ManagedArray object. This is the interface through which you will
+want to access data:
 
-.. literalinclude:: ../../src/examples/example.cpp
-  :language: c++
+.. code-block:: cpp
 
+  chai::ManagedArray<double> a(100);
+
+This creates a ManagedArray storing elements of type double, with 100 elements
+allocated in the CPU memory.
+
+Next, let's assign some data to this array. We'll use CHAI's forall helper
+function for this, since it interacts with the ArrayManager for us to ensure
+the data is in the appropriate ExecutionSpace:
+
+.. code-block:: cpp
+
+  forall(sequential(), 0, 100, [=] (int i) {
+    a[i] = 3.14 * i;
+  });
+
+CHAI's ArrayManager can copy this array to another ExecutionSpace
+transparently. Let's use the GPU to double the contents of this array:
+
+.. code-block:: cpp
+
+  forall(cuda(), 0, 100, [=] __device__ (int i) {
+    a[i] = 2.0 * a[i];
+  });
+
+We can access the array again on the CPU, and the ArrayManager will handle
+copying the modified data back:
+
+.. code-block:: cpp
+  
+  forall(sequential(), 0, 100, [=] (int i) {
+    std::cout << "a[" << i << "] = " << a[i] << std::endl;
+  });
 

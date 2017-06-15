@@ -1,4 +1,4 @@
-.. code_documentation:
+.. _code_documentation:
 
 ==================
 Code Documentation

@@ -1,4 +1,4 @@
-.. concepts:
+.. _concepts:
 
 ========
 Concepts

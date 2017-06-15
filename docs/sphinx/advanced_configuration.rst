@@ -1,4 +1,4 @@
-.. _configuration:
+.. _advanced_configuration:
 
 ================
 Configuring CHAI
