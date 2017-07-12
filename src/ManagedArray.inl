@@ -30,7 +30,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t other) :
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t) :
   m_active_pointer(nullptr),
   m_resource_manager(nullptr),
   m_elems(0)
