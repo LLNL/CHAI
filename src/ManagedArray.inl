@@ -127,6 +127,7 @@ CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const int i) const {
 
 
 
+#if defined(ENABLE_IMPLICIT_CONVERSIONS)
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
@@ -142,6 +143,18 @@ CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
   return m_active_pointer;
 #endif
 }
+
+
+template<typename T>
+template<bool Q>
+CHAI_INLINE
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool test) :
+  m_active_pointer(data),
+  m_resource_manager(ArrayManager::getInstance()),
+  m_elems(m_resource_manager->getSize(m_active_pointer))
+{
+}
+#endif
 
 template<typename T>
 template<bool B,typename std::enable_if<!B, int>::type>
