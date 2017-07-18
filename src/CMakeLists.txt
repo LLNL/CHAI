@@ -54,10 +54,10 @@ install(
 
 install(
   TARGETS chai
+  EXPORT chai-targets
   RUNTIME DESTINATION lib
   LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
-  EXPORT chai-targets)
+  ARCHIVE DESTINATION lib)
 
 install(EXPORT chai-targets DESTINATION share/chai/cmake/)
 
