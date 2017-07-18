@@ -111,6 +111,12 @@ CHAI_HOST uint ManagedArray<T>::size() const {
 
 template<typename T>
 CHAI_INLINE
+CHAI_HOST void ManagedArray<T>::registerTouch(ExecutionSpace space) {
+  m_resource_manager->registerTouch(m_active_pointer, space);
+}
+
+template<typename T>
+CHAI_INLINE
 CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const int i) const {
   return m_active_pointer[i];
 }
