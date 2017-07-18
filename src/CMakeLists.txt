@@ -52,6 +52,13 @@ install(
   FILES ${PROJECT_BINARY_DIR}/include/chai/config.hpp
   DESTINATION include/chai)
 
+install(
+  TARGETS chai
+  RUNTIME DESTINATION lib
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  EXPORT chai-targets)
+
 install(EXPORT chai-targets DESTINATION share/chai/cmake/)
 
 add_subdirectory(tests)
