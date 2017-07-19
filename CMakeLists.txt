@@ -7,9 +7,12 @@ set(ENABLE_OPENMP On CACHE BOOL "Enable OpenMP")
 set(ENABLE_BENCHMARKS On CACHE Bool "Enable benchmarks")
 option(ENABLE_CNMEM "Enable cnemem for GPU allocation" Off)
 option(ENABLE_IMPLICIT_CONVERSIONS "Enable implicit conversions to-from raw pointers" On)
+option(ENABLE_THIN_UM "Make ManagedArray a thin wrapper around CUDA Unified Memory" Off)
+mark_as_advanced(ENABLE_THIN_UM)
 
 set(ENABLE_COPY_HEADERS On CACHE BOOL "")
 set(BLT_CXX_STD c++11 CACHE STRING "")
+
 
 ################################
 # BLT

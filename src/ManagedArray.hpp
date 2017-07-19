@@ -163,6 +163,10 @@ class ManagedArray {
 
 } // end of namespace chai
 
+#if defined(ENABLE_THIN_UM)
+#include "chai/ManagedArray_thin.inl"
+#else
 #include "chai/ManagedArray.inl"
+#endif
 
 #endif // CHAI_ManagedArray_HPP
