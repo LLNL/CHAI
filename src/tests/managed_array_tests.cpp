@@ -5,9 +5,11 @@ static void cuda_test_ ## X ## Y();\
 TEST(X,Y) { cuda_test_ ## X ## Y();}\
 static void cuda_test_ ## X ## Y()
 
+#include "../util/forall.hpp"
+
 #include "chai/ManagedArray.hpp"
 
-#include "../util/forall.hpp"
+#include "chai/config.hpp"
 
 TEST(ManagedArray, DefaultConstructor) {
   chai::ManagedArray<float> array;
@@ -159,3 +161,14 @@ TEST(ManagedArray, NullpointerConversions) {
 
   ASSERT_EQ(c.size(), 0);
 }
+
+#if defined(ENABLE_IMPLICIT_CONVERSIONS)
+TEST(ManageArray, ImplicitConversions) {
+  chai::ManagedArray<float> a(10);
+  float * raw_a = a;
+
+  chai::ManagedArray<float> a2 = a;
+
+  SUCCEED();
+}
+#endif

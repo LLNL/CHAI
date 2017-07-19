@@ -12,6 +12,12 @@ set (chai_headers
   PointerRecord.hpp
   Types.hpp)
 
+if(ENABLE_THIN_UM)
+  set(chai_headers
+    ${chai_headers}
+    ManagedArray_thin.inl)
+endif ()
+
 set (chai_sources
   ArrayManager.cpp)
 
