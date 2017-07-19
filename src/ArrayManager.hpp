@@ -71,6 +71,16 @@ class ArrayManager
   void registerTouch(void* pointer);
 
   /*!
+   * \brief Register a touch of the pointer in the given execution space.
+   *
+   * The pointer doesn't need to exist in the space being touched.
+   *
+   * \param pointer Raw pointer to register a touch of.
+   * \param space Space to register touch.
+   */
+  void registerTouch(void* pointer, ExecutionSpace space);
+
+  /*!
    * \brief Allocate data in the specified space.
    *
    * \param elems The number of elements to allocate.

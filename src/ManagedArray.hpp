@@ -97,6 +97,13 @@ class ManagedArray {
   CHAI_HOST uint size() const;
 
   /*!
+   * \brief Register this ManagedArray object as 'touched' in the given space.
+   *
+   * \param space The space to register a touch.
+   */
+  CHAI_HOST void registerTouch(ExecutionSpace space);
+
+  /*!
    * \brief Return reference to i-th element of the ManagedArray.
    *
    * \param i Element to return reference to.
