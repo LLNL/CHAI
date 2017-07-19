@@ -70,13 +70,17 @@ void* ArrayManager::allocate(size_t elems, ExecutionSpace space)
 
   if (space == CPU) {
     posix_memalign(static_cast<void **>(&ret), 64, sizeof(T) * elems); 
-  } else {
+  } else if (space == GPU) {
 #if defined(ENABLE_CUDA)
 #if defined(ENABLE_CNMEM)
     cnmemMalloc(&ret, sizeof(T) * elems, NULL);
 #else
     cudaMalloc(&ret, sizeof(T) * elems);
 #endif
+#endif
+  } else if (space == UM) {
+#if defined(ENABLE_UM)
+    cudaMallocManaged(&ret, sizeof(T) * elems, NULL);
 #endif
   }
 
@@ -94,7 +98,8 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
   auto pointer_record = getPointerRecord(pointer);
 
 #if defined(ENABLE_CUDA)
-  auto space = (pointer_record->m_pointers[CPU] == pointer) ? CPU : GPU; 
+  auto space = (pointer_record->m_pointers[CPU] == pointer) ? CPU :
+    (pointer_record->m_pointers[GPU] == pointer) ? GPU : UM;
 #else
   auto space = CPU;
 #endif
@@ -127,6 +132,20 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
     m_pointer_map.erase(old_ptr);
     m_pointer_map[ptr] = pointer_record;
   }
+
+#if defined(ENABLE_UM)
+  if (pointer_record->m_pointers[UM]) {
+    void* old_ptr = pointer_record->m_pointers[GPU];
+    void* ptr;
+    cudaMallocManaged(&ptr, sizeof(T) * elems);
+    cudaMemcpy(ptr, old_ptr, pointer_record->m_size, cudaMemcpyDefault);
+    cudaFree(old_ptr);
+#endif
+    pointer_record->m_pointers[UM] = ptr;
+
+    m_pointer_map.erase(old_ptr);
+    m_pointer_map[ptr] = pointer_record;
+  }
 #endif
 
   pointer_record->m_size = sizeof(T) * elems;
@@ -142,13 +161,17 @@ void* ArrayManager::allocate(
 
   if (space == CPU) {
     posix_memalign(static_cast<void **>(&ret), 64, size); 
-  } else {
+  } else if (space == GPU) {
 #if defined(ENABLE_CUDA)
 #if defined(ENABLE_CNMEM)
     cnmemMalloc(&ret, size, NULL);
 #else
     cudaMalloc(&ret, size);
 #endif
+#endif
+  } else if (space == UM) {
+#if defined(ENABLE_UM)
+    cudaMallocManaged(&ret, size);
 #endif
   }
 
@@ -179,6 +202,14 @@ void ArrayManager::free(void* pointer)
     cudaFree(gpu_ptr);
 #endif
     pointer_record->m_pointers[GPU] = nullptr;
+  }
+
+#if defined(ENABLE_UM)
+  if (pointer_record->m_pointers[UM]) {
+    void* um_ptr = pointer_record->m_pointers[UM];
+    m_pointer_map.erase(um_ptr);
+    cudaFree(um_ptr);
+    pointer_record->m_pointers[UM] = nullptr;
   }
 #endif
 

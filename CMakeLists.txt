@@ -7,11 +7,16 @@ set(ENABLE_OPENMP On CACHE BOOL "Enable OpenMP")
 set(ENABLE_BENCHMARKS On CACHE Bool "Enable benchmarks")
 option(ENABLE_CNMEM "Enable cnemem for GPU allocation" Off)
 option(ENABLE_IMPLICIT_CONVERSIONS "Enable implicit conversions to-from raw pointers" On)
+option(ENABLE_UM "Enable Unified Memory" On)
 option(ENABLE_THIN_UM "Make ManagedArray a thin wrapper around CUDA Unified Memory" Off)
 mark_as_advanced(ENABLE_THIN_UM)
 
 if (ENABLE_THIN_UM AND NOT ENABLE_CUDA)
   message(FATAL_ERROR "Option ENABLE_THIN_UM requires ENABLE_CUDA")
+endif()
+
+if (ENABLE_UM AND NOT ENABLE_CUDA)
+  message(FATAL_ERROR "Option ENABLE_UM requires ENABLE_CUDA")
 endif()
 
 set(ENABLE_COPY_HEADERS On CACHE BOOL "")

@@ -17,6 +17,9 @@ enum ExecutionSpace {
   /*! Execution in GPU space */
   GPU,
 #endif
+#if defined(ENABLE_UM)
+  UM,
+#endif
   // NUM_EXECUTION_SPACES should always be last!
   /*! Used to count total number of spaces */
   NUM_EXECUTION_SPACES
