@@ -1,6 +1,8 @@
 #ifndef CHAI_ManagedArray_HPP
 #define CHAI_ManagedArray_HPP
 
+#include "chai/config.hpp"
+
 #include "chai/ChaiMacros.hpp"
 #include "chai/ArrayManager.hpp"
 #include "chai/Types.hpp"
@@ -147,6 +149,10 @@ class ManagedArray {
 
 } // end of namespace chai
 
+#if defined(ENABLE_THIN_UM)
+#include "chai/ManagedArray_thin.inl"
+#else
 #include "chai/ManagedArray.inl"
+#endif
 
 #endif // CHAI_ManagedArray_HPP

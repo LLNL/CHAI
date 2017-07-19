@@ -5,10 +5,12 @@ project(Chai LANGUAGES CXX)
 set(ENABLE_CUDA On CACHE BOOL "Enable CUDA")
 set(ENABLE_OPENMP On CACHE BOOL "Enable OpenMP")
 set(ENABLE_BENCHMARKS On CACHE Bool "Enable benchmarks")
-option(ENABLE_CNMEM "Enable cnemem for GPU allocation" Off)
-
 set(ENABLE_COPY_HEADERS On CACHE BOOL "")
 set(BLT_CXX_STD c++11 CACHE STRING "")
+
+option(ENABLE_CNMEM "Enable cnemem for GPU allocation" Off)
+option(ENABLE_THIN_UM "Make ManagedArray a thin wrapper around CUDA Unified Memory" On)
+mark_as_advanced(ENABLE_THIN_UM)
 
 ################################
 # BLT
