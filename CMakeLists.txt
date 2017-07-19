@@ -6,6 +6,7 @@ set(ENABLE_CUDA On CACHE BOOL "Enable CUDA")
 set(ENABLE_OPENMP On CACHE BOOL "Enable OpenMP")
 set(ENABLE_BENCHMARKS On CACHE Bool "Enable benchmarks")
 option(ENABLE_CNMEM "Enable cnemem for GPU allocation" Off)
+option(ENABLE_IMPLICIT_CONVERSIONS "Enable implicit conversions to-from raw pointers" On)
 
 set(ENABLE_COPY_HEADERS On CACHE BOOL "")
 set(BLT_CXX_STD c++11 CACHE STRING "")

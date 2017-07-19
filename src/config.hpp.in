@@ -3,5 +3,6 @@
 
 #cmakedefine ENABLE_CNMEM
 #cmakedefine ENABLE_CUDA
+#cmakedefine ENABLE_IMPLICIT_CONVERSIONS
 
 #endif // CHAI_config_HPP
