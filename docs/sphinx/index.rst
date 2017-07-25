@@ -4,9 +4,9 @@ CHAI
 
 CHAI is a C++ libary providing an array object that can be used transparently
 in multiple memory spaces. Data is automatically migrated based on
-copy-construction, allowing for transparent data access regardless of location.
+copy-construction, allowing for correct data access regardless of location.
 CHAI can be used standalone, but is best when paired with the RAJA library,
-which has build in CHAI integration that takes care of everything.
+which has built-in CHAI integration that takes care of everything.
 
 - If you want to get and install CHAI, take a look at our getting started guide. 
 - If you are looking for documentation about a particular CHAI function, see the code documentation.
