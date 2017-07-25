@@ -1,9 +1,14 @@
 #ifndef CHAI_ManagedArray_HPP
 #define CHAI_ManagedArray_HPP
 
+#include "chai/config.hpp"
+
 #include "chai/ChaiMacros.hpp"
 #include "chai/ArrayManager.hpp"
 #include "chai/Types.hpp"
+
+
+#include <cstddef>
 
 namespace chai {
 
@@ -56,6 +61,11 @@ class ManagedArray {
   CHAI_HOST_DEVICE ManagedArray(ManagedArray const& other);
 
   /*!
+   * \brief Construct a ManagedArray from a nullptr.
+   */
+  CHAI_HOST_DEVICE ManagedArray(std::nullptr_t other);
+
+  /*!
    * \brief Allocate data for the ManagedArray in the specified space.
    *
    * The default space for allocations is the CPU.
@@ -64,6 +74,15 @@ class ManagedArray {
    * \param space Execution space in which to allocate data.
    */
   CHAI_HOST void allocate(uint elems, ExecutionSpace space=CPU);
+
+  /*!
+   * \brief Reallocate data for the ManagedArray.
+   *
+   * Reallocation will happen in all spaces the data exists
+   *
+   * \param elems Number of elements to allocate.
+   */
+  CHAI_HOST void reallocate(uint elems);
 
   /*!
    * \brief Free all data allocated by this ManagedArray.
@@ -76,6 +95,13 @@ class ManagedArray {
    * \return The number of elements in the array
    */
   CHAI_HOST uint size() const;
+
+  /*!
+   * \brief Register this ManagedArray object as 'touched' in the given space.
+   *
+   * \param space The space to register a touch.
+   */
+  CHAI_HOST void registerTouch(ExecutionSpace space);
 
   /*!
    * \brief Return reference to i-th element of the ManagedArray.
@@ -92,12 +118,37 @@ class ManagedArray {
    */
   // CHAI_HOST_DEVICE void pick(size_t i, T_non_const& val);
 
+#if defined(ENABLE_IMPLICIT_CONVERSIONS)
   /*!
    * \brief Cast the ManagedArray to a raw pointer.
    *
    * \return Raw pointer to data.
    */
   CHAI_HOST_DEVICE operator T*() const;
+
+  /*!
+   * \brief Construct a ManagedArray from a raw pointer.
+   *
+   * This raw pointer *must* have taken from an existing ManagedArray object.
+   *
+   * \param data Raw pointer to data.
+   * \param enable Boolean argument (unused) added to differentiate constructor.
+   */
+  template<bool Q=0>
+  CHAI_HOST_DEVICE ManagedArray(T* data, bool test=Q);
+#endif
+
+  /*!
+   * \brief 
+   *
+   */
+  template<bool B = std::is_const<T>::value,typename std::enable_if<!B, int>::type = 0>
+  CHAI_HOST_DEVICE operator ManagedArray<const T> () const;
+
+  CHAI_HOST_DEVICE ManagedArray(T* data, ArrayManager* array_manager, uint m_elems);
+
+
+  CHAI_HOST_DEVICE ManagedArray<T>& operator= (std::nullptr_t);
 
   private:
 
@@ -114,11 +165,15 @@ class ManagedArray {
   /*!
    * Number of elements in the ManagedArray.
    */
-  size_t m_elems;
+  uint m_elems;
 };
 
 } // end of namespace chai
 
+#if defined(ENABLE_THIN_UM)
+#include "chai/ManagedArray_thin.inl"
+#else
 #include "chai/ManagedArray.inl"
+#endif
 
 #endif // CHAI_ManagedArray_HPP

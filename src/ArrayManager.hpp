@@ -71,6 +71,16 @@ class ArrayManager
   void registerTouch(void* pointer);
 
   /*!
+   * \brief Register a touch of the pointer in the given execution space.
+   *
+   * The pointer doesn't need to exist in the space being touched.
+   *
+   * \param pointer Raw pointer to register a touch of.
+   * \param space Space to register touch.
+   */
+  void registerTouch(void* pointer, ExecutionSpace space);
+
+  /*!
    * \brief Allocate data in the specified space.
    *
    * \param elems The number of elements to allocate.
@@ -81,6 +91,20 @@ class ArrayManager
    */
   template<typename T>
   void* allocate(size_t elems, ExecutionSpace space=CPU);
+
+  /*!
+   * \brief Reallocate data.
+   *
+   * Data is reallocated in all spaces this pointer is associated with.
+   *
+   * \param ptr Pointer to address to reallocate
+   * \param elems The number of elements to allocate.
+   * \tparam T The type of data to allocate.
+   * 
+   * \return Pointer to the allocated memory.
+   */
+  template<typename T>
+  void* reallocate(void* pointer, size_t elems);
 
   /*!
    * \brief Free all allocations associated with the given raw pointer.

@@ -2,6 +2,10 @@
 
 #include "chai/config.hpp"
 
+#if defined(ENABLE_CUDA)
+#include "cuda_runtime_api.h"
+#endif
+
 #if defined(ENABLE_CNMEM)
 #include "cnmem.h"
 #endif
@@ -89,11 +93,16 @@ ExecutionSpace ArrayManager::getExecutionSpace() {
   return m_current_execution_space;
 }
 
-void ArrayManager::registerTouch(void* host_pointer) {
-  CHAI_LOG("ArrayManager", host_pointer << " touched in space " << m_current_execution_space);
+void ArrayManager::registerTouch(void* pointer) {
+  CHAI_LOG("ArrayManager", pointer << " touched in space " << m_current_execution_space);
 
-  auto pointer_record = getPointerRecord(host_pointer);
+  auto pointer_record = getPointerRecord(pointer);
   pointer_record->m_touched[m_current_execution_space] = true;
+}
+
+void ArrayManager::registerTouch(void* pointer, ExecutionSpace space) {
+  auto pointer_record = getPointerRecord(pointer);
+  pointer_record->m_touched[space] = true;
 }
 
 void ArrayManager::resetTouch(PointerRecord* pointer_record) {

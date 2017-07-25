@@ -12,12 +12,21 @@ set (chai_headers
   PointerRecord.hpp
   Types.hpp)
 
+if(ENABLE_THIN_UM)
+  set(chai_headers
+    ${chai_headers}
+    ManagedArray_thin.inl)
+endif ()
+
 set (chai_sources
   ArrayManager.cpp)
 
-set (chai_depends
-  cuda)
+set (chai_depends)
 
+if (ENABLE_CUDA)
+  set (chai_depends
+    cuda_runtime)
+endif ()
 if (ENABLE_CNMEM)
   set (chai_depends
     ${chai_depends}
@@ -48,6 +57,13 @@ install(
 install(
   FILES ${PROJECT_BINARY_DIR}/include/chai/config.hpp
   DESTINATION include/chai)
+
+install(
+  TARGETS chai
+  EXPORT chai-targets
+  RUNTIME DESTINATION lib
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib)
 
 install(EXPORT chai-targets DESTINATION share/chai/cmake/)
 
