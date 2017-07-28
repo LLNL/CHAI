@@ -40,11 +40,12 @@
 // WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 // ---------------------------------------------------------------------
-#ifndef CHAI_ManagedArray_INL
-#define CHAI_ManagedArray_INL
+#ifndef CHAI_ManagedArray_thin_INL
+#define CHAI_ManagedArray_thin_INL
 
 #include "ManagedArray.hpp"
-#include "ArrayManager.hpp"
+
+#include <cuda_runtime_api.h>
 
 namespace chai {
 
@@ -55,7 +56,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
   m_resource_manager(nullptr),
   m_elems(0)
 {
-  m_resource_manager = ArrayManager::getInstance();
 }
 
 template<typename T>
@@ -66,7 +66,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
   m_resource_manager(nullptr),
   m_elems(elems)
 {
-  m_resource_manager = ArrayManager::getInstance();
   this->allocate(elems, space);
 }
 
@@ -87,22 +86,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
   m_resource_manager(other.m_resource_manager),
   m_elems(other.m_elems)
 {
-#if !defined(__CUDA_ARCH__)
-  CHAI_LOG("ManagedArray", "Moving " << m_active_pointer);
-
-  m_active_pointer = static_cast<T*>(m_resource_manager->move(const_cast<T_non_const*>(m_active_pointer)));
-
-  CHAI_LOG("ManagedArray", "Moved to " << m_active_pointer);
-
-  /*
-   * Register touch
-   */
-  if (!std::is_const<T>::value) {
-    CHAI_LOG("ManagedArray", "T is non-const, registering touch of pointer" << m_active_pointer);
-    T_non_const* non_const_pointer = const_cast<T_non_const*>(m_active_pointer);
-    m_resource_manager->registerTouch(non_const_pointer);
-  }
-#endif
 }
 
 template<typename T>
@@ -120,19 +103,26 @@ CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space) {
   CHAI_LOG("ManagedArray", "Allocating array of size " << elems << " in space " << space);
 
   m_elems = elems;
-  m_active_pointer = static_cast<T*>(m_resource_manager->allocate<T>(elems, space));
+  cudaMallocManaged(&m_active_pointer, sizeof(T)*elems);
 
   CHAI_LOG("ManagedArray", "m_active_ptr allocated at address: " << m_active_pointer);
 }
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST void ManagedArray<T>::reallocate(uint elems)
+CHAI_HOST void ManagedArray<T>::reallocate(uint new_elems)
 {
   CHAI_LOG("ManagedArray", "Reallocating array of size " << m_elems << " with new size" << elems);
 
-  m_elems = elems;
-  m_active_pointer = static_cast<T*>(m_resource_manager->reallocate<T>(m_active_pointer, elems));
+  T* new_ptr;
+  cudaMallocManaged(&new_ptr, sizeof(T)*new_elems);
+
+  cudaMemcpy(new_ptr, m_active_pointer, sizeof(T)*m_elems, cudaMemcpyDefault);
+
+  cudaFree(m_active_pointer);
+
+  m_elems = new_elems;
+  m_active_pointer = new_ptr;
 
   CHAI_LOG("ManagedArray", "m_active_ptr reallocated at address: " << m_active_pointer);
 }
@@ -141,7 +131,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::free()
 {
-  m_resource_manager->free(m_active_pointer);
+  cudaFree(m_active_pointer);
 }
 
 
@@ -153,56 +143,15 @@ CHAI_HOST uint ManagedArray<T>::size() const {
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST void ManagedArray<T>::registerTouch(ExecutionSpace space) {
-  m_resource_manager->registerTouch(m_active_pointer, space);
-}
-
-template<typename T>
-CHAI_INLINE
 CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const int i) const {
   return m_active_pointer[i];
 }
 
-// template<typename T>
-// CHAI_INLINE
-// CHAI_HOST_DEVICE T& ManagedArray<T>::pick(size_t i, T_non_const& val) {
-// #ifdef __CUDA_ARCH__
-//           val = m_active_ptr[i]; 
-// #else
-// #endif
-// 
-// }
-
-
-
-#if defined(ENABLE_IMPLICIT_CONVERSIONS)
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
-#if !defined(__CUDA_ARCH__)
-  m_resource_manager->setExecutionSpace(CPU);
-
-  m_active_pointer = static_cast<T*>(m_resource_manager->move(m_active_pointer));
-
-  m_resource_manager->registerTouch(m_active_pointer);
-
   return m_active_pointer;
-#else
-  return m_active_pointer;
-#endif
 }
-
-
-template<typename T>
-template<bool Q>
-CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool test) :
-  m_active_pointer(data),
-  m_resource_manager(ArrayManager::getInstance()),
-  m_elems(m_resource_manager->getSize(m_active_pointer))
-{
-}
-#endif
 
 template<typename T>
 template<bool B,typename std::enable_if<!B, int>::type>
@@ -225,4 +174,4 @@ ManagedArray<T>::operator= (std::nullptr_t from) {
 
 } // end of namespace chai
 
-#endif // CHAI_ManagedArray_INL
+#endif // CHAI_ManagedArray_thin_INL
