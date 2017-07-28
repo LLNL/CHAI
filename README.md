@@ -1,4 +1,4 @@
-# CHAI
+# CHAI v1.0
 
 CHAI is a libary handling automatic data migration to different memory spaces
 behind an array-style interface.
