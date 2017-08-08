@@ -235,10 +235,10 @@ TEST(ManagedArray, PodTest) {
 }
 
 #if defined(ENABLE_CUDA)
-TEST(ManagedArray, PodTestGPU) {
+CUDA_TEST(ManagedArray, PodTestGPU) {
   chai::ManagedArray<my_point> array(1);
 
-  forall(cuda(), 0, 1, [=] (int i) {
+  forall(cuda(), 0, 1, [=] __device__ (int i) {
       array[i].x = (double) i;
       array[i].y = (double) i*2.0;
   });
