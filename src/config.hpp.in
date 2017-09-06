@@ -55,8 +55,12 @@
 #define CHAI_ENABLE_IMPLICIT_CONVERSIONS
 #endif
 
-#if defined(@ENABLE_THIN_UM@)
-#define CHAI_ENABLE_THIN_UM
+#if defined(@DISABLE_RM@)
+#define CHAI_DISABLE_RM
+#endif
+
+#if defined(@ENABLE_UM@)
+#define CHAI_ENABLE_UM
 #endif
 
 #endif // CHAI_config_HPP

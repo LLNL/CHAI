@@ -47,7 +47,7 @@
 #include "chai/ExecutionSpaces.hpp"
 #include "chai/ArrayManager.hpp"
 
-#if defined(CHAI_ENABLE_THIN_UM)
+#if defined(CHAI_ENABLE_UM)
 #include <cuda_runtime_api.h>
 #endif
 
@@ -71,7 +71,7 @@ template <typename LOOP_BODY>
 void forall(sequential, int begin, int end, LOOP_BODY body) {
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
 
-#if defined(CHAI_ENABLE_THIN_UM)
+#if defined(CHAI_ENABLE_UM)
   cudaDeviceSynchronize();
 #endif
 
