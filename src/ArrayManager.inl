@@ -81,30 +81,29 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 #if defined(ENABLE_CUDA)
   if (space == GPU) {
     if (record->m_pointers[UM])
-      cudaPrefetchAsynch(/* */);
-    }
-      
-    if (!record->m_pointers[GPU]) {
-      allocate(record, GPU);
-    }
-    if (record->m_touched[CPU]) {
-      cudaMemcpy(record->m_pointers[GPU], record->m_pointers[CPU], 
-          record->m_size, cudaMemcpyHostToDevice);
+      cudaPrefetchAsynch(record->m_pointers[UM], record->m_size, 0);
+    } else {
+      if (!record->m_pointers[GPU]) {
+        allocate(record, GPU);
+      }
+      if (record->m_touched[CPU]) {
+        cudaMemcpy(record->m_pointers[GPU], record->m_pointers[CPU], 
+            record->m_size, cudaMemcpyHostToDevice);
+      }
     }
   }
 
   if (space == CPU) {
     if (record->m_pointers[UM])
-      cudaPrefetchAsynch(/* */);
-    }
+    } else {
+      if (!record->m_pointers[CPU]) {
+        allocate(record, CPU);
+      }
 
-    if (!record->m_pointers[CPU]) {
-      allocate(record, CPU);
-    }
-
-    if (record->m_touched[GPU]) {
-      cudaMemcpy(record->m_pointers[CPU], record->m_pointers[GPU],
-          record->m_size, cudaMemcpyDeviceToHost);
+      if (record->m_touched[GPU]) {
+        cudaMemcpy(record->m_pointers[CPU], record->m_pointers[GPU],
+            record->m_size, cudaMemcpyDeviceToHost);
+      }
     }
   }
 #endif
