@@ -55,7 +55,7 @@ set (chai_headers
   PointerRecord.hpp
   Types.hpp)
 
-if(ENABLE_THIN_UM)
+if(DISABLE_RM)
   set(chai_headers
     ${chai_headers}
     ManagedArray_thin.inl)
@@ -75,6 +75,8 @@ if (ENABLE_CNMEM)
     ${chai_depends}
     cnmem)
 endif()
+
+message(STATUS ${chai_headers})
 
 blt_add_library(
   NAME chai

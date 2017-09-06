@@ -109,7 +109,7 @@ CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space) {
 #if defined(ENABLE_UM)
   cudaMallocManaged(&m_active_pointer, sizeof(T)*elems);
 #else
-  m_active_pointer = malloc(sizeof(T)*elems);
+  m_active_pointer = static_cast<T*>(malloc(sizeof(T)*elems));
 #endif
 
   CHAI_LOG("ManagedArray", "m_active_ptr allocated at address: " << m_active_pointer);
@@ -129,7 +129,7 @@ CHAI_HOST void ManagedArray<T>::reallocate(uint new_elems)
 
   cudaFree(m_active_pointer);
 #else
-  new_ptr = realloc(m_active_pointer, sizeof(T)*new_elems);
+  new_ptr = static_cast<T*>(realloc(m_active_pointer, sizeof(T)*new_elems));
 #endif
 
   m_elems = new_elems;
@@ -145,7 +145,7 @@ CHAI_HOST void ManagedArray<T>::free()
 #if defined(ENABLE_UM)
   cudaFree(m_active_pointer);
 #else
-  free(m_active_pointer);
+  ::free(m_active_pointer);
 #endif
 }
 
