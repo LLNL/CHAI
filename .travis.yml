@@ -27,19 +27,19 @@ matrix:
     env:
     - COMPILER=clang++
     - LLVM_VERSION=3.5.2
-    - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=Off"
+    - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=Off -DENABLE_OPENMP=Off"
   - compiler: clang-3.9
     addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-6 ] } }
     env:
     - COMPILER=clang++
     - LLVM_VERSION=3.9.1
-    - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=Off"
+    - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=Off -DENABLE_OPENMP=Off"
   - compiler: clang-4.0
     addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-6 ] } }
     env:
     - COMPILER=clang++
     - LLVM_VERSION=4.0.0
-    - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=Off"
+    - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=Off -DENABLE_OPENMP=Off"
   - compiler: nvcc
     addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-4.9 ] } }
     env:
@@ -57,7 +57,7 @@ matrix:
     env:
     - COMPILER=clang++
     - LLVM_VERSION=3.9.1
-    - CMAKE_EXTRA_FLAGS="-DCMAKE_BUILD_TYPE=Debug -DENABLE_CUDA=Off"
+    - CMAKE_EXTRA_FLAGS="-DCMAKE_BUILD_TYPE=Debug -DENABLE_CUDA=Off -DENABLE_OPENMP=Off"
   - compiler: nvcc-debug
     addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-4.9 ] } }
     env:
