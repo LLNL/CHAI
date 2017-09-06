@@ -46,6 +46,7 @@
 #cmakedefine ENABLE_CNMEM
 #cmakedefine ENABLE_CUDA
 #cmakedefine ENABLE_IMPLICIT_CONVERSIONS
-#cmakedefine ENABLE_THIN_UM
+#cmakedefine DISABLE_RM
+#cmakedefine ENABLE_UM
 
 #endif // CHAI_config_HPP
