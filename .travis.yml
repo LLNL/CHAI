@@ -17,6 +17,11 @@ matrix:
     env:
     - COMPILER=g++-6
     - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=Off"
+  - compiler: gcc-6-disable-rm
+    addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-6 ] } }
+    env:
+    - COMPILER=g++-6
+    - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=Off -DDISABLE_RM=On"
   - compiler: gcc-7
     addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-7 ] } }
     env:
@@ -45,6 +50,13 @@ matrix:
     env:
     - COMPILER=g++-4.9
     - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=On"
+    - TRAVIS_INSTALL_COMPILER="nvcc"
+    - DO_TEST=no
+  - compiler: nvcc-um-disable-rm
+    addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-4.9 ] } }
+    env:
+    - COMPILER=g++-4.9
+    - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=On -DENABLE_UM=On -DDISABLE_RM=On"
     - TRAVIS_INSTALL_COMPILER="nvcc"
     - DO_TEST=no
   - compiler: gcc-4.9-debug
