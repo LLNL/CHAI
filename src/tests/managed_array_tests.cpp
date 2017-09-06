@@ -53,6 +53,11 @@ static void cuda_test_ ## X ## Y()
 
 #include "chai/config.hpp"
 
+struct my_point {
+  double x;
+  double y;
+};
+
 TEST(ManagedArray, DefaultConstructor) {
   chai::ManagedArray<float> array;
   ASSERT_EQ(array.size(), 0);
@@ -213,4 +218,35 @@ TEST(ManageArray, ImplicitConversions) {
 
   SUCCEED();
 }
+#endif
+
+TEST(ManagedArray, PodTest) {
+  chai::ManagedArray<my_point> array(1);
+
+  forall(sequential(), 0, 1, [=] (int i) {
+      array[i].x = (double) i;
+      array[i].y = (double) i*2.0;
+  });
+
+  forall(sequential(), 0, 1, [=] (int i) {
+    ASSERT_EQ(array[i].x, i);
+    ASSERT_EQ(array[i].y, i*2.0);
+  });
+}
+
+#if defined(ENABLE_CUDA)
+CUDA_TEST(ManagedArray, PodTestGPU) {
+  chai::ManagedArray<my_point> array(1);
+
+  forall(cuda(), 0, 1, [=] __device__ (int i) {
+      array[i].x = (double) i;
+      array[i].y = (double) i*2.0;
+  });
+
+  forall(sequential(), 0, 1, [=] (int i) {
+    ASSERT_EQ(array[i].x, i);
+    ASSERT_EQ(array[i].y, i*2.0);
+  });
+}
+
 #endif

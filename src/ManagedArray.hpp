@@ -222,7 +222,7 @@ class ManagedArray {
 
 } // end of namespace chai
 
-#if defined(ENABLE_THIN_UM)
+#if defined(DISABLE_RM)
 #include "chai/ManagedArray_thin.inl"
 #else
 #include "chai/ManagedArray.inl"
