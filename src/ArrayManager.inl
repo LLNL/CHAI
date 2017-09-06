@@ -80,6 +80,10 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 
 #if defined(ENABLE_CUDA)
   if (space == GPU) {
+    if (record->m_pointers[UM])
+      cudaPrefetchAsynch(/* */);
+    }
+      
     if (!record->m_pointers[GPU]) {
       allocate(record, GPU);
     }
@@ -90,6 +94,10 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   }
 
   if (space == CPU) {
+    if (record->m_pointers[UM])
+      cudaPrefetchAsynch(/* */);
+    }
+
     if (!record->m_pointers[CPU]) {
       allocate(record, CPU);
     }
@@ -119,10 +127,10 @@ void* ArrayManager::allocate(size_t elems, ExecutionSpace space)
 #else
     cudaMalloc(&ret, sizeof(T) * elems);
 #endif
-#endif
   } else if (space == UM) {
 #if defined(ENABLE_UM)
     cudaMallocManaged(&ret, sizeof(T) * elems, NULL);
+#endif
 #endif
   }
 
@@ -264,6 +272,18 @@ size_t ArrayManager::getSize(void* ptr)
 {
   auto pointer_record = getPointerRecord(ptr);
   return pointer_record->m_size;
+}
+
+CHAI_INLINE
+void ArrayManager::setDefaultAllocationSpace(ExecutionSpace space)
+{
+  m_default_allocation_space = space;
+}
+
+CHAI_INLINE
+ExecutionSpace ArrayManager::getDefaultAllocationSpace(ExecutionSpace space)
+{
+  return m_default_allocation_space;
 }
 
 } // end of namespace chai
