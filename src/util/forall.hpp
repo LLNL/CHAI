@@ -47,12 +47,12 @@
 #include "chai/ExecutionSpaces.hpp"
 #include "chai/ArrayManager.hpp"
 
-#if defined(ENABLE_THIN_UM)
+#if defined(CHAI_ENABLE_THIN_UM)
 #include <cuda_runtime_api.h>
 #endif
 
 struct sequential {};
-#if defined(ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA)
 struct cuda {};
 #endif
 
@@ -71,7 +71,7 @@ template <typename LOOP_BODY>
 void forall(sequential, int begin, int end, LOOP_BODY body) {
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
 
-#if defined(ENABLE_THIN_UM)
+#if defined(CHAI_ENABLE_THIN_UM)
   cudaDeviceSynchronize();
 #endif
 
@@ -82,7 +82,7 @@ void forall(sequential, int begin, int end, LOOP_BODY body) {
   rm->setExecutionSpace(chai::NONE);
 }
 
-#if defined(ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA)
 template <typename LOOP_BODY>
 __global__ void forall_kernel_gpu(int start, int length, LOOP_BODY body) {
   int idx = blockDim.x * blockIdx.x + threadIdx.x;

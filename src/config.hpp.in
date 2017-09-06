@@ -43,9 +43,20 @@
 #ifndef CHAI_config_HPP
 #define CHAI_config_HPP
 
-#cmakedefine ENABLE_CNMEM
-#cmakedefine ENABLE_CUDA
-#cmakedefine ENABLE_IMPLICIT_CONVERSIONS
-#cmakedefine ENABLE_THIN_UM
+#if defined(@ENABLE_CNMEM@)
+#define CHAI_ENABLE_CNMEM
+#endif
+
+#if defined(@ENABLE_CUDA@)
+#define CHAI_ENABLE_CUDA 
+#endif
+
+#if defined(@ENABLE_IMPLICIT_CONVERSIONS@)
+#define CHAI_ENABLE_IMPLICIT_CONVERSIONS
+#endif
+
+#if defined(@ENABLE_THIN_UM@)
+#define CHAI_ENABLE_THIN_UM
+#endif
 
 #endif // CHAI_config_HPP
