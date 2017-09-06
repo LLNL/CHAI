@@ -80,9 +80,11 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 
 #if defined(CHAI_ENABLE_CUDA)
   if (space == GPU) {
+#if defined(CHAI_ENABLE_UM)
     if (record->m_pointers[UM]) {
       cudaMemPrefetchAsync(record->m_pointers[UM], record->m_size, 0);
     } else {
+#endif
       if (!record->m_pointers[GPU]) {
         allocate(record, GPU);
       }
@@ -90,12 +92,16 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
         cudaMemcpy(record->m_pointers[GPU], record->m_pointers[CPU], 
             record->m_size, cudaMemcpyHostToDevice);
       }
+#if defined(CHAI_ENABLE_UM)
     }
+#endif
   }
 
   if (space == CPU) {
+#if defined(CHAI_ENABLE_UM)
     if (record->m_pointers[UM]) {
     } else {
+#endif
       if (!record->m_pointers[CPU]) {
         allocate(record, CPU);
       }
@@ -104,7 +110,9 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
         cudaMemcpy(record->m_pointers[CPU], record->m_pointers[GPU],
             record->m_size, cudaMemcpyDeviceToHost);
       }
+#if defined(CHAI_ENABLE_UM)
     }
+#endif
   }
 #endif
 
@@ -194,12 +202,12 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
     cudaMallocManaged(&ptr, sizeof(T) * elems);
     cudaMemcpy(ptr, old_ptr, pointer_record->m_size, cudaMemcpyDefault);
     cudaFree(old_ptr);
-#endif
     pointer_record->m_pointers[UM] = ptr;
 
     m_pointer_map.erase(old_ptr);
     m_pointer_map[ptr] = pointer_record;
   }
+#endif
 #endif
 
   pointer_record->m_size = sizeof(T) * elems;
@@ -222,8 +230,8 @@ void* ArrayManager::allocate(
 #else
     cudaMalloc(&ret, size);
 #endif
-  } else if (space == UM) {
 #if defined(CHAI_ENABLE_UM)
+  } else if (space == UM) {
     cudaMallocManaged(&ret, size);
 #endif
 #endif
