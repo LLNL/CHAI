@@ -80,24 +80,39 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 
 #if defined(CHAI_ENABLE_CUDA)
   if (space == GPU) {
-    if (!record->m_pointers[GPU]) {
-      allocate(record, GPU);
+#if defined(CHAI_ENABLE_UM)
+    if (record->m_pointers[UM]) {
+      cudaMemPrefetchAsync(record->m_pointers[UM], record->m_size, 0);
+    } else {
+#endif
+      if (!record->m_pointers[GPU]) {
+        allocate(record, GPU);
+      }
+      if (record->m_touched[CPU]) {
+        cudaMemcpy(record->m_pointers[GPU], record->m_pointers[CPU], 
+            record->m_size, cudaMemcpyHostToDevice);
+      }
+#if defined(CHAI_ENABLE_UM)
     }
-    if (record->m_touched[CPU]) {
-      cudaMemcpy(record->m_pointers[GPU], record->m_pointers[CPU], 
-          record->m_size, cudaMemcpyHostToDevice);
-    }
+#endif
   }
 
   if (space == CPU) {
-    if (!record->m_pointers[CPU]) {
-      allocate(record, CPU);
-    }
+#if defined(CHAI_ENABLE_UM)
+    if (record->m_pointers[UM]) {
+    } else {
+#endif
+      if (!record->m_pointers[CPU]) {
+        allocate(record, CPU);
+      }
 
-    if (record->m_touched[GPU]) {
-      cudaMemcpy(record->m_pointers[CPU], record->m_pointers[GPU],
-          record->m_size, cudaMemcpyDeviceToHost);
+      if (record->m_touched[GPU]) {
+        cudaMemcpy(record->m_pointers[CPU], record->m_pointers[GPU],
+            record->m_size, cudaMemcpyDeviceToHost);
+      }
+#if defined(CHAI_ENABLE_UM)
     }
+#endif
   }
 #endif
 
@@ -112,12 +127,16 @@ void* ArrayManager::allocate(size_t elems, ExecutionSpace space)
 
   if (space == CPU) {
     posix_memalign(static_cast<void **>(&ret), 64, sizeof(T) * elems); 
-  } else {
 #if defined(CHAI_ENABLE_CUDA)
+  } else if (space == GPU) {
 #if defined(CHAI_ENABLE_CNMEM)
     cnmemMalloc(&ret, sizeof(T) * elems, NULL);
 #else
     cudaMalloc(&ret, sizeof(T) * elems);
+#endif
+#if defined(CHAI_ENABLE_UM)
+  } else if (space == UM) {
+    cudaMallocManaged(&ret, sizeof(T) * elems);
 #endif
 #endif
   }
@@ -136,7 +155,13 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
   auto pointer_record = getPointerRecord(pointer);
 
 #if defined(CHAI_ENABLE_CUDA)
-  auto space = (pointer_record->m_pointers[CPU] == pointer) ? CPU : GPU; 
+  auto space = (pointer_record->m_pointers[CPU] == pointer) ? CPU :
+    (pointer_record->m_pointers[GPU] == pointer) ? GPU : 
+#if defined(CHAI_ENABLE_UM)
+    UM;
+#else
+  GPU;
+#endif
 #else
   auto space = CPU;
 #endif
@@ -169,6 +194,20 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
     m_pointer_map.erase(old_ptr);
     m_pointer_map[ptr] = pointer_record;
   }
+
+#if defined(CHAI_ENABLE_UM)
+  if (pointer_record->m_pointers[UM]) {
+    void* old_ptr = pointer_record->m_pointers[GPU];
+    void* ptr;
+    cudaMallocManaged(&ptr, sizeof(T) * elems);
+    cudaMemcpy(ptr, old_ptr, pointer_record->m_size, cudaMemcpyDefault);
+    cudaFree(old_ptr);
+    pointer_record->m_pointers[UM] = ptr;
+
+    m_pointer_map.erase(old_ptr);
+    m_pointer_map[ptr] = pointer_record;
+  }
+#endif
 #endif
 
   pointer_record->m_size = sizeof(T) * elems;
@@ -184,12 +223,16 @@ void* ArrayManager::allocate(
 
   if (space == CPU) {
     posix_memalign(static_cast<void **>(&ret), 64, size); 
-  } else {
 #if defined(CHAI_ENABLE_CUDA)
+  } else if (space == GPU) {
 #if defined(CHAI_ENABLE_CNMEM)
     cnmemMalloc(&ret, size, NULL);
 #else
     cudaMalloc(&ret, size);
+#endif
+#if defined(CHAI_ENABLE_UM)
+  } else if (space == UM) {
+    cudaMallocManaged(&ret, size);
 #endif
 #endif
   }
@@ -222,6 +265,15 @@ void ArrayManager::free(void* pointer)
 #endif
     pointer_record->m_pointers[GPU] = nullptr;
   }
+
+#if defined(CHAI_ENABLE_UM)
+  if (pointer_record->m_pointers[UM]) {
+    void* um_ptr = pointer_record->m_pointers[UM];
+    m_pointer_map.erase(um_ptr);
+    cudaFree(um_ptr);
+    pointer_record->m_pointers[UM] = nullptr;
+  }
+#endif
 #endif
 
   delete pointer_record;
@@ -233,6 +285,18 @@ size_t ArrayManager::getSize(void* ptr)
 {
   auto pointer_record = getPointerRecord(ptr);
   return pointer_record->m_size;
+}
+
+CHAI_INLINE
+void ArrayManager::setDefaultAllocationSpace(ExecutionSpace space)
+{
+  m_default_allocation_space = space;
+}
+
+CHAI_INLINE
+ExecutionSpace ArrayManager::getDefaultAllocationSpace()
+{
+  return m_default_allocation_space;
 }
 
 } // end of namespace chai

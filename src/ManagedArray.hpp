@@ -85,12 +85,14 @@ class ManagedArray {
    * \brief Constructor to create a ManagedArray with specified size, allocated
    * in the provided space.
    *
-   * The default space for allocations is CPU.
+   * If space is NONE, the storage will be allocated in the default space. The
+   * default space for these allocations can be set with the
+   * setDefaultAllocationSpace method of the ArrayManager.
    *
    * \param elems Number of elements in the array.
    * \param space Execution space in which to allocate the array.
    */
-  CHAI_HOST_DEVICE ManagedArray(uint elems, ExecutionSpace space=CPU);
+  CHAI_HOST_DEVICE ManagedArray(uint elems, ExecutionSpace space=NONE);
 
   /*!
    * \brief Copy constructor handles data movement.

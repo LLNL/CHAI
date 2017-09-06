@@ -58,6 +58,10 @@ if (ENABLE_UM AND NOT ENABLE_CUDA)
   message(FATAL_ERROR "Option ENABLE_UM requires ENABLE_CUDA")
 endif()
 
+if (ENABLE_UM AND NOT ENABLE_CUDA)
+  message(FATAL_ERROR "Option ENABLE_UM requires ENABLE_CUDA")
+endif()
+
 set(ENABLE_COPY_HEADERS On CACHE BOOL "")
 set(BLT_CXX_STD c++11 CACHE STRING "")
 
