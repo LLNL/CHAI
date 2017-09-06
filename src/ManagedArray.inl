@@ -119,7 +119,7 @@ CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space) {
   CHAI_LOG("ManagedArray", "Allocating array of size " << elems << " in space " << space);
 
-  if (space = NONE) {
+  if (space == NONE) {
     space = m_resource_manager->getDefaultAllocationSpace();
   }
 

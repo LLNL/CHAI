@@ -80,8 +80,8 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 
 #if defined(ENABLE_CUDA)
   if (space == GPU) {
-    if (record->m_pointers[UM])
-      cudaPrefetchAsynch(record->m_pointers[UM], record->m_size, 0);
+    if (record->m_pointers[UM]) {
+      cudaMemPrefetchAsync(record->m_pointers[UM], record->m_size, 0);
     } else {
       if (!record->m_pointers[GPU]) {
         allocate(record, GPU);
@@ -94,7 +94,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   }
 
   if (space == CPU) {
-    if (record->m_pointers[UM])
+    if (record->m_pointers[UM]) {
     } else {
       if (!record->m_pointers[CPU]) {
         allocate(record, CPU);
@@ -119,8 +119,8 @@ void* ArrayManager::allocate(size_t elems, ExecutionSpace space)
 
   if (space == CPU) {
     posix_memalign(static_cast<void **>(&ret), 64, sizeof(T) * elems); 
-  } else if (space == GPU) {
 #if defined(ENABLE_CUDA)
+  } else if (space == GPU) {
 #if defined(ENABLE_CNMEM)
     cnmemMalloc(&ret, sizeof(T) * elems, NULL);
 #else
@@ -128,7 +128,7 @@ void* ArrayManager::allocate(size_t elems, ExecutionSpace space)
 #endif
   } else if (space == UM) {
 #if defined(ENABLE_UM)
-    cudaMallocManaged(&ret, sizeof(T) * elems, NULL);
+    cudaMallocManaged(&ret, sizeof(T) * elems);
 #endif
 #endif
   }
@@ -217,10 +217,10 @@ void* ArrayManager::allocate(
 #else
     cudaMalloc(&ret, size);
 #endif
-#endif
   } else if (space == UM) {
 #if defined(ENABLE_UM)
     cudaMallocManaged(&ret, size);
+#endif
 #endif
   }
 
@@ -261,6 +261,7 @@ void ArrayManager::free(void* pointer)
     pointer_record->m_pointers[UM] = nullptr;
   }
 #endif
+#endif
 
   delete pointer_record;
 }
@@ -280,7 +281,7 @@ void ArrayManager::setDefaultAllocationSpace(ExecutionSpace space)
 }
 
 CHAI_INLINE
-ExecutionSpace ArrayManager::getDefaultAllocationSpace(ExecutionSpace space)
+ExecutionSpace ArrayManager::getDefaultAllocationSpace()
 {
   return m_default_allocation_space;
 }

@@ -85,16 +85,8 @@ class ManagedArray {
    * \brief Constructor to create a ManagedArray with specified size, allocated
    * in the provided space.
    *
-   *
-   * \param elems Number of elements in the array.
-   */
-  CHAI_HOST_DEVICE ManagedArray(uint elems);
-
-  /*!
-   * \brief Constructor to create a ManagedArray with specified size, allocated
-   * in the provided space.
-   *
-   * The default space for these allocations can be set with the
+   * If space is NONE, the storage will be allocated in the default space. The
+   * default space for these allocations can be set with the
    * setDefaultAllocationSpace method of the ArrayManager.
    *
    * \param elems Number of elements in the array.
