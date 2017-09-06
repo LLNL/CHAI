@@ -175,7 +175,7 @@ CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const int i) const {
 
 
 
-#if defined(ENABLE_IMPLICIT_CONVERSIONS)
+#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {

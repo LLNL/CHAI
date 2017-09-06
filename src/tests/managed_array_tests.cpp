@@ -75,7 +75,7 @@ TEST(ManagedArray, SpaceConstructorCPU) {
   array.free();
 }
 
-#if defined(ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA)
 TEST(ManagedArray, SpaceConstructorGPU) {
   chai::ManagedArray<float> array(10, chai::GPU);
   ASSERT_EQ(array.size(), 10);
@@ -112,7 +112,7 @@ TEST(ManagedArray, Const) {
   });
 }
 
-#if defined(ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA)
 CUDA_TEST(ManagedArray, SetOnDevice) {
   chai::ManagedArray<float> array(10);
 
@@ -171,7 +171,7 @@ TEST(ManagedArray, ReallocateCPU) {
   });
 }
 
-#if defined(ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA)
 CUDA_TEST(ManagedArray, ReallocateGPU) {
   chai::ManagedArray<float> array(10);
   ASSERT_EQ(array.size(), 10);
@@ -209,7 +209,7 @@ TEST(ManagedArray, NullpointerConversions) {
   ASSERT_EQ(c.size(), 0);
 }
 
-#if defined(ENABLE_IMPLICIT_CONVERSIONS)
+#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
 TEST(ManageArray, ImplicitConversions) {
   chai::ManagedArray<float> a(10);
   float * raw_a = a;

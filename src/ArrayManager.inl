@@ -48,11 +48,11 @@
 #include "chai/ArrayManager.hpp"
 #include "chai/ChaiMacros.hpp"
 
-#if defined(ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA)
 #include "cuda_runtime_api.h"
 #endif
 
-#if defined(ENABLE_CNMEM)
+#if defined(CHAI_ENABLE_CNMEM)
 #include "cnmem.h"
 #endif
 
@@ -78,7 +78,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
     return;
   }
 
-#if defined(ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA)
   if (space == GPU) {
     if (!record->m_pointers[GPU]) {
       allocate(record, GPU);
@@ -113,8 +113,8 @@ void* ArrayManager::allocate(size_t elems, ExecutionSpace space)
   if (space == CPU) {
     posix_memalign(static_cast<void **>(&ret), 64, sizeof(T) * elems); 
   } else {
-#if defined(ENABLE_CUDA)
-#if defined(ENABLE_CNMEM)
+#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CNMEM)
     cnmemMalloc(&ret, sizeof(T) * elems, NULL);
 #else
     cudaMalloc(&ret, sizeof(T) * elems);
@@ -135,7 +135,7 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
 {
   auto pointer_record = getPointerRecord(pointer);
 
-#if defined(ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA)
   auto space = (pointer_record->m_pointers[CPU] == pointer) ? CPU : GPU; 
 #else
   auto space = CPU;
@@ -150,10 +150,10 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
     m_pointer_map[ptr] = pointer_record;
   } 
   
-#if defined(ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA)
   if (pointer_record->m_pointers[GPU]) {
     void* old_ptr = pointer_record->m_pointers[GPU];
-#if defined(ENABLE_CNMEM)
+#if defined(CHAI_ENABLE_CNMEM)
     void* ptr;
     cnmemMalloc(&ptr, sizeof(T) * elems, NULL);
     cudaMemcpy(ptr, old_ptr, pointer_record->m_size, cudaMemcpyDeviceToDevice);
@@ -185,8 +185,8 @@ void* ArrayManager::allocate(
   if (space == CPU) {
     posix_memalign(static_cast<void **>(&ret), 64, size); 
   } else {
-#if defined(ENABLE_CUDA)
-#if defined(ENABLE_CNMEM)
+#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CNMEM)
     cnmemMalloc(&ret, size, NULL);
 #else
     cudaMalloc(&ret, size);
@@ -211,11 +211,11 @@ void ArrayManager::free(void* pointer)
     pointer_record->m_pointers[CPU] = nullptr;
   } 
   
-#if defined(ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA)
   if (pointer_record->m_pointers[GPU]) {
     void* gpu_ptr = pointer_record->m_pointers[GPU];
     m_pointer_map.erase(gpu_ptr);
-#if defined(ENABLE_CNMEM)
+#if defined(CHAI_ENABLE_CNMEM)
     cnmemFree(gpu_ptr, NULL);
 #else
     cudaFree(gpu_ptr);

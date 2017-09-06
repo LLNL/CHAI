@@ -43,10 +43,10 @@
 #ifndef CHAI_config_HPP
 #define CHAI_config_HPP
 
-#cmakedefine ENABLE_CNMEM
-#cmakedefine ENABLE_CUDA
-#cmakedefine ENABLE_IMPLICIT_CONVERSIONS
-#cmakedefine DISABLE_RM
-#cmakedefine ENABLE_UM
+#cmakedefine CHAI_ENABLE_CNMEM
+#cmakedefine CHAI_ENABLE_CUDA 
+#cmakedefine CHAI_ENABLE_IMPLICIT_CONVERSIONS
+#cmakedefine CHAI_DISABLE_RM
+#cmakedefine CHAI_ENABLE_UM
 
 #endif // CHAI_config_HPP

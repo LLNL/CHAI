@@ -45,7 +45,7 @@
 
 #include "ManagedArray.hpp"
 
-#if defined(ENABLE_UM)
+#if defined(CHAI_ENABLE_UM)
 #include <cuda_runtime_api.h>
 #endif
 
@@ -106,7 +106,7 @@ CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space) {
 
   m_elems = elems;
 
-#if defined(ENABLE_UM)
+#if defined(CHAI_ENABLE_UM)
   cudaMallocManaged(&m_active_pointer, sizeof(T)*elems);
 #else
   m_active_pointer = static_cast<T*>(malloc(sizeof(T)*elems));
@@ -122,7 +122,7 @@ CHAI_HOST void ManagedArray<T>::reallocate(uint new_elems)
   CHAI_LOG("ManagedArray", "Reallocating array of size " << m_elems << " with new size" << elems);
 
   T* new_ptr;
-#if defined(ENABLE_UM)
+#if defined(CHAI_ENABLE_UM)
   cudaMallocManaged(&new_ptr, sizeof(T)*new_elems);
 
   cudaMemcpy(new_ptr, m_active_pointer, sizeof(T)*m_elems, cudaMemcpyDefault);
@@ -142,7 +142,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::free()
 {
-#if defined(ENABLE_UM)
+#if defined(CHAI_ENABLE_UM)
   cudaFree(m_active_pointer);
 #else
   ::free(m_active_pointer);

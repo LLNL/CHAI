@@ -160,7 +160,7 @@ class ManagedArray {
    */
   // CHAI_HOST_DEVICE void pick(size_t i, T_non_const& val);
 
-#if defined(ENABLE_IMPLICIT_CONVERSIONS)
+#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
   /*!
    * \brief Cast the ManagedArray to a raw pointer.
    *
@@ -212,7 +212,7 @@ class ManagedArray {
 
 } // end of namespace chai
 
-#if defined(DISABLE_RM)
+#if defined(CHAI_DISABLE_RM)
 #include "chai/ManagedArray_thin.inl"
 #else
 #include "chai/ManagedArray.inl"
