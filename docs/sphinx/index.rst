@@ -49,8 +49,10 @@ copy-construction, allowing for correct data access regardless of location.
 CHAI can be used standalone, but is best when paired with the RAJA library,
 which has built-in CHAI integration that takes care of everything.
 
-- If you want to get and install CHAI, take a look at our getting started guide. 
-- If you are looking for documentation about a particular CHAI function, see the code documentation.
+- If you want to get and install CHAI, take a look at our getting started
+  guide. 
+- If you are looking for documentation about a particular CHAI function, see
+  the code documentation.
 - Want to contribute? Take a look at our developer and contribution guides.
 
 Any questions? Contact chai-dev@llnl.gov
@@ -61,13 +63,12 @@ Any questions? Contact chai-dev@llnl.gov
 
   getting_started
   tutorial
-  known_issues
 
 .. toctree::
   :maxdepth: 2
   :caption: Reference
 
-  concepts
+  advanced_configuration
   code_documentation
 
 .. toctree::

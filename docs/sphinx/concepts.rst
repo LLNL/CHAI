@@ -1,7 +1,0 @@
-.. _concepts:
-
-========
-Concepts
-========
-
-Spaces

@@ -7,22 +7,15 @@ Getting Started
 This page provides information on how to quickly get up and running with CHAI.
 
 ------------
-Requirements
-------------
-
-------------
 Installation
 ------------
 
-CHAI is hosted in a git repository in the CZ Bitbucket instance. As long as you
-are a member of the ``chai`` LC group, you will be able to checkout a copy of
-the code.
-
-To clone the repo into your local working space, type:
+CHAI is hosted on GitHub `here <https://github.com/LLNL/CHAI>`_.  To clone the
+repo into your local working space, type:
 
 .. code-block:: bash
 
-  $ git clone --recursive 
+  $ git clone --recursive git@github.com:LLNL/CHAI.git
 
 
 The ``--recursive`` argument is required to ensure that the *BLT* submodule is
@@ -49,7 +42,7 @@ of CUDA was detected. Once CMake has completed, CHAI can be built with Make:
 
   $ make
 
-For more advanced configuration you can use standard CMake variables.
+For more advanced configuration, see :doc:`advanced_configuration`.
 
 -----------
 Basic Usage
