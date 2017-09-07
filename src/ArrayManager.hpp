@@ -149,11 +149,36 @@ class ArrayManager
   void* reallocate(void* pointer, size_t elems);
 
   /*!
+   * \brief Set the default space for new ManagedArray allocations.
+   *
+   * ManagedArrays allocated without an explicit ExecutionSpace argument will
+   * be allocated in space after this routine is called.
+   *
+   * \param space New space for default allocations.
+   */
+  void setDefaultAllocationSpace(ExecutionSpace space);
+
+  /*!
+   * \brief Get the currently set default allocation space.
+   *
+   * See also setDefaultAllocationSpace.
+   *
+   * \return Current default space for allocations.
+   */
+  ExecutionSpace getDefaultAllocationSpace();
+
+  /*!
    * \brief Free all allocations associated with the given raw pointer.
    */
   void free(void* pointer);
 
-  size_t getSize(void* host_pointer);
+  /*!
+   * \brief Get the size of the given pointer.
+   *
+   * \param pointer Pointer to find the size of.
+   * \return Size of pointer.
+   */
+  size_t getSize(void* pointer);
 
   protected:
 
@@ -234,6 +259,11 @@ class ArrayManager
    * Current execution space.
    */
   ExecutionSpace m_current_execution_space;
+
+  /**
+   * Default space for new allocations
+   */
+  ExecutionSpace m_default_allocation_space;
 
   /*!
    * Map of active ManagedArray pointers to their corresponding PointerRecord.

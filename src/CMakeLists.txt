@@ -41,6 +41,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
+set(CHAI_ENABLE_CNMEM ${ENABLE_CNMEM})
+set(CHAI_ENABLE_CUDA ${ENABLE_CUDA})
+set(CHAI_ENABLE_IMPLICIT_CONVERSIONS ${ENABLE_IMPLICIT_CONVERSIONS})
+set(CHAI_DISABLE_RM ${DISABLE_RM})
+set(CHAI_ENABLE_UM ${ENABLE_UM})
+
 configure_file(
   ${PROJECT_SOURCE_DIR}/src/config.hpp.in
   ${PROJECT_BINARY_DIR}/include/chai/config.hpp)
@@ -55,7 +61,7 @@ set (chai_headers
   PointerRecord.hpp
   Types.hpp)
 
-if(ENABLE_THIN_UM)
+if(DISABLE_RM)
   set(chai_headers
     ${chai_headers}
     ManagedArray_thin.inl)
@@ -75,6 +81,8 @@ if (ENABLE_CNMEM)
     ${chai_depends}
     cnmem)
 endif()
+
+message(STATUS ${chai_headers})
 
 blt_add_library(
   NAME chai

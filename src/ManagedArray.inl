@@ -119,6 +119,10 @@ CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space) {
   CHAI_LOG("ManagedArray", "Allocating array of size " << elems << " in space " << space);
 
+  if (space == NONE) {
+    space = m_resource_manager->getDefaultAllocationSpace();
+  }
+
   m_elems = elems;
   m_active_pointer = static_cast<T*>(m_resource_manager->allocate<T>(elems, space));
 
@@ -175,7 +179,7 @@ CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const int i) const {
 
 
 
-#if defined(ENABLE_IMPLICIT_CONVERSIONS)
+#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {

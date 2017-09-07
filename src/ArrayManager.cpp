@@ -44,11 +44,11 @@
 
 #include "chai/config.hpp"
 
-#if defined(ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA)
 #include "cuda_runtime_api.h"
 #endif
 
-#if defined(ENABLE_CNMEM)
+#if defined(CHAI_ENABLE_CNMEM)
 #include "cnmem.h"
 #endif
 
@@ -70,7 +70,8 @@ ArrayManager::ArrayManager() :
 {
   m_pointer_map.clear();
   m_current_execution_space = NONE;
-#if defined(ENABLE_CNMEM)
+  m_default_allocation_space = CPU;
+#if defined(CHAI_ENABLE_CNMEM)
   cudaDeviceProp props;
   cudaGetDeviceProperties(&props, 0);
   cnmemDevice_t cnmem_device;

@@ -72,7 +72,7 @@ void benchmark_arraymanager_alloc_cpu(benchmark::State& state) {
 BENCHMARK(benchmark_arraymanager_alloc_default)->Range(1, INT_MAX);
 BENCHMARK(benchmark_arraymanager_alloc_cpu)->Range(1, INT_MAX);
 
-#if defined(ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA)
 void benchmark_arraymanager_alloc_gpu(benchmark::State& state) {
   chai::ArrayManager* manager = chai::ArrayManager::getInstance();
 

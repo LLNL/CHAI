@@ -1,4 +1,4 @@
-# CHAI
+# CHAI v1.0
 
 CHAI is a libary handling automatic data migration to different memory spaces
 behind an array-style interface.
@@ -29,8 +29,8 @@ The original developers of CHAI are:
 Contributors include:
 
 - David Beckingsale (david@llnl.gov)
-- Riyaz Haque ()
-- Adam Kunen ()
+- Riyaz Haque (haque1@llnl.gov)
+- Adam Kunen (kunen1@llnl.gov)
 
 ## Release
 

@@ -85,12 +85,14 @@ class ManagedArray {
    * \brief Constructor to create a ManagedArray with specified size, allocated
    * in the provided space.
    *
-   * The default space for allocations is CPU.
+   * If space is NONE, the storage will be allocated in the default space. The
+   * default space for these allocations can be set with the
+   * setDefaultAllocationSpace method of the ArrayManager.
    *
    * \param elems Number of elements in the array.
    * \param space Execution space in which to allocate the array.
    */
-  CHAI_HOST_DEVICE ManagedArray(uint elems, ExecutionSpace space=CPU);
+  CHAI_HOST_DEVICE ManagedArray(uint elems, ExecutionSpace space=NONE);
 
   /*!
    * \brief Copy constructor handles data movement.
@@ -160,7 +162,7 @@ class ManagedArray {
    */
   // CHAI_HOST_DEVICE void pick(size_t i, T_non_const& val);
 
-#if defined(ENABLE_IMPLICIT_CONVERSIONS)
+#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
   /*!
    * \brief Cast the ManagedArray to a raw pointer.
    *
@@ -212,7 +214,7 @@ class ManagedArray {
 
 } // end of namespace chai
 
-#if defined(ENABLE_THIN_UM)
+#if defined(CHAI_DISABLE_RM)
 #include "chai/ManagedArray_thin.inl"
 #else
 #include "chai/ManagedArray.inl"
