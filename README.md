@@ -1,5 +1,7 @@
 # CHAI v1.0
 
+[![Build Status](https://travis-ci.org/LLNL/CHAI.svg?branch=develop)](https://travis-ci.org/LLNL/CHAI)
+
 CHAI is a libary handling automatic data migration to different memory spaces
 behind an array-style interface.
 
