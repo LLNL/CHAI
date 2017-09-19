@@ -60,8 +60,7 @@ These arguments are explained in more detail below:
 
   This option will remove all usage of the ``ArrayManager`` class and let the
   ``ManagedArray`` objects function as thin wrappers around a raw pointer. This
-  option can only be used with CPU-only allocations, or with CUDA Unified
-  Memory.
+  option can be used with CPU-only allocations, or with CUDA Unified Memory.
 
 * ENABLE_TESTING
   

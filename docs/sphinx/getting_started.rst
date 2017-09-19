@@ -19,8 +19,8 @@ repo into your local working space, type:
 
 
 The ``--recursive`` argument is required to ensure that the *BLT* submodule is
-also checked out. BLT is the build system we use for CHAI, and is available on
-GitHub.
+also checked out. `BLT <https://github.com/LLNL/BLT>`_ is the build system we
+use for CHAI.
 
 
 ^^^^^^^^^^^^^
@@ -35,8 +35,9 @@ compiler loaded and the configuration is as simple as:
   $ mkdir build && cd build
   $ cmake -DCUDA_TOOLKIT_ROOT_DIR=/path/to/cuda ../
 
-CMake will provide output about which compiler is being used, and what version
-of CUDA was detected. Once CMake has completed, CHAI can be built with Make:
+By default, CHAI will attempt to build with CUDA. CMake will provide output
+about which compiler is being used, and what version of CUDA was detected. Once
+CMake has completed, CHAI can be built with Make:
 
 .. code-block:: bash
 
