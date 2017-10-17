@@ -298,8 +298,10 @@ void ArrayManager::transferValue(T* pointer, T& val, size_t index, DIRECTION dir
     }
     // else {} //TODO: How to fail
   } else {
+#endif
     if(__DTOH__(dir)) val = pointer[index]; //device to host
     else pointer[index] = val; //host to device
+#if defined(CHAI_ENABLE_CUDA)
   }
 #endif
 }
@@ -308,18 +310,14 @@ template<typename T>
 CHAI_INLINE
 void ArrayManager::pick(T* pointer, size_t index, T& val)
 {
-#if defined(CHAI_ENABLE_CUDA)
   transferValue(pointer, val, index, DTOH);
-#endif
 }
 
 template<typename T>
 CHAI_INLINE
 void ArrayManager::set(T* pointer, size_t index, T& val)
 {
-#if defined(CHAI_ENABLE_CUDA)
   transferValue(pointer, val, index, HTOD);
-#endif
 }
 
 template<typename T>
@@ -343,7 +341,9 @@ void ArrayManager::modifyValue(T* pointer, size_t index, T val)
     }
     // else {} //TODO: How to fail
   } else {
+#endif
     pointer[index] = pointer[index] + val;
+#if defined(CHAI_ENABLE_CUDA)
   }
 #endif
 }
@@ -352,18 +352,14 @@ template<typename T>
 CHAI_INLINE
 void ArrayManager::incr(T* pointer, size_t index)
 {
-#if defined(CHAI_ENABLE_CUDA)
   modifyValue(pointer, index, (T)1);
-#endif
 }
 
 template<typename T>
 CHAI_INLINE
 void ArrayManager::decr(T* pointer, size_t index)
 {
-#if defined(CHAI_ENABLE_CUDA)
   modifyValue(pointer, index, (T)-1);
-#endif
 }
 #endif
 
