@@ -156,6 +156,51 @@ class ManagedArray {
    */
   CHAI_HOST_DEVICE T& operator[](const int i) const;
 
+#if defined(CHAI_ENABLE_PICK_SET_INCR_DECR)
+  /*!
+   * \brief Set val to the value of element i in the ManagedArray.
+   *
+   * \param index The index of the element to be fetched
+   * \param val Destination location of the value
+   * \tparam T The type of data value in ManagedArray.
+   */
+  CHAI_HOST_DEVICE void pick(size_t i, T& val) const; 
+
+  /*!
+   * \brief Return the value of element i in the ManagedArray.
+   *
+   * \param index The index of the element to be fetched
+   * \return The value of the i-th element in the ManagedArray.
+   * \tparam T The type of data value in ManagedArray.
+   */
+  CHAI_HOST_DEVICE T pick(size_t i) const;
+ 
+  /*!
+   * \brief Set the value of element i in the ManagedArray to be val.
+   *
+   * \param index The index of the element to be set 
+   * \param val Source location of the value
+   * \tparam T The type of data value in ManagedArray.
+   */
+  CHAI_HOST_DEVICE void set(size_t i, T& val) const; 
+
+  /*!
+   * \brief Increment the value of element i in the ManagedArray
+   *
+   * \param index The index of the element to be incremented
+   * \tparam T The type of data value in ManagedArray.
+   */
+  CHAI_HOST_DEVICE void incr(size_t i) const;
+ 
+  /*!
+   * \brief Decrement the value of element i in the ManagedArray
+   *
+   * \param index The index of the element to be decremented
+   * \tparam T The type of data value in ManagedArray.
+   */
+  CHAI_HOST_DEVICE void decr(size_t i) const;
+#endif
+
   /*!
    * \brief Set val to the value of element i in the ManagedArray.
    *

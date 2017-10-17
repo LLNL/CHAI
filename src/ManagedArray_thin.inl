@@ -162,6 +162,40 @@ CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const int i) const {
   return m_active_pointer[i];
 }
 
+#if defined(CHAI_ENABLE_PICK_SET_INCR_DECR)
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE void ManagedArray<T>::pick(size_t i, T& val) const { 
+  val = m_active_pointer[i]; 
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE T ManagedArray<T>::pick(size_t i) const {
+  T temp;
+  pick(i, temp);
+  return temp;
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T& val) const { 
+  m_active_pointer[i] = val; 
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE void ManagedArray<T>::incr(size_t i) const { 
+  ++m_active_pointer[i]; 
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE void ManagedArray<T>::decr(size_t i) const { 
+  --m_active_pointer[i]; 
+}
+#endif
+
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {

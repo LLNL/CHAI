@@ -167,17 +167,67 @@ CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const int i) const {
   return m_active_pointer[i];
 }
 
-// template<typename T>
-// CHAI_INLINE
-// CHAI_HOST_DEVICE T& ManagedArray<T>::pick(size_t i, T_non_const& val) {
-// #ifdef __CUDA_ARCH__
-//           val = m_active_ptr[i]; 
-// #else
-// #endif
-// 
-// }
+#if defined(CHAI_ENABLE_PICK_SET_INCR_DECR)
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE void ManagedArray<T>::pick(size_t i, T& val) const { 
+  #if !defined(CHAI_ENABLE_UM) && !defined(__CUDA_ARCH__) // this implies defined(CHAI_ENABLE_CUDA)
+     //Executing on HOST. Get the value from the currently active execution space
+     m_resource_manager->pick(m_active_pointer, i, val);
+  #else
+     //Executing on DEVICE or using UM.
+     //Simply dereference the active pointer 
+     val = m_active_pointer[i]; 
+  #endif
+}
 
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE T ManagedArray<T>::pick(size_t i) const {
+  T temp;
+  pick(i, temp);
+  return temp;
+}
 
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T& val) const { 
+  #if !defined(CHAI_ENABLE_UM) && !defined(__CUDA_ARCH__) // this implies defined(CHAI_ENABLE_CUDA)
+     //Executing on HOST. Set the value in the currently active execution space
+     m_resource_manager->set(m_active_pointer, i, val);
+  #else
+     //Executing on DEVICE or using UM.
+     //Simply dereference the active pointer 
+     m_active_pointer[i] = val; 
+  #endif
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE void ManagedArray<T>::incr(size_t i) const { 
+  #if !defined(CHAI_ENABLE_UM) && !defined(__CUDA_ARCH__) // this implies defined(CHAI_ENABLE_CUDA)
+     //Executing on HOST. Set the value in the currently active execution space
+     m_resource_manager->incr(m_active_pointer, i);
+  #else
+     //Executing on DEVICE or using UM.
+     //Simply dereference the active pointer 
+     ++m_active_pointer[i]; 
+  #endif
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE void ManagedArray<T>::decr(size_t i) const { 
+  #if !defined(CHAI_ENABLE_UM) && !defined(__CUDA_ARCH__) // this implies defined(CHAI_ENABLE_CUDA)
+     //Executing on HOST. Set the value in the currently active execution space
+     m_resource_manager->decr(m_active_pointer, i);
+  #else
+     //Executing on DEVICE or using UM.
+     //Simply dereference the active pointer 
+     --m_active_pointer[i]; 
+  #endif
+}
+#endif
 
 #if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
 template<typename T>

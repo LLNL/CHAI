@@ -279,6 +279,93 @@ void ArrayManager::free(void* pointer)
   delete pointer_record;
 }
 
+#if defined(CHAI_ENABLE_PICK_SET_INCR_DECR)
+template<typename T>
+CHAI_INLINE
+void ArrayManager::transferValue(T* pointer, T& val, size_t index, DIRECTION dir)
+{
+#if defined(CHAI_ENABLE_CUDA)
+  auto pointer_record = getPointerRecord(pointer);
+  // if active on non-HOST execution space (GPU)
+  //TODO: Extend this to n arbitrary execution spaces
+  if(pointer_record->m_touched[GPU]) {
+    //FIXME: pointer should work just fine since it is THE active pointer
+    T* registered_ptr = (T*)(pointer_record->m_pointers[GPU]);
+    if(index*sizeof(T) < pointer_record->m_size) {
+      cudaError_t err;
+      if(__DTOH__(dir)) err = cudaMemcpy(&val, registered_ptr+index, sizeof(T), cudaMemcpyDeviceToHost); //device to host
+      else err = cudaMemcpy(registered_ptr+index, &val, sizeof(T), cudaMemcpyHostToDevice); //host to device
+    }
+    // else {} //TODO: How to fail
+  } else {
+    if(__DTOH__(dir)) val = pointer[index]; //device to host
+    else pointer[index] = val; //host to device
+  }
+#endif
+}
+
+template<typename T>
+CHAI_INLINE
+void ArrayManager::pick(T* pointer, size_t index, T& val)
+{
+#if defined(CHAI_ENABLE_CUDA)
+  transferValue(pointer, val, index, DTOH);
+#endif
+}
+
+template<typename T>
+CHAI_INLINE
+void ArrayManager::set(T* pointer, size_t index, T& val)
+{
+#if defined(CHAI_ENABLE_CUDA)
+  transferValue(pointer, val, index, HTOD);
+#endif
+}
+
+template<typename T>
+CHAI_INLINE
+void ArrayManager::modifyValue(T* pointer, size_t index, T val)
+{
+#if defined(CHAI_ENABLE_CUDA)
+  auto pointer_record = getPointerRecord(pointer);
+  // if active on non-HOST execution space (GPU)
+  //TODO: Extend this to n arbitrary execution spaces
+  if(pointer_record->m_touched[GPU]) {
+    //FIXME: pointer should work just fine since it is THE active pointer
+    T* registered_ptr = (T*)(pointer_record->m_pointers[GPU]);
+    if(index*sizeof(T) < pointer_record->m_size) {
+      T temp;
+      cudaError_t err;
+      err = cudaMemcpy(&temp, registered_ptr+index, sizeof(T), cudaMemcpyDeviceToHost); //device to host
+      temp = temp + val;
+      err = cudaMemcpy(registered_ptr+index, &temp, sizeof(T), cudaMemcpyHostToDevice); //host to device
+      //deviceModifyValue<T>(registered_ptr, index, val);
+    }
+    // else {} //TODO: How to fail
+  } else {
+    pointer[index] = pointer[index] + val;
+  }
+#endif
+}
+
+template<typename T>
+CHAI_INLINE
+void ArrayManager::incr(T* pointer, size_t index)
+{
+#if defined(CHAI_ENABLE_CUDA)
+  modifyValue(pointer, index, (T)1);
+#endif
+}
+
+template<typename T>
+CHAI_INLINE
+void ArrayManager::decr(T* pointer, size_t index)
+{
+#if defined(CHAI_ENABLE_CUDA)
+  modifyValue(pointer, index, (T)-1);
+#endif
+}
+#endif
 
 CHAI_INLINE
 size_t ArrayManager::getSize(void* ptr)

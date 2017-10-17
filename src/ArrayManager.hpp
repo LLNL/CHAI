@@ -50,6 +50,14 @@
 
 namespace chai {
 
+#if defined(CHAI_ENABLE_PICK_SET_INCR_DECR)
+#define DTOH 1
+#define HTOD 0
+
+#define __DTOH__(X) X == DTOH
+typedef int DIRECTION;
+#endif
+
 /*!
  * \brief Singleton that manages caching and movement of ManagedArray objects.
  *
@@ -171,6 +179,85 @@ class ArrayManager
    * \brief Free all allocations associated with the given raw pointer.
    */
   void free(void* pointer);
+
+#if defined(CHAI_ENABLE_PICK_SET_INCR_DECR)
+  /*!
+   * \brief Increment a data value in the ManagedArray.
+   *
+   * \param pointer The current active pointer
+   * \param index The index of the element to be incremented 
+   * \param val The value of the increment (if < 0, the operation is a decrement) 
+   * \tparam T The type of data value in ManagedArray.
+   * 
+   */
+  template<typename T>
+  void modifyValue(T* pointer, size_t index, T val);
+
+  /*!
+   * \brief Transfer a single value to/from the ManagedArray.
+   *
+   * \param pointer The active pointer
+   * \param index The index of the element to be set 
+   * \param val Reference to the value
+   * \param tofrom Direction of data transfer (DTOH or HTOD)
+   * \tparam T The type of data value in ManagedArray.
+   * 
+   */
+  template<typename T>
+  void transferValue(T* pointer, T& val, size_t index, DIRECTION dir);
+
+  /*!
+   * \brief Pick a data value from the ManagedArray.
+   *
+   * The data value is picked from the current active space 
+   * into the host memory
+   *
+   * \param pointer The active pointer
+   * \param index The index of the element to be fetched
+   * \param val Destination location of the picked value
+   * \tparam T The type of data value in ManagedArray.
+   * 
+   */
+  template<typename T>
+  void pick(T* pointer, size_t index, T& val);
+
+  /*!
+   * \brief Set a data value in the ManagedArray.
+   *
+   * The data value in the ManagedArray is set from
+   * the host memory to current active space
+   *
+   * \param pointer The current active pointer
+   * \param index The index of the element to be set 
+   * \param val Source location of the value
+   * \tparam T The type of data value in ManagedArray.
+   * 
+   */
+  template<typename T>
+  void set(T* pointer, size_t index, T& val);
+
+  /*!
+   * \brief Increment a data value in the ManagedArray.
+   *
+   * \param pointer The current active pointer
+   * \param index The index of the element to be incremented 
+   * \tparam T The type of data value in ManagedArray.
+   * 
+   */
+  template<typename T>
+  void incr(T* pointer, size_t index);
+
+  /*!
+   * \brief Decrement a data value in the ManagedArray.
+   *
+   * \param pointer The current active pointer
+   * \param index The index of the element to be decremented 
+   * \tparam T The type of data value in ManagedArray.
+   * 
+   */
+  template<typename T>
+  void decr(T* pointer, size_t index);
+#endif
 
   /*!
    * \brief Get the size of the given pointer.
