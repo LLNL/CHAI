@@ -90,7 +90,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 #if !defined(__CUDA_ARCH__)
   CHAI_LOG("ManagedArray", "Moving " << m_active_pointer);
 
+//printf("Moving active pointer 0: %p\n", m_active_pointer);
   m_active_pointer = static_cast<T*>(m_resource_manager->move(const_cast<T_non_const*>(m_active_pointer)));
+//printf("Moving active pointer 1: %p\n", m_active_pointer);
 
   CHAI_LOG("ManagedArray", "Moved to " << m_active_pointer);
 
@@ -124,7 +126,9 @@ CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space) {
   }
 
   m_elems = elems;
+//printf("Moving active pointer 2: %p\n", m_active_pointer);
   m_active_pointer = static_cast<T*>(m_resource_manager->allocate<T>(elems, space));
+//printf("Moving active pointer 3: %p\n", m_active_pointer);
 
   CHAI_LOG("ManagedArray", "m_active_ptr allocated at address: " << m_active_pointer);
 }
@@ -136,7 +140,9 @@ CHAI_HOST void ManagedArray<T>::reallocate(uint elems)
   CHAI_LOG("ManagedArray", "Reallocating array of size " << m_elems << " with new size" << elems);
 
   m_elems = elems;
+//printf("Moving active pointer 4: %p\n", m_active_pointer);
   m_active_pointer = static_cast<T*>(m_resource_manager->reallocate<T>(m_active_pointer, elems));
+//printf("Moving active pointer 5: %p\n", m_active_pointer);
 
   CHAI_LOG("ManagedArray", "m_active_ptr reallocated at address: " << m_active_pointer);
 }
@@ -171,12 +177,13 @@ CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const int i) const {
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE void ManagedArray<T>::pick(size_t i, T& val) const { 
-  #if !defined(CHAI_ENABLE_UM) && !defined(__CUDA_ARCH__) // this implies defined(CHAI_ENABLE_CUDA)
+  #if defined(CHAI_ENABLE_CUDA) && !defined(CHAI_ENABLE_UM) && !defined(__CUDA_ARCH__)
      //Executing on HOST. Get the value from the currently active execution space
      m_resource_manager->pick(m_active_pointer, i, val);
   #else
      //Executing on DEVICE or using UM.
      //Simply dereference the active pointer 
+//printf("Active pointer: %p\n", m_active_pointer);
      val = m_active_pointer[i]; 
   #endif
 }
@@ -192,7 +199,7 @@ CHAI_HOST_DEVICE T ManagedArray<T>::pick(size_t i) const {
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T& val) const { 
-  #if !defined(CHAI_ENABLE_UM) && !defined(__CUDA_ARCH__) // this implies defined(CHAI_ENABLE_CUDA)
+  #if defined(CHAI_ENABLE_CUDA) && !defined(CHAI_ENABLE_UM) && !defined(__CUDA_ARCH__)
      //Executing on HOST. Set the value in the currently active execution space
      m_resource_manager->set(m_active_pointer, i, val);
   #else
@@ -205,7 +212,7 @@ CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T& val) const {
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE void ManagedArray<T>::incr(size_t i) const { 
-  #if !defined(CHAI_ENABLE_UM) && !defined(__CUDA_ARCH__) // this implies defined(CHAI_ENABLE_CUDA)
+  #if defined(CHAI_ENABLE_CUDA) && !defined(CHAI_ENABLE_UM) && !defined(__CUDA_ARCH__)
      //Executing on HOST. Set the value in the currently active execution space
      m_resource_manager->incr(m_active_pointer, i);
   #else
@@ -218,7 +225,7 @@ CHAI_HOST_DEVICE void ManagedArray<T>::incr(size_t i) const {
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE void ManagedArray<T>::decr(size_t i) const { 
-  #if !defined(CHAI_ENABLE_UM) && !defined(__CUDA_ARCH__) // this implies defined(CHAI_ENABLE_CUDA)
+  #if defined(CHAI_ENABLE_CUDA) && !defined(CHAI_ENABLE_UM) && !defined(__CUDA_ARCH__)
      //Executing on HOST. Set the value in the currently active execution space
      m_resource_manager->decr(m_active_pointer, i);
   #else

@@ -219,6 +219,8 @@ CUDA_TEST(ManagedArray, PickHostFromDevice) {
       array[i] = i;
   });
 
+  cudaDeviceSynchronize();
+
   int temp;
   array.pick(5, temp);
   ASSERT_EQ(temp, 5);
@@ -232,6 +234,8 @@ CUDA_TEST(ManagedArray, PickReturnHostFromDevice) {
   forall(cuda(), 0, 10, [=] __device__ (int i) {
       array[i] = i;
   });
+
+  cudaDeviceSynchronize();
 
   int temp = array.pick(5);
   ASSERT_EQ(temp, 5);
@@ -268,6 +272,8 @@ CUDA_TEST(ManagedArray, IncrementDecrementOnDevice) {
       arrayD.decr(i);
   });
 
+  cudaDeviceSynchronize();
+
   forall(sequential(), 0, 10, [=] (int i) {
     ASSERT_EQ(arrayI[i], i+1);
     ASSERT_EQ(arrayD[i], i-1);
@@ -283,6 +289,8 @@ CUDA_TEST(ManagedArray, IncrementDecrementFromHostOnDevice) {
   forall(cuda(), 0, 10, [=] __device__ (int i) {
       array[i] = i;
   });
+
+  cudaDeviceSynchronize();
 
   array.incr(5);
   array.decr(9);
