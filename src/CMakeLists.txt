@@ -97,9 +97,7 @@ install(
   FILES ${PROJECT_BINARY_DIR}/share/chai/cmake/chai-config.cmake
   DESTINATION share/chai/cmake/)
 
-install(
-  FILES ${PROJECT_BINARY_DIR}/include/chai/config.hpp
-  DESTINATION include/chai)
+install(DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION . OPTIONAL)
 
 install(
   TARGETS chai
@@ -109,6 +107,7 @@ install(
   ARCHIVE DESTINATION lib)
 
 install(EXPORT chai-targets DESTINATION share/chai/cmake/)
+
 
 add_subdirectory(tests)
 if (ENABLE_BENCHMARKS)
