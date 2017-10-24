@@ -269,6 +269,13 @@ class ArrayManager
    * Map of active ManagedArray pointers to their corresponding PointerRecord.
    */
   std::unordered_map<void *, PointerRecord*> m_pointer_map;
+
+  /*!
+   *
+   * \brief Array of umpire::Allocators, indexed by ExecutionSpace.
+   */
+  umpire::Allocator* m_allocators[NUM_EXECUTION_SPACES];
+
 };
 
 } // end of namespace chai

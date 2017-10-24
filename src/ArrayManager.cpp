@@ -48,10 +48,6 @@
 #include "cuda_runtime_api.h"
 #endif
 
-#if defined(CHAI_ENABLE_CNMEM)
-#include "cnmem.h"
-#endif
-
 namespace chai {
 
 ArrayManager* ArrayManager::s_resource_manager_instance = nullptr;
@@ -71,14 +67,6 @@ ArrayManager::ArrayManager() :
   m_pointer_map.clear();
   m_current_execution_space = NONE;
   m_default_allocation_space = CPU;
-#if defined(CHAI_ENABLE_CNMEM)
-  cudaDeviceProp props;
-  cudaGetDeviceProperties(&props, 0);
-  cnmemDevice_t cnmem_device;
-  memset(&cnmem_device, 0, sizeof(cnmem_device));
-  cnmem_device.size = static_cast<size_t>(0.8 * props.totalGlobalMem);
-  cnmemInit(1, &cnmem_device, CNMEM_FLAGS_DEFAULT);
-#endif
 }
 
 void ArrayManager::registerPointer(void* pointer, size_t size, ExecutionSpace space) {
@@ -139,8 +127,9 @@ ExecutionSpace ArrayManager::getExecutionSpace() {
 void ArrayManager::registerTouch(void* pointer) {
   CHAI_LOG("ArrayManager", pointer << " touched in space " << m_current_execution_space);
 
-  auto pointer_record = getPointerRecord(pointer);
-  pointer_record->m_touched[m_current_execution_space] = true;
+  // auto pointer_record = getPointerRecord(pointer);
+  // pointer_record->m_touched[m_current_execution_space] = true;
+  registerTouch(pointer, m_current_execution_space);
 }
 
 void ArrayManager::registerTouch(void* pointer, ExecutionSpace space) {

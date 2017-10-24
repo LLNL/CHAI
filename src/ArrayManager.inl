@@ -52,10 +52,6 @@
 #include "cuda_runtime_api.h"
 #endif
 
-#if defined(CHAI_ENABLE_CNMEM)
-#include "cnmem.h"
-#endif
-
 #include <iostream>
 
 namespace chai {
@@ -124,22 +120,7 @@ CHAI_INLINE
 void* ArrayManager::allocate(size_t elems, ExecutionSpace space)
 {
   void * ret = nullptr;
-
-  if (space == CPU) {
-    posix_memalign(static_cast<void **>(&ret), 64, sizeof(T) * elems); 
-#if defined(CHAI_ENABLE_CUDA)
-  } else if (space == GPU) {
-#if defined(CHAI_ENABLE_CNMEM)
-    cnmemMalloc(&ret, sizeof(T) * elems, NULL);
-#else
-    cudaMalloc(&ret, sizeof(T) * elems);
-#endif
-#if defined(CHAI_ENABLE_UM)
-  } else if (space == UM) {
-    cudaMallocManaged(&ret, sizeof(T) * elems);
-#endif
-#endif
-  }
+  ret = m_allocators[space]->allocate(sizeof(T) * elems);
 
   CHAI_LOG("ArrayManager", "Allocated array at: " << ret);
 
@@ -178,17 +159,10 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
 #if defined(CHAI_ENABLE_CUDA)
   if (pointer_record->m_pointers[GPU]) {
     void* old_ptr = pointer_record->m_pointers[GPU];
-#if defined(CHAI_ENABLE_CNMEM)
-    void* ptr;
-    cnmemMalloc(&ptr, sizeof(T) * elems, NULL);
-    cudaMemcpy(ptr, old_ptr, pointer_record->m_size, cudaMemcpyDeviceToDevice);
-    cnmemFree(old_ptr, NULL);
-#else
     void* ptr;
     cudaMalloc(&ptr, sizeof(T) * elems);
     cudaMemcpy(ptr, old_ptr, pointer_record->m_size, cudaMemcpyDeviceToDevice);
     cudaFree(old_ptr);
-#endif
     pointer_record->m_pointers[GPU] = ptr;
 
     m_pointer_map.erase(old_ptr);
@@ -225,11 +199,7 @@ void* ArrayManager::allocate(
     posix_memalign(static_cast<void **>(&ret), 64, size); 
 #if defined(CHAI_ENABLE_CUDA)
   } else if (space == GPU) {
-#if defined(CHAI_ENABLE_CNMEM)
-    cnmemMalloc(&ret, size, NULL);
-#else
     cudaMalloc(&ret, size);
-#endif
 #if defined(CHAI_ENABLE_UM)
   } else if (space == UM) {
     cudaMallocManaged(&ret, size);
@@ -258,11 +228,7 @@ void ArrayManager::free(void* pointer)
   if (pointer_record->m_pointers[GPU]) {
     void* gpu_ptr = pointer_record->m_pointers[GPU];
     m_pointer_map.erase(gpu_ptr);
-#if defined(CHAI_ENABLE_CNMEM)
-    cnmemFree(gpu_ptr, NULL);
-#else
     cudaFree(gpu_ptr);
-#endif
     pointer_record->m_pointers[GPU] = nullptr;
   }
 
