@@ -48,6 +48,8 @@
 
 #include <unordered_map>
 
+#include "umpire/Allocator.hpp"
+
 namespace chai {
 
 /*!
@@ -275,7 +277,6 @@ class ArrayManager
    * \brief Array of umpire::Allocators, indexed by ExecutionSpace.
    */
   umpire::Allocator* m_allocators[NUM_EXECUTION_SPACES];
-
 };
 
 } // end of namespace chai

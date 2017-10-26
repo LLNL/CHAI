@@ -70,10 +70,12 @@ endif ()
 set (chai_sources
   ArrayManager.cpp)
 
-set (chai_depends)
+set (chai_depends
+  umpire)
 
 if (ENABLE_CUDA)
   set (chai_depends
+    ${chai_depends}
     cuda_runtime)
 endif ()
 if (ENABLE_CNMEM)
@@ -81,8 +83,6 @@ if (ENABLE_CNMEM)
     ${chai_depends}
     cnmem)
 endif()
-
-message(STATUS ${chai_headers})
 
 blt_add_library(
   NAME chai
