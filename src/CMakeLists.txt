@@ -41,7 +41,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-set(CHAI_ENABLE_CNMEM ${ENABLE_CNMEM})
 set(CHAI_ENABLE_CUDA ${ENABLE_CUDA})
 set(CHAI_ENABLE_IMPLICIT_CONVERSIONS ${ENABLE_IMPLICIT_CONVERSIONS})
 set(CHAI_DISABLE_RM ${DISABLE_RM})
@@ -78,11 +77,6 @@ if (ENABLE_CUDA)
     ${chai_depends}
     cuda_runtime)
 endif ()
-if (ENABLE_CNMEM)
-  set (chai_depends
-    ${chai_depends}
-    cnmem)
-endif()
 
 blt_add_library(
   NAME chai
