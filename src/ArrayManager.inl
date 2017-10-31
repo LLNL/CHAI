@@ -308,9 +308,9 @@ void ArrayManager::transferValue(T* pointer, T& val, size_t index, Direction tof
 
 template<typename T>
 CHAI_INLINE
-void ArrayManager::pick(T* pointer, size_t index, typename std::remove_const<T>::type& val)
+void ArrayManager::pick(T* pointer, size_t index, T_non_const<T>& val)
 {
-  transferValue((typename std::remove_const<T>::type*)pointer, val, index, Direction::DeviceToHost);
+  transferValue((T_non_const<T>*)pointer, val, index, Direction::DeviceToHost);
 }
 
 template<typename T>

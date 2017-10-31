@@ -164,7 +164,7 @@ class ManagedArray {
    * \param val Destination location of the value
    * \tparam T The type of data value in ManagedArray.
    */
-  CHAI_HOST_DEVICE void pick(size_t i, typename std::remove_const<T>::type& val) const; 
+  CHAI_HOST_DEVICE void pick(size_t i, T_non_const& val) const; 
 
   /*!
    * \brief Return the value of element i in the ManagedArray.

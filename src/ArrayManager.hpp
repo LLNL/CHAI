@@ -73,6 +73,9 @@ class ArrayManager
 {
   public:
 
+  template <typename T>
+  using T_non_const = typename std::remove_const<T>::type;
+
   static PointerRecord s_null_record;
 
   /*!
@@ -186,7 +189,7 @@ class ArrayManager
    * 
    */
   template<typename T>
-  void pick(T* pointer, size_t index, typename std::remove_const<T>::type& val);
+  void pick(T* pointer, size_t index, T_non_const<T>& val);
 
   /*!
    * \brief Set a data value in the ManagedArray.

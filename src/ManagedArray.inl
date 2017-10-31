@@ -170,7 +170,7 @@ CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const int i) const {
 #if defined(CHAI_ENABLE_PICK)
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE void ManagedArray<T>::pick(size_t i, typename std::remove_const<T>::type& val) const { 
+CHAI_HOST_DEVICE void ManagedArray<T>::pick(size_t i, T_non_const& val) const { 
   #if !defined(__CUDA_ARCH__)
      if (!std::is_const<T>::value) {
        m_resource_manager->pick(m_active_pointer, i, val);
@@ -185,7 +185,7 @@ CHAI_HOST_DEVICE void ManagedArray<T>::pick(size_t i, typename std::remove_const
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE T ManagedArray<T>::pick(size_t i) const {
-  typename std::remove_const<T>::type temp;
+  T_non_const temp;
   pick(i, temp);
   return temp;
 }
