@@ -156,6 +156,19 @@ class ManagedArray {
    */
   CHAI_HOST_DEVICE T& operator[](const int i) const;
 
+  CHAI_HOST_DEVICE ManagedArray(T* data, ExecutionSpace space, uint m_elems, bool owned);
+  /*!
+   * \brief Create a ManagedArray from a raw pointer
+   *
+   * \param dataVec Vector of raw pointers; null if not mapped in a given execution space
+   * \param m_elems Number of elements
+   * \param owned Vector of owned flag (one per execution space); true means CHAI can free memory in that space
+   * \param space Execution space where data is valid; defaults to CPU
+   *
+   * \tparam T The type of elements stored in the ManagedArray.
+   */
+  //CHAI_HOST ManagedArray(std::vector<T*> dataVec, uint m_elems, std::vector<bool> owned);
+
   /*!
    * \brief Set val to the value of element i in the ManagedArray.
    *
