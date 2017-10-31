@@ -167,23 +167,25 @@ CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const int i) const {
   return m_active_pointer[i];
 }
 
-#if defined(CHAI_ENABLE_PICK_SET_INCR_DECR)
+#if defined(CHAI_ENABLE_PICK)
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE void ManagedArray<T>::pick(size_t i, T& val) const { 
+CHAI_HOST_DEVICE void ManagedArray<T>::pick(size_t i, typename std::remove_const<T>::type& val) const { 
   #if !defined(__CUDA_ARCH__)
-     //Executing on HOST. Get the value from the currently active execution space
-     m_resource_manager->pick(m_active_pointer, i, val);
-  #else
-     //Executing on DEVICE. Simply dereference the active pointer 
+     if (!std::is_const<T>::value) {
+       m_resource_manager->pick(m_active_pointer, i, val);
+     } else {
+  #endif
      val = m_active_pointer[i]; 
+  #if !defined(__CUDA_ARCH__)
+    }
   #endif
 }
 
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE T ManagedArray<T>::pick(size_t i) const {
-  T temp;
+  typename std::remove_const<T>::type temp;
   pick(i, temp);
   return temp;
 }
@@ -192,10 +194,8 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T& val) const { 
   #if !defined(__CUDA_ARCH__)
-     //Executing on HOST. Set the value in the currently active execution space
      m_resource_manager->set(m_active_pointer, i, val);
   #else
-     //Executing on DEVICE. Simply dereference the active pointer 
      m_active_pointer[i] = val; 
   #endif
 }
@@ -204,10 +204,8 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE void ManagedArray<T>::incr(size_t i) const { 
   #if !defined(__CUDA_ARCH__)
-     //Executing on HOST. Increment the value in the currently active execution space
      m_resource_manager->incr(m_active_pointer, i);
   #else
-     //Executing on DEVICE. Simply dereference the active pointer 
      ++m_active_pointer[i]; 
   #endif
 }
@@ -216,10 +214,8 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE void ManagedArray<T>::decr(size_t i) const { 
   #if !defined(__CUDA_ARCH__)
-     //Executing on HOST. Decrement the value in the currently active execution space
      m_resource_manager->decr(m_active_pointer, i);
   #else
-     //Executing on DEVICE. Simply dereference the active pointer 
      --m_active_pointer[i]; 
   #endif
 }

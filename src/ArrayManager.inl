@@ -279,27 +279,27 @@ void ArrayManager::free(void* pointer)
   delete pointer_record;
 }
 
-#if defined(CHAI_ENABLE_PICK_SET_INCR_DECR)
+#if defined(CHAI_ENABLE_PICK)
 template<typename T>
 CHAI_INLINE
-void ArrayManager::transferValue(T* pointer, T& val, size_t index, DIRECTION dir)
+void ArrayManager::transferValue(T* pointer, T& val, size_t index, Direction tofrom)
 {
 #if defined(CHAI_ENABLE_CUDA)
   auto pointer_record = getPointerRecord(pointer);
   // if active on non-HOST execution space (GPU)
   //TODO: Extend this to n arbitrary execution spaces
   if(pointer_record->m_touched[GPU]) {
-    //FIXME: pointer should work just fine since it is THE active pointer
+    //FIXME: "pointer" should work just fine since it is THE active pointer
     T* registered_ptr = (T*)(pointer_record->m_pointers[GPU]);
     if(index*sizeof(T) < pointer_record->m_size) {
       cudaError_t err;
-      if(__DTOH__(dir)) err = cudaMemcpy(&val, registered_ptr+index, sizeof(T), cudaMemcpyDeviceToHost); //device to host
+      if(tofrom == Direction::DeviceToHost) err = cudaMemcpy(&val, registered_ptr+index, sizeof(T), cudaMemcpyDeviceToHost); //device to host
       else err = cudaMemcpy(registered_ptr+index, &val, sizeof(T), cudaMemcpyHostToDevice); //host to device
     }
     // else {} //TODO: How to fail
   } else {
 #endif
-    if(__DTOH__(dir)) val = pointer[index]; //device to host
+    if(tofrom == Direction::DeviceToHost) val = pointer[index]; //device to host
     else pointer[index] = val; //host to device
 #if defined(CHAI_ENABLE_CUDA)
   }
@@ -308,16 +308,16 @@ void ArrayManager::transferValue(T* pointer, T& val, size_t index, DIRECTION dir
 
 template<typename T>
 CHAI_INLINE
-void ArrayManager::pick(T* pointer, size_t index, T& val)
+void ArrayManager::pick(T* pointer, size_t index, typename std::remove_const<T>::type& val)
 {
-  transferValue(pointer, val, index, DTOH);
+  transferValue((typename std::remove_const<T>::type*)pointer, val, index, Direction::DeviceToHost);
 }
 
 template<typename T>
 CHAI_INLINE
 void ArrayManager::set(T* pointer, size_t index, T& val)
 {
-  transferValue(pointer, val, index, HTOD);
+  transferValue(pointer, val, index, Direction::HostToDevice);
 }
 
 template<typename T>
@@ -337,7 +337,6 @@ void ArrayManager::modifyValue(T* pointer, size_t index, T val)
       err = cudaMemcpy(&temp, registered_ptr+index, sizeof(T), cudaMemcpyDeviceToHost); //device to host
       temp = temp + val;
       err = cudaMemcpy(registered_ptr+index, &temp, sizeof(T), cudaMemcpyHostToDevice); //host to device
-      //deviceModifyValue<T>(registered_ptr, index, val);
     }
     // else {} //TODO: How to fail
   } else {

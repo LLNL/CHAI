@@ -120,7 +120,23 @@ TEST(ManagedArray, Const) {
   });
 }
 
-#if defined(CHAI_ENABLE_PICK_SET_INCR_DECR)
+#if defined(CHAI_ENABLE_PICK)
+TEST(ManagedArray, PickHostFromHostConst) {
+  chai::ManagedArray<int> array(10);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  chai::ManagedArray<const int> array_const(array);
+
+  int temp;
+  array_const.pick(5, temp);
+  ASSERT_EQ(temp, 5);
+
+  array.free();
+}
+
 TEST(ManagedArray, PickHostFromHost) {
   chai::ManagedArray<int> array(10);
 
@@ -184,14 +200,17 @@ TEST(ManagedArray, IncrementDecrementOnHost) {
   arrayI.free();
   arrayD.free();
 }
+
 #endif
 
 
 #if defined(CHAI_ENABLE_CUDA)
-#if defined(CHAI_ENABLE_PICK_SET_INCR_DECR)
-CUDA_TEST(ManagedArray, PickandSetDeviceToDevice) {
-  chai::ManagedArray<int> array1(10);
-  chai::ManagedArray<int> array2(10);
+#if defined(CHAI_ENABLE_PICK)
+/*
+#if defined(CHAI_ENABLE_UM)
+CUDA_TEST(ManagedArray, PickandSetDeviceToDeviceUM) {
+  chai::ManagedArray<int> array1(10, chai::UM);
+  chai::ManagedArray<int> array2(10, chai::UM);
 
   forall(cuda(), 0, 10, [=] __device__ (int i) {
       array1[i] = i;
@@ -212,14 +231,126 @@ CUDA_TEST(ManagedArray, PickandSetDeviceToDevice) {
   array2.free();
 }
 
-CUDA_TEST(ManagedArray, PickHostFromDevice) {
+CUDA_TEST(ManagedArray, PickHostFromDeviceUM) {
+  chai::ManagedArray<int> array(10, chai::UM);
+
+  forall(cuda(), 0, 10, [=] __device__ (int i) {
+      array[i] = i;
+  });
+
+  int temp;
+  array.pick(5, temp);
+  ASSERT_EQ(temp, 5);
+
+  array.free();
+}
+
+CUDA_TEST(ManagedArray, PickReturnHostFromDeviceUM) {
+  chai::ManagedArray<int> array(10, chai::UM);
+
+  forall(cuda(), 0, 10, [=] __device__ (int i) {
+      array[i] = i;
+  });
+
+  int temp = array.pick(5);
+  ASSERT_EQ(temp, 5);
+
+  array.free();
+}
+
+CUDA_TEST(ManagedArray, SetHostToDeviceUM) {
   chai::ManagedArray<int> array(10);
 
   forall(cuda(), 0, 10, [=] __device__ (int i) {
       array[i] = i;
   });
 
-  cudaDeviceSynchronize();
+  int temp = 10;
+  array.set(5, temp);
+  array.pick(5, temp);
+  ASSERT_EQ(temp, 10);
+
+  array.free();
+}
+
+CUDA_TEST(ManagedArray, IncrementDecrementOnDeviceUM) {
+  chai::ManagedArray<int> arrayI(10, chai::UM);
+  chai::ManagedArray<int> arrayD(10, chai::UM);
+
+  forall(cuda(), 0, 10, [=] __device__ (int i) {
+      arrayI[i] = i;
+      arrayD[i] = i;
+  });
+
+  forall(cuda(), 0, 10, [=] __device__ (int i) {
+      arrayI.incr(i);
+      arrayD.decr(i);
+  });
+
+  forall(sequential(), 0, 10, [=] (int i) {
+    ASSERT_EQ(arrayI[i], i+1);
+    ASSERT_EQ(arrayD[i], i-1);
+  });
+
+  arrayI.free();
+  arrayD.free();
+}
+
+CUDA_TEST(ManagedArray, IncrementDecrementFromHostOnDeviceUM) {
+  chai::ManagedArray<int> array(10, chai::UM);
+
+  forall(cuda(), 0, 10, [=] __device__ (int i) {
+      array[i] = i;
+  });
+
+  array.incr(5);
+  array.decr(9);
+
+  int temp;
+  temp = array.pick(5);
+  ASSERT_EQ(temp, 6);
+
+  temp = array.pick(9);
+  ASSERT_EQ(temp, 8);
+
+  array.free();
+}
+#endif
+*/
+
+#if (!defined(CHAI_DISABLE_RM) || defined(CHAI_ENABLE_UM))
+CUDA_TEST(ManagedArray, PickandSetDeviceToDevice) {
+  chai::ManagedArray<int> array1(10);
+  chai::ManagedArray<int> array2(10);
+
+  forall(cuda(), 0, 10, [=] __device__ (int i) {
+      array1[i] = i;
+  });
+
+  chai::ManagedArray<const int> array_const(array1);
+
+  forall(cuda(), 0, 10, [=] __device__ (int i) {
+      int temp;
+      array1.pick(i, temp);
+      temp += array1.pick(i);
+      temp += array_const.pick(i);
+      array2.set(i, temp);
+  });
+
+  forall(sequential(), 0, 10, [=] (int i) {
+    ASSERT_EQ(array2[i], i+i+i);
+  });
+
+  array1.free();
+  array2.free();
+}
+
+CUDA_TEST(ManagedArray, PickHostFromDevice) {
+  chai::ManagedArray<int> array(10);
+
+  forall(cuda(), 0, 10, [=] __device__ (int i) {
+      array[i] = i;
+  });
 
   int temp;
   array.pick(5, temp);
@@ -234,8 +365,6 @@ CUDA_TEST(ManagedArray, PickReturnHostFromDevice) {
   forall(cuda(), 0, 10, [=] __device__ (int i) {
       array[i] = i;
   });
-
-  cudaDeviceSynchronize();
 
   int temp = array.pick(5);
   ASSERT_EQ(temp, 5);
@@ -272,8 +401,6 @@ CUDA_TEST(ManagedArray, IncrementDecrementOnDevice) {
       arrayD.decr(i);
   });
 
-  cudaDeviceSynchronize();
-
   forall(sequential(), 0, 10, [=] (int i) {
     ASSERT_EQ(arrayI[i], i+1);
     ASSERT_EQ(arrayD[i], i-1);
@@ -290,8 +417,6 @@ CUDA_TEST(ManagedArray, IncrementDecrementFromHostOnDevice) {
       array[i] = i;
   });
 
-  cudaDeviceSynchronize();
-
   array.incr(5);
   array.decr(9);
 
@@ -304,6 +429,7 @@ CUDA_TEST(ManagedArray, IncrementDecrementFromHostOnDevice) {
 
   array.free();
 }
+#endif
 #endif
 
 CUDA_TEST(ManagedArray, SetOnDevice) {

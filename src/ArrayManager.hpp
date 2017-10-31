@@ -50,14 +50,6 @@
 
 namespace chai {
 
-#if defined(CHAI_ENABLE_PICK_SET_INCR_DECR)
-#define DTOH 1
-#define HTOD 0
-
-#define __DTOH__(X) X == DTOH
-typedef int DIRECTION;
-#endif
-
 /*!
  * \brief Singleton that manages caching and movement of ManagedArray objects.
  *
@@ -180,32 +172,7 @@ class ArrayManager
    */
   void free(void* pointer);
 
-#if defined(CHAI_ENABLE_PICK_SET_INCR_DECR)
-  /*!
-   * \brief Increment a data value in the ManagedArray.
-   *
-   * \param pointer The current active pointer
-   * \param index The index of the element to be incremented 
-   * \param val The value of the increment (if < 0, the operation is a decrement) 
-   * \tparam T The type of data value in ManagedArray.
-   * 
-   */
-  template<typename T>
-  void modifyValue(T* pointer, size_t index, T val);
-
-  /*!
-   * \brief Transfer a single value to/from the ManagedArray.
-   *
-   * \param pointer The active pointer
-   * \param index The index of the element to be set 
-   * \param val Reference to the value
-   * \param tofrom Direction of data transfer (DTOH or HTOD)
-   * \tparam T The type of data value in ManagedArray.
-   * 
-   */
-  template<typename T>
-  void transferValue(T* pointer, T& val, size_t index, DIRECTION dir);
-
+#if defined(CHAI_ENABLE_PICK)
   /*!
    * \brief Pick a data value from the ManagedArray.
    *
@@ -219,7 +186,7 @@ class ArrayManager
    * 
    */
   template<typename T>
-  void pick(T* pointer, size_t index, T& val);
+  void pick(T* pointer, size_t index, typename std::remove_const<T>::type& val);
 
   /*!
    * \brief Set a data value in the ManagedArray.
@@ -278,6 +245,38 @@ class ArrayManager
   ArrayManager();
 
   private:
+#if defined(CHAI_ENABLE_PICK)
+  enum Direction {
+    HostToDevice,
+    DeviceToHost
+  };
+
+  /*!
+   * \brief Increment a data value in the ManagedArray.
+   *
+   * \param pointer The current active pointer
+   * \param index The index of the element to be incremented 
+   * \param val The value of the increment (if < 0, the operation is a decrement) 
+   * \tparam T The type of data value in ManagedArray.
+   * 
+   */
+  template<typename T>
+  void modifyValue(T* pointer, size_t index, T val);
+
+  /*!
+   * \brief Transfer a single value to/from the ManagedArray.
+   *
+   * \param pointer The active pointer
+   * \param index The index of the element to be set 
+   * \param val Reference to the value
+   * \param tofrom Direction of data transfer (DTOH or HTOD)
+   * \tparam T The type of data value in ManagedArray.
+   * 
+   */
+  template<typename T>
+  void transferValue(T* pointer, T& val, size_t index, Direction tofrom);
+#endif
+
 
   /*!
    * \brief Make a new allocation of the data described by the PointerRecord in

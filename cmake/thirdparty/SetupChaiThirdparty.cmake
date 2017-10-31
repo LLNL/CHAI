@@ -42,7 +42,6 @@
 #######################################################################
 
 message (STATUS "cnmem support is ${ENABLE_CNMEM}")
-message (STATUS "pick/set/incr/decr support is ${ENABLE_PICK_SET_INCR_DECR}")
 
 if (ENABLE_CNMEM)
   if (NOT ENABLE_CUDA)

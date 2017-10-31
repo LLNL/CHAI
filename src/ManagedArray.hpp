@@ -156,7 +156,7 @@ class ManagedArray {
    */
   CHAI_HOST_DEVICE T& operator[](const int i) const;
 
-#if defined(CHAI_ENABLE_PICK_SET_INCR_DECR)
+#if defined(CHAI_ENABLE_PICK)
   /*!
    * \brief Set val to the value of element i in the ManagedArray.
    *
@@ -164,7 +164,7 @@ class ManagedArray {
    * \param val Destination location of the value
    * \tparam T The type of data value in ManagedArray.
    */
-  CHAI_HOST_DEVICE void pick(size_t i, T& val) const; 
+  CHAI_HOST_DEVICE void pick(size_t i, typename std::remove_const<T>::type& val) const; 
 
   /*!
    * \brief Return the value of element i in the ManagedArray.
