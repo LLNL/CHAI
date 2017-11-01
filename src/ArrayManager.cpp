@@ -160,14 +160,22 @@ void ArrayManager::resetTouch(PointerRecord* pointer_record) {
 
 void ArrayManager::move(PointerRecord* record, ExecutionSpace space) 
 {
-
   umpire::ResourceManager& rm = umpire::ResourceManager::getInstance();
 
   if ( space == NONE ) {
     return;
   }
 
-  std::cout << "Last space: " << record->m_last_space << std::endl;
+#if defined(CHAI_ENABLE_UM)
+  if (record->m_last_space == UM) {
+    return;
+  }
+#endif
+
+  if (space == record->m_last_space) {
+    return;
+  }
+
   void* src_pointer = record->m_pointers[record->m_last_space];
   void* dst_pointer = record->m_pointers[space];
 
