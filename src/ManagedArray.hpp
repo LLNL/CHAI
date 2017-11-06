@@ -158,22 +158,13 @@ class ManagedArray {
 
 #if defined(CHAI_ENABLE_PICK)
   /*!
-   * \brief Set val to the value of element i in the ManagedArray.
-   *
-   * \param index The index of the element to be fetched
-   * \param val Destination location of the value
-   * \tparam T The type of data value in ManagedArray.
-   */
-  CHAI_HOST_DEVICE void pick(size_t i, T_non_const& val) const; 
-
-  /*!
    * \brief Return the value of element i in the ManagedArray.
    *
    * \param index The index of the element to be fetched
    * \return The value of the i-th element in the ManagedArray.
-   * \tparam T The type of data value in ManagedArray.
+   * \tparam T_non_const The (non-const) type of data value in ManagedArray.
    */
-  CHAI_HOST_DEVICE T pick(size_t i) const;
+  CHAI_HOST_DEVICE T_non_const pick(size_t i) const;
  
   /*!
    * \brief Set the value of element i in the ManagedArray to be val.
@@ -200,12 +191,6 @@ class ManagedArray {
    */
   CHAI_HOST_DEVICE void decr(size_t i) const;
 #endif
-
-  /*!
-   * \brief Set val to the value of element i in the ManagedArray.
-   *
-   */
-  // CHAI_HOST_DEVICE void pick(size_t i, T_non_const& val);
 
 #if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
   /*!

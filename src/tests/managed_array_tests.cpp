@@ -130,28 +130,13 @@ TEST(ManagedArray, PickHostFromHostConst) {
 
   chai::ManagedArray<const int> array_const(array);
 
-  int temp;
-  array_const.pick(5, temp);
+  int temp = array_const.pick(5);
   ASSERT_EQ(temp, 5);
 
   array.free();
 }
 
 TEST(ManagedArray, PickHostFromHost) {
-  chai::ManagedArray<int> array(10);
-
-  forall(sequential(), 0, 10, [=] (int i) {
-      array[i] = i;
-  });
-
-  int temp;
-  array.pick(5, temp);
-  ASSERT_EQ(temp, 5);
-
-  array.free();
-}
-
-TEST(ManagedArray, PickReturnHostFromHost) {
   chai::ManagedArray<int> array(10);
 
   forall(sequential(), 0, 10, [=] (int i) {
@@ -211,8 +196,7 @@ TEST(ManagedArray, PickHostFromHostConstUM) {
 
   chai::ManagedArray<const int> array_const(array);
 
-  int temp;
-  array_const.pick(5, temp);
+  int temp = array_const.pick(5);
   ASSERT_EQ(temp, 5);
 
   array.free();
@@ -220,20 +204,6 @@ TEST(ManagedArray, PickHostFromHostConstUM) {
 }
 
 TEST(ManagedArray, PickHostFromHostUM) {
-  chai::ManagedArray<int> array(10, chai::UM);
-
-  forall(sequential(), 0, 10, [=] (int i) {
-      array[i] = i;
-  });
-
-  int temp;
-  array.pick(5, temp);
-  ASSERT_EQ(temp, 5);
-
-  array.free();
-}
-
-TEST(ManagedArray, PickReturnHostFromHostUM) {
   chai::ManagedArray<int> array(10, chai::UM);
 
   forall(sequential(), 0, 10, [=] (int i) {
@@ -300,14 +270,12 @@ CUDA_TEST(ManagedArray, PickandSetDeviceToDeviceUM) {
   });
 
   forall(cuda(), 0, 10, [=] __device__ (int i) {
-      int temp;
-      array1.pick(i, temp);
-      temp += array1.pick(i);
+      int temp = array1.pick(i);
       array2.set(i, temp);
   });
 
   forall(sequential(), 0, 10, [=] (int i) {
-    ASSERT_EQ(array2[i], i+i);
+    ASSERT_EQ(array2[i], i);
   });
 
   array1.free();
@@ -321,24 +289,26 @@ CUDA_TEST(ManagedArray, PickHostFromDeviceUM) {
       array[i] = i;
   });
 
-  int temp;
-  array.pick(5, temp);
+  int temp = array.pick(5);
   ASSERT_EQ(temp, 5);
 
   array.free();
 }
 
-CUDA_TEST(ManagedArray, PickReturnHostFromDeviceUM) {
+CUDA_TEST(ManagedArray, PickHostFromDeviceConstUM) {
   chai::ManagedArray<int> array(10, chai::UM);
 
   forall(cuda(), 0, 10, [=] __device__ (int i) {
       array[i] = i;
   });
 
-  int temp = array.pick(5);
+  chai::ManagedArray<const int> array_const(array);
+
+  int temp = array_const.pick(5);
   ASSERT_EQ(temp, 5);
 
   array.free();
+  //array_const.free();
 }
 
 CUDA_TEST(ManagedArray, SetHostToDeviceUM) {
@@ -350,7 +320,7 @@ CUDA_TEST(ManagedArray, SetHostToDeviceUM) {
 
   int temp = 10;
   array.set(5, temp);
-  array.pick(5, temp);
+  temp = array.pick(5);
   ASSERT_EQ(temp, 10);
 
   array.free();
@@ -413,15 +383,13 @@ CUDA_TEST(ManagedArray, PickandSetDeviceToDevice) {
   chai::ManagedArray<const int> array_const(array1);
 
   forall(cuda(), 0, 10, [=] __device__ (int i) {
-      int temp;
-      array1.pick(i, temp);
-      temp += array1.pick(i);
+      int temp = array1.pick(i);
       temp += array_const.pick(i);
       array2.set(i, temp);
   });
 
   forall(sequential(), 0, 10, [=] (int i) {
-    ASSERT_EQ(array2[i], i+i+i);
+    ASSERT_EQ(array2[i], i+i);
   });
 
   array1.free();
@@ -435,24 +403,30 @@ CUDA_TEST(ManagedArray, PickHostFromDevice) {
       array[i] = i;
   });
 
-  int temp;
-  array.pick(5, temp);
+  int temp = array.pick(5);
   ASSERT_EQ(temp, 5);
 
   array.free();
 }
 
-CUDA_TEST(ManagedArray, PickReturnHostFromDevice) {
+CUDA_TEST(ManagedArray, PickHostFromDeviceConst) {
   chai::ManagedArray<int> array(10);
 
   forall(cuda(), 0, 10, [=] __device__ (int i) {
       array[i] = i;
   });
 
-  int temp = array.pick(5);
+  chai::ManagedArray<const int> array_const(array);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+    ASSERT_EQ(array_const[i], i);
+  });
+
+  int temp = array_const.pick(5);
   ASSERT_EQ(temp, 5);
 
   array.free();
+  //array_const.free();
 }
 
 CUDA_TEST(ManagedArray, SetHostToDevice) {
@@ -464,7 +438,7 @@ CUDA_TEST(ManagedArray, SetHostToDevice) {
 
   int temp = 10;
   array.set(5, temp);
-  array.pick(5, temp);
+  temp = array.pick(5);
   ASSERT_EQ(temp, 10);
 
   array.free();

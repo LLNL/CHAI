@@ -325,7 +325,7 @@ void ArrayManager::transferValue(T* pointer, T& val, size_t index, Direction tof
 
 template<typename T>
 CHAI_INLINE
-void ArrayManager::pick(T* pointer, size_t index, T_non_const<T>& val)
+typename ArrayManager::T_non_const<T> ArrayManager::pick(T* pointer, size_t index)
 {
 #if defined(CHAI_ENABLE_UM)
   if (std::is_const<T>::value) {
@@ -333,10 +333,12 @@ void ArrayManager::pick(T* pointer, size_t index, T_non_const<T>& val)
     if (pointer_record->m_pointers[UM]) {
       cudaDeviceSynchronize();
     }
-    val = pointer[index];
+    return (T_non_const<T>) (pointer[index]);
   } else {
 #endif
+    T_non_const<T> val;
     transferValue((T_non_const<T>*)pointer, val, index, Direction::DeviceToHost);
+    return val;
 #if defined(CHAI_ENABLE_UM)
   }
 #endif

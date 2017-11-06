@@ -184,12 +184,11 @@ class ArrayManager
    *
    * \param pointer The active pointer
    * \param index The index of the element to be fetched
-   * \param val Destination location of the picked value
    * \tparam T The type of data value in ManagedArray.
    * 
    */
   template<typename T>
-  void pick(T* pointer, size_t index, T_non_const<T>& val);
+  T_non_const<T> pick(T* pointer, size_t index);
 
   /*!
    * \brief Set a data value in the ManagedArray.
