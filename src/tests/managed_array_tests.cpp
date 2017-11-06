@@ -201,12 +201,95 @@ TEST(ManagedArray, IncrementDecrementOnHost) {
   arrayD.free();
 }
 
+#if defined(CHAI_ENABLE_UM)
+TEST(ManagedArray, PickHostFromHostConstUM) {
+  chai::ManagedArray<int> array(10, chai::UM);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  chai::ManagedArray<const int> array_const(array);
+
+  int temp;
+  array_const.pick(5, temp);
+  ASSERT_EQ(temp, 5);
+
+  array.free();
+  //array_const.free();
+}
+
+TEST(ManagedArray, PickHostFromHostUM) {
+  chai::ManagedArray<int> array(10, chai::UM);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  int temp;
+  array.pick(5, temp);
+  ASSERT_EQ(temp, 5);
+
+  array.free();
+}
+
+TEST(ManagedArray, PickReturnHostFromHostUM) {
+  chai::ManagedArray<int> array(10, chai::UM);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  int temp = array.pick(5);
+  ASSERT_EQ(temp, 5);
+
+  array.free();
+}
+
+TEST(ManagedArray, SetHostToHostUM) {
+  chai::ManagedArray<int> array(10, chai::UM);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  int temp = 10;
+  array.set(5, temp);
+  ASSERT_EQ(array[5], 10);
+
+  array.free();
+}
+
+TEST(ManagedArray, IncrementDecrementOnHostUM) {
+  chai::ManagedArray<int> arrayI(10, chai::UM);
+  chai::ManagedArray<int> arrayD(10, chai::UM);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      arrayI[i] = i;
+      arrayD[i] = i;
+  });
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      arrayI.incr(i);
+      arrayD.decr(i);
+  });
+
+  forall(sequential(), 0, 10, [=] (int i) {
+    ASSERT_EQ(arrayI[i], i+1);
+    ASSERT_EQ(arrayD[i], i-1);
+  });
+
+  arrayI.free();
+  arrayD.free();
+}
+#endif
+
 #endif
 
 
 #if defined(CHAI_ENABLE_CUDA)
 #if defined(CHAI_ENABLE_PICK)
-/*
+
 #if defined(CHAI_ENABLE_UM)
 CUDA_TEST(ManagedArray, PickandSetDeviceToDeviceUM) {
   chai::ManagedArray<int> array1(10, chai::UM);
@@ -316,9 +399,9 @@ CUDA_TEST(ManagedArray, IncrementDecrementFromHostOnDeviceUM) {
   array.free();
 }
 #endif
-*/
 
-#if (!defined(CHAI_DISABLE_RM) || defined(CHAI_ENABLE_UM))
+
+#if (!defined(CHAI_DISABLE_RM))
 CUDA_TEST(ManagedArray, PickandSetDeviceToDevice) {
   chai::ManagedArray<int> array1(10);
   chai::ManagedArray<int> array2(10);

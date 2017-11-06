@@ -129,6 +129,13 @@ void* ArrayManager::move(void* pointer) {
   auto pointer_record = getPointerRecord(pointer);
   move(pointer_record, m_current_execution_space);
 
+#if defined(CHAI_ENABLE_UM)
+    if (pointer_record->m_pointers[UM]) {
+      cudaDeviceSynchronize();
+      return pointer_record->m_pointers[UM];
+    }
+#endif
+
   return pointer_record->m_pointers[m_current_execution_space];
 }
 

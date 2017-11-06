@@ -172,13 +172,9 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE void ManagedArray<T>::pick(size_t i, T_non_const& val) const { 
   #if !defined(__CUDA_ARCH__)
-     if (!std::is_const<T>::value) {
-       m_resource_manager->pick(m_active_pointer, i, val);
-     } else {
-  #endif
+     m_resource_manager->pick(m_active_pointer, i, val);
+  #else
      val = m_active_pointer[i]; 
-  #if !defined(__CUDA_ARCH__)
-    }
   #endif
 }
 
