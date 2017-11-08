@@ -30,6 +30,6 @@ if [[ "$BUILD_RAJA" == "yes" ]] ; then
   or_die cd RAJA
   or_di mkdir build
   or_die cd build
-  or_die cmake -DCMAKE_CXX_COMPILER="${COMPILER}" ${CMAKE_EXTRA_FLAGS} -Dchai_DIR=${TRAVIS_BUILD_DIR}/travis-install ../
+  or_die cmake -DCMAKE_CXX_COMPILER="${COMPILER}" ${CMAKE_EXTRA_FLAGS} -DENABLE_CHAI=On -Dchai_DIR=${TRAVIS_BUILD_DIR}/travis-install ../
   or_die make -j 3 VERBOSE=2
 exit 0
