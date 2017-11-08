@@ -107,9 +107,7 @@ install(
   FILES ${PROJECT_BINARY_DIR}/share/chai/cmake/chai-config.cmake
   DESTINATION share/chai/cmake/)
 
-install(
-  FILES ${PROJECT_BINARY_DIR}/include/chai/config.hpp
-  DESTINATION include/chai)
+install(DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION .)
 
 install(
   TARGETS chai
