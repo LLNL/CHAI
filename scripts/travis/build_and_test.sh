@@ -19,6 +19,7 @@ cd travis-build
 if [[ "$DO_BUILD" == "yes" ]] ; then
     or_die cmake -DCMAKE_CXX_COMPILER="${COMPILER}" ${CMAKE_EXTRA_FLAGS} -DCMAKE_INSTALL_PREFIX=../travis-install/ ../
     or_die make -j 3 VERBOSE=1
+    or_die make install
     if [[ "${DO_TEST}" == "yes" ]] ; then
         or_die ctest -V
     fi
