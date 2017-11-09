@@ -17,9 +17,9 @@ or_die mkdir travis-install
 cd travis-build
 
 if [[ "$DO_BUILD" == "yes" ]] ; then
-    or_die cmake -DCMAKE_CXX_COMPILER="${COMPILER}" ${CMAKE_EXTRA_FLAGS} -DCMAKE_INSTALL_PREFIX=../travis-install/ ../
+    or_die cmake -DCMAKE_CXX_COMPILER="${COMPILER}" ${CMAKE_EXTRA_FLAGS} -DCMAKE_INSTALL_PREFIX=${TRAVIS_BUILD_DIR}/travis-install/ ../
     or_die make -j 3 VERBOSE=1
-    or_die make install
+    or_die make VERBOSE=1 install
     if [[ "${DO_TEST}" == "yes" ]] ; then
         or_die ctest -V
     fi
@@ -31,7 +31,7 @@ if [[ "$BUILD_RAJA" == "yes" ]] ; then
   or_die cd RAJA
   or_die mkdir build
   or_die cd build
-  or_die cmake -DCMAKE_CXX_COMPILER="${COMPILER}" ${CMAKE_EXTRA_FLAGS} -DENABLE_CHAI=On -Dchai_DIR=${TRAVIS_BUILD_DIR}/travis-install ../
+  or_die cmake -DCMAKE_CXX_COMPILER="${COMPILER}" ${CMAKE_EXTRA_FLAGS} -DENABLE_CHAI=On -Dchai_DIR=${TRAVIS_BUILD_DIR}/travis-install/share/chai/cmake ../
   or_die make -j 3 VERBOSE=2
 fi
 
