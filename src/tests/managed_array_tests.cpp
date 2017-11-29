@@ -233,17 +233,6 @@ TEST(ManagedArray, NullpointerConversions) {
   ASSERT_EQ(c.size(), 0);
 }
 
-#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
-TEST(ManagedArray, ImplicitConversions) {
-  chai::ManagedArray<float> a(10);
-  float * raw_a = a;
-
-  chai::ManagedArray<float> a2 = a;
-
-  SUCCEED();
-}
-#endif
-
 TEST(ManagedArray, PodTest) {
   chai::ManagedArray<my_point> array(1);
 
