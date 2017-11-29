@@ -180,6 +180,8 @@ class ArrayManager
    */
   size_t getSize(void* pointer);
 
+  void* makeManaged(void* pointer, size_t size, ExecutionSpace space, bool owned);
+
   protected:
 
   /*!
@@ -233,8 +235,6 @@ class ArrayManager
    */
   void move(PointerRecord* record, ExecutionSpace space);
 
-  template<typename T>
-  void* makeManaged(T* pointer, ExecutionSpace space, uint m_elems, bool owned);
   /*!
    * \brief Find the PointerRecord corresponding to the raw pointer.
    *

@@ -212,7 +212,6 @@ class ManagedArray {
   uint m_elems;
 };
 
-
 /*!
  * \brief Construct a ManagedArray from an externally allocated pointer.
  *
@@ -230,15 +229,16 @@ class ManagedArray {
  * \return A new ManagedArray containing the raw data pointer.
  */
 template <typename T>
-ManagedArray<T> makeManagedArray(
+ManagedArray<T> 
+makeManagedArray(
     T* data, 
     uint elems, 
-    ExecutionSpace space, 
+    ExecutionSpace space,
     bool owned)
 {
   ArrayManager* manager = ArrayManager::getInstance();
 
-  T* managed_data = static_cast<T*>(manager->makeManaged(data, elems, space, owned));
+  T* managed_data = static_cast<T*>(manager->makeManaged(data, sizeof(T)*elems, space, owned));
 
   return ManagedArray<T>(managed_data);
 }

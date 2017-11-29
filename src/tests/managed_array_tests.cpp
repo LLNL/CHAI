@@ -281,7 +281,7 @@ TEST(ManagedArray, ExternalConstructorUnowned) {
     data[i] = 1.0f*i;
   }
 
-  ManagedArray<float> array = chai::makeManagedArray<float>(data, 100, chai::CPU, false);
+  chai::ManagedArray<float> array = chai::makeManagedArray<float>(data, 100, chai::CPU, false);
 
   forall(sequential(), 0, 20, [=] (int i) {
     ASSERT_EQ(data[i], array[i]);
@@ -289,17 +289,17 @@ TEST(ManagedArray, ExternalConstructorUnowned) {
 
   array.free();
 
-  ASSERT_NEQ(nullptr, data);
+  ASSERT_NE(nullptr, data);
 }
 
 TEST(ManagedArray, ExternalConstructorOwned) {
-  float* data = new float[100];
+  float* data = new float[20];
 
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 20; i++) {
     data[i] = 1.0f*i;
   }
 
-  ManagedArray<float> array = chai::makeManagedArray<float>(data, 100, chai::CPU, true);
+  chai::ManagedArray<float> array = chai::makeManagedArray<float>(data, 20, chai::CPU, true);
 
   forall(sequential(), 0, 20, [=] (int i) {
     ASSERT_EQ(data[i], array[i]);
@@ -307,5 +307,5 @@ TEST(ManagedArray, ExternalConstructorOwned) {
 
   array.free();
 
-  ASSERT_EQ(nullptr, data);
+  std::cout << data[10] << std::endl;
 }

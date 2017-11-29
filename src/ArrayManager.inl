@@ -119,11 +119,10 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   resetTouch(record);
 }
 
-template<typename T>
 CHAI_INLINE
-void* makeManaged(T* pointer, ExecutionSpace space, uint m_elems, bool owned)
+void* ArrayManager::makeManaged(void* pointer, size_t size, ExecutionSpace space, bool owned)
 {
-  registerPointer(pointer, sizeof(T) * m_elems, space, owned);
+  registerPointer(pointer, size, space, owned);
   
   auto pointer_record = getPointerRecord(pointer);
   for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
@@ -131,9 +130,9 @@ void* makeManaged(T* pointer, ExecutionSpace space, uint m_elems, bool owned)
     if(pointer_record->m_touched[i] == true) return pointer_record->m_pointers[i];
   }
 
-  if (!std::is_const<T>::value) {
-    pointer_record->m_touched[space] = true;
-  }
+//  if (!std::is_const<T>::value) {
+//    pointer_record->m_touched[space] = true;
+//  }
 
   return pointer;
 }

@@ -107,19 +107,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ExecutionSpace space, uint m_elems, bool owned):
-  m_active_pointer(data),
-  m_resource_manager(nullptr),
-  m_elems(m_elems)
-{
-#if !defined(__CUDA_ARCH__)
-  m_resource_manager = ArrayManager::getInstance();
-  m_active_pointer = static_cast<T*>(m_resource_manager->makeManaged(data, m_elems, space, owned));
-#endif
-}
-
-template<typename T>
-CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_manager, uint elems) :
   m_active_pointer(data), 
   m_resource_manager(array_manager),
