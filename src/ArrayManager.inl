@@ -185,8 +185,9 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
 #endif
 
   for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
-    //NOTE: If the pointer is not owned on any execution space, we CANNOT reallocate!!!
-    if(!pointer_record->m_owned[i]) return pointer_record->m_pointers[space];
+    if(!pointer_record->m_owned[i]) 
+      CHAI_LOG("ArrayManager", "Cannot reallocate unowned pointer");
+      return pointer_record->m_pointers[space];
   }
 
   if (pointer_record->m_pointers[CPU]) {
