@@ -156,19 +156,6 @@ class ManagedArray {
    */
   CHAI_HOST_DEVICE T& operator[](const int i) const;
 
-  CHAI_HOST_DEVICE ManagedArray(T* data, ExecutionSpace space, uint m_elems, bool owned);
-  /*!
-   * \brief Create a ManagedArray from a raw pointer
-   *
-   * \param dataVec Vector of raw pointers; null if not mapped in a given execution space
-   * \param m_elems Number of elements
-   * \param owned Vector of owned flag (one per execution space); true means CHAI can free memory in that space
-   * \param space Execution space where data is valid; defaults to CPU
-   *
-   * \tparam T The type of elements stored in the ManagedArray.
-   */
-  //CHAI_HOST ManagedArray(std::vector<T*> dataVec, uint m_elems, std::vector<bool> owned);
-
   /*!
    * \brief Set val to the value of element i in the ManagedArray.
    *
@@ -224,6 +211,37 @@ class ManagedArray {
    */
   uint m_elems;
 };
+
+
+/*!
+ * \brief Construct a ManagedArray from an externally allocated pointer.
+ *
+ * The pointer can exist in any valid ExecutionSpace, and can either be "owned"
+ * or "unowned". An owned pointer will be deallocated by the ArrayManager when
+ * free is called on the returned ManagedArray object.
+ *
+ * \param data Pointer to the raw data.
+ * \param elems Number of elements in the data pointer.
+ * \param space ExecutionSpace where the data pointer exists.
+ * \param owned If true, data will be deallocated by the ArrayManager.
+ *
+ * \tparam T Type of the raw data.
+ *
+ * \return A new ManagedArray containing the raw data pointer.
+ */
+template <typename T>
+ManagedArray<T> makeManagedArray(
+    T* data, 
+    uint elems, 
+    ExecutionSpace space, 
+    bool owned)
+{
+  ArrayManager* manager = ArrayManager::getInstance();
+
+  T* managed_data = static_cast<T*>(manager->makeManaged(data, elems, space, owned));
+
+  return ManagedArray<T>(managed_data);
+}
 
 } // end of namespace chai
 

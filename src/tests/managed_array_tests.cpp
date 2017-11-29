@@ -272,5 +272,40 @@ CUDA_TEST(ManagedArray, PodTestGPU) {
     ASSERT_EQ(array[i].y, i*2.0);
   });
 }
-
 #endif
+
+TEST(ManagedArray, ExternalConstructorUnowned) {
+  float* data = new float[100];
+
+  for (int i = 0; i < 100; i++) {
+    data[i] = 1.0f*i;
+  }
+
+  ManagedArray<float> array = chai::makeManagedArray<float>(data, 100, chai::CPU, false);
+
+  forall(sequential(), 0, 20, [=] (int i) {
+    ASSERT_EQ(data[i], array[i]);
+  });
+
+  array.free();
+
+  ASSERT_NEQ(nullptr, data);
+}
+
+TEST(ManagedArray, ExternalConstructorOwned) {
+  float* data = new float[100];
+
+  for (int i = 0; i < 100; i++) {
+    data[i] = 1.0f*i;
+  }
+
+  ManagedArray<float> array = chai::makeManagedArray<float>(data, 100, chai::CPU, true);
+
+  forall(sequential(), 0, 20, [=] (int i) {
+    ASSERT_EQ(data[i], array[i]);
+  });
+
+  array.free();
+
+  ASSERT_EQ(nullptr, data);
+}
