@@ -82,6 +82,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   if (space == GPU) {
 #if defined(CHAI_ENABLE_UM)
     if (record->m_pointers[UM]) {
+      cudaDeviceSynchronize();
       cudaMemPrefetchAsync(record->m_pointers[UM], record->m_size, 0);
     } else {
 #endif
@@ -268,6 +269,7 @@ void ArrayManager::free(void* pointer)
 
 #if defined(CHAI_ENABLE_UM)
   if (pointer_record->m_pointers[UM]) {
+    cudaDeviceSynchronize();
     void* um_ptr = pointer_record->m_pointers[UM];
     m_pointer_map.erase(um_ptr);
     cudaFree(um_ptr);
@@ -279,6 +281,132 @@ void ArrayManager::free(void* pointer)
   delete pointer_record;
 }
 
+#if defined(CHAI_ENABLE_PICK)
+template<typename T>
+CHAI_INLINE
+void ArrayManager::transferValue(T* pointer, T& val, size_t index, Direction tofrom)
+{
+#if defined(CHAI_ENABLE_CUDA)
+  auto pointer_record = getPointerRecord(pointer);
+  // if active on non-HOST execution space (GPU)
+  //TODO: Extend this to n arbitrary execution spaces
+  if(pointer_record->m_touched[GPU]) {
+    T* registered_ptr = nullptr;
+#if defined(CHAI_ENABLE_UM)
+    if (pointer_record->m_pointers[UM]) {
+      cudaDeviceSynchronize();
+      registered_ptr = (T*)(pointer_record->m_pointers[UM]);
+    } else {
+#endif
+    //FIXME: "pointer" should work just fine since it is THE active pointer
+    registered_ptr = (T*)(pointer_record->m_pointers[GPU]);
+#if defined(CHAI_ENABLE_UM)
+    }
+#endif
+    if(index*sizeof(T) < pointer_record->m_size) {
+      cudaError_t err;
+      if(tofrom == Direction::DeviceToHost) err = cudaMemcpy(&val, registered_ptr+index, sizeof(T), cudaMemcpyDeviceToHost); //device to host
+      else err = cudaMemcpy(registered_ptr+index, &val, sizeof(T), cudaMemcpyHostToDevice); //host to device
+    }
+    // else {} //TODO: How to fail
+  } else {
+#endif
+#if defined(CHAI_ENABLE_UM)
+    if (pointer_record->m_pointers[UM]) {
+      cudaDeviceSynchronize();
+    }
+#endif
+    if(tofrom == Direction::DeviceToHost) val = pointer[index]; //device to host
+    else pointer[index] = val; //host to device
+#if defined(CHAI_ENABLE_CUDA)
+  }
+#endif
+}
+
+template<typename T>
+CHAI_INLINE
+typename ArrayManager::T_non_const<T> ArrayManager::pick(T* pointer, size_t index)
+{
+#if defined(CHAI_ENABLE_UM)
+  if (std::is_const<T>::value) {
+    auto pointer_record = getPointerRecord((T_non_const<T>*)pointer);
+    if (pointer_record->m_pointers[UM]) {
+      cudaDeviceSynchronize();
+    }
+    return (T_non_const<T>) (pointer[index]);
+  } else {
+#endif
+    T_non_const<T> val;
+    transferValue((T_non_const<T>*)pointer, val, index, Direction::DeviceToHost);
+    return val;
+#if defined(CHAI_ENABLE_UM)
+  }
+#endif
+}
+
+template<typename T>
+CHAI_INLINE
+void ArrayManager::set(T* pointer, size_t index, T& val)
+{
+  transferValue(pointer, val, index, Direction::HostToDevice);
+}
+
+template<typename T>
+CHAI_INLINE
+void ArrayManager::modifyValue(T* pointer, size_t index, T val)
+{
+#if defined(CHAI_ENABLE_CUDA)
+  auto pointer_record = getPointerRecord(pointer);
+  // if active on non-HOST execution space (GPU)
+  //TODO: Extend this to n arbitrary execution spaces
+  if(pointer_record->m_touched[GPU]) {
+    //FIXME: pointer should work just fine since it is THE active pointer
+    T* registered_ptr = nullptr;
+#if defined(CHAI_ENABLE_UM)
+    if (pointer_record->m_pointers[UM]) {
+      cudaDeviceSynchronize();
+      registered_ptr = (T*)(pointer_record->m_pointers[UM]);
+    } else {
+#endif
+      registered_ptr = (T*)(pointer_record->m_pointers[GPU]);
+#if defined(CHAI_ENABLE_UM)
+    }
+#endif
+    if(index*sizeof(T) < pointer_record->m_size) {
+      T temp;
+      cudaError_t err;
+      err = cudaMemcpy(&temp, registered_ptr+index, sizeof(T), cudaMemcpyDeviceToHost); //device to host
+      temp = temp + val;
+      err = cudaMemcpy(registered_ptr+index, &temp, sizeof(T), cudaMemcpyHostToDevice); //host to device
+    }
+    // else {} //TODO: How to fail
+  } else {
+#endif
+#if defined(CHAI_ENABLE_UM)
+    if (pointer_record->m_pointers[UM]) {
+      cudaDeviceSynchronize();
+    }
+#endif
+    pointer[index] = pointer[index] + val;
+#if defined(CHAI_ENABLE_CUDA)
+  }
+#endif
+}
+
+template<typename T>
+CHAI_INLINE
+void ArrayManager::incr(T* pointer, size_t index)
+{
+  modifyValue(pointer, index, (T)1);
+}
+
+template<typename T>
+CHAI_INLINE
+void ArrayManager::decr(T* pointer, size_t index)
+{
+  modifyValue(pointer, index, (T)-1);
+}
+#endif
 
 CHAI_INLINE
 size_t ArrayManager::getSize(void* ptr)

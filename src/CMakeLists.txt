@@ -42,6 +42,7 @@
 #######################################################################
 
 set(CHAI_ENABLE_CNMEM ${ENABLE_CNMEM})
+set(CHAI_ENABLE_PICK ${ENABLE_PICK})
 set(CHAI_ENABLE_CUDA ${ENABLE_CUDA})
 set(CHAI_ENABLE_IMPLICIT_CONVERSIONS ${ENABLE_IMPLICIT_CONVERSIONS})
 set(CHAI_DISABLE_RM ${DISABLE_RM})

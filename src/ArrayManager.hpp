@@ -73,6 +73,9 @@ class ArrayManager
 {
   public:
 
+  template <typename T>
+  using T_non_const = typename std::remove_const<T>::type;
+
   static PointerRecord s_null_record;
 
   /*!
@@ -172,6 +175,59 @@ class ArrayManager
    */
   void free(void* pointer);
 
+#if defined(CHAI_ENABLE_PICK)
+  /*!
+   * \brief Pick a data value from the ManagedArray.
+   *
+   * The data value is picked from the current active space 
+   * into the host memory
+   *
+   * \param pointer The active pointer
+   * \param index The index of the element to be fetched
+   * \tparam T The type of data value in ManagedArray.
+   * 
+   */
+  template<typename T>
+  T_non_const<T> pick(T* pointer, size_t index);
+
+  /*!
+   * \brief Set a data value in the ManagedArray.
+   *
+   * The data value in the ManagedArray is set from
+   * the host memory to current active space
+   *
+   * \param pointer The current active pointer
+   * \param index The index of the element to be set 
+   * \param val Source location of the value
+   * \tparam T The type of data value in ManagedArray.
+   * 
+   */
+  template<typename T>
+  void set(T* pointer, size_t index, T& val);
+
+  /*!
+   * \brief Increment a data value in the ManagedArray.
+   *
+   * \param pointer The current active pointer
+   * \param index The index of the element to be incremented 
+   * \tparam T The type of data value in ManagedArray.
+   * 
+   */
+  template<typename T>
+  void incr(T* pointer, size_t index);
+
+  /*!
+   * \brief Decrement a data value in the ManagedArray.
+   *
+   * \param pointer The current active pointer
+   * \param index The index of the element to be decremented 
+   * \tparam T The type of data value in ManagedArray.
+   * 
+   */
+  template<typename T>
+  void decr(T* pointer, size_t index);
+#endif
+
   /*!
    * \brief Get the size of the given pointer.
    *
@@ -191,6 +247,38 @@ class ArrayManager
   ArrayManager();
 
   private:
+#if defined(CHAI_ENABLE_PICK)
+  enum Direction {
+    HostToDevice,
+    DeviceToHost
+  };
+
+  /*!
+   * \brief Increment a data value in the ManagedArray.
+   *
+   * \param pointer The current active pointer
+   * \param index The index of the element to be incremented 
+   * \param val The value of the increment (if < 0, the operation is a decrement) 
+   * \tparam T The type of data value in ManagedArray.
+   * 
+   */
+  template<typename T>
+  void modifyValue(T* pointer, size_t index, T val);
+
+  /*!
+   * \brief Transfer a single value to/from the ManagedArray.
+   *
+   * \param pointer The active pointer
+   * \param index The index of the element to be set 
+   * \param val Reference to the value
+   * \param tofrom Direction of data transfer (DTOH or HTOD)
+   * \tparam T The type of data value in ManagedArray.
+   * 
+   */
+  template<typename T>
+  void transferValue(T* pointer, T& val, size_t index, Direction tofrom);
+#endif
+
 
   /*!
    * \brief Make a new allocation of the data described by the PointerRecord in

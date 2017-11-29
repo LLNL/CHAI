@@ -44,6 +44,7 @@
 #define CHAI_config_HPP
 
 #cmakedefine CHAI_ENABLE_CNMEM
+#cmakedefine CHAI_ENABLE_PICK
 #cmakedefine CHAI_ENABLE_CUDA 
 #cmakedefine CHAI_ENABLE_IMPLICIT_CONVERSIONS
 #cmakedefine CHAI_DISABLE_RM
