@@ -130,10 +130,6 @@ void* ArrayManager::makeManaged(void* pointer, size_t size, ExecutionSpace space
     if(pointer_record->m_touched[i] == true) return pointer_record->m_pointers[i];
   }
 
-//  if (!std::is_const<T>::value) {
-//    pointer_record->m_touched[space] = true;
-//  }
-
   return pointer;
 }
 
@@ -185,9 +181,10 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
 #endif
 
   for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
-    if(!pointer_record->m_owned[i]) 
+    if(!pointer_record->m_owned[i]) {
       CHAI_LOG("ArrayManager", "Cannot reallocate unowned pointer");
       return pointer_record->m_pointers[space];
+    }
   }
 
   if (pointer_record->m_pointers[CPU]) {

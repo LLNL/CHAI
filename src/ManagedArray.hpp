@@ -240,6 +240,10 @@ makeManagedArray(
 
   T* managed_data = static_cast<T*>(manager->makeManaged(data, sizeof(T)*elems, space, owned));
 
+  if (!std::is_const<T>::value) {
+    manager->registerTouch(managed_data, space);
+  }
+
   return ManagedArray<T>(managed_data);
 }
 
