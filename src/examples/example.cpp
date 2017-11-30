@@ -89,23 +89,6 @@ int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv)) {
       v2[i] *= 2.0f;
   });
 
-  std::cout << "Casting v2 to a pointer." << std::endl;
-  float * raw_v2 = v2;
-
-  std::cout << "raw_v2 = [";
-  for (int i = 0; i < 10; i++ ) {
-      std::cout << " " << raw_v2[i];
-  }
-  std::cout << " ]" << std::endl;
-
-  std::cout << "Casting device_array to a pointer." << std::endl;
-  int* raw_device_array = device_array;
-  std::cout  << "device_array = [";
-  for (int i = 0; i < 10; i++ ) {
-      std::cout << " " << device_array[i];
-  }
-  std::cout << " ]" << std::endl;
-
   v1.free();
   v2.free();
   device_array.free();

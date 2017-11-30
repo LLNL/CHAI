@@ -167,47 +167,6 @@ CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const int i) const {
   return m_active_pointer[i];
 }
 
-// template<typename T>
-// CHAI_INLINE
-// CHAI_HOST_DEVICE T& ManagedArray<T>::pick(size_t i, T_non_const& val) {
-// #ifdef __CUDA_ARCH__
-//           val = m_active_ptr[i]; 
-// #else
-// #endif
-// 
-// }
-
-
-
-#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
-#if !defined(__CUDA_ARCH__)
-  m_resource_manager->setExecutionSpace(CPU);
-
-  m_active_pointer = static_cast<T*>(m_resource_manager->move(m_active_pointer));
-
-  m_resource_manager->registerTouch(m_active_pointer);
-
-  return m_active_pointer;
-#else
-  return m_active_pointer;
-#endif
-}
-
-
-template<typename T>
-template<bool Q>
-CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool test) :
-  m_active_pointer(data),
-  m_resource_manager(ArrayManager::getInstance()),
-  m_elems(m_resource_manager->getSize(m_active_pointer))
-{
-}
-#endif
-
 template<typename T>
 template<bool B,typename std::enable_if<!B, int>::type>
 CHAI_INLINE

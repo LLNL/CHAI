@@ -157,32 +157,6 @@ class ManagedArray {
   CHAI_HOST_DEVICE T& operator[](const int i) const;
 
   /*!
-   * \brief Set val to the value of element i in the ManagedArray.
-   *
-   */
-  // CHAI_HOST_DEVICE void pick(size_t i, T_non_const& val);
-
-#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
-  /*!
-   * \brief Cast the ManagedArray to a raw pointer.
-   *
-   * \return Raw pointer to data.
-   */
-  CHAI_HOST_DEVICE operator T*() const;
-
-  /*!
-   * \brief Construct a ManagedArray from a raw pointer.
-   *
-   * This raw pointer *must* have taken from an existing ManagedArray object.
-   *
-   * \param data Raw pointer to data.
-   * \param enable Boolean argument (unused) added to differentiate constructor.
-   */
-  template<bool Q=0>
-  CHAI_HOST_DEVICE ManagedArray(T* data, bool test=Q);
-#endif
-
-  /*!
    * \brief 
    *
    */
