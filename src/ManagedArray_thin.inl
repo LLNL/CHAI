@@ -163,12 +163,6 @@ CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const int i) const {
 }
 
 template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
-  return m_active_pointer;
-}
-
-template<typename T>
 template<bool B,typename std::enable_if<!B, int>::type>
 CHAI_INLINE
 CHAI_HOST_DEVICE
