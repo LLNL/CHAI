@@ -119,6 +119,20 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   resetTouch(record);
 }
 
+CHAI_INLINE
+void* ArrayManager::makeManaged(void* pointer, size_t size, ExecutionSpace space, bool owned)
+{
+  registerPointer(pointer, size, space, owned);
+  
+  auto pointer_record = getPointerRecord(pointer);
+  for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
+    // If pointer is already active on some execution space, return that pointer
+    if(pointer_record->m_touched[i] == true) return pointer_record->m_pointers[i];
+  }
+
+  return pointer;
+}
+
 template<typename T>
 CHAI_INLINE
 void* ArrayManager::allocate(size_t elems, ExecutionSpace space)
@@ -165,6 +179,13 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
 #else
   auto space = CPU;
 #endif
+
+  for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
+    if(!pointer_record->m_owned[i]) {
+      CHAI_LOG("ArrayManager", "Cannot reallocate unowned pointer");
+      return pointer_record->m_pointers[space];
+    }
+  }
 
   if (pointer_record->m_pointers[CPU]) {
     void* old_ptr = pointer_record->m_pointers[CPU];
@@ -248,30 +269,36 @@ void ArrayManager::free(void* pointer)
   auto pointer_record = getPointerRecord(pointer);
 
   if (pointer_record->m_pointers[CPU]) {
-    void* cpu_ptr = pointer_record->m_pointers[CPU];
-    m_pointer_map.erase(cpu_ptr);
-    ::free(cpu_ptr);
-    pointer_record->m_pointers[CPU] = nullptr;
+    if(pointer_record->m_owned[CPU]) {
+      void* cpu_ptr = pointer_record->m_pointers[CPU];
+      m_pointer_map.erase(cpu_ptr);
+      ::free(cpu_ptr);
+      pointer_record->m_pointers[CPU] = nullptr;
+    }
   } 
   
 #if defined(CHAI_ENABLE_CUDA)
   if (pointer_record->m_pointers[GPU]) {
-    void* gpu_ptr = pointer_record->m_pointers[GPU];
-    m_pointer_map.erase(gpu_ptr);
+    if(pointer_record->m_owned[GPU]) {
+      void* gpu_ptr = pointer_record->m_pointers[GPU];
+      m_pointer_map.erase(gpu_ptr);
 #if defined(CHAI_ENABLE_CNMEM)
-    cnmemFree(gpu_ptr, NULL);
+      cnmemFree(gpu_ptr, NULL);
 #else
-    cudaFree(gpu_ptr);
+      cudaFree(gpu_ptr);
 #endif
-    pointer_record->m_pointers[GPU] = nullptr;
+      pointer_record->m_pointers[GPU] = nullptr;
+    }
   }
 
 #if defined(CHAI_ENABLE_UM)
   if (pointer_record->m_pointers[UM]) {
-    void* um_ptr = pointer_record->m_pointers[UM];
-    m_pointer_map.erase(um_ptr);
-    cudaFree(um_ptr);
-    pointer_record->m_pointers[UM] = nullptr;
+    if(pointer_record->m_owned[UM]) {
+      void* um_ptr = pointer_record->m_pointers[UM];
+      m_pointer_map.erase(um_ptr);
+      cudaFree(um_ptr);
+      pointer_record->m_pointers[UM] = nullptr;
+    }
   }
 #endif
 #endif
