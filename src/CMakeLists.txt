@@ -82,8 +82,6 @@ if (ENABLE_CNMEM)
     cnmem)
 endif()
 
-message(STATUS ${chai_headers})
-
 blt_add_library(
   NAME chai
   SOURCES ${chai_sources}
