@@ -68,6 +68,8 @@ struct PointerRecord
    * Array holding touched state of pointer in each execution space.
    */
   bool m_touched[NUM_EXECUTION_SPACES];
+
+  bool m_owned[NUM_EXECUTION_SPACES];
 };
 
 } // end of namespace chai

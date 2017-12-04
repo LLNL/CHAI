@@ -180,6 +180,8 @@ class ArrayManager
    */
   size_t getSize(void* pointer);
 
+  void* makeManaged(void* pointer, size_t size, ExecutionSpace space, bool owned);
+
   protected:
 
   /*!
@@ -218,7 +220,7 @@ class ArrayManager
    * \param size Size of the allocation in bytes.
    * \param space Space in which the pointer was allocated.
    */
-  void registerPointer(void* pointer, size_t size, ExecutionSpace space=CPU);
+  void registerPointer(void* pointer, size_t size, ExecutionSpace space=CPU, bool owned=true);
 
   /*!
    * \brief Deregister a PointerRecord from the ArrayManager.
