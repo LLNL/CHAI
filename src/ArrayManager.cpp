@@ -153,6 +153,14 @@ void ArrayManager::registerTouch(void* pointer, ExecutionSpace space) {
   pointer_record->m_touched[space] = true;
 }
 
+
+void ArrayManager::resetTouch(void* pointer)
+{
+  auto record = getPointerRecord(pointer);
+  resetTouch(record);
+}
+
+
 void ArrayManager::resetTouch(PointerRecord* pointer_record) {
   for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
     pointer_record->m_touched[i] = false;

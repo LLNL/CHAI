@@ -182,6 +182,8 @@ class ArrayManager
 
   void* makeManaged(void* pointer, size_t size, ExecutionSpace space, bool owned);
 
+  void resetTouch(void* pointer);
+
   protected:
 
   /*!
