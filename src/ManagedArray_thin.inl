@@ -149,7 +149,7 @@ CHAI_HOST void ManagedArray<T>::free()
 #endif
 }
 
-template<typenameT>
+template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::reset()
 {
