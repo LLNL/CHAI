@@ -134,6 +134,14 @@ class ManagedArray {
   CHAI_HOST void free();
 
   /*!
+   * \brief Reset array state.
+   *
+   * The next space that accesses this array will be considered a first touch,
+   * and no data will be migrated.
+   */
+  CHAI_HOST void reset();
+
+  /*!
    * \brief Get the number of elements in the array.
    *
    * \return The number of elements in the array

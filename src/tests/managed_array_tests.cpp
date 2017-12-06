@@ -258,7 +258,7 @@ TEST(ManagedArray, PodTest) {
   });
 }
 
-#if defined(ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA)
 CUDA_TEST(ManagedArray, PodTestGPU) {
   chai::ManagedArray<my_point> array(1);
 
@@ -306,6 +306,36 @@ TEST(ManagedArray, ExternalConstructorOwned) {
   });
 
   array.free();
-
-  std::cout << data[10] << std::endl;
 }
+
+TEST(ManagedArray, Reset)
+{
+  chai::ManagedArray<float> array(20);
+
+  forall(sequential(), 0, 20, [=] (int i) {
+    array[i] = 1.0f*i;
+  });
+
+  array.reset();
+}
+
+#if defined(CHAI_ENABLE_CUDA)
+CUDA_TEST(ManagedArray, ResetDevice)
+{
+  chai::ManagedArray<float> array(20);
+
+  forall(sequential(), 0, 20, [=] (int i) {
+    array[i] = 0.0f;
+  });
+
+  forall(cuda(), 0, 20, [=] __device__ (int i) {
+    array[i] = 1.0f*i;
+  });
+
+  array.reset();
+
+  forall(sequential(), 0, 20, [=] (int i) {
+    ASSERT_EQ(array[i], 0.0f);
+  });
+}
+#endif
