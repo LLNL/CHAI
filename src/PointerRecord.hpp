@@ -73,6 +73,8 @@ struct PointerRecord
    * Execution space where this arary was last touched.
    */
   ExecutionSpace m_last_space;
+
+  bool m_owned[NUM_EXECUTION_SPACES];
 };
 
 } // end of namespace chai

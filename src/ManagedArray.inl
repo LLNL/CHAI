@@ -148,6 +148,12 @@ CHAI_HOST void ManagedArray<T>::free()
   m_resource_manager->free(m_active_pointer);
 }
 
+template<typename T>
+CHAI_INLINE
+CHAI_HOST void ManagedArray<T>::reset()
+{
+  m_resource_manager->resetTouch(m_active_pointer);
+}
 
 template<typename T>
 CHAI_INLINE

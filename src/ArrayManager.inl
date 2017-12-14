@@ -69,6 +69,20 @@ PointerRecord* ArrayManager::getPointerRecord(void* pointer)
   }
 }
 
+CHAI_INLINE
+void* ArrayManager::makeManaged(void* pointer, size_t size, ExecutionSpace space, bool owned)
+{
+  registerPointer(pointer, size, space, owned);
+  
+  auto pointer_record = getPointerRecord(pointer);
+  for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
+    // If pointer is already active on some execution space, return that pointer
+    if(pointer_record->m_touched[i] == true) return pointer_record->m_pointers[i];
+  }
+
+  return pointer;
+}
+
 template<typename T>
 CHAI_INLINE
 void* ArrayManager::allocate(size_t elems, ExecutionSpace space)
@@ -100,6 +114,13 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     if (pointer_record->m_pointers[space] == pointer) {
       my_space = static_cast<ExecutionSpace>(space);
+    }
+  }
+
+  for (int space = CPU; space < NUM_EXECUTION_SPACES; space++) {
+    if(!pointer_record->m_owned[space]) {
+      CHAI_LOG("ArrayManager", "Cannot reallocate unowned pointer");
+      return pointer_record->m_pointers[my_space];
     }
   }
 
@@ -144,10 +165,12 @@ void ArrayManager::free(void* pointer)
 
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     if (pointer_record->m_pointers[space]) {
-      void* space_ptr = pointer_record->m_pointers[space];
-      m_pointer_map.erase(space_ptr);
-      m_allocators[space]->deallocate(space_ptr);
-      pointer_record->m_pointers[space] = nullptr;
+      if(pointer_record->m_owned[space]) {
+        void* space_ptr = pointer_record->m_pointers[space];
+        m_pointer_map.erase(space_ptr);
+        m_allocators[space]->deallocate(space_ptr);
+        pointer_record->m_pointers[space] = nullptr;
+      }
     }
   }
 
