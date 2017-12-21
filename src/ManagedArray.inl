@@ -63,7 +63,7 @@ CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
     uint elems, ExecutionSpace space):
   m_active_pointer(nullptr),
-  m_resource_manager(ArrayManager::getInstance()),
+  m_resource_manager(nullptr),
   m_elems(elems)
 {
   m_resource_manager = ArrayManager::getInstance();
