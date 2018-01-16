@@ -179,10 +179,10 @@ CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
 #if !defined(__CUDA_ARCH__)
   m_resource_manager->setExecutionSpace(CPU);
+  auto non_const_active_pointer = const_cast<T_non_const*>(static_cast<T*>(m_active_pointer));
+  m_active_pointer = static_cast<T_non_const*>(m_resource_manager->move(non_const_active_pointer));
 
-  m_active_pointer = static_cast<T*>(m_resource_manager->move(m_active_pointer));
-
-  m_resource_manager->registerTouch(m_active_pointer);
+  m_resource_manager->registerTouch(non_const_active_pointer);
 
   return m_active_pointer;
 #else
