@@ -73,6 +73,11 @@ struct PointerRecord
    * Execution space where this arary was last touched.
    */
   ExecutionSpace m_last_space;
+
+  /*!
+   * Array holding ownership status of each pointer.
+   */
+  bool m_owned[NUM_EXECUTION_SPACES];
 };
 
 } // end of namespace chai

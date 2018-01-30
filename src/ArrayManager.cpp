@@ -81,7 +81,7 @@ ArrayManager::ArrayManager() :
 #endif
 }
 
-void ArrayManager::registerPointer(void* pointer, size_t size, ExecutionSpace space) {
+void ArrayManager::registerPointer(void* pointer, size_t size, ExecutionSpace space, bool owned) {
   CHAI_LOG("ArrayManager", "Registering " << pointer << " in space " << space);
 
   auto found_pointer_record = m_pointer_map.find(pointer);
@@ -96,6 +96,11 @@ void ArrayManager::registerPointer(void* pointer, size_t size, ExecutionSpace sp
   pointer_record->m_pointers[space] = pointer;
   pointer_record->m_size = size;
   pointer_record->m_last_space = space;
+
+  for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
+    pointer_record->m_owned[i] = true;
+  }
+  pointer_record->m_owned[space] = owned;
 }
 
 void ArrayManager::registerPointer(void* pointer, PointerRecord* record, ExecutionSpace space) 
@@ -151,6 +156,14 @@ void ArrayManager::registerTouch(void* pointer, ExecutionSpace space) {
   pointer_record->m_touched[space] = true;
   pointer_record->m_last_space = space;
 }
+
+
+void ArrayManager::resetTouch(void* pointer)
+{
+  auto record = getPointerRecord(pointer);
+  resetTouch(record);
+}
+
 
 void ArrayManager::resetTouch(PointerRecord* pointer_record) {
   for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {

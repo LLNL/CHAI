@@ -258,7 +258,7 @@ TEST(ManagedArray, PodTest) {
   });
 }
 
-#if defined(ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA)
 CUDA_TEST(ManagedArray, PodTestGPU) {
   chai::ManagedArray<my_point> array(1);
 
@@ -272,5 +272,70 @@ CUDA_TEST(ManagedArray, PodTestGPU) {
     ASSERT_EQ(array[i].y, i*2.0);
   });
 }
+#endif
 
+TEST(ManagedArray, ExternalConstructorUnowned) {
+  float* data = new float[100];
+
+  for (int i = 0; i < 100; i++) {
+    data[i] = 1.0f*i;
+  }
+
+  chai::ManagedArray<float> array = chai::makeManagedArray<float>(data, 100, chai::CPU, false);
+
+  forall(sequential(), 0, 20, [=] (int i) {
+    ASSERT_EQ(data[i], array[i]);
+  });
+
+  array.free();
+
+  ASSERT_NE(nullptr, data);
+}
+
+TEST(ManagedArray, ExternalConstructorOwned) {
+  float* data = new float[20];
+
+  for (int i = 0; i < 20; i++) {
+    data[i] = 1.0f*i;
+  }
+
+  chai::ManagedArray<float> array = chai::makeManagedArray<float>(data, 20, chai::CPU, true);
+
+  forall(sequential(), 0, 20, [=] (int i) {
+    ASSERT_EQ(data[i], array[i]);
+  });
+
+  array.free();
+}
+
+TEST(ManagedArray, Reset)
+{
+  chai::ManagedArray<float> array(20);
+
+  forall(sequential(), 0, 20, [=] (int i) {
+    array[i] = 1.0f*i;
+  });
+
+  array.reset();
+}
+
+#if defined(CHAI_ENABLE_CUDA)
+CUDA_TEST(ManagedArray, ResetDevice)
+{
+  chai::ManagedArray<float> array(20);
+
+  forall(sequential(), 0, 20, [=] (int i) {
+    array[i] = 0.0f;
+  });
+
+  forall(cuda(), 0, 20, [=] __device__ (int i) {
+    array[i] = 1.0f*i;
+  });
+
+  array.reset();
+
+  forall(sequential(), 0, 20, [=] (int i) {
+    ASSERT_EQ(array[i], 0.0f);
+  });
+}
 #endif

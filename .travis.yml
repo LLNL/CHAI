@@ -52,6 +52,7 @@ matrix:
     - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=On"
     - TRAVIS_INSTALL_COMPILER="nvcc"
     - DO_TEST=no
+    - BUILD_RAJA=yes
   - compiler: nvcc-um-disable-rm
     addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-4.9 ] } }
     env:
