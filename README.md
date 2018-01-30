@@ -2,8 +2,10 @@
 
 [![Build Status](https://travis-ci.org/LLNL/CHAI.svg?branch=develop)](https://travis-ci.org/LLNL/CHAI)
 
-CHAI is a libary handling automatic data migration to different memory spaces
-behind an array-style interface.
+CHAI is a library that handles automatic data migration to different memory
+spaces behind an array-style interface. It was designed to work with
+[RAJA](https://github.com/LLNL/RAJA) and integrates with it. CHAI could be
+used with other C++ abstractions, as well.
 
 CHAI uses CMake and BLT to handle builds. Make sure that you have a modern
 compiler loaded and the configuration is as simple as:
