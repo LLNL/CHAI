@@ -162,7 +162,8 @@ class ManagedArray {
    *
    * \return Reference to i-th element.
    */
-  CHAI_HOST_DEVICE T& operator[](const int i) const;
+	template<typename Idx>
+  CHAI_HOST_DEVICE T& operator[](const Idx i) const;
 
   /*!
    * \brief Set val to the value of element i in the ManagedArray.
