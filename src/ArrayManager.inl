@@ -122,7 +122,7 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     if(!pointer_record->m_owned[space]) {
       CHAI_LOG("ArrayManager", "Cannot reallocate unowned pointer");
-      return pointer_record->m_pointers[space];
+      return pointer_record->m_pointers[my_space];
     }
   }
 
@@ -168,7 +168,7 @@ void ArrayManager::free(void* pointer)
 
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     if (pointer_record->m_pointers[space]) {
-      if(pointer_record->m_owned[CPU]) {
+      if(pointer_record->m_owned[space]) {
         void* space_ptr = pointer_record->m_pointers[space];
         m_pointer_map.erase(space_ptr);
         m_allocators[space]->deallocate(space_ptr);
