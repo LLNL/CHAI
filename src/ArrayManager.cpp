@@ -166,8 +166,8 @@ void ArrayManager::resetTouch(void* pointer)
 
 
 void ArrayManager::resetTouch(PointerRecord* pointer_record) {
-  for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
-    pointer_record->m_touched[i] = false;
+  for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
+    pointer_record->m_touched[space] = false;
   }
 }
 
@@ -189,6 +189,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
     return;
   }
 
+
   void* src_pointer = record->m_pointers[record->m_last_space];
   void* dst_pointer = record->m_pointers[space];
 
@@ -197,7 +198,11 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
     dst_pointer = record->m_pointers[space];
   }
 
-  rm.copy(src_pointer, dst_pointer);
+  if (!record->m_touched[record->m_last_space]) {
+    return;
+  } else {
+    rm.copy(src_pointer, dst_pointer);
+  }
 
   resetTouch(record);
 }

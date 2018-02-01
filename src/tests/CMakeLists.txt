@@ -42,7 +42,7 @@
 #######################################################################
 
 set (managed_array_test_depends
-  chai gtest)
+  chai umpire gtest)
 
 if (ENABLE_CUDA)
   set (managed_array_test_depends

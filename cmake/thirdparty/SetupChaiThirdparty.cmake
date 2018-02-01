@@ -46,4 +46,4 @@ find_package(Umpire REQUIRED)
 blt_register_library(
   NAME umpire
   INCLUDES ${UMPIRE_INCLUDE_DIRS}
-  LIBRARIES ${UMPIRE_LIBRARIES})
+  LIBRARIES umpire)
