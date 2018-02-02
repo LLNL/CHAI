@@ -203,7 +203,7 @@ class ManagedArray {
 
   CHAI_HOST_DEVICE ManagedArray<T>& operator= (std::nullptr_t);
 
-  private:
+  protected:
 
   /*! 
    * Currently active data pointer.
