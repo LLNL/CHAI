@@ -46,6 +46,7 @@
 #include "chai/ExecutionSpaces.hpp"
 #include "chai/PointerRecord.hpp"
 
+#include <functional>
 #include <unordered_map>
 
 namespace chai {
@@ -183,6 +184,11 @@ class ArrayManager
   void* makeManaged(void* pointer, size_t size, ExecutionSpace space, bool owned);
 
   void resetTouch(void* pointer);
+      
+  /*!
+   * \brief Assign a user-defined callback triggerd upon memory migration.
+   */
+  void setMoveCallback(void *pointer, std::function<void(ExecutionSpace)> f);
 
   protected:
 

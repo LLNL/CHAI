@@ -51,6 +51,7 @@
 
 
 #include <cstddef>
+#include <functional>
 
 namespace chai {
 
@@ -192,6 +193,12 @@ class ManagedArray {
 #endif
 
   /*!
+   * \brief Assign a user-defined callback triggerd upon memory migration.
+   */
+  CHAI_HOST void setMoveCallback(std::function<void(ExecutionSpace)> f);
+
+
+  /*!
    * \brief 
    *
    */
@@ -203,7 +210,7 @@ class ManagedArray {
 
   CHAI_HOST_DEVICE ManagedArray<T>& operator= (std::nullptr_t);
 
-  protected:
+  private:
 
   /*! 
    * Currently active data pointer.

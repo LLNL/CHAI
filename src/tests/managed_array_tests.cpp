@@ -339,3 +339,32 @@ CUDA_TEST(ManagedArray, ResetDevice)
   });
 }
 #endif
+
+
+
+#if defined(CHAI_ENABLE_CUDA)
+CUDA_TEST(ManagedArray, MoveCallback)
+{
+  int num_h2d = 0;
+  int num_d2h = 0;
+  
+  chai::ManagedArray<float> array(20);
+  array.setMoveCallback([&](chai::ExecutionSpace s){  
+    if(s == chai::CPU){ ++num_d2h;}
+    if(s == chai::GPU){ ++num_h2d;}
+  });
+
+  for(int iter = 0;iter < 10;++ iter){
+    forall(sequential(), 0, 20, [=] (int i) {
+      array[i] = 0.0f;
+    });
+
+    forall(cuda(), 0, 20, [=] __device__ (int i) {
+      array[i] = 1.0f*i;
+    });
+  }
+  
+  ASSERT_EQ(num_d2h, 9);
+  ASSERT_EQ(num_h2d, 10);
+}
+#endif

@@ -216,6 +216,13 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool test) :
 #endif
 
 template<typename T>
+CHAI_HOST void ManagedArray<T>::setMoveCallback(std::function<void(ExecutionSpace)> f)
+{
+  m_resource_manager->setMoveCallback(m_active_pointer, f);
+}
+
+
+template<typename T>
 template<bool B,typename std::enable_if<!B, int>::type>
 CHAI_INLINE
 CHAI_HOST_DEVICE

@@ -46,6 +46,7 @@
 #include "chai/ExecutionSpaces.hpp"
 
 #include <cstddef>
+#include <functional>
 
 namespace chai {
 
@@ -70,6 +71,12 @@ struct PointerRecord
   bool m_touched[NUM_EXECUTION_SPACES];
 
   bool m_owned[NUM_EXECUTION_SPACES];
+  
+  
+  /*!
+   * User defined callback triggered when memory is moved.
+   */
+  std::function<void(ExecutionSpace)> m_move_callback;
 };
 
 } // end of namespace chai
