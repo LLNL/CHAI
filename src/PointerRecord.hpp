@@ -76,7 +76,7 @@ struct PointerRecord
   /*!
    * User defined callback triggered when memory is moved.
    */
-  std::function<void(ExecutionSpace)> m_move_callback;
+  std::function<void(ExecutionSpace, size_t)> m_move_callback;
 };
 
 } // end of namespace chai

@@ -347,11 +347,13 @@ CUDA_TEST(ManagedArray, MoveCallback)
 {
   int num_h2d = 0;
   int num_d2h = 0;
+  size_t bytes_h2d = 0;
+  size_t bytes_d2h = 0;
   
   chai::ManagedArray<float> array(20);
-  array.setMoveCallback([&](chai::ExecutionSpace s){  
-    if(s == chai::CPU){ ++num_d2h;}
-    if(s == chai::GPU){ ++num_h2d;}
+  array.setMoveCallback([&](chai::ExecutionSpace s, size_t bytes){  
+    if(s == chai::CPU){ ++num_d2h; bytes_d2h += bytes;}
+    if(s == chai::GPU){ ++num_h2d; bytes_h2d += bytes;}
   });
 
   for(int iter = 0;iter < 10;++ iter){
@@ -365,6 +367,8 @@ CUDA_TEST(ManagedArray, MoveCallback)
   }
   
   ASSERT_EQ(num_d2h, 9);
+  ASSERT_EQ(bytes_d2h, 9*sizeof(float)*20);
   ASSERT_EQ(num_h2d, 10);
+  ASSERT_EQ(bytes_h2d, 10*sizeof(float)*20);  
 }
 #endif

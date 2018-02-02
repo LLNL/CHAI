@@ -188,7 +188,7 @@ class ArrayManager
   /*!
    * \brief Assign a user-defined callback triggerd upon memory migration.
    */
-  void setMoveCallback(void *pointer, std::function<void(ExecutionSpace)> f);
+  void setMoveCallback(void *pointer, std::function<void(ExecutionSpace, size_t)> f);
 
   protected:
 

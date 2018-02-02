@@ -82,7 +82,6 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   if (space == GPU) {
 #if defined(CHAI_ENABLE_UM)
     if (record->m_pointers[UM]) {
-      record->m_move_callback(UM);
       cudaMemPrefetchAsync(record->m_pointers[UM], record->m_size, 0);
     } else {
 #endif
@@ -90,7 +89,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
         allocate(record, GPU);
       }
       if (record->m_touched[CPU]) {
-        record->m_move_callback(GPU);
+        record->m_move_callback(GPU, record->m_size);
         cudaMemcpy(record->m_pointers[GPU], record->m_pointers[CPU], 
             record->m_size, cudaMemcpyHostToDevice);
       }
@@ -109,7 +108,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
       }
 
       if (record->m_touched[GPU]) {
-        record->m_move_callback(CPU);
+        record->m_move_callback(CPU, record->m_size);
         cudaMemcpy(record->m_pointers[CPU], record->m_pointers[GPU],
             record->m_size, cudaMemcpyDeviceToHost);
       }
@@ -331,7 +330,7 @@ ExecutionSpace ArrayManager::getDefaultAllocationSpace()
 
 
 CHAI_INLINE
-void ArrayManager::setMoveCallback(void *pointer, std::function<void(ExecutionSpace)> f)
+void ArrayManager::setMoveCallback(void *pointer, std::function<void(ExecutionSpace, size_t)> f)
 {
   auto pointer_record = getPointerRecord(pointer);
   pointer_record->m_move_callback = f;
