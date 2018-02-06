@@ -163,8 +163,9 @@ CHAI_HOST uint ManagedArray<T>::size() const {
 }
 
 template<typename T>
+template<typename Idx>
 CHAI_INLINE
-CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const int i) const {
+CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const Idx i) const {
   return m_active_pointer[i];
 }
 

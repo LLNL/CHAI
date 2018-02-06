@@ -191,11 +191,16 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
 #if !defined(__CUDA_ARCH__)
+  ExecutionSpace prev_space = m_resource_manager->getExecutionSpace();
   m_resource_manager->setExecutionSpace(CPU);
   auto non_const_active_pointer = const_cast<T_non_const*>(static_cast<T*>(m_active_pointer));
   m_active_pointer = static_cast<T_non_const*>(m_resource_manager->move(non_const_active_pointer));
 
   m_resource_manager->registerTouch(non_const_active_pointer);
+
+
+  // Reset to whatever space we rode in on
+  m_resource_manager->setExecutionSpace(prev_space);
 
   return m_active_pointer;
 #else
