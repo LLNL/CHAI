@@ -206,6 +206,15 @@ ManagedArray<T>::operator= (std::nullptr_t from) {
   return *this;
 }
 
+
+template<typename T>
+CHAI_HOST void ManagedArray<T>::setMoveCallback(std::function<void(ExecutionSpace, size_t)> f)
+{
+  m_resource_manager->setMoveCallback(m_active_pointer, f);
+}
+
+
+
 } // end of namespace chai
 
 #endif // CHAI_ManagedArray_thin_INL
