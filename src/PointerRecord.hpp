@@ -75,6 +75,9 @@ struct PointerRecord
   
   /*!
    * User defined callback triggered when memory is moved.
+	 *
+	 * Function is passed the execution space that the memory is 
+	 * moved to, and the number of bytes moved.
    */
   std::function<void(ExecutionSpace, size_t)> m_move_callback;
 };

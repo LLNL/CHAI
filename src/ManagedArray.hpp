@@ -194,6 +194,14 @@ class ManagedArray {
 
   /*!
    * \brief Assign a user-defined callback triggerd upon memory migration.
+	 *
+	 * The callback is a function of the form
+	 * 
+	 *   void callback(chai::ExecutionSpace moved_to, size_t num_bytes)
+	 *
+	 * Where moved_to is the execution space that the data was moved to, and
+	 * num_bytes is the number of bytes moved.
+	 *
    */
   CHAI_HOST void setMoveCallback(std::function<void(ExecutionSpace, size_t)> f);
 
