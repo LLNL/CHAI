@@ -58,6 +58,9 @@ set (chai_headers
   ExecutionSpaces.hpp
   ManagedArray.hpp
   ManagedArray.inl
+  ManagedMultiArray.hpp
+  ManagedMultiArray_inl.hpp
+  
   PointerRecord.hpp
   Types.hpp)
 
