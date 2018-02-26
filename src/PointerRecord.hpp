@@ -44,6 +44,7 @@
 #define CHAI_PointerRecord_HPP
 
 #include "chai/ExecutionSpaces.hpp"
+#include "chai/Types.hpp"
 
 #include <cstddef>
 #include <functional>
@@ -74,12 +75,12 @@ struct PointerRecord
   
   
   /*!
-   * User defined callback triggered when memory is moved.
+   * User defined callback triggered on memory operations.
 	 *
 	 * Function is passed the execution space that the memory is 
 	 * moved to, and the number of bytes moved.
    */
-  std::function<void(ExecutionSpace, size_t)> m_move_callback;
+  UserCallback m_user_callback;
 };
 
 } // end of namespace chai

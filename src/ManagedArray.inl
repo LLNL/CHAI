@@ -116,7 +116,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space) {
+CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space, UserCallback const &cback) {
   CHAI_LOG("ManagedArray", "Allocating array of size " << elems << " in space " << space);
 
   if (space == NONE) {
@@ -124,7 +124,7 @@ CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space) {
   }
 
   m_elems = elems;
-  m_active_pointer = static_cast<T*>(m_resource_manager->allocate<T>(elems, space));
+  m_active_pointer = static_cast<T*>(m_resource_manager->allocate<T>(elems, space, cback));
 
   CHAI_LOG("ManagedArray", "m_active_ptr allocated at address: " << m_active_pointer);
 }
@@ -221,9 +221,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool test) :
 #endif
 
 template<typename T>
-CHAI_HOST void ManagedArray<T>::setMoveCallback(std::function<void(ExecutionSpace, size_t)> f)
+CHAI_HOST void ManagedArray<T>::setUserCallback(UserCallback const &cback)
 {
-  m_resource_manager->setMoveCallback(m_active_pointer, f);
+  m_resource_manager->setUserCallback(m_active_pointer, cback);
 }
 
 

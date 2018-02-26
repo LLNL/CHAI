@@ -51,7 +51,6 @@
 
 
 #include <cstddef>
-#include <functional>
 
 namespace chai {
 
@@ -117,8 +116,10 @@ class ManagedArray {
    *
    * \param elems Number of elements to allocate.
    * \param space Execution space in which to allocate data.
+   * \param cback User defined callback for memory events (alloc, free, move)
    */
-  CHAI_HOST void allocate(uint elems, ExecutionSpace space=CPU);
+  CHAI_HOST void allocate(uint elems, ExecutionSpace space=CPU, 
+    UserCallback const &cback=[](Action, ExecutionSpace, size_t){});
 
   /*!
    * \brief Reallocate data for the ManagedArray.
@@ -203,7 +204,7 @@ class ManagedArray {
 	 * num_bytes is the number of bytes moved.
 	 *
    */
-  CHAI_HOST void setMoveCallback(std::function<void(ExecutionSpace, size_t)> f);
+  CHAI_HOST void setUserCallback(UserCallback const &cback);
 
 
   /*!

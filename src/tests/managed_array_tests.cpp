@@ -343,17 +343,29 @@ CUDA_TEST(ManagedArray, ResetDevice)
 
 
 #if defined(CHAI_ENABLE_CUDA)
-CUDA_TEST(ManagedArray, MoveCallback)
+CUDA_TEST(ManagedArray, UserCallback)
 {
   int num_h2d = 0;
   int num_d2h = 0;
   size_t bytes_h2d = 0;
   size_t bytes_d2h = 0;
+	size_t bytes_alloc = 0;
+	size_t bytes_free = 0;
   
-  chai::ManagedArray<float> array(20);
-  array.setMoveCallback([&](chai::ExecutionSpace s, size_t bytes){  
-    if(s == chai::CPU){ ++num_d2h; bytes_d2h += bytes;}
-    if(s == chai::GPU){ ++num_h2d; bytes_h2d += bytes;}
+  chai::ManagedArray<float> array;
+  array.allocate(20, chai::CPU, [&](chai::Action act, chai::ExecutionSpace s, size_t bytes){  
+	  //printf("cback: act=%d, space=%d, bytes=%ld\n",
+		//   (int)act, (int)s, (long)bytes);
+		if(act == chai::ACTION_MOVE){
+	    if(s == chai::CPU){ ++num_d2h; bytes_d2h += bytes;}
+  	  if(s == chai::GPU){ ++num_h2d; bytes_h2d += bytes;}
+	  }
+		if(act == chai::ACTION_ALLOC){
+			bytes_alloc += bytes;	
+		}
+		if(act == chai::ACTION_FREE){
+			bytes_free += bytes;	
+		}
   });
 
   for(int iter = 0;iter < 10;++ iter){
@@ -366,9 +378,15 @@ CUDA_TEST(ManagedArray, MoveCallback)
     });
   }
   
+
   ASSERT_EQ(num_d2h, 9);
   ASSERT_EQ(bytes_d2h, 9*sizeof(float)*20);
   ASSERT_EQ(num_h2d, 10);
   ASSERT_EQ(bytes_h2d, 10*sizeof(float)*20);  
+	
+	array.free();
+
+	ASSERT_EQ(bytes_alloc, 2*20*sizeof(float));
+	ASSERT_EQ(bytes_free, 2*20*sizeof(float));
 }
 #endif

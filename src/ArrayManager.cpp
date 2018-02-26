@@ -100,7 +100,7 @@ void ArrayManager::registerPointer(void* pointer, size_t size, ExecutionSpace sp
     pointer_record->m_owned[i] = true;
   }
   pointer_record->m_owned[space] = owned;
-  pointer_record->m_move_callback = [](ExecutionSpace, size_t){};
+  pointer_record->m_user_callback = [](Action, ExecutionSpace, size_t){};
 }
 
 void ArrayManager::registerPointer(void* pointer, PointerRecord* record, ExecutionSpace space) 
