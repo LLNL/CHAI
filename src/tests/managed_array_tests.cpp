@@ -60,32 +60,32 @@ struct my_point {
 
 TEST(ManagedArray, DefaultConstructor) {
   chai::ManagedArray<float> array;
-  ASSERT_EQ(array.size(), 0);
+  ASSERT_EQ(array.size(), 0u);
 }
 
 TEST(ManagedArray, SizeConstructor) {
   chai::ManagedArray<float> array(10);
-  ASSERT_EQ(array.size(), 10);
+  ASSERT_EQ(array.size(), 10u);
   array.free();
 }
 
 TEST(ManagedArray, SpaceConstructorCPU) {
   chai::ManagedArray<float> array(10, chai::CPU);
-  ASSERT_EQ(array.size(), 10);
+  ASSERT_EQ(array.size(), 10u);
   array.free();
 }
 
 #if defined(CHAI_ENABLE_CUDA)
 TEST(ManagedArray, SpaceConstructorGPU) {
   chai::ManagedArray<float> array(10, chai::GPU);
-  ASSERT_EQ(array.size(), 10);
+  ASSERT_EQ(array.size(), 10u);
   array.free();
 }
 
 #if defined(CHAI_ENABLE_UM)
 TEST(ManagedArray, SpaceConstructorUM) {
   chai::ManagedArray<float> array(10, chai::UM);
-  ASSERT_EQ(array.size(), 10);
+  ASSERT_EQ(array.size(), 10u);
   array.free();
 }
 #endif
@@ -113,7 +113,6 @@ TEST(ManagedArray, Const) {
   });
 
   chai::ManagedArray<const float> array_const(array);
-  chai::ManagedArray<const float> array_const2 = array;
 
   forall(sequential(), 0, 10, [=] (int i) {
       ASSERT_EQ(array_const[i], i);
@@ -168,22 +167,22 @@ CUDA_TEST(ManagedArray, SetOnDeviceUM) {
 
 TEST(ManagedArray, Allocate) {
   chai::ManagedArray<float> array;
-  ASSERT_EQ(array.size(), 0);
+  ASSERT_EQ(array.size(), 0u);
 
   array.allocate(10);
-  ASSERT_EQ(array.size(), 10);
+  ASSERT_EQ(array.size(), 10u);
 }
 
 TEST(ManagedArray, ReallocateCPU) {
   chai::ManagedArray<float> array(10);
-  ASSERT_EQ(array.size(), 10);
+  ASSERT_EQ(array.size(), 10u);
 
   forall(sequential(), 0, 10, [=](int i) {
       array[i] = i;
   });
 
   array.reallocate(20);
-  ASSERT_EQ(array.size(), 20);
+  ASSERT_EQ(array.size(), 20u);
 
   forall(sequential(), 0, 20, [=](int i) {
       if (i < 10) {
@@ -198,14 +197,14 @@ TEST(ManagedArray, ReallocateCPU) {
 #if defined(CHAI_ENABLE_CUDA)
 CUDA_TEST(ManagedArray, ReallocateGPU) {
   chai::ManagedArray<float> array(10);
-  ASSERT_EQ(array.size(), 10);
+  ASSERT_EQ(array.size(), 10u);
 
   forall(cuda(), 0, 10, [=] __device__ (int i) {
       array[i] = i;
   });
 
   array.reallocate(20);
-  ASSERT_EQ(array.size(), 20);
+  ASSERT_EQ(array.size(), 20u);
 
   forall(sequential(), 0, 20, [=] (int i) {
       if ( i < 10) {
@@ -225,18 +224,17 @@ TEST(ManagedArray, NullpointerConversions) {
   chai::ManagedArray<const float> b;
   b = nullptr;
 
-  ASSERT_EQ(a.size(), 0);
-  ASSERT_EQ(b.size(), 0);
+  ASSERT_EQ(a.size(), 0u);
+  ASSERT_EQ(b.size(), 0u);
 
   chai::ManagedArray<float> c(nullptr);
 
-  ASSERT_EQ(c.size(), 0);
+  ASSERT_EQ(c.size(), 0u);
 }
 
 #if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
 TEST(ManagedArray, ImplicitConversions) {
   chai::ManagedArray<float> a(10);
-  float * raw_a = a;
 
   chai::ManagedArray<float> a2 = a;
 

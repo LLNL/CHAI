@@ -51,20 +51,20 @@
 
 void benchmark_managedarray_alloc_default(benchmark::State& state) {
   while (state.KeepRunning()) {
-    chai::ManagedArray<char> array(state.range_x());
+    chai::ManagedArray<char> array(state.range(0));
     array.free();
   }
 
-  state.SetItemsProcessed(state.iterations() * state.range_x());
+  state.SetItemsProcessed(state.iterations() * state.range(0));
 }
 
 void benchmark_managedarray_alloc_cpu(benchmark::State& state) {
   while (state.KeepRunning()) {
-    chai::ManagedArray<char> array(state.range_x(), chai::CPU);
+    chai::ManagedArray<char> array(state.range(0), chai::CPU);
     array.free();
   }
 
-  state.SetItemsProcessed(state.iterations() * state.range_x());
+  state.SetItemsProcessed(state.iterations() * state.range(0));
 }
 
 BENCHMARK(benchmark_managedarray_alloc_default)->Range(1, INT_MAX);
@@ -73,11 +73,11 @@ BENCHMARK(benchmark_managedarray_alloc_cpu)->Range(1, INT_MAX);
 #if defined(CHAI_ENABLE_CUDA)
 void benchmark_managedarray_alloc_gpu(benchmark::State& state) {
   while (state.KeepRunning()) {
-    chai::ManagedArray<char> array(state.range_x(), chai::GPU);
+    chai::ManagedArray<char> array(state.range(0), chai::GPU);
     array.free();
   }
 
-  state.SetItemsProcessed(state.iterations() * state.range_x());
+  state.SetItemsProcessed(state.iterations() * state.range(0));
 }
 BENCHMARK(benchmark_managedarray_alloc_gpu)->Range(1, INT_MAX);
 #endif
@@ -86,7 +86,7 @@ BENCHMARK(benchmark_managedarray_alloc_gpu)->Range(1, INT_MAX);
 #if defined(CHAI_ENABLE_CUDA)
 void benchmark_managedarray_move(benchmark::State& state)
 {
-  chai::ManagedArray<char> array(state.range_x());
+  chai::ManagedArray<char> array(state.range(0));
 
   forall(sequential(), 0, 1, [=] (int i) {
       array[i] = 'b';

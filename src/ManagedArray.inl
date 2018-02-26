@@ -61,7 +61,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
-    uint elems, ExecutionSpace space):
+    size_t elems, ExecutionSpace space):
   m_active_pointer(nullptr),
   m_resource_manager(nullptr),
   m_elems(elems)
@@ -107,7 +107,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_manager, uint elems) :
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_manager, size_t elems) :
   m_active_pointer(data), 
   m_resource_manager(array_manager),
   m_elems(elems)
@@ -116,7 +116,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space, UserCallback const &cback) {
+CHAI_HOST void ManagedArray<T>::allocate(size_t elems, ExecutionSpace space, UserCallback const &cback) {
   CHAI_LOG("ManagedArray", "Allocating array of size " << elems << " in space " << space);
 
   if (space == NONE) {
@@ -131,7 +131,7 @@ CHAI_HOST void ManagedArray<T>::allocate(uint elems, ExecutionSpace space, UserC
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST void ManagedArray<T>::reallocate(uint elems)
+CHAI_HOST void ManagedArray<T>::reallocate(size_t elems)
 {
   CHAI_LOG("ManagedArray", "Reallocating array of size " << m_elems << " with new size" << elems);
 
@@ -157,7 +157,7 @@ CHAI_HOST void ManagedArray<T>::reset()
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST uint ManagedArray<T>::size() const {
+CHAI_HOST size_t ManagedArray<T>::size() const {
   return m_elems;
 }
 
@@ -219,13 +219,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool test) :
 {
 }
 #endif
-
-template<typename T>
-CHAI_HOST void ManagedArray<T>::setUserCallback(UserCallback const &cback)
-{
-  m_resource_manager->setUserCallback(m_active_pointer, cback);
-}
-
 
 template<typename T>
 template<bool B,typename std::enable_if<!B, int>::type>

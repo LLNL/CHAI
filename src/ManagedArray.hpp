@@ -92,7 +92,7 @@ class ManagedArray {
    * \param elems Number of elements in the array.
    * \param space Execution space in which to allocate the array.
    */
-  CHAI_HOST_DEVICE ManagedArray(uint elems, ExecutionSpace space=NONE);
+  CHAI_HOST_DEVICE ManagedArray(size_t elems, ExecutionSpace space=NONE);
 
   /*!
    * \brief Copy constructor handles data movement.
@@ -118,7 +118,7 @@ class ManagedArray {
    * \param space Execution space in which to allocate data.
    * \param cback User defined callback for memory events (alloc, free, move)
    */
-  CHAI_HOST void allocate(uint elems, ExecutionSpace space=CPU, 
+  CHAI_HOST void allocate(size_t elems, ExecutionSpace space=CPU, 
     UserCallback const &cback=[](Action, ExecutionSpace, size_t){});
 
   /*!
@@ -128,7 +128,7 @@ class ManagedArray {
    *
    * \param elems Number of elements to allocate.
    */
-  CHAI_HOST void reallocate(uint elems);
+  CHAI_HOST void reallocate(size_t elems);
 
   /*!
    * \brief Free all data allocated by this ManagedArray.
@@ -148,7 +148,7 @@ class ManagedArray {
    *
    * \return The number of elements in the array
    */
-  CHAI_HOST uint size() const;
+  CHAI_HOST size_t size() const;
 
   /*!
    * \brief Register this ManagedArray object as 'touched' in the given space.
@@ -214,7 +214,7 @@ class ManagedArray {
   template<bool B = std::is_const<T>::value,typename std::enable_if<!B, int>::type = 0>
   CHAI_HOST_DEVICE operator ManagedArray<const T> () const;
 
-  CHAI_HOST_DEVICE ManagedArray(T* data, ArrayManager* array_manager, uint m_elems);
+  CHAI_HOST_DEVICE ManagedArray(T* data, ArrayManager* array_manager, size_t m_elems);
 
 
   CHAI_HOST_DEVICE ManagedArray<T>& operator= (std::nullptr_t);
@@ -234,7 +234,7 @@ class ManagedArray {
   /*!
    * Number of elements in the ManagedArray.
    */
-  uint m_elems;
+  size_t m_elems;
 };
 
 /*!
@@ -257,7 +257,7 @@ template <typename T>
 ManagedArray<T> 
 makeManagedArray(
     T* data, 
-    uint elems, 
+    size_t elems,
     ExecutionSpace space,
     bool owned)
 {
