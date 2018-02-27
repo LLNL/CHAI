@@ -114,10 +114,10 @@ CHAI_HOST void ManagedArray<T>::allocate(size_t elems, ExecutionSpace space,
   m_user_callback = cback;
 
 #if defined(CHAI_ENABLE_UM)
-  m_user_callback(ACTION_ALLOC, UM, sizeof(T)*new_elems); 
+  m_user_callback(ACTION_ALLOC, UM, sizeof(T)*elems); 
   cudaMallocManaged(&m_active_pointer, sizeof(T)*elems);
 #else
-  m_user_callback(ACTION_ALLOC, CPU, sizeof(T)*new_elems); 
+  m_user_callback(ACTION_ALLOC, CPU, sizeof(T)*elems); 
   m_active_pointer = static_cast<T*>(malloc(sizeof(T)*elems));
 #endif
 
