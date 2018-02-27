@@ -235,6 +235,15 @@ class ManagedArray {
    * Number of elements in the ManagedArray.
    */
   size_t m_elems;
+  
+#if defined(CHAI_DISABLE_RM)
+  /*!
+   * User callback for memory events.
+   * Typically stored by resource manager, but for "thin" version, we need
+   * to keep our pointer.
+   */
+  UserCallback m_user_callback;
+#endif
 };
 
 /*!

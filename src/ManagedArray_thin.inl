@@ -56,7 +56,8 @@ CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
   m_active_pointer(nullptr),
   m_resource_manager(nullptr),
-  m_elems(0)
+  m_elems(0),
+  m_user_callback([](Action, ExecutionSpace, size_t){})
 {
 }
 
@@ -66,7 +67,8 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
     size_t elems, ExecutionSpace space):
   m_active_pointer(nullptr),
   m_resource_manager(nullptr),
-  m_elems(elems)
+  m_elems(elems),
+  m_user_callback([](Action, ExecutionSpace, size_t){})
 {
   this->allocate(elems, space);
 }
@@ -76,7 +78,8 @@ CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t) :
   m_active_pointer(nullptr),
   m_resource_manager(nullptr),
-  m_elems(0)
+  m_elems(0),
+  m_user_callback([](Action, ExecutionSpace, size_t){})
 {
 }
 
@@ -86,7 +89,8 @@ CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
   m_active_pointer(other.m_active_pointer),
   m_resource_manager(other.m_resource_manager),
-  m_elems(other.m_elems)
+  m_elems(other.m_elems),
+  m_user_callback([](Action, ExecutionSpace, size_t){})
 {
 }
 
@@ -95,20 +99,25 @@ CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_manager, size_t elems) :
   m_active_pointer(data), 
   m_resource_manager(array_manager),
-  m_elems(elems)
+  m_elems(elems),
+  m_user_callback([](Action, ExecutionSpace, size_t){})
 {
 }
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST void ManagedArray<T>::allocate(size_t elems, ExecutionSpace space) {
+CHAI_HOST void ManagedArray<T>::allocate(size_t elems, ExecutionSpace space, 
+    UserCallback const &cback) {
   CHAI_LOG("ManagedArray", "Allocating array of size " << elems << " in space " << space);
 
   m_elems = elems;
+  m_user_callback = cback;
 
 #if defined(CHAI_ENABLE_UM)
+  m_user_callback(ACTION_ALLOC, UM, sizeof(T)*new_elems); 
   cudaMallocManaged(&m_active_pointer, sizeof(T)*elems);
 #else
+  m_user_callback(ACTION_ALLOC, CPU, sizeof(T)*new_elems); 
   m_active_pointer = static_cast<T*>(malloc(sizeof(T)*elems));
 #endif
 
@@ -123,12 +132,18 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t new_elems)
 
   T* new_ptr;
 #if defined(CHAI_ENABLE_UM)
+  m_user_callback(ACTION_FREE, UM, sizeof(T)*m_elems); 
+  m_user_callback(ACTION_ALLOC, UM, sizeof(T)*new_elems); 
+  
   cudaMallocManaged(&new_ptr, sizeof(T)*new_elems);
 
   cudaMemcpy(new_ptr, m_active_pointer, sizeof(T)*m_elems, cudaMemcpyDefault);
 
   cudaFree(m_active_pointer);
 #else
+  m_user_callback(ACTION_FREE, CPU, sizeof(T)*m_elems); 
+  m_user_callback(ACTION_ALLOC, CPU, sizeof(T)*new_elems); 
+  
   new_ptr = static_cast<T*>(realloc(m_active_pointer, sizeof(T)*new_elems));
 #endif
 
@@ -142,9 +157,12 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::free()
 {
+  
 #if defined(CHAI_ENABLE_UM)
+  m_user_callback(ACTION_FREE, UM, sizeof(T)*m_elems); 
   cudaFree(m_active_pointer);
 #else
+  m_user_callback(ACTION_FREE, CPU, sizeof(T)*m_elems);
   ::free(m_active_pointer);
 #endif
 }
@@ -208,9 +226,9 @@ ManagedArray<T>::operator= (std::nullptr_t from) {
 
 
 template<typename T>
-CHAI_HOST void ManagedArray<T>::setMoveCallback(std::function<void(ExecutionSpace, size_t)> f)
+CHAI_HOST void ManagedArray<T>::setUserCallback(UserCallback const &cback)
 {
-  m_resource_manager->setMoveCallback(m_active_pointer, f);
+  m_user_callback = cback;  
 }
 
 
