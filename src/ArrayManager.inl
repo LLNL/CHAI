@@ -134,12 +134,12 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
     void* old_ptr = pointer_record->m_pointers[space];
 
     if (old_ptr) {
-      pointer_record->m_user_callback(ACTION_ALLOC, space, sizeof(T) * elems);
+      pointer_record->m_user_callback(ACTION_ALLOC, ExecutionSpace(space), sizeof(T) * elems);
       void* new_ptr = m_allocators[space]->allocate(sizeof(T)*elems);
 
       rm.copy(old_ptr, new_ptr);
 
-      pointer_record->m_user_callback(ACTION_FREE, space, sizeof(T) * elems);
+      pointer_record->m_user_callback(ACTION_FREE, ExecutionSpace(space), sizeof(T) * elems);
       m_allocators[space]->deallocate(old_ptr);
 
       pointer_record->m_pointers[space] = new_ptr;
@@ -176,7 +176,7 @@ void ArrayManager::free(void* pointer)
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     if (pointer_record->m_pointers[space]) {
       if(pointer_record->m_owned[space]) {
-        pointer_record->m_user_callback(ACTION_FREE, space, pointer_record->m_size);    
+        pointer_record->m_user_callback(ACTION_FREE, ExecutionSpace(space), pointer_record->m_size);    
         void* space_ptr = pointer_record->m_pointers[space];
         m_pointer_map.erase(space_ptr);
         m_allocators[space]->deallocate(space_ptr);
