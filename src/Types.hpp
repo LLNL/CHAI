@@ -43,8 +43,21 @@
 #ifndef CHAI_Types_HPP
 #define CHAI_Types_HPP
 
+#include <functional>
+
 namespace chai {
   typedef unsigned int uint;
+  
+  
+  enum Action {
+    ACTION_ALLOC,
+    ACTION_FREE,
+    ACTION_MOVE
+  };
+
+	using UserCallback = std::function<void(Action, ExecutionSpace, size_t)>;
 }
+
+
 
 #endif

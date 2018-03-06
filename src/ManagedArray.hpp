@@ -116,8 +116,10 @@ class ManagedArray {
    *
    * \param elems Number of elements to allocate.
    * \param space Execution space in which to allocate data.
+   * \param cback User defined callback for memory events (alloc, free, move)
    */
-  CHAI_HOST void allocate(size_t elems, ExecutionSpace space=CPU);
+  CHAI_HOST void allocate(size_t elems, ExecutionSpace space=CPU, 
+    UserCallback const &cback=[](Action, ExecutionSpace, size_t){});
 
   /*!
    * \brief Reallocate data for the ManagedArray.
@@ -192,6 +194,21 @@ class ManagedArray {
 #endif
 
   /*!
+   * \brief Assign a user-defined callback triggerd upon memory migration.
+	 *
+	 * The callback is a function of the form
+	 * 
+	 *   void callback(chai::ExecutionSpace moved_to, size_t num_bytes)
+	 *
+	 * Where moved_to is the execution space that the data was moved to, and
+	 * num_bytes is the number of bytes moved.
+	 *
+   */
+#ifndef CHAI_DISABLE_RM
+  CHAI_HOST void setUserCallback(UserCallback const &cback);
+#endif
+
+  /*!
    * \brief 
    *
    */
@@ -219,6 +236,7 @@ class ManagedArray {
    * Number of elements in the ManagedArray.
    */
   size_t m_elems;
+  
 };
 
 /*!

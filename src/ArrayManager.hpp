@@ -45,6 +45,7 @@
 
 #include "chai/ExecutionSpaces.hpp"
 #include "chai/PointerRecord.hpp"
+#include "chai/Types.hpp"
 
 #include <unordered_map>
 
@@ -127,12 +128,14 @@ class ArrayManager
    *
    * \param elems The number of elements to allocate.
    * \param space The space in which to allocate the data.
+   * \param cback User defined callback for memory events (alloc, free, move)
    * \tparam T The type of data to allocate.
    * 
    * \return Pointer to the allocated memory.
    */
   template<typename T>
-  void* allocate(size_t elems, ExecutionSpace space=CPU);
+  void* allocate(size_t elems, ExecutionSpace space=CPU, 
+      UserCallback const &cback=[](Action, ExecutionSpace, size_t){});
 
   /*!
    * \brief Reallocate data.
@@ -183,6 +186,11 @@ class ArrayManager
   void* makeManaged(void* pointer, size_t size, ExecutionSpace space, bool owned);
 
   void resetTouch(void* pointer);
+      
+  /*!
+   * \brief Assign a user-defined callback triggerd upon memory operations.
+   */
+  void setUserCallback(void *pointer, UserCallback const &f);
 
   protected:
 

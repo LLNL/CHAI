@@ -101,7 +101,8 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST void ManagedArray<T>::allocate(size_t elems, ExecutionSpace space) {
+CHAI_HOST void ManagedArray<T>::allocate(size_t elems, ExecutionSpace space, 
+    UserCallback const &cback) {
   CHAI_LOG("ManagedArray", "Allocating array of size " << elems << " in space " << space);
 
   m_elems = elems;
@@ -128,7 +129,7 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t new_elems)
   cudaMemcpy(new_ptr, m_active_pointer, sizeof(T)*m_elems, cudaMemcpyDefault);
 
   cudaFree(m_active_pointer);
-#else
+#else  
   new_ptr = static_cast<T*>(realloc(m_active_pointer, sizeof(T)*new_elems));
 #endif
 
@@ -142,6 +143,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::free()
 {
+  
 #if defined(CHAI_ENABLE_UM)
   cudaFree(m_active_pointer);
 #else
@@ -205,6 +207,10 @@ ManagedArray<T>::operator= (std::nullptr_t from) {
   m_elems = 0;
   return *this;
 }
+
+
+
+
 
 } // end of namespace chai
 
