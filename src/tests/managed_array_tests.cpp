@@ -318,6 +318,7 @@ TEST(ManagedArray, Reset)
 }
 
 #if defined(CHAI_ENABLE_CUDA)
+#ifndef CHAI_DISABLE_RM
 CUDA_TEST(ManagedArray, ResetDevice)
 {
   chai::ManagedArray<float> array(20);
@@ -337,10 +338,12 @@ CUDA_TEST(ManagedArray, ResetDevice)
   });
 }
 #endif
+#endif
 
 
 
 #if defined(CHAI_ENABLE_CUDA)
+#ifndef CHAI_DISABLE_RM
 CUDA_TEST(ManagedArray, UserCallback)
 {
   int num_h2d = 0;
@@ -388,3 +391,5 @@ CUDA_TEST(ManagedArray, UserCallback)
 	ASSERT_EQ(bytes_free, 2*20*sizeof(float));
 }
 #endif
+#endif
+

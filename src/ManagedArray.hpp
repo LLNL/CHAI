@@ -204,8 +204,9 @@ class ManagedArray {
 	 * num_bytes is the number of bytes moved.
 	 *
    */
+#ifndef CHAI_DISABLE_RM
   CHAI_HOST void setUserCallback(UserCallback const &cback);
-
+#endif
 
   /*!
    * \brief 
@@ -236,14 +237,6 @@ class ManagedArray {
    */
   size_t m_elems;
   
-#if defined(CHAI_DISABLE_RM)
-  /*!
-   * User callback for memory events.
-   * Typically stored by resource manager, but for "thin" version, we need
-   * to keep our pointer.
-   */
-  UserCallback m_user_callback;
-#endif
 };
 
 /*!
