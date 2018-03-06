@@ -92,7 +92,7 @@ class ManagedArray {
    * \param elems Number of elements in the array.
    * \param space Execution space in which to allocate the array.
    */
-  CHAI_HOST_DEVICE ManagedArray(uint elems, ExecutionSpace space=NONE);
+  CHAI_HOST_DEVICE ManagedArray(size_t elems, ExecutionSpace space=NONE);
 
   /*!
    * \brief Copy constructor handles data movement.
@@ -116,8 +116,10 @@ class ManagedArray {
    *
    * \param elems Number of elements to allocate.
    * \param space Execution space in which to allocate data.
+   * \param cback User defined callback for memory events (alloc, free, move)
    */
-  CHAI_HOST void allocate(uint elems, ExecutionSpace space=CPU);
+  CHAI_HOST void allocate(size_t elems, ExecutionSpace space=CPU, 
+    UserCallback const &cback=[](Action, ExecutionSpace, size_t){});
 
   /*!
    * \brief Reallocate data for the ManagedArray.
@@ -126,7 +128,7 @@ class ManagedArray {
    *
    * \param elems Number of elements to allocate.
    */
-  CHAI_HOST void reallocate(uint elems);
+  CHAI_HOST void reallocate(size_t elems);
 
   /*!
    * \brief Free all data allocated by this ManagedArray.
@@ -146,7 +148,7 @@ class ManagedArray {
    *
    * \return The number of elements in the array
    */
-  CHAI_HOST uint size() const;
+  CHAI_HOST size_t size() const;
 
   /*!
    * \brief Register this ManagedArray object as 'touched' in the given space.
@@ -162,7 +164,8 @@ class ManagedArray {
    *
    * \return Reference to i-th element.
    */
-  CHAI_HOST_DEVICE T& operator[](const int i) const;
+	template<typename Idx>
+  CHAI_HOST_DEVICE T& operator[](const Idx i) const;
 
   /*!
    * \brief Set val to the value of element i in the ManagedArray.
@@ -191,13 +194,28 @@ class ManagedArray {
 #endif
 
   /*!
+   * \brief Assign a user-defined callback triggerd upon memory migration.
+	 *
+	 * The callback is a function of the form
+	 * 
+	 *   void callback(chai::ExecutionSpace moved_to, size_t num_bytes)
+	 *
+	 * Where moved_to is the execution space that the data was moved to, and
+	 * num_bytes is the number of bytes moved.
+	 *
+   */
+#ifndef CHAI_DISABLE_RM
+  CHAI_HOST void setUserCallback(UserCallback const &cback);
+#endif
+
+  /*!
    * \brief 
    *
    */
   template<bool B = std::is_const<T>::value,typename std::enable_if<!B, int>::type = 0>
   CHAI_HOST_DEVICE operator ManagedArray<const T> () const;
 
-  CHAI_HOST_DEVICE ManagedArray(T* data, ArrayManager* array_manager, uint m_elems);
+  CHAI_HOST_DEVICE ManagedArray(T* data, ArrayManager* array_manager, size_t m_elems);
 
 
   CHAI_HOST_DEVICE ManagedArray<T>& operator= (std::nullptr_t);
@@ -217,7 +235,8 @@ class ManagedArray {
   /*!
    * Number of elements in the ManagedArray.
    */
-  uint m_elems;
+  size_t m_elems;
+  
 };
 
 /*!
@@ -240,7 +259,7 @@ template <typename T>
 ManagedArray<T> 
 makeManagedArray(
     T* data, 
-    uint elems, 
+    size_t elems,
     ExecutionSpace space,
     bool owned)
 {

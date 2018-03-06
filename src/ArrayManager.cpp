@@ -101,6 +101,7 @@ void ArrayManager::registerPointer(void* pointer, size_t size, ExecutionSpace sp
     pointer_record->m_owned[i] = true;
   }
   pointer_record->m_owned[space] = owned;
+  pointer_record->m_user_callback = [](Action, ExecutionSpace, size_t){};
 }
 
 void ArrayManager::registerPointer(void* pointer, PointerRecord* record, ExecutionSpace space) 
@@ -201,6 +202,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   if (!record->m_touched[record->m_last_space]) {
     return;
   } else {
+    record->m_user_callback(ACTION_MOVE, space, record->m_size);
     rm.copy(src_pointer, dst_pointer);
   }
 
