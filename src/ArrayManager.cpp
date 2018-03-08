@@ -48,9 +48,7 @@
 #include "cuda_runtime_api.h"
 #endif
 
-#if defined(CHAI_ENABLE_CNMEM)
-#include "cnmem.h"
-#endif
+#include "umpire/ResourceManager.hpp"
 
 namespace chai {
 
@@ -71,13 +69,15 @@ ArrayManager::ArrayManager() :
   m_pointer_map.clear();
   m_current_execution_space = NONE;
   m_default_allocation_space = CPU;
-#if defined(CHAI_ENABLE_CNMEM)
-  cudaDeviceProp props;
-  cudaGetDeviceProperties(&props, 0);
-  cnmemDevice_t cnmem_device;
-  memset(&cnmem_device, 0, sizeof(cnmem_device));
-  cnmem_device.size = static_cast<size_t>(0.8 * props.totalGlobalMem);
-  cnmemInit(1, &cnmem_device, CNMEM_FLAGS_DEFAULT);
+
+  umpire::ResourceManager& rm = umpire::ResourceManager::getInstance();
+
+  m_allocators[CPU] = new umpire::Allocator(rm.getAllocator("HOST"));
+#if defined(CHAI_ENABLE_CUDA)
+  m_allocators[GPU] = new umpire::Allocator(rm.getAllocator("DEVICE"));
+#endif
+#if defined(CHAI_ENABLE_UM)
+  m_allocators[UM] = new umpire::Allocator(rm.getAllocator("UM"));
 #endif
 }
 
@@ -95,6 +95,7 @@ void ArrayManager::registerPointer(void* pointer, size_t size, ExecutionSpace sp
 
   pointer_record->m_pointers[space] = pointer;
   pointer_record->m_size = size;
+  pointer_record->m_last_space = space;
 
   for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
     pointer_record->m_owned[i] = true;
@@ -144,14 +145,17 @@ ExecutionSpace ArrayManager::getExecutionSpace() {
 
 void ArrayManager::registerTouch(void* pointer) {
   CHAI_LOG("ArrayManager", pointer << " touched in space " << m_current_execution_space);
+  
+  if (m_current_execution_space == NONE)
+    return;
 
-  auto pointer_record = getPointerRecord(pointer);
-  pointer_record->m_touched[m_current_execution_space] = true;
+  registerTouch(pointer, m_current_execution_space);
 }
 
 void ArrayManager::registerTouch(void* pointer, ExecutionSpace space) {
   auto pointer_record = getPointerRecord(pointer);
   pointer_record->m_touched[space] = true;
+  pointer_record->m_last_space = space;
 }
 
 
@@ -163,9 +167,46 @@ void ArrayManager::resetTouch(void* pointer)
 
 
 void ArrayManager::resetTouch(PointerRecord* pointer_record) {
-  for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
-    pointer_record->m_touched[i] = false;
+  for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
+    pointer_record->m_touched[space] = false;
   }
+}
+
+void ArrayManager::move(PointerRecord* record, ExecutionSpace space) 
+{
+  umpire::ResourceManager& rm = umpire::ResourceManager::getInstance();
+
+  if ( space == NONE ) {
+    return;
+  }
+
+#if defined(CHAI_ENABLE_UM)
+  if (record->m_last_space == UM) {
+    return;
+  }
+#endif
+
+  if (space == record->m_last_space) {
+    return;
+  }
+
+
+  void* src_pointer = record->m_pointers[record->m_last_space];
+  void* dst_pointer = record->m_pointers[space];
+
+  if (!dst_pointer) {
+    allocate(record, space);
+    dst_pointer = record->m_pointers[space];
+  }
+
+  if (!record->m_touched[record->m_last_space]) {
+    return;
+  } else {
+    record->m_user_callback(ACTION_MOVE, space, record->m_size);
+    rm.copy(src_pointer, dst_pointer);
+  }
+
+  resetTouch(record);
 }
 
 } // end of namespace chai

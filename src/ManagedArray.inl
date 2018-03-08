@@ -174,18 +174,6 @@ CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const Idx i) const {
   return m_active_pointer[i];
 }
 
-// template<typename T>
-// CHAI_INLINE
-// CHAI_HOST_DEVICE T& ManagedArray<T>::pick(size_t i, T_non_const& val) {
-// #ifdef __CUDA_ARCH__
-//           val = m_active_ptr[i]; 
-// #else
-// #endif
-// 
-// }
-
-
-
 #if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
 template<typename T>
 CHAI_INLINE

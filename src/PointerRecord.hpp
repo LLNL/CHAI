@@ -71,6 +71,14 @@ struct PointerRecord
    */
   bool m_touched[NUM_EXECUTION_SPACES];
 
+  /*!
+   * Execution space where this arary was last touched.
+   */
+  ExecutionSpace m_last_space;
+
+  /*!
+   * Array holding ownership status of each pointer.
+   */
   bool m_owned[NUM_EXECUTION_SPACES];
   
   

@@ -41,7 +41,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-set(CHAI_ENABLE_CNMEM ${ENABLE_CNMEM})
 set(CHAI_ENABLE_CUDA ${ENABLE_CUDA})
 set(CHAI_ENABLE_IMPLICIT_CONVERSIONS ${ENABLE_IMPLICIT_CONVERSIONS})
 set(CHAI_DISABLE_RM ${DISABLE_RM})
@@ -70,17 +69,14 @@ endif ()
 set (chai_sources
   ArrayManager.cpp)
 
-set (chai_depends)
+set (chai_depends
+  umpire)
 
 if (ENABLE_CUDA)
   set (chai_depends
+    ${chai_depends}
     cuda_runtime)
 endif ()
-if (ENABLE_CNMEM)
-  set (chai_depends
-    ${chai_depends}
-    cnmem)
-endif()
 
 blt_add_library(
   NAME chai
