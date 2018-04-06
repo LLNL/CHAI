@@ -236,6 +236,11 @@ class ManagedArray {
    * Number of elements in the ManagedArray.
    */
   size_t m_elems;
+
+  /*!
+   * Pointer to PointerRecord data.
+   */
+  PointerRecord* m_pointer_record;
   
 };
 
