@@ -48,46 +48,15 @@
 #include "chai/ArrayManager.hpp"
 #include "chai/ChaiMacros.hpp"
 
-#if defined(CHAI_ENABLE_CUDA)
-#include "cuda_runtime_api.h"
-#endif
-
 #include <iostream>
 
 #include "umpire/ResourceManager.hpp"
 
 namespace chai {
 
-CHAI_INLINE
-PointerRecord* ArrayManager::getPointerRecord(void* pointer) 
-{
-  auto record = m_pointer_map.find(pointer);
-  if (record != m_pointer_map.end()) {
-    return record->second;
-  } else {
-    return &s_null_record;
-  }
-}
-
-CHAI_INLINE
-void* ArrayManager::makeManaged(void* pointer, size_t size, ExecutionSpace space, bool owned)
-{
-  umpire::ResourceManager::getInstance().registerAllocation(pointer, new umpire::util::AllocationRecord{pointer, size, m_allocators[space]->getAllocationStrategy()});
-
-  registerPointer(pointer, size, space, owned);
-  
-  auto pointer_record = getPointerRecord(pointer);
-  for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
-    // If pointer is already active on some execution space, return that pointer
-    if(pointer_record->m_touched[i] == true) return pointer_record->m_pointers[i];
-  }
-
-  return pointer;
-}
-
 template<typename T>
 CHAI_INLINE
-void* ArrayManager::allocate(size_t elems, ExecutionSpace space, UserCallback const &f)
+PointerRecord* ArrayManager::allocate(size_t elems, ExecutionSpace space, UserCallback const &f)
 {
   if (space == NONE) {
     return nullptr;
@@ -98,22 +67,18 @@ void* ArrayManager::allocate(size_t elems, ExecutionSpace space, UserCallback co
 
   CHAI_LOG("ArrayManager", "Allocated array at: " << ret);
 
-  registerPointer(ret, sizeof(T) * elems, space);
+  auto record = registerPointer(ret, sizeof(T) * elems, space);
+  record->m_user_callback = f;  
+  record->m_user_callback(ACTION_ALLOC, space, sizeof(T) * elems);
   
-  auto pointer_record = getPointerRecord(ret);
-  pointer_record->m_user_callback = f;  
-  pointer_record->m_user_callback(ACTION_ALLOC, space, sizeof(T) * elems);
-  
-  return ret;
+  return record;
 }
 
 template<typename T>
 CHAI_INLINE
-void* ArrayManager::reallocate(void* pointer, size_t elems)
+void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* pointer_record)
 {
   umpire::ResourceManager& rm = umpire::ResourceManager::getInstance();
-
-  auto pointer_record = getPointerRecord(pointer);
 
   ExecutionSpace my_space;
 
@@ -137,7 +102,7 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
       pointer_record->m_user_callback(ACTION_ALLOC, ExecutionSpace(space), sizeof(T) * elems);
       void* new_ptr = m_allocators[space]->allocate(sizeof(T)*elems);
 
-      rm.copy(old_ptr, new_ptr);
+      rm.copy(new_ptr, old_ptr);
 
       pointer_record->m_user_callback(ACTION_FREE, ExecutionSpace(space), sizeof(T) * elems);
       m_allocators[space]->deallocate(old_ptr);
@@ -152,70 +117,6 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
   pointer_record->m_size = sizeof(T) * elems;
   return pointer_record->m_pointers[my_space];
 }
-
-CHAI_INLINE
-void* ArrayManager::allocate(
-    PointerRecord* pointer_record, ExecutionSpace space)
-{
-  void * ret = nullptr;
-  auto size = pointer_record->m_size;
-  
-  pointer_record->m_user_callback(ACTION_ALLOC, space, size);
-
-  ret = m_allocators[space]->allocate(size);
-  registerPointer(ret, pointer_record, space);
-
-  return ret;
-}
-
-CHAI_INLINE
-void ArrayManager::free(void* pointer)
-{
-  auto pointer_record = getPointerRecord(pointer);
-
-  for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
-    if (pointer_record->m_pointers[space]) {
-      if(pointer_record->m_owned[space]) {
-        pointer_record->m_user_callback(ACTION_FREE, ExecutionSpace(space), pointer_record->m_size);    
-        void* space_ptr = pointer_record->m_pointers[space];
-        m_pointer_map.erase(space_ptr);
-        m_allocators[space]->deallocate(space_ptr);
-        pointer_record->m_pointers[space] = nullptr;
-      }
-    }
-  }
-
-  delete pointer_record;
-}
-
-
-CHAI_INLINE
-size_t ArrayManager::getSize(void* ptr)
-{
-  auto pointer_record = getPointerRecord(ptr);
-  return pointer_record->m_size;
-}
-
-CHAI_INLINE
-void ArrayManager::setDefaultAllocationSpace(ExecutionSpace space)
-{
-  m_default_allocation_space = space;
-}
-
-CHAI_INLINE
-ExecutionSpace ArrayManager::getDefaultAllocationSpace()
-{
-  return m_default_allocation_space;
-}
-
-
-CHAI_INLINE
-void ArrayManager::setUserCallback(void *pointer, UserCallback const &f)
-{
-  auto pointer_record = getPointerRecord(pointer);
-  pointer_record->m_user_callback = f;
-}
-
 
 } // end of namespace chai
 

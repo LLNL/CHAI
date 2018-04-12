@@ -49,7 +49,6 @@
 #include "chai/ArrayManager.hpp"
 #include "chai/Types.hpp"
 
-
 #include <cstddef>
 
 namespace chai {
@@ -108,6 +107,8 @@ class ManagedArray {
    * \brief Construct a ManagedArray from a nullptr.
    */
   CHAI_HOST_DEVICE ManagedArray(std::nullptr_t other);
+
+  CHAI_HOST_DEVICE ManagedArray(PointerRecord* record, ExecutionSpace space);
 
   /*!
    * \brief Allocate data for the ManagedArray in the specified space.
@@ -215,7 +216,7 @@ class ManagedArray {
   template<bool B = std::is_const<T>::value,typename std::enable_if<!B, int>::type = 0>
   CHAI_HOST_DEVICE operator ManagedArray<const T> () const;
 
-  CHAI_HOST_DEVICE ManagedArray(T* data, ArrayManager* array_manager, size_t m_elems);
+  CHAI_HOST_DEVICE ManagedArray(T* data, ArrayManager* array_manager, size_t m_elems, PointerRecord* pointer_record);
 
 
   CHAI_HOST_DEVICE ManagedArray<T>& operator= (std::nullptr_t);
@@ -270,13 +271,15 @@ makeManagedArray(
 {
   ArrayManager* manager = ArrayManager::getInstance();
 
-  T* managed_data = static_cast<T*>(manager->makeManaged(data, sizeof(T)*elems, space, owned));
+  auto record = manager->makeManaged(data, sizeof(T)*elems, space, owned);
+
+  auto array = ManagedArray<T>(record, space);
 
   if (!std::is_const<T>::value) {
-    manager->registerTouch(managed_data, space);
+    array.registerTouch(space);
   }
 
-  return ManagedArray<T>(managed_data);
+  return array;
 }
 
 } // end of namespace chai

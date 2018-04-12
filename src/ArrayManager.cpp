@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------
-// Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
+// Copyright (c) 2017, Lawrence Livermore National Security, LLC. All
 // rights reserved.
 // 
 // Produced at the Lawrence Livermore National Laboratory.
@@ -44,10 +44,6 @@
 
 #include "chai/config.hpp"
 
-#if defined(CHAI_ENABLE_CUDA)
-#include "cuda_runtime_api.h"
-#endif
-
 #include "umpire/ResourceManager.hpp"
 
 namespace chai {
@@ -81,7 +77,7 @@ ArrayManager::ArrayManager() :
 #endif
 }
 
-void ArrayManager::registerPointer(void* pointer, size_t size, ExecutionSpace space, bool owned) {
+PointerRecord* ArrayManager::registerPointer(void* pointer, size_t size, ExecutionSpace space, bool owned) {
   CHAI_LOG("ArrayManager", "Registering " << pointer << " in space " << space);
 
   auto found_pointer_record = m_pointer_map.find(pointer);
@@ -102,6 +98,8 @@ void ArrayManager::registerPointer(void* pointer, size_t size, ExecutionSpace sp
   }
   pointer_record->m_owned[space] = owned;
   pointer_record->m_user_callback = [](Action, ExecutionSpace, size_t){};
+  
+  return pointer_record;
 }
 
 void ArrayManager::registerPointer(void* pointer, PointerRecord* record, ExecutionSpace space) 
@@ -128,12 +126,11 @@ void ArrayManager::setExecutionSpace(ExecutionSpace space) {
   m_current_execution_space = space;
 }
 
-void* ArrayManager::move(void* pointer) {
+void* ArrayManager::move(void* pointer, PointerRecord* pointer_record) {
   if (m_current_execution_space == NONE) {
     return pointer;
   }
 
-  auto pointer_record = getPointerRecord(pointer);
   move(pointer_record, m_current_execution_space);
 
   return pointer_record->m_pointers[m_current_execution_space];
@@ -143,26 +140,18 @@ ExecutionSpace ArrayManager::getExecutionSpace() {
   return m_current_execution_space;
 }
 
-void ArrayManager::registerTouch(void* pointer) {
+void ArrayManager::registerTouch(PointerRecord* pointer_record) {
   CHAI_LOG("ArrayManager", pointer << " touched in space " << m_current_execution_space);
   
   if (m_current_execution_space == NONE)
     return;
 
-  registerTouch(pointer, m_current_execution_space);
+  registerTouch(pointer_record, m_current_execution_space);
 }
 
-void ArrayManager::registerTouch(void* pointer, ExecutionSpace space) {
-  auto pointer_record = getPointerRecord(pointer);
+void ArrayManager::registerTouch(PointerRecord* pointer_record, ExecutionSpace space) {
   pointer_record->m_touched[space] = true;
   pointer_record->m_last_space = space;
-}
-
-
-void ArrayManager::resetTouch(void* pointer)
-{
-  auto record = getPointerRecord(pointer);
-  resetTouch(record);
 }
 
 
@@ -203,10 +192,98 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
     return;
   } else {
     record->m_user_callback(ACTION_MOVE, space, record->m_size);
-    rm.copy(src_pointer, dst_pointer);
+    rm.copy(dst_pointer, src_pointer);
   }
 
   resetTouch(record);
 }
+
+CHAI_INLINE
+void* ArrayManager::allocate(
+    PointerRecord* pointer_record, ExecutionSpace space)
+{
+  void * ret = nullptr;
+  auto size = pointer_record->m_size;
+  
+  pointer_record->m_user_callback(ACTION_ALLOC, space, size);
+
+  ret = m_allocators[space]->allocate(size);
+  registerPointer(ret, pointer_record, space);
+
+  return ret;
+}
+
+void ArrayManager::free(PointerRecord* pointer_record)
+{
+  for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
+    if (pointer_record->m_pointers[space]) {
+      if(pointer_record->m_owned[space]) {
+        pointer_record->m_user_callback(ACTION_FREE, ExecutionSpace(space), pointer_record->m_size);    
+        void* space_ptr = pointer_record->m_pointers[space];
+        m_pointer_map.erase(space_ptr);
+        m_allocators[space]->deallocate(space_ptr);
+        pointer_record->m_pointers[space] = nullptr;
+      }
+    }
+  }
+
+  delete pointer_record;
+}
+
+
+size_t ArrayManager::getSize(void* ptr)
+{
+  // TODO
+  auto pointer_record = getPointerRecord(ptr);
+  return pointer_record->m_size;
+}
+
+CHAI_INLINE
+void ArrayManager::setDefaultAllocationSpace(ExecutionSpace space)
+{
+  m_default_allocation_space = space;
+}
+
+ExecutionSpace ArrayManager::getDefaultAllocationSpace()
+{
+  return m_default_allocation_space;
+}
+
+
+CHAI_INLINE
+void ArrayManager::setUserCallback(void *pointer, UserCallback const &f)
+{
+  // TODO ??
+  auto pointer_record = getPointerRecord(pointer);
+  pointer_record->m_user_callback = f;
+}
+
+CHAI_INLINE
+PointerRecord* ArrayManager::getPointerRecord(void* pointer) 
+{
+  auto record = m_pointer_map.find(pointer);
+  if (record != m_pointer_map.end()) {
+    return record->second;
+  } else {
+    return &s_null_record;
+  }
+}
+
+PointerRecord* ArrayManager::makeManaged(void* pointer, size_t size, ExecutionSpace space, bool owned)
+{
+  umpire::ResourceManager::getInstance().registerAllocation(pointer, new umpire::util::AllocationRecord{pointer, size, m_allocators[space]->getAllocationStrategy()});
+
+  auto pointer_record = registerPointer(pointer, size, space, owned);
+  
+  // TODO Is this a problem?
+  // for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
+  //   // If pointer is already active on some execution space, return that pointer
+  //   if(pointer_record->m_touched[i] == true) 
+  //     return pointer_record->m_pointers[i];
+  // }
+
+  return pointer_record;
+}
+
 
 } // end of namespace chai
