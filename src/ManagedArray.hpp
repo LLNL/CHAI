@@ -220,6 +220,8 @@ class ManagedArray {
 
   CHAI_HOST_DEVICE ManagedArray<T>& operator= (std::nullptr_t);
 
+  CHAI_HOST_DEVICE bool operator== (ManagedArray<T>& rhs);
+
   private:
 
   /*! 
