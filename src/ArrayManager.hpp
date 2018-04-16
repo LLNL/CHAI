@@ -289,6 +289,8 @@ class ArrayManager
    * \brief Array of umpire::Allocators, indexed by ExecutionSpace.
    */
   umpire::Allocator* m_allocators[NUM_EXECUTION_SPACES];
+
+  umpire::ResourceManager& m_resource_manager;
 };
 
 } // end of namespace chai
