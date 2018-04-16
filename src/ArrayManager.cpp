@@ -203,7 +203,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
     return;
   } else {
     record->m_user_callback(ACTION_MOVE, space, record->m_size);
-    rm.copy(src_pointer, dst_pointer);
+    rm.copy(dst_pointer, src_pointer);
   }
 
   resetTouch(record);
