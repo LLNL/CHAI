@@ -72,7 +72,7 @@ PointerRecord* ArrayManager::getPointerRecord(void* pointer)
 CHAI_INLINE
 void* ArrayManager::makeManaged(void* pointer, size_t size, ExecutionSpace space, bool owned)
 {
-  umpire::ResourceManager::getInstance().registerAllocation(pointer, new umpire::util::AllocationRecord{pointer, size, m_allocators[space]->getAllocationStrategy()});
+  m_resource_manager.registerAllocation(pointer, new umpire::util::AllocationRecord{pointer, size, m_allocators[space]->getAllocationStrategy()});
 
   registerPointer(pointer, size, space, owned);
   
@@ -111,8 +111,6 @@ template<typename T>
 CHAI_INLINE
 void* ArrayManager::reallocate(void* pointer, size_t elems)
 {
-  umpire::ResourceManager& rm = umpire::ResourceManager::getInstance();
-
   auto pointer_record = getPointerRecord(pointer);
 
   ExecutionSpace my_space;
@@ -137,7 +135,7 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
       pointer_record->m_user_callback(ACTION_ALLOC, ExecutionSpace(space), sizeof(T) * elems);
       void* new_ptr = m_allocators[space]->allocate(sizeof(T)*elems);
 
-      rm.copy(old_ptr, new_ptr);
+      m_resource_manager.copy(old_ptr, new_ptr);
 
       pointer_record->m_user_callback(ACTION_FREE, ExecutionSpace(space), sizeof(T) * elems);
       m_allocators[space]->deallocate(old_ptr);
