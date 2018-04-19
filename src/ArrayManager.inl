@@ -78,8 +78,6 @@ template<typename T>
 CHAI_INLINE
 void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* pointer_record)
 {
-  umpire::ResourceManager& rm = umpire::ResourceManager::getInstance();
-
   ExecutionSpace my_space;
 
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
@@ -101,8 +99,7 @@ void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* point
     if (old_ptr) {
       pointer_record->m_user_callback(ACTION_ALLOC, ExecutionSpace(space), sizeof(T) * elems);
       void* new_ptr = m_allocators[space]->allocate(sizeof(T)*elems);
-
-      rm.copy(new_ptr, old_ptr);
+      m_resource_manager.copy(new_ptr, old_ptr);
 
       pointer_record->m_user_callback(ACTION_FREE, ExecutionSpace(space), sizeof(T) * elems);
       m_allocators[space]->deallocate(old_ptr);

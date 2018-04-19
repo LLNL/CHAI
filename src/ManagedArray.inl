@@ -246,6 +246,15 @@ ManagedArray<T>::operator= (std::nullptr_t from) {
   return *this;
 }
 
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+bool
+ManagedArray<T>::operator== (ManagedArray<T>& rhs)
+{
+  return (m_active_pointer ==  rhs.m_active_pointer);
+}
+
 } // end of namespace chai
 
 #endif // CHAI_ManagedArray_INL
