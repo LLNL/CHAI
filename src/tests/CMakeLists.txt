@@ -62,3 +62,7 @@ target_include_directories(
 blt_add_test(
   NAME managed_array_test
   COMMAND managed_array_tests)
+
+if (ENABLE_RAJA_PLUGIN)
+  add_subdirectory(integration)
+endif ()

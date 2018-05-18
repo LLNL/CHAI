@@ -54,6 +54,7 @@ set (chai_headers
   ArrayManager.hpp
   ArrayManager.inl
   ChaiMacros.hpp
+  pluginLinker.hpp
   ExecutionSpaces.hpp
   ManagedArray.hpp
   ManagedArray.inl
@@ -76,6 +77,20 @@ if (ENABLE_CUDA)
   set (chai_depends
     ${chai_depends}
     cuda_runtime)
+endif ()
+
+if (ENABLE_RAJA_PLUGIN)
+  set (chai_headers
+    ${chai_headers}
+    RajaExecutionSpacePlugin.hpp)
+
+  set (chai_sources
+    ${chai_sources}
+    RajaExecutionSpacePlugin.cpp)
+
+  set (chai_depends
+    ${chai_depends}
+    raja)
 endif ()
 
 blt_add_library(

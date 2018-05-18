@@ -47,3 +47,14 @@ blt_register_library(
   NAME umpire
   INCLUDES ${UMPIRE_INCLUDE_DIRS}
   LIBRARIES umpire)
+
+if (ENABLE_RAJA_PLUGIN)
+  find_package(RAJA REQUIRED)
+  
+  blt_register_library(
+    NAME raja
+    INCLUDES ${RAJA_INCLUDE_DIR}
+    LIBRARIES RAJA)
+
+  message(STATUS "RAJA: ${RAJA_INCLUDE_DIR}")
+endif ()

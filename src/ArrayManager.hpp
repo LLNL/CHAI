@@ -47,6 +47,8 @@
 #include "chai/PointerRecord.hpp"
 #include "chai/Types.hpp"
 
+#include "chai/pluginLinker.hpp"
+
 #include <unordered_map>
 
 #include "umpire/Allocator.hpp"

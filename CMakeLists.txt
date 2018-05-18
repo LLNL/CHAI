@@ -52,6 +52,7 @@ option(ENABLE_IMPLICIT_CONVERSIONS "Enable implicit conversions to-from raw poin
 option(DISABLE_RM "Make ManagedArray a thin wrapper" Off)
 mark_as_advanced(DISABLE_RM)
 option(ENABLE_UM "Use CUDA unified (managed) memory" Off)
+option(ENABLE_RAJA_PLUGIN "Build plugin to set RAJA execution spaces" On)
 
 if (ENABLE_UM AND NOT ENABLE_CUDA)
   message(FATAL_ERROR "Option ENABLE_UM requires ENABLE_CUDA")
