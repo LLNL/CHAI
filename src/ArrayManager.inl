@@ -135,7 +135,7 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
       pointer_record->m_user_callback(ACTION_ALLOC, ExecutionSpace(space), sizeof(T) * elems);
       void* new_ptr = m_allocators[space]->allocate(sizeof(T)*elems);
 
-      m_resource_manager.copy(old_ptr, new_ptr);
+      m_resource_manager.copy(new_ptr, old_ptr, sizeof(T)*elems);
 
       pointer_record->m_user_callback(ACTION_FREE, ExecutionSpace(space), sizeof(T) * elems);
       m_allocators[space]->deallocate(old_ptr);
