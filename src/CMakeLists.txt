@@ -45,6 +45,7 @@ set(CHAI_ENABLE_CUDA ${ENABLE_CUDA})
 set(CHAI_ENABLE_IMPLICIT_CONVERSIONS ${ENABLE_IMPLICIT_CONVERSIONS})
 set(CHAI_DISABLE_RM ${DISABLE_RM})
 set(CHAI_ENABLE_UM ${ENABLE_UM})
+set(CHAI_ENABLE_RAJA_PLUGIN ${ENABLE_RAJA_PLUGIN})
 
 configure_file(
   ${PROJECT_SOURCE_DIR}/src/config.hpp.in
@@ -82,6 +83,7 @@ endif ()
 if (ENABLE_RAJA_PLUGIN)
   set (chai_headers
     ${chai_headers}
+    ManagedArrayView.hpp
     RajaExecutionSpacePlugin.hpp)
 
   set (chai_sources

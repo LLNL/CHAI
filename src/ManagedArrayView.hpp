@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------
-// Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
+// Copyright (c) 2018, Lawrence Livermore National Security, LLC. All
 // rights reserved.
 // 
 // Produced at the Lawrence Livermore National Laboratory.
@@ -40,13 +40,31 @@
 // WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 // ---------------------------------------------------------------------
-#ifndef CHAI_config_HPP
-#define CHAI_config_HPP
+#ifndef CHAI_ManagedArrayView_HPP
+#define CHAI_ManagedArrayView_HPP
 
-#cmakedefine CHAI_ENABLE_CUDA 
-#cmakedefine CHAI_ENABLE_IMPLICIT_CONVERSIONS
-#cmakedefine CHAI_DISABLE_RM
-#cmakedefine CHAI_ENABLE_UM
-#cmakedefine CHAI_ENABLE_RAJA_PLUGIN
+#if defined(CHAI_ENABLE_RAJA_PLUGIN)
 
-#endif // CHAI_config_HPP
+#include "chai/config.hpp"
+#include "chai/ManagedArray.hpp"
+
+#include "RAJA/util/View.hpp"
+
+namespace chai {
+
+template <typename ValueType, typename LayoutType>
+using ManagedArrayView =
+    RAJA::View<ValueType, LayoutType, chai::ManagedArray<ValueType>>;
+
+
+template <typename ValueType, typename LayoutType, typename... IndexTypes>
+using TypedManagedArrayView = RAJA::TypedViewBase<ValueType,
+                                            chai::ManagedArray<ValueType>,
+                                            LayoutType,
+                                            IndexTypes...>;
+
+} // end of namespace chai
+
+#endif // defined(CHAI_ENABLE_RAJA_PLUGIN)
+
+#endif // CHAI_ManagedArrayView_HPP
