@@ -204,7 +204,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
 template<typename T>
 template<bool Q>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool test) :
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool ) :
   m_active_pointer(data),
 #if !defined(__CUDA_ARCH__)
   m_resource_manager(ArrayManager::getInstance()),
@@ -218,12 +218,13 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool test) :
 #endif
 
 template<typename T>
-template<bool B,typename std::enable_if<!B, int>::type>
-CHAI_INLINE
-CHAI_HOST_DEVICE
-ManagedArray<T>::operator ManagedArray<const T> () const
+ManagedArray<T>::operator ManagedArray<
+  typename std::conditional<!std::is_const<T>::value, 
+                            const T, 
+                            InvalidConstCast>::type> ()const
 {
-  return ManagedArray<const T>(const_cast<const T*>(m_active_pointer), m_resource_manager, m_elems);
+  return ManagedArray<const T>(const_cast<const T*>(m_active_pointer), 
+  m_resource_manager, m_elems);
 }
 
 template<typename T>
