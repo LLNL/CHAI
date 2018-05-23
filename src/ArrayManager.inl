@@ -127,6 +127,9 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
       return pointer_record->m_pointers[my_space];
     }
   }
+  
+  // only copy however many bytes overlap
+  size_t num_bytes_to_copy = std::min(sizeof(T)*elems, pointer_record->m_size);
 
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     void* old_ptr = pointer_record->m_pointers[space];
@@ -135,7 +138,7 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
       pointer_record->m_user_callback(ACTION_ALLOC, ExecutionSpace(space), sizeof(T) * elems);
       void* new_ptr = m_allocators[space]->allocate(sizeof(T)*elems);
 
-      m_resource_manager.copy(new_ptr, old_ptr, sizeof(T)*elems);
+      m_resource_manager.copy(new_ptr, old_ptr, num_bytes_to_copy);
 
       pointer_record->m_user_callback(ACTION_FREE, ExecutionSpace(space), sizeof(T) * elems);
       m_allocators[space]->deallocate(old_ptr);
