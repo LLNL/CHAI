@@ -55,7 +55,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
   m_resource_manager(nullptr),
   m_elems(0)
 {
+#if !defined(__CUDA_ARCH__)
   m_resource_manager = ArrayManager::getInstance();
+#endif
 }
 
 template<typename T>
@@ -66,8 +68,10 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
   m_resource_manager(nullptr),
   m_elems(elems)
 {
+#if !defined(__CUDA_ARCH__)
   m_resource_manager = ArrayManager::getInstance();
   this->allocate(elems, space);
+#endif
 }
 
 template<typename T>
@@ -202,8 +206,13 @@ template<bool Q>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool test) :
   m_active_pointer(data),
+#if !defined(__CUDA_ARCH__)
   m_resource_manager(ArrayManager::getInstance()),
   m_elems(m_resource_manager->getSize(m_active_pointer))
+#else
+  m_resource_manager(nullptr),
+  m_elems(0)
+#endif
 {
 }
 #endif
