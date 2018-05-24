@@ -177,6 +177,12 @@ CHAI_HOST
 void ManagedArray<T>::move(ExecutionSpace space)
 {
   m_active_pointer = static_cast<T*>(m_resource_manager->move(m_active_pointer, space));
+
+  if (!std::is_const<T>::value) {
+    CHAI_LOG("ManagedArray", "T is non-const, registering touch of pointer" << m_active_pointer);
+    T_non_const* non_const_pointer = const_cast<T_non_const*>(m_active_pointer);
+    m_resource_manager->registerTouch(non_const_pointer);
+  }
 }
 
 template<typename T>
