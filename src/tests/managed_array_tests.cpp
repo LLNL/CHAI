@@ -393,3 +393,20 @@ CUDA_TEST(ManagedArray, UserCallback)
 #endif
 #endif
 
+
+#if defined(CHAI_ENABLE_CUDA)
+CUDA_TEST(ManagedArray, Move)
+{
+  chai::ManagedArray<float> array(10, chai::GPU);
+
+  forall(cuda(), 0, 10, [=] __device__ (int i) {
+      array[i] = i;
+  });
+
+  array.move(chai::CPU);
+
+  ASSERT_EQ(array[5], 5);
+
+  array.free();
+}
+#endif // defined(CHAI_ENABLE_CUDA)

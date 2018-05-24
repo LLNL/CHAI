@@ -106,7 +106,7 @@ class ArrayManager
    * \param pointer Pointer to data in any execution space.
    * \return Pointer to data in the current execution space.
    */
-  void* move(void* pointer, PointerRecord* pointer_record);
+  void* move(void* pointer, PointerRecord* pointer_record, ExecutionSpace=NONE);
 
   /*!
    * \brief Register a touch of the pointer in the current execution space.

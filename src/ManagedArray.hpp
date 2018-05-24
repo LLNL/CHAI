@@ -161,6 +161,8 @@ class ManagedArray {
    */
   CHAI_HOST void registerTouch(ExecutionSpace space);
 
+  CHAI_HOST void move(ExecutionSpace space);
+
   /*!
    * \brief Return reference to i-th element of the ManagedArray.
    *
