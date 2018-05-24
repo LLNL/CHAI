@@ -268,7 +268,7 @@ PointerRecord* ArrayManager::getPointerRecord(void* pointer)
 
 PointerRecord* ArrayManager::makeManaged(void* pointer, size_t size, ExecutionSpace space, bool owned)
 {
-  umpire::ResourceManager::getInstance().registerAllocation(pointer, new umpire::util::AllocationRecord{pointer, size, m_allocators[space]->getAllocationStrategy()});
+  m_resource_manager.registerAllocation(pointer, new umpire::util::AllocationRecord{pointer, size, m_allocators[space]->getAllocationStrategy()});
 
   auto pointer_record = registerPointer(pointer, size, space, owned);
   
@@ -281,6 +281,5 @@ PointerRecord* ArrayManager::makeManaged(void* pointer, size_t size, ExecutionSp
 
   return pointer_record;
 }
-
 
 } // end of namespace chai
