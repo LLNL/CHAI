@@ -56,7 +56,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
   m_elems(0),
   m_pointer_record(nullptr)
 {
+#if !defined(__CUDA_ARCH__)
   m_resource_manager = ArrayManager::getInstance();
+#endif
 }
 
 template<typename T>
@@ -68,8 +70,10 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
   m_elems(elems),
   m_pointer_record(nullptr)
 {
+#if !defined(__CUDA_ARCH__)
   m_resource_manager = ArrayManager::getInstance();
   this->allocate(elems, space);
+#endif
 }
 
 template<typename T>
@@ -218,22 +222,29 @@ CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
 template<typename T>
 template<bool Q>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool test) :
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool ) :
   m_active_pointer(data),
+#if !defined(__CUDA_ARCH__)
   m_resource_manager(ArrayManager::getInstance()),
   m_elems(m_resource_manager->getSize(m_active_pointer)),
   m_pointer_record(m_resource_manager->getPointerRecord(data))
+#else
+  m_resource_manager(nullptr),
+  m_elems(0),
+  m_pointer_record(nullptr)
+#endif
 {
 }
 #endif
 
 template<typename T>
-template<bool B,typename std::enable_if<!B, int>::type>
-CHAI_INLINE
-CHAI_HOST_DEVICE
-ManagedArray<T>::operator ManagedArray<const T> () const
+ManagedArray<T>::operator ManagedArray<
+  typename std::conditional<!std::is_const<T>::value, 
+                            const T, 
+                            InvalidConstCast>::type> ()const
 {
-  return ManagedArray<const T>(const_cast<const T*>(m_active_pointer), m_resource_manager, m_elems, m_pointer_record);
+  return ManagedArray<const T>(const_cast<const T*>(m_active_pointer), 
+  m_resource_manager, m_elems, m_pointer_record);
 }
 
 template<typename T>
@@ -244,6 +255,15 @@ ManagedArray<T>::operator= (std::nullptr_t from) {
   m_active_pointer = from;
   m_elems = 0;
   return *this;
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+bool
+ManagedArray<T>::operator== (ManagedArray<T>& rhs)
+{
+  return (m_active_pointer ==  rhs.m_active_pointer);
 }
 
 } // end of namespace chai

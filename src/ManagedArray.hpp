@@ -53,6 +53,9 @@
 
 namespace chai {
 
+
+struct InvalidConstCast;
+
 /*!
  * \class ManagedArray
  *
@@ -213,13 +216,15 @@ class ManagedArray {
    * \brief 
    *
    */
-  template<bool B = std::is_const<T>::value,typename std::enable_if<!B, int>::type = 0>
-  CHAI_HOST_DEVICE operator ManagedArray<const T> () const;
+  operator ManagedArray<typename std::conditional<!std::is_const<T>::value, const T, InvalidConstCast>::type> () const;
+
 
   CHAI_HOST_DEVICE ManagedArray(T* data, ArrayManager* array_manager, size_t m_elems, PointerRecord* pointer_record);
 
 
   CHAI_HOST_DEVICE ManagedArray<T>& operator= (std::nullptr_t);
+
+  CHAI_HOST_DEVICE bool operator== (ManagedArray<T>& rhs);
 
   private:
 

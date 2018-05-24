@@ -60,20 +60,19 @@ ArrayManager* ArrayManager::getInstance() {
 }
 
 ArrayManager::ArrayManager() :
-  m_pointer_map()
+  m_pointer_map(),
+  m_resource_manager(umpire::ResourceManager::getInstance())
 {
   m_pointer_map.clear();
   m_current_execution_space = NONE;
   m_default_allocation_space = CPU;
 
-  umpire::ResourceManager& rm = umpire::ResourceManager::getInstance();
-
-  m_allocators[CPU] = new umpire::Allocator(rm.getAllocator("HOST"));
+  m_allocators[CPU] = new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
 #if defined(CHAI_ENABLE_CUDA)
-  m_allocators[GPU] = new umpire::Allocator(rm.getAllocator("DEVICE"));
+  m_allocators[GPU] = new umpire::Allocator(m_resource_manager.getAllocator("DEVICE"));
 #endif
 #if defined(CHAI_ENABLE_UM)
-  m_allocators[UM] = new umpire::Allocator(rm.getAllocator("UM"));
+  m_allocators[UM] = new umpire::Allocator(m_resource_manager.getAllocator("UM"));
 #endif
 }
 
@@ -163,8 +162,6 @@ void ArrayManager::resetTouch(PointerRecord* pointer_record) {
 
 void ArrayManager::move(PointerRecord* record, ExecutionSpace space) 
 {
-  umpire::ResourceManager& rm = umpire::ResourceManager::getInstance();
-
   if ( space == NONE ) {
     return;
   }
@@ -192,7 +189,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
     return;
   } else {
     record->m_user_callback(ACTION_MOVE, space, record->m_size);
-    rm.copy(dst_pointer, src_pointer);
+    m_resource_manager.copy(dst_pointer, src_pointer);
   }
 
   resetTouch(record);

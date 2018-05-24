@@ -41,5 +41,5 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-set (CUDA_NVCC_FLAGS -std=c++11; --expt-extended-lambda; -G; -g)
+set (CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-extended-lambda")
 include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/SetupChaiThirdparty.cmake)

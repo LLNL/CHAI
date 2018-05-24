@@ -41,9 +41,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-find_package(Umpire REQUIRED)
+if (DEFINED umpire_DIR)
+  find_package(umpire REQUIRED)
 
-blt_register_library(
-  NAME umpire
-  INCLUDES ${UMPIRE_INCLUDE_DIRS}
-  LIBRARIES umpire)
+  blt_register_library(
+    NAME umpire
+    INCLUDES ${UMPIRE_INCLUDE_DIRS}
+    LIBRARIES umpire)
+else ()
+  add_subdirectory(src/tpl/umpire)
+endif()
+
+
