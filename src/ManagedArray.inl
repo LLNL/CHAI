@@ -171,6 +171,14 @@ CHAI_HOST void ManagedArray<T>::registerTouch(ExecutionSpace space) {
   m_resource_manager->registerTouch(m_active_pointer, space);
 }
 
+template <typename T>
+CHAI_INLINE
+CHAI_HOST
+void ManagedArray<T>::move(ExecutionSpace space)
+{
+  m_active_pointer = static_cast<T*>(m_resource_manager->move(m_active_pointer, space));
+}
+
 template<typename T>
 template<typename Idx>
 CHAI_INLINE

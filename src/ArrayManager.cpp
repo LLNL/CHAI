@@ -127,15 +127,22 @@ void ArrayManager::setExecutionSpace(ExecutionSpace space) {
   m_current_execution_space = space;
 }
 
-void* ArrayManager::move(void* pointer) {
-  if (m_current_execution_space == NONE) {
+void* ArrayManager::move(void* pointer, ExecutionSpace space) {
+
+  // Check for default arg (NONE)
+  if (space == NONE)
+  {
+    space = m_current_execution_space;
+  }
+
+  if (space == NONE) {
     return pointer;
   }
 
   auto pointer_record = getPointerRecord(pointer);
-  move(pointer_record, m_current_execution_space);
+  move(pointer_record, space);
 
-  return pointer_record->m_pointers[m_current_execution_space];
+  return pointer_record->m_pointers[space];
 }
 
 ExecutionSpace ArrayManager::getExecutionSpace() {
