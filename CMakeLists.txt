@@ -41,7 +41,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.9)
+
+cmake_policy(SET CMP0057 NEW)
 
 project(Chai LANGUAGES CXX)
 
@@ -52,6 +54,11 @@ option(ENABLE_IMPLICIT_CONVERSIONS "Enable implicit conversions to-from raw poin
 option(DISABLE_RM "Make ManagedArray a thin wrapper" Off)
 mark_as_advanced(DISABLE_RM)
 option(ENABLE_UM "Use CUDA unified (managed) memory" Off)
+
+# options for Umpire as TPL
+set(ENABLE_GMOCK On CACHE Bool "")
+set(ENABLE_ASSERTS "Build Umpire with assert() enabled" On)
+set(ENABLE_GTEST_DEATH_TESTS ${ENABLE_ASSERTS} CACHE Bool "")
 
 if (ENABLE_UM AND NOT ENABLE_CUDA)
   message(FATAL_ERROR "Option ENABLE_UM requires ENABLE_CUDA")
