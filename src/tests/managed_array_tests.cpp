@@ -393,3 +393,26 @@ CUDA_TEST(ManagedArray, UserCallback)
 #endif
 #endif
 
+#if !defined(NDEBUG)
+TEST(ManagedArray, OutOfRangeAccess)
+{
+  chai::ManagedArray<float> array(20);
+
+  EXPECT_DEATH(
+  forall(sequential(), 10, 50, [=] (int i) {
+    array[i] = 0.0f;
+  });,
+  "i < m_elems");
+}
+
+#if defined(CHAI_ENABLE_CUDA)
+CUDA_TEST(ManagedArray, OutOfRangeAccessGPU)
+{
+  chai::ManagedArray<float> array(20);
+
+  forall(cuda(), 10, 50, [=] __device__ (int i) {
+    array[i] = 0.0f;
+  });
+}
+#endif // defined(CHAI_ENABLE_CUDA)
+#endif // !defined(NDEBUG)
