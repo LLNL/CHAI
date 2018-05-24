@@ -72,7 +72,7 @@ PointerRecord* ArrayManager::getPointerRecord(void* pointer)
 CHAI_INLINE
 void* ArrayManager::makeManaged(void* pointer, size_t size, ExecutionSpace space, bool owned)
 {
-  umpire::ResourceManager::getInstance().registerAllocation(pointer, new umpire::util::AllocationRecord{pointer, size, m_allocators[space]->getAllocationStrategy()});
+  m_resource_manager.registerAllocation(pointer, new umpire::util::AllocationRecord{pointer, size, m_allocators[space]->getAllocationStrategy()});
 
   registerPointer(pointer, size, space, owned);
   
@@ -111,8 +111,6 @@ template<typename T>
 CHAI_INLINE
 void* ArrayManager::reallocate(void* pointer, size_t elems)
 {
-  umpire::ResourceManager& rm = umpire::ResourceManager::getInstance();
-
   auto pointer_record = getPointerRecord(pointer);
 
   ExecutionSpace my_space;
@@ -129,6 +127,9 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
       return pointer_record->m_pointers[my_space];
     }
   }
+  
+  // only copy however many bytes overlap
+  size_t num_bytes_to_copy = std::min(sizeof(T)*elems, pointer_record->m_size);
 
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     void* old_ptr = pointer_record->m_pointers[space];
@@ -137,7 +138,7 @@ void* ArrayManager::reallocate(void* pointer, size_t elems)
       pointer_record->m_user_callback(ACTION_ALLOC, ExecutionSpace(space), sizeof(T) * elems);
       void* new_ptr = m_allocators[space]->allocate(sizeof(T)*elems);
 
-      rm.copy(old_ptr, new_ptr);
+      m_resource_manager.copy(new_ptr, old_ptr, num_bytes_to_copy);
 
       pointer_record->m_user_callback(ACTION_FREE, ExecutionSpace(space), sizeof(T) * elems);
       m_allocators[space]->deallocate(old_ptr);
