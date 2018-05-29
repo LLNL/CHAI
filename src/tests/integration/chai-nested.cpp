@@ -125,7 +125,7 @@ CUDA_TEST(Chai, NestedView) {
   chai::ManagedArray<float> v1_array(X*Y);
   chai::ManagedArray<float> v2_array(X*Y);
 
-  typedef RAJA::ManagedArrayView<float, RAJA::Layout<2> > view;
+  typedef chai::ManagedArrayView<float, RAJA::Layout<2> > view;
 
   view v1(v1_array, X, Y);
   view v2(v2_array, X, Y);

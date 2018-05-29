@@ -43,11 +43,11 @@
 #ifndef CHAI_ManagedArrayView_HPP
 #define CHAI_ManagedArrayView_HPP
 
+#include "chai/config.hpp"
+
 #if defined(CHAI_ENABLE_RAJA_PLUGIN)
 
-#include "chai/config.hpp"
 #include "chai/ManagedArray.hpp"
-
 #include "RAJA/util/View.hpp"
 
 namespace chai {
