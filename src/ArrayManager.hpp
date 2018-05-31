@@ -106,14 +106,14 @@ class ArrayManager
    * \param pointer Pointer to data in any execution space.
    * \return Pointer to data in the current execution space.
    */
-  void* move(void* pointer, ExecutionSpace space=NONE);
+  void* move(void* pointer, PointerRecord* pointer_record, ExecutionSpace=NONE);
 
   /*!
    * \brief Register a touch of the pointer in the current execution space.
    *
    * \param pointer Raw pointer to register a touch of.
    */
-  void registerTouch(void* pointer);
+  void registerTouch(PointerRecord* pointer_record);
 
   /*!
    * \brief Register a touch of the pointer in the given execution space.
@@ -123,7 +123,7 @@ class ArrayManager
    * \param pointer Raw pointer to register a touch of.
    * \param space Space to register touch.
    */
-  void registerTouch(void* pointer, ExecutionSpace space);
+  void registerTouch(PointerRecord* pointer_record, ExecutionSpace space);
 
   /*!
    * \brief Allocate data in the specified space.
@@ -136,8 +136,7 @@ class ArrayManager
    * \return Pointer to the allocated memory.
    */
   template<typename T>
-  void* allocate(size_t elems, ExecutionSpace space=CPU, 
-      UserCallback const &cback=[](Action, ExecutionSpace, size_t){});
+  PointerRecord* allocate(size_t elems, ExecutionSpace space=CPU, UserCallback const &cback=[](Action, ExecutionSpace, size_t){});
 
   /*!
    * \brief Reallocate data.
@@ -151,7 +150,7 @@ class ArrayManager
    * \return Pointer to the allocated memory.
    */
   template<typename T>
-  void* reallocate(void* pointer, size_t elems);
+  void* reallocate(void* pointer, size_t elems, PointerRecord* record);
 
   /*!
    * \brief Set the default space for new ManagedArray allocations.
@@ -173,9 +172,9 @@ class ArrayManager
   ExecutionSpace getDefaultAllocationSpace();
 
   /*!
-   * \brief Free all allocations associated with the given raw pointer.
+   * \brief Free all allocations associated with the given PointerRecord.
    */
-  void free(void* pointer);
+  void free(PointerRecord* pointer);
 
   /*!
    * \brief Get the size of the given pointer.
@@ -185,14 +184,19 @@ class ArrayManager
    */
   size_t getSize(void* pointer);
 
-  void* makeManaged(void* pointer, size_t size, ExecutionSpace space, bool owned);
+  PointerRecord* makeManaged(void* pointer, size_t size, ExecutionSpace space, bool owned);
 
-  void resetTouch(void* pointer);
-      
   /*!
    * \brief Assign a user-defined callback triggerd upon memory operations.
    */
   void setUserCallback(void *pointer, UserCallback const &f);
+
+  /*!
+   * \brief Set touched to false in all spaces for the given PointerRecord.
+   *
+   * \param pointer_record PointerRecord to reset.
+   */
+  void resetTouch(PointerRecord* pointer_record);
 
   protected:
 
@@ -232,7 +236,7 @@ class ArrayManager
    * \param size Size of the allocation in bytes.
    * \param space Space in which the pointer was allocated.
    */
-  void registerPointer(void* pointer, size_t size, ExecutionSpace space=CPU, bool owned=true);
+  PointerRecord* registerPointer(void* pointer, size_t size, ExecutionSpace space=CPU, bool owned=true);
 
   /*!
    * \brief Deregister a PointerRecord from the ArrayManager.
@@ -256,13 +260,6 @@ class ArrayManager
    *         PointerRecord if none found.
    */
   PointerRecord* getPointerRecord(void* pointer);
-
-  /*!
-   * \brief Set touched to false in all spaces for the given PointerRecord.
-   *
-   * \param pointer_record PointerRecord to reset.
-   */
-  void resetTouch(PointerRecord* pointer_record);
 
   /*!
    * Pointer to singleton instance.
