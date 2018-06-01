@@ -199,6 +199,14 @@ class ManagedArray {
   CHAI_HOST_DEVICE ManagedArray(T* data, bool test=Q);
 #endif
 
+
+  /*!
+   * \brief get access to m_active_pointer
+   * @return a copy of m_active_pointer
+   */
+  T* getActivePointer() const;
+
+
   /*!
    * \brief Assign a user-defined callback triggerd upon memory migration.
 	 *
