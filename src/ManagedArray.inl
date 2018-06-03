@@ -252,6 +252,13 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool ) :
 #endif
 
 template<typename T>
+ManagedArray<T>::getActivePointer() const
+{
+  return m_active_pointer;
+}
+
+
+template<typename T>
 ManagedArray<T>::operator ManagedArray<
   typename std::conditional<!std::is_const<T>::value, 
                             const T, 
