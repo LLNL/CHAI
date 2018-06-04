@@ -41,4 +41,4 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-add_sphinx_target(chai_docs)
+blt_add_sphinx_target(chai_docs)

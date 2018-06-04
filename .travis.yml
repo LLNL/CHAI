@@ -85,7 +85,7 @@ before_install:
 - sudo apt-get update -qq
 - mkdir -p ${HOME}/download
 - if [[ -n "${LLVM_VERSION}" ]]; then ./scripts/travis/install_llvm.sh ; fi
-- CMAKE_URL="https://cmake.org/files/v3.7/cmake-3.7.0-rc2-Linux-x86_64.tar.gz"
+- CMAKE_URL="https://cmake.org/files/v3.9/cmake-3.9.6.tar.gz"
 - curl -o ${HOME}/cmake-tarball.tar.gz ${CMAKE_URL} &&
   mkdir -p ${HOME}/cmake &&
   tar xf ${HOME}/cmake-tarball.tar.gz -C ${HOME}/cmake --strip-components=1 &&
