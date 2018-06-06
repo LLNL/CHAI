@@ -252,6 +252,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool ) :
 #endif
 
 template<typename T>
+T*
 ManagedArray<T>::getActivePointer() const
 {
   return m_active_pointer;
