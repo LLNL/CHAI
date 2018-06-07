@@ -238,6 +238,9 @@ TEST(ManagedArray, ImplicitConversions) {
 
   chai::ManagedArray<float> a2 = a;
 
+  forall(sequential(), 0, 10, [=] (int i) {
+    ASSERT_EQ( a[i], a2[i]);
+  });
   SUCCEED();
 }
 #endif
@@ -410,3 +413,12 @@ CUDA_TEST(ManagedArray, Move)
   array.free();
 }
 #endif // defined(CHAI_ENABLE_CUDA)
+
+#if defined(CHAI_ARRAY_BOUNDS_CHECK)
+TEST(ManagedArray_DeathTest, RangeCheck) {
+  chai::ManagedArray<float> array(10);
+
+  EXPECT_DEATH_IF_SUPPORTED( array[-1], ".*" );
+  EXPECT_DEATH_IF_SUPPORTED( array[10], ".*" );
+}
+#endif

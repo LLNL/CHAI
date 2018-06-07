@@ -117,7 +117,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
    */
   if (!std::is_const<T>::value) {
     CHAI_LOG("ManagedArray", "T is non-const, registering touch of pointer" << m_active_pointer);
-    T_non_const* non_const_pointer = const_cast<T_non_const*>(m_active_pointer);
+//    T_non_const* non_const_pointer = const_cast<T_non_const*>(m_active_pointer);
     m_resource_manager->registerTouch(m_pointer_record);
   }
 #endif
@@ -207,6 +207,9 @@ template<typename T>
 template<typename Idx>
 CHAI_INLINE
 CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const Idx i) const {
+#if defined(CHAI_ARRAY_BOUNDS_CHECK)
+  assert( i>=0 && static_cast<size_t>(i) < m_elems );
+#endif
   return m_active_pointer[i];
 }
 
