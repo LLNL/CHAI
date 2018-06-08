@@ -52,6 +52,10 @@
 
 #include "umpire/ResourceManager.hpp"
 
+#if defined(CHAI_ENABLE_UM)
+#include <cuda_runtime_api.h>
+#endif
+
 namespace chai {
 
 template<typename T>
@@ -118,6 +122,36 @@ void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* point
   pointer_record->m_size = sizeof(T) * elems;
   return pointer_record->m_pointers[my_space];
 }
+
+#if defined(CHAI_ENABLE_PICK)
+template<typename T>
+CHAI_INLINE
+typename ArrayManager::T_non_const<T> ArrayManager::pick(T* src_ptr, size_t index)
+{
+  auto dst_alloc_strategy = m_resource_manager.getAllocator("HOST").getAllocationStrategy();
+  auto src_alloc_strategy = m_resource_manager.getAllocator(const_cast<T_non_const<T>*>(src_ptr)).getAllocationStrategy();
+  T_non_const<T> dst;
+  m_resource_manager.transfer(&dst /*Host*/,
+                              const_cast<T_non_const<T>*>(src_ptr+index) /*Last touch*/,
+                              sizeof(T) /*size, pick 1 value of size sizeof(T)*/,
+                              dst_alloc_strategy,
+                              src_alloc_strategy);
+  return dst;
+}
+
+template<typename T>
+CHAI_INLINE
+void ArrayManager::set(T* dst_ptr, size_t index, const T& val)
+{
+  auto src_alloc_strategy = m_resource_manager.getAllocator("HOST").getAllocationStrategy();
+  auto dst_alloc_strategy = m_resource_manager.getAllocator(const_cast<T_non_const<T>*>(dst_ptr)).getAllocationStrategy();
+  m_resource_manager.transfer(const_cast<T_non_const<T>*>(dst_ptr+index) /*Last touch*/,
+                              const_cast<T_non_const<T>*>(&val), /*Host*/
+                              sizeof(T) /*size, set 1 value of size sizeof(T)*/,
+                              dst_alloc_strategy,
+                              src_alloc_strategy);
+}
+#endif
 
 } // end of namespace chai
 

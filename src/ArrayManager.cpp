@@ -221,11 +221,25 @@ void ArrayManager::free(PointerRecord* pointer_record)
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     if (pointer_record->m_pointers[space]) {
       if(pointer_record->m_owned[space]) {
-        pointer_record->m_user_callback(ACTION_FREE, ExecutionSpace(space), pointer_record->m_size);    
         void* space_ptr = pointer_record->m_pointers[space];
-        m_pointer_map.erase(space_ptr);
-        m_allocators[space]->deallocate(space_ptr);
-        pointer_record->m_pointers[space] = nullptr;
+#if defined(CHAI_ENABLE_UM)
+        if(space_ptr == pointer_record->m_pointers[UM]) {
+          pointer_record->m_user_callback(ACTION_FREE, ExecutionSpace(UM), pointer_record->m_size);    
+          m_pointer_map.erase(space_ptr);
+          m_allocators[UM]->deallocate(space_ptr);
+          for (int space_t = CPU; space_t < NUM_EXECUTION_SPACES; ++space_t) {
+            if(space_ptr == pointer_record->m_pointers[space_t]) pointer_record->m_pointers[space_t] = nullptr;
+          }
+        }
+        else {
+#endif
+          pointer_record->m_user_callback(ACTION_FREE, ExecutionSpace(space), pointer_record->m_size);    
+          m_pointer_map.erase(space_ptr);
+          m_allocators[space]->deallocate(space_ptr);
+          pointer_record->m_pointers[space] = nullptr;
+#if defined(CHAI_ENABLE_UM)
+        }
+#endif
       }
     }
   }
