@@ -238,9 +238,6 @@ TEST(ManagedArray, ImplicitConversions) {
 
   chai::ManagedArray<float> a2 = a;
 
-  forall(sequential(), 0, 10, [=] (int i) {
-    ASSERT_EQ( a[i], a2[i]);
-  });
   SUCCEED();
 }
 #endif
