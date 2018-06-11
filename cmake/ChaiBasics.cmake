@@ -42,4 +42,4 @@
 #######################################################################
 
 set (CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-extended-lambda")
-include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/SetupChaiThirdparty.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/thirdparty/SetupChaiThirdparty.cmake)
