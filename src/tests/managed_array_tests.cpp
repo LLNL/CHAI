@@ -410,3 +410,12 @@ CUDA_TEST(ManagedArray, Move)
   array.free();
 }
 #endif // defined(CHAI_ENABLE_CUDA)
+
+#if defined(CHAI_ARRAY_BOUNDS_CHECK)
+TEST(ManagedArray_DeathTest, RangeCheck) {
+  chai::ManagedArray<float> array(10);
+
+  EXPECT_DEATH_IF_SUPPORTED( array[-1], ".*" );
+  EXPECT_DEATH_IF_SUPPORTED( array[10], ".*" );
+}
+#endif
