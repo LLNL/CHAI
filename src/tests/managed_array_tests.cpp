@@ -410,9 +410,12 @@ CUDA_TEST(ManagedArray, OutOfRangeAccessGPU)
 {
   chai::ManagedArray<float> array(20);
 
-  forall(cuda(), 10, 50, [=] __device__ (int i) {
-    array[i] = 0.0f;
-  });
+  EXPECT_DEATH(
+    forall(cuda(), 10, 50, [=] __device__ (int i) {
+      array[i] = 0.0f;
+    });
+  ,
+  "i < m_elems");
 }
 #endif // defined(CHAI_ENABLE_CUDA)
 #endif // !defined(NDEBUG)
