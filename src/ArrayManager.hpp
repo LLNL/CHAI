@@ -198,6 +198,16 @@ class ArrayManager
    */
   void resetTouch(PointerRecord* pointer_record);
 
+  /*!
+   * \brief Find the PointerRecord corresponding to the raw pointer.
+   *
+   * \param pointer Raw pointer to find the PointerRecord for.
+   *
+   * \return PointerRecord containing the raw pointer, or an empty
+   *         PointerRecord if none found.
+   */
+  PointerRecord* getPointerRecord(void* pointer);
+
   protected:
 
   /*!
@@ -250,16 +260,6 @@ class ArrayManager
    * \param space
    */
   void move(PointerRecord* record, ExecutionSpace space);
-
-  /*!
-   * \brief Find the PointerRecord corresponding to the raw pointer.
-   *
-   * \param pointer Raw pointer to find the PointerRecord for.
-   *
-   * \return PointerRecord containing the raw pointer, or an empty
-   *         PointerRecord if none found.
-   */
-  PointerRecord* getPointerRecord(void* pointer);
 
   /*!
    * Pointer to singleton instance.
