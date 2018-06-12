@@ -45,6 +45,7 @@
 
 #include "ManagedArray.hpp"
 #include "ArrayManager.hpp"
+#include <cassert>
 
 namespace chai {
 
