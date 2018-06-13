@@ -393,28 +393,28 @@ CUDA_TEST(ManagedArray, UserCallback)
 #endif
 #endif
 
-#if defined(CHAI_ENABLE_CUDA)
-CUDA_TEST(ManagedArray, Move)
+#if !defined(NDEBUG)
+TEST(ManagedArray, OutOfRangeAccess)
 {
-  chai::ManagedArray<float> array(10, chai::GPU);
+  chai::ManagedArray<float> array(20);
 
-  forall(cuda(), 0, 10, [=] __device__ (int i) {
-      array[i] = i;
-  });
+  EXPECT_DEATH(
+               forall(sequential(), 10, 50, [=] (int i) {
+                   array[i] = 0.0f;
+                 });,
+               "i < m_elems");
+}
 
-  array.move(chai::CPU);
+#if defined(CHAI_ENABLE_CUDA)
+CUDA_TEST(ManagedArray, OutOfRangeAccessGPU)
+{
+  chai::ManagedArray<float> array(20);
 
-  ASSERT_EQ(array[5], 5);
-
-  array.free();
+  EXPECT_DEATH(
+               forall(cuda(), 10, 50, [=] __device__ (int i) {
+                   array[i] = 0.0f;
+                 });,      
+               "i < m_elems");
 }
 #endif // defined(CHAI_ENABLE_CUDA)
-
-#if defined(CHAI_ARRAY_BOUNDS_CHECK)
-TEST(ManagedArray_DeathTest, RangeCheck) {
-  chai::ManagedArray<float> array(10);
-
-  EXPECT_DEATH_IF_SUPPORTED( array[-1], ".*" );
-  EXPECT_DEATH_IF_SUPPORTED( array[10], ".*" );
-}
-#endif
+#endif // !defined(NDEBUG)

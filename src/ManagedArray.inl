@@ -46,7 +46,7 @@
 #include "ManagedArray.hpp"
 #include "ArrayManager.hpp"
 
-#include <assert.h>
+#include <cassert>
 
 namespace chai {
 
