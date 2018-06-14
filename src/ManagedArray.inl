@@ -119,7 +119,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
    */
   if (!std::is_const<T>::value) {
     CHAI_LOG("ManagedArray", "T is non-const, registering touch of pointer" << m_active_pointer);
-//    T_non_const* non_const_pointer = const_cast<T_non_const*>(m_active_pointer);
     m_resource_manager->registerTouch(m_pointer_record);
   }
 #endif
