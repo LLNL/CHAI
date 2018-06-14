@@ -71,6 +71,9 @@ endif()
 set(ENABLE_COPY_HEADERS On CACHE BOOL "")
 set(BLT_CXX_STD c++11 CACHE STRING "")
 
+if( CMAKE_BUILD_TYPE STREQUAL "Debug" )
+  set( CHAI_ENABLE_BOUNDS_CHECK ON CACHE BOOL "Enable Bounds Checking for chai::ManagedArray<>::operator[]" FORCE )
+endif()
 
 ################################
 # BLT

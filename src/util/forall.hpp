@@ -60,7 +60,7 @@ template <typename LOOP_BODY>
 void forall_kernel_cpu(int begin, int end, LOOP_BODY body)
 {
   for (int i = 0; i < (end - begin); ++i) {
-    body(i);
+    body(begin+i);
   }
 }
 

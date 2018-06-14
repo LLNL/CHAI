@@ -393,28 +393,44 @@ CUDA_TEST(ManagedArray, UserCallback)
 #endif
 #endif
 
-#if !defined(NDEBUG)
-TEST(ManagedArray, OutOfRangeAccess)
+#if defined(CHAI_ENABLE_BOUNDS_CHECK)
+TEST(ManagedArray, UpperOutOfRangeAccess)
 {
   chai::ManagedArray<float> array(20);
 
-  EXPECT_DEATH(
-               forall(sequential(), 10, 50, [=] (int i) {
-                   array[i] = 0.0f;
-                 });,
-               "i < m_elems");
+  array[19] = 0.0;
+  EXPECT_DEATH_IF_SUPPORTED( array[20] = 0.0, ".*" );
+}
+
+TEST(ManagedArray, LowerOutOfRangeAccess)
+{
+  chai::ManagedArray<float> array(20);
+
+  array[0] = 0.0;
+  EXPECT_DEATH_IF_SUPPORTED( array[-1] = 0.0, ".*" );
 }
 
 #if defined(CHAI_ENABLE_CUDA)
-CUDA_TEST(ManagedArray, OutOfRangeAccessGPU)
+CUDA_TEST(ManagedArray, UpperOutOfRangeAccessGPU)
 {
   chai::ManagedArray<float> array(20);
 
   EXPECT_DEATH(
-               forall(cuda(), 10, 50, [=] __device__ (int i) {
+               forall(cuda(), 19, 20, [=] __device__ (int i) {
+                   array[i] = 0.0f;
+                 });,
+               "i > m_elems");
+}
+
+CUDA_TEST(ManagedArray, LowerOutOfRangeAccessGPU)
+{
+  chai::ManagedArray<float> array(20);
+
+  EXPECT_DEATH(
+               forall(cuda(), -1, 0, [=] __device__ (int i) {
                    array[i] = 0.0f;
                  });,      
-               "i < m_elems");
+               "i < 0");
 }
 #endif // defined(CHAI_ENABLE_CUDA)
 #endif // !defined(NDEBUG)
