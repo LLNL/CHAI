@@ -44,6 +44,7 @@
 #define CHAI_ManagedArray_thin_INL
 
 #include "ManagedArray.hpp"
+#include "PointerRecord.hpp"
 
 #if defined(CHAI_ENABLE_UM)
 #include <cuda_runtime_api.h>
@@ -80,6 +81,14 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t) :
 {
 }
 
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(PointerRecord* record, ExecutionSpace space):
+  m_active_pointer(static_cast<T*>(record->m_pointers[space])),
+  m_resource_manager(ArrayManager::getInstance()),
+  m_elems(record->m_size/sizeof(T))
+{
+}
 
 template<typename T>
 CHAI_INLINE
@@ -92,7 +101,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_manager, size_t elems) :
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_manager, size_t elems, PointerRecord* pointer_record) :
   m_active_pointer(data), 
   m_resource_manager(array_manager),
   m_elems(elems)
@@ -190,12 +199,11 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool test) :
 #endif
 
 template<typename T>
-template<bool B,typename std::enable_if<!B, int>::type>
 CHAI_INLINE
 CHAI_HOST_DEVICE
-ManagedArray<T>::operator ManagedArray<const T> () const
+ManagedArray<T>::operator ManagedArray<typename std::conditional<!std::is_const<T>::value, const T, InvalidConstCast>::type> () const
 {
-  return ManagedArray<const T>(const_cast<const T*>(m_active_pointer), m_resource_manager, m_elems);
+  return ManagedArray<const T>(const_cast<const T*>(m_active_pointer), m_resource_manager, m_elems, nullptr);
 }
 
 template<typename T>
@@ -210,6 +218,12 @@ ManagedArray<T>::operator= (std::nullptr_t from) {
 
 
 
+template<typename T>
+CHAI_INLINE
+CHAI_HOST
+void
+ManagedArray<T>::registerTouch(ExecutionSpace space) 
+{}
 
 
 } // end of namespace chai
