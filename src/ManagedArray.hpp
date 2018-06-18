@@ -61,11 +61,10 @@ struct InvalidConstCast;
  *
  * \brief Provides an interface for types that are copyable.
  *
- * If a class inherits from CHAICopyable, then a data transfer is triggered
- * when the copy constructor is called.
+ * If a class inherits from CHAICopyable, then the stored items of type T
+ * are moved when the copy constructor is called.
  */
 class CHAICopyable {
-   public:
 };
 
 /*!
@@ -243,16 +242,29 @@ class ManagedArray : public CHAICopyable {
 
   CHAI_HOST_DEVICE ManagedArray(T* data, ArrayManager* array_manager, size_t m_elems, PointerRecord* pointer_record);
 
-
   CHAI_HOST_DEVICE ManagedArray<T>& operator= (std::nullptr_t);
 
   CHAI_HOST_DEVICE bool operator== (ManagedArray<T>& rhs);
 
+  /*!
+   * \brief Moves the inner data of a ManagedArray.
+   *
+   * Called in the copy constructor of ManagedArray. In this implementation, the inner
+   * type inherits from CHAICopyable, so the inner data will be moved. For example, this
+   * version of the method is called when there are nested ManagedArrays.
+   */
   template<bool B = std::is_base_of<CHAICopyable, T>::value, typename std::enable_if<B, int>::type = 0>
-  CHAI_HOST_DEVICE void migrateInnerData();
+  CHAI_HOST_DEVICE void moveInnerData();
 
+  /*!
+   * \brief Does nothing since the inner data type does not inherit from CHAICopyable.
+   *
+   * Called in the copy constructor of ManagedArray. In this implementation, the inner
+   * type does not inherit from CHAICopyable, so nothing will be done. For example, this
+   * version of the method is called when there are not nested ManagedArrays.
+   */
   template<bool B = std::is_base_of<CHAICopyable, T>::value, typename std::enable_if<!B, int>::type = 0>
-  CHAI_HOST_DEVICE void migrateInnerData();
+  CHAI_HOST_DEVICE void moveInnerData();
 
   private:
 
