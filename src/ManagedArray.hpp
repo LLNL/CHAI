@@ -57,6 +57,18 @@ namespace chai {
 struct InvalidConstCast;
 
 /*!
+ * \class CHAICopyable
+ *
+ * \brief Provides an interface for types that are copyable.
+ *
+ * If a class inherits from CHAICopyable, then a data transfer is triggered
+ * when the copy constructor is called.
+ */
+class CHAICopyable {
+   public:
+};
+
+/*!
  * \class ManagedArray
  *
  * \brief Provides an array-like class that automatically transfers data
@@ -73,7 +85,7 @@ struct InvalidConstCast;
  * \tparam T The type of elements stored in the ManagedArray.
  */
 template <typename T>
-class ManagedArray {
+class ManagedArray : public CHAICopyable {
   public:
 
   using T_non_const = typename std::remove_const<T>::type;
@@ -235,6 +247,12 @@ class ManagedArray {
   CHAI_HOST_DEVICE ManagedArray<T>& operator= (std::nullptr_t);
 
   CHAI_HOST_DEVICE bool operator== (ManagedArray<T>& rhs);
+
+  template<bool B = std::is_base_of<CHAICopyable, T>::value, typename std::enable_if<B, int>::type = 0>
+  CHAI_HOST_DEVICE void migrateInnerData();
+
+  template<bool B = std::is_base_of<CHAICopyable, T>::value, typename std::enable_if<!B, int>::type = 0>
+  CHAI_HOST_DEVICE void migrateInnerData();
 
   private:
 

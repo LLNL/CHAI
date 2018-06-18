@@ -287,6 +287,29 @@ ManagedArray<T>::operator== (ManagedArray<T>& rhs)
   return (m_active_pointer ==  rhs.m_active_pointer);
 }
 
+template<typename T>
+template<bool B, typename std::enable_if<B, int>::type>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+void
+ManagedArray<T>::migrateInnerData()
+{
+   for (int i = 0; i < size(); ++i)
+   {
+      // Copy constructor triggers data migration
+      T temp = T(m_active_pointer[i]);
+   }
+}
+
+template<typename T>
+template<bool B, typename std::enable_if<!B, int>::type>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+void
+ManagedArray<T>::migrateInnerData()
+{
+}
+
 } // end of namespace chai
 
 #endif // CHAI_ManagedArray_INL
