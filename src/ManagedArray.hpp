@@ -286,15 +286,41 @@ makeManagedArray(
 {
   ArrayManager* manager = ArrayManager::getInstance();
 
-  auto record = manager->makeManaged(data, sizeof(T)*elems, space, owned);
+  PointerRecord* record = manager->makeManaged(data, sizeof(T)*elems, space, owned);
 
-  auto array = ManagedArray<T>(record, space);
+  ManagedArray<T> array = ManagedArray<T>(record, space);
 
   if (!std::is_const<T>::value) {
     array.registerTouch(space);
   }
 
   return array;
+}
+
+/*!
+ * \brief Create a copy of the given ManagedArray with a single allocation in the active
+ *  space of the given array.
+ *
+ * \param array The ManagedArray to copy.
+ *
+ * \tparam T Type of the raw data.
+ *
+ * \return A copy of the given ManagedArray.
+ */
+template <typename T>
+ManagedArray<T>
+deepCopy(
+    ManagedArray<T> const& array)
+{
+  T* data_ptr = array.getActivePointer();
+  
+  ArrayManager* manager = ArrayManager::getInstance();
+  
+  PointerRecord const* record = manager->getPointerRecord(data_ptr);
+  
+  PointerRecord* copy_record = manager->copyRecord(record);
+
+  return ManagedArray<T>(copy_record, copy_record->m_last_space);
 }
 
 } // end of namespace chai
