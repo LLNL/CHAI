@@ -409,4 +409,40 @@ CUDA_TEST(ManagedArray, Move)
 
   array.free();
 }
+
+CUDA_TEST(ManagedArray, MigrateInnerData)
+{
+  chai::ManagedArray<chai::ManagedArray<int>> gpuArray(3, chai::GPU);
+
+  for (int i = 0; i < 3; ++i)
+  {
+     gpuArray[i] = chai::ManagedArray<int>(3, chai::GPU);
+  }
+
+  forall(cuda(), 0, 3, [=] __device__ (int i) {
+      gpuArray[0][i] = i;
+      gpuArray[1][i] = i;
+      gpuArray[2][i] = i;
+  });
+
+  auto hostArray = chai::ManagedArray<chai::ManagedArray<int>>(gpuArray);
+
+  for (int i = 0; i < 3; ++i)
+  {
+     for (int j = 0; j < 3; ++j)
+     {
+        ASSERT_EQ(hostArray[i][j], j);
+     }
+  }
+
+  for (int i = 0; i < 3; ++i)
+  {
+     gpuArray[i].free();
+     hostArray[i].free();
+  }
+
+  gpuArray.free();
+  hostArray.free();
+}
+
 #endif // defined(CHAI_ENABLE_CUDA)

@@ -110,6 +110,8 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 
   m_active_pointer = static_cast<T*>(m_resource_manager->move(const_cast<T_non_const*>(m_active_pointer), m_pointer_record));
 
+  migrateInnerData();
+
   CHAI_LOG("ManagedArray", "Moved to " << m_active_pointer);
 
   /*
