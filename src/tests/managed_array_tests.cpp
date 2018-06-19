@@ -438,10 +438,12 @@ CUDA_TEST(ManagedArray, MoveInnerData)
 
   for (int i = 0; i < 3; ++i)
   {
+     // TODO: Free when deep copy is implemented
      //originalArray[i].free();
      copiedArray[i].free();
   }
 
+  // TODO: Free when deep copy is implemented
   //originalArray.free();
   copiedArray.free();
 }
