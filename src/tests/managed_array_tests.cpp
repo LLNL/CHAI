@@ -424,11 +424,12 @@ TEST(ManagedArray, DeepCopy) {
   ASSERT_EQ(copy.size(), 10u);
 
   forall(sequential(), 0, 10, [=] (int i) {
-    array[i] = 3.14159 * i;
+    array[i] = -5.5 * i;
   });
 
   forall(sequential(), 0, 10, [=] (int i) {
-    ASSERT_EQ(copy[i] = i);
+    ASSERT_EQ(copy[i], i);
+    ASSERT_EQ(array[i], -5.5 * i);
   });
 
   array.free();
@@ -442,18 +443,19 @@ CUDA_TEST(ManagedArray, DeviceDeepCopy)
   ASSERT_EQ(array.size(), 10u);
 
   forall(cuda(), 0, 10, [=] __device__ (int i) {
-      array[i] = i;
+    array[i] = i;
   });
 
   chai::ManagedArray<float> copy = chai::deepCopy(array);
   ASSERT_EQ(copy.size(), 10u);
 
   forall(cuda(), 0, 10, [=] __device__ (int i) {
-      array[i] = 3.14159 * i;
+    array[i] = -5.5 * i;
   });
 
   forall(sequential(), 0, 10, [=] (int i) {
-    ASSERT_EQ(copy[i] = i);
+    ASSERT_EQ(copy[i], i);
+    ASSERT_EQ(array[i], -5.5 * i);
   });
 
   array.free();
