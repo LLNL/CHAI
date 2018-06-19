@@ -216,7 +216,7 @@ class ArrayManager
    *
    * \return A copy of the given PointerRecord, must be free'd with delete.
    */
-  PointerRecord* copyRecord(PointerRecord const* record);
+  PointerRecord* deepCopyRecord(PointerRecord const* record);
 
   protected:
 

@@ -318,7 +318,7 @@ deepCopy(
   
   PointerRecord const* record = manager->getPointerRecord(data_ptr);
   
-  PointerRecord* copy_record = manager->copyRecord(record);
+  PointerRecord* copy_record = manager->deepCopyRecord(record);
 
   return ManagedArray<T>(copy_record, copy_record->m_last_space);
 }

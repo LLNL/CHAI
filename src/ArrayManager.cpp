@@ -288,7 +288,7 @@ PointerRecord* ArrayManager::makeManaged(void* pointer, size_t size, ExecutionSp
   return pointer_record;
 }
 
-PointerRecord* ArrayManager::copyRecord(PointerRecord const* record)
+PointerRecord* ArrayManager::deepCopyRecord(PointerRecord const* record)
 {
   PointerRecord* copy = new PointerRecord();
   size_t const size = record->m_size;
