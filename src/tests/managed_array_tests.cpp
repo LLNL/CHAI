@@ -410,3 +410,54 @@ CUDA_TEST(ManagedArray, Move)
   array.free();
 }
 #endif // defined(CHAI_ENABLE_CUDA)
+
+
+TEST(ManagedArray, DeepCopy) {
+  chai::ManagedArray<float> array(10);
+  ASSERT_EQ(array.size(), 10u);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+    array[i] = i;
+  });
+
+  chai::ManagedArray<float> copy = chai::deepCopy(array);
+  ASSERT_EQ(copy.size(), 10u);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+    array[i] = 3.14159 * i;
+  });
+
+  forall(sequential(), 0, 10, [=] (int i) {
+    ASSERT_EQ(copy[i] = i);
+  });
+
+  array.free();
+  copy.free();
+}
+
+#if defined(CHAI_ENABLE_CUDA)
+CUDA_TEST(ManagedArray, DeviceDeepCopy)
+{
+  chai::ManagedArray<float> array(10, chai::GPU);
+  ASSERT_EQ(array.size(), 10u);
+
+  forall(cuda(), 0, 10, [=] __device__ (int i) {
+      array[i] = i;
+  });
+
+  chai::ManagedArray<float> copy = chai::deepCopy(array);
+  ASSERT_EQ(copy.size(), 10u);
+
+  forall(cuda(), 0, 10, [=] __device__ (int i) {
+      array[i] = 3.14159 * i;
+  });
+
+  forall(sequential(), 0, 10, [=] (int i) {
+    ASSERT_EQ(copy[i] = i);
+  });
+
+  array.free();
+  copy.free();
+}
+#endif // defined(CHAI_ENABLE_CUDA)
+
