@@ -410,39 +410,40 @@ CUDA_TEST(ManagedArray, Move)
   array.free();
 }
 
-CUDA_TEST(ManagedArray, MigrateInnerData)
+CUDA_TEST(ManagedArray, MoveInnerData)
 {
-  chai::ManagedArray<chai::ManagedArray<int>> gpuArray(3, chai::GPU);
+  chai::ManagedArray<chai::ManagedArray<int>> originalArray(3, chai::CPU);
 
   for (int i = 0; i < 3; ++i)
   {
-     gpuArray[i] = chai::ManagedArray<int>(3, chai::GPU);
+     auto temp = chai::ManagedArray<int>(5, chai::GPU);
+
+     forall(cuda(), 0, 5, [=] __device__ (int j) {
+        temp[j] = j;
+     });
+
+     originalArray[i] = temp;
   }
 
-  forall(cuda(), 0, 3, [=] __device__ (int i) {
-      gpuArray[0][i] = i;
-      gpuArray[1][i] = i;
-      gpuArray[2][i] = i;
-  });
-
-  auto hostArray = chai::ManagedArray<chai::ManagedArray<int>>(gpuArray);
+  auto copiedArray = chai::ManagedArray<chai::ManagedArray<int>>(originalArray);
 
   for (int i = 0; i < 3; ++i)
   {
-     for (int j = 0; j < 3; ++j)
-     {
-        ASSERT_EQ(hostArray[i][j], j);
-     }
+     auto temp = copiedArray[i];
+
+     forall(sequential(), 0, 5, [=] (int j) {
+        ASSERT_EQ(temp[j], j);
+     });
   }
 
   for (int i = 0; i < 3; ++i)
   {
-     gpuArray[i].free();
-     hostArray[i].free();
+     //originalArray[i].free();
+     copiedArray[i].free();
   }
 
-  gpuArray.free();
-  hostArray.free();
+  //originalArray.free();
+  copiedArray.free();
 }
 
 #endif // defined(CHAI_ENABLE_CUDA)
