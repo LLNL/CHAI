@@ -110,6 +110,8 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 
   m_active_pointer = static_cast<T*>(m_resource_manager->move(const_cast<T_non_const*>(m_active_pointer), m_pointer_record));
 
+  moveInnerData();
+
   CHAI_LOG("ManagedArray", "Moved to " << m_active_pointer);
 
   /*
@@ -285,6 +287,29 @@ bool
 ManagedArray<T>::operator== (ManagedArray<T>& rhs)
 {
   return (m_active_pointer ==  rhs.m_active_pointer);
+}
+
+template<typename T>
+template<bool B, typename std::enable_if<B, int>::type>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+void
+ManagedArray<T>::moveInnerData()
+{
+   for (int i = 0; i < size(); ++i)
+   {
+      // Copy constructor triggers data movement
+      T temp = T(m_active_pointer[i]);
+   }
+}
+
+template<typename T>
+template<bool B, typename std::enable_if<!B, int>::type>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+void
+ManagedArray<T>::moveInnerData()
+{
 }
 
 } // end of namespace chai

@@ -409,4 +409,43 @@ CUDA_TEST(ManagedArray, Move)
 
   array.free();
 }
+
+CUDA_TEST(ManagedArray, MoveInnerData)
+{
+  chai::ManagedArray<chai::ManagedArray<int>> originalArray(3, chai::CPU);
+
+  for (int i = 0; i < 3; ++i)
+  {
+     auto temp = chai::ManagedArray<int>(5, chai::GPU);
+
+     forall(cuda(), 0, 5, [=] __device__ (int j) {
+        temp[j] = j;
+     });
+
+     originalArray[i] = temp;
+  }
+
+  auto copiedArray = chai::ManagedArray<chai::ManagedArray<int>>(originalArray);
+
+  for (int i = 0; i < 3; ++i)
+  {
+     auto temp = copiedArray[i];
+
+     forall(sequential(), 0, 5, [=] (int j) {
+        ASSERT_EQ(temp[j], j);
+     });
+  }
+
+  for (int i = 0; i < 3; ++i)
+  {
+     // TODO: Free when deep copy is implemented
+     //originalArray[i].free();
+     copiedArray[i].free();
+  }
+
+  // TODO: Free when deep copy is implemented
+  //originalArray.free();
+  copiedArray.free();
+}
+
 #endif // defined(CHAI_ENABLE_CUDA)
