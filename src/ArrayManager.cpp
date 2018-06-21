@@ -288,4 +288,28 @@ PointerRecord* ArrayManager::makeManaged(void* pointer, size_t size, ExecutionSp
   return pointer_record;
 }
 
+PointerRecord* ArrayManager::deepCopyRecord(PointerRecord const* record)
+{
+  PointerRecord* copy = new PointerRecord();
+  size_t const size = record->m_size;
+  copy->m_size = size;
+  copy->m_user_callback = [](Action, ExecutionSpace, size_t){};
+
+  const ExecutionSpace last_space = record->m_last_space;
+
+  copy->m_last_space = last_space;
+  allocate(copy, last_space);
+
+  for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
+    copy->m_owned[space] = true;
+  }
+
+  void* dst_pointer = copy->m_pointers[last_space];
+  void* src_pointer = record->m_pointers[last_space];
+
+  m_resource_manager.copy(dst_pointer, src_pointer);
+
+  return copy;
+}
+
 } // end of namespace chai

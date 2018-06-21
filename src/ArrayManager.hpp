@@ -208,6 +208,16 @@ class ArrayManager
    */
   PointerRecord* getPointerRecord(void* pointer);
 
+  /*!
+   * \brief Create a copy of the given PointerRecord with a new allocation
+   *  in the active space.
+   *
+   * \param record The PointerRecord to copy.
+   *
+   * \return A copy of the given PointerRecord, must be free'd with delete.
+   */
+  PointerRecord* deepCopyRecord(PointerRecord const* record);
+
   protected:
 
   /*!
