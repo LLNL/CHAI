@@ -218,6 +218,13 @@ class ArrayManager
    */
   PointerRecord* deepCopyRecord(PointerRecord const* record);
 
+  /*!
+   * \brief Create a copy of the pointers map.
+   *
+   * \return A copy of the pointers map.
+   */
+  std::unordered_map<void*, PointerRecord*> getPointerTable() { return m_pointer_map; }
+
   protected:
 
   /*!
@@ -289,7 +296,7 @@ class ArrayManager
   /*!
    * Map of active ManagedArray pointers to their corresponding PointerRecord.
    */
-  std::unordered_map<void *, PointerRecord*> m_pointer_map;
+  std::unordered_map<void*, PointerRecord*> m_pointer_map;
 
   /*!
    *

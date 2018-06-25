@@ -43,8 +43,53 @@
 #include "gtest/gtest.h"
 
 #include "chai/ArrayManager.hpp"
+#include "chai/ManagedArray.hpp"
+#include "chai/PointerRecord.hpp"
 
 TEST(ArrayManager, Constructor) {
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
-  ASSERT_NEQ(rm, nullptr);
+  ASSERT_NE(rm, nullptr);
 }
+
+TEST(ArrayManager, getPointerTable) {
+  chai::ArrayManager* rm = chai::ArrayManager::getInstance();
+
+  // Allocate one array
+  size_t sizeOfArray1 = 5;
+  chai::ManagedArray<int> array1 = chai::ManagedArray<int>(sizeOfArray1, chai::CPU);
+
+  // Check map of pointers
+  std::unordered_map<void*, chai::PointerRecord*> map1 = rm->getPointerTable();
+  ASSERT_EQ(map1.size(), 1);
+
+  // Check some of the entries in the pointer record
+  ASSERT_TRUE(map1.find(array1) != map1.end());
+  chai::PointerRecord* record1Temp = map1[array1];
+  ASSERT_EQ(record1Temp->m_size, sizeOfArray1 * sizeof(int));
+  ASSERT_EQ(record1Temp->m_last_space, chai::CPU);
+
+  // Allocate another array
+  size_t sizeOfArray2 = 4;
+  chai::ManagedArray<double> array2 = chai::ManagedArray<double>(sizeOfArray2, chai::CPU);
+
+  // Check map of pointers
+  std::unordered_map<void*, chai::PointerRecord*> map2 = rm->getPointerTable();
+  ASSERT_EQ(map2.size(), 2);
+
+  // Check that the entries in the first record are not changed
+  ASSERT_TRUE(map2.find(array1) != map2.end());
+  chai::PointerRecord* record1 = map1[array1];
+  ASSERT_EQ(record1->m_size, sizeOfArray1 * sizeof(int));
+  ASSERT_EQ(record1->m_last_space, chai::CPU);
+
+  // Check some of the entries in the pointer record
+  ASSERT_TRUE(map2.find(array2) != map2.end());
+  chai::PointerRecord* record2 = map2[array2];
+  ASSERT_EQ(record2->m_size, sizeOfArray2 * sizeof(double));
+  ASSERT_EQ(record2->m_last_space, chai::CPU);
+
+  // Check the equality of the records
+  ASSERT_EQ(record1, record1Temp);
+  ASSERT_NE(record1, record2);
+}
+
