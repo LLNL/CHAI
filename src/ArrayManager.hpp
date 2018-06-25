@@ -223,7 +223,7 @@ class ArrayManager
    *
    * \return A copy of the pointers map.
    */
-  std::unordered_map<void*, PointerRecord*> getPointerTable() { return m_pointer_map; }
+  std::unordered_map<void*, const PointerRecord*> getPointerMap() const;
 
   protected:
 
