@@ -312,4 +312,16 @@ PointerRecord* ArrayManager::deepCopyRecord(PointerRecord const* record)
   return copy;
 }
 
+std::unordered_map<void*, const PointerRecord*> ArrayManager::getPointerMap() const
+{
+  std::unordered_map<void*, const PointerRecord*> mapCopy;
+
+  for (auto entry : m_pointer_map)
+  {
+    mapCopy[entry.first] = entry.second;
+  }
+
+  return mapCopy;
+}
+
 } // end of namespace chai
