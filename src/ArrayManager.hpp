@@ -219,9 +219,9 @@ class ArrayManager
   PointerRecord* deepCopyRecord(PointerRecord const* record);
 
   /*!
-   * \brief Create a copy of the pointers map.
+   * \brief Create a copy of the pointer map.
    *
-   * \return A copy of the pointers map.
+   * \return A copy of the pointer map. Can be used to find memory leaks.
    */
   std::unordered_map<void*, const PointerRecord*> getPointerMap() const;
 
