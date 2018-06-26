@@ -107,12 +107,10 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 {
 #if !defined(__CUDA_ARCH__)
   CHAI_LOG("ManagedArray", "Moving " << m_active_pointer);
-
   m_active_pointer = static_cast<T*>(m_resource_manager->move(const_cast<T_non_const*>(m_active_pointer), m_pointer_record));
-
-  moveInnerData();
-
   CHAI_LOG("ManagedArray", "Moved to " << m_active_pointer);
+
+  moveInnerImpl();
 
   /*
    * Register touch
@@ -290,17 +288,31 @@ ManagedArray<T>::operator== (ManagedArray<T>& rhs)
 }
 
 template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+void
+ManagedArray<T>::setFrom(ManagedArray<T> const& other)
+{
+  m_active_pointer = other.m_active_pointer;
+  m_resource_manager = other.m_resource_manager;
+  m_elems = other.m_elems;
+  m_pointer_record = other.m_pointer_record;
+}
+
+template<typename T>
 template<bool B, typename std::enable_if<B, int>::type>
 CHAI_INLINE
 CHAI_HOST_DEVICE
 void
-ManagedArray<T>::moveInnerData()
+ManagedArray<T>::moveInnerImpl()
 {
-   for (int i = 0; i < size(); ++i)
-   {
-      // Copy constructor triggers data movement
-      T temp = T(m_active_pointer[i]);
-   }
+  // Use reverse order to optimize cnmem deallocation
+  for (int i = size() - 1; i >= 0; --i)
+  {
+    T inner = T(m_active_pointer[i]);
+    // The following may be slow.
+    m_active_pointer[i].setFrom(inner);
+  }
 }
 
 template<typename T>
@@ -308,7 +320,7 @@ template<bool B, typename std::enable_if<!B, int>::type>
 CHAI_INLINE
 CHAI_HOST_DEVICE
 void
-ManagedArray<T>::moveInnerData()
+ManagedArray<T>::moveInnerImpl()
 {
 }
 

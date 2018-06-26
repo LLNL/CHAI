@@ -218,6 +218,7 @@ class ManagedArray : public CHAICopyable {
   T* getActivePointer() const;
 
 
+#ifndef CHAI_DISABLE_RM
   /*!
    * \brief Assign a user-defined callback triggerd upon memory migration.
 	 *
@@ -229,8 +230,17 @@ class ManagedArray : public CHAICopyable {
 	 * num_bytes is the number of bytes moved.
 	 *
    */
-#ifndef CHAI_DISABLE_RM
   CHAI_HOST void setUserCallback(UserCallback const &cback);
+
+  /*!
+   * \brief Used to copy data from nested ManagedArrays.
+   *
+   * This is like a copy ctor for already-constructed objects.  This
+   * function modifies the internal state of this object.  Despite
+   * this, it is a const function so we can call it on const objects
+   * (note that the member variables are marked mutable).
+   */
+  CHAI_HOST_DEVICE void setFrom(ManagedArray const& other);
 #endif
 
   /*!
@@ -254,7 +264,7 @@ class ManagedArray : public CHAICopyable {
    * version of the method is called when there are nested ManagedArrays.
    */
   template<bool B = std::is_base_of<CHAICopyable, T>::value, typename std::enable_if<B, int>::type = 0>
-  CHAI_HOST_DEVICE void moveInnerData();
+  CHAI_HOST_DEVICE void moveInnerImpl();
 
   /*!
    * \brief Does nothing since the inner data type does not inherit from CHAICopyable.
@@ -264,7 +274,7 @@ class ManagedArray : public CHAICopyable {
    * version of the method is called when there are not nested ManagedArrays.
    */
   template<bool B = std::is_base_of<CHAICopyable, T>::value, typename std::enable_if<!B, int>::type = 0>
-  CHAI_HOST_DEVICE void moveInnerData();
+  CHAI_HOST_DEVICE void moveInnerImpl();
 
   private:
 

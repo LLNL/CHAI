@@ -216,13 +216,8 @@ template<bool B, typename std::enable_if<B, int>::type>
 CHAI_INLINE
 CHAI_HOST_DEVICE
 void
-ManagedArray<T>::moveInnerData()
+ManagedArray<T>::moveInnerImpl()
 {
-   for (int i = 0; i < size(); ++i)
-   {
-      // Copy constructor triggers data movement
-      T temp = T(m_active_pointer[i]);
-   }
 }
 
 template<typename T>
@@ -230,7 +225,7 @@ template<bool B, typename std::enable_if<!B, int>::type>
 CHAI_INLINE
 CHAI_HOST_DEVICE
 void
-ManagedArray<T>::moveInnerData()
+ManagedArray<T>::moveInnerImpl()
 {
 }
 
