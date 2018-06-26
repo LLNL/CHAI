@@ -225,6 +225,20 @@ class ArrayManager
    */
   std::unordered_map<void*, const PointerRecord*> getPointerMap() const;
 
+  /*!
+   * \brief Get the total number of arrays registered with the array manager.
+   *
+   * \return The total number of arrays registered with the array manager.
+   */
+  size_t getTotalNumArrays() const;
+
+  /*!
+   * \brief Get the total amount of memory allocated.
+   *
+   * \return The total amount of memory allocated.
+   */
+  size_t getTotalSize() const;
+
   protected:
 
   /*!
