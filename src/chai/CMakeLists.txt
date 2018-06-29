@@ -41,13 +41,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-set(CHAI_ENABLE_CUDA ${ENABLE_CUDA})
-set(CHAI_ENABLE_IMPLICIT_CONVERSIONS ${ENABLE_IMPLICIT_CONVERSIONS})
-set(CHAI_DISABLE_RM ${DISABLE_RM})
-set(CHAI_ENABLE_UM ${ENABLE_UM})
 
 configure_file(
-  ${PROJECT_SOURCE_DIR}/src/config.hpp.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in
   ${PROJECT_BINARY_DIR}/include/chai/config.hpp)
 
 set (chai_headers
@@ -87,14 +83,13 @@ blt_add_library(
 
 install(FILES ${chai_headers} DESTINATION include/chai/)
 
-install(FILES util/forall.hpp DESTINATION include/chai/util/)
 
 target_include_directories(
   chai
   PRIVATE ${PROJECT_BINARY_DIR}/include)
 
 configure_file(
-  ${PROJECT_SOURCE_DIR}/src/chai-config.cmake.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/chai-config.cmake.in
   ${PROJECT_BINARY_DIR}/share/chai/cmake/chai-config.cmake)
 
 install(
@@ -113,9 +108,3 @@ install(
   ARCHIVE DESTINATION lib)
 
 install(EXPORT chai-targets DESTINATION share/chai/cmake/)
-
-add_subdirectory(tests)
-if (ENABLE_BENCHMARKS)
-  add_subdirectory(benchmarks)
-endif()
-add_subdirectory(examples)
