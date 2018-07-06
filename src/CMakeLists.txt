@@ -47,8 +47,6 @@ set(CHAI_DISABLE_RM ${DISABLE_RM})
 set(CHAI_ENABLE_UM ${ENABLE_UM})
 
 
-message(INFO CHAI config file: ${PROJECT_BINARY_DIR}/include/chai/config.hpp)
-
 
 get_property(UMPIRE_INCLUDE_DIRS TARGET umpire PROPERTY INCLUDE_DIRECTORIES)
 include_directories(${UMPIRE_INCLUDE_DIRS})
