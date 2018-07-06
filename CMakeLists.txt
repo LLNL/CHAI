@@ -41,7 +41,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.8)
 
 cmake_policy(SET CMP0057 NEW)
 
@@ -75,15 +75,19 @@ set(BLT_CXX_STD c++11 CACHE STRING "")
 ################################
 # BLT
 ################################
-if (NOT EXISTS ${PROJECT_SOURCE_DIR}/blt/SetupBLT.cmake)
-  message(FATAL_ERROR "\
-  The BLT submodule is not present. \
-  If in git repository run the following two commands:\n \
-  git submodule init\n \
-  git submodule update")
-endif()
+if (NOT BLT_LOADED)
 
-include(blt/SetupBLT.cmake)
+  if (NOT EXISTS ${PROJECT_SOURCE_DIR}/blt/SetupBLT.cmake)
+    message(FATAL_ERROR "\
+    The BLT submodule is not present. \
+    If in git repository run the following two commands:\n \
+    git submodule init\n \
+    git submodule update")
+  endif()
+
+  include(blt/SetupBLT.cmake)
+  
+endif()
 
 include(cmake/ChaiBasics.cmake)
 
