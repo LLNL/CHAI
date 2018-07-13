@@ -302,7 +302,10 @@ PointerRecord* ArrayManager::deepCopyRecord(PointerRecord const* record)
 
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     copy->m_owned[space] = true;
+    copy->m_touched[space] = false;
   }
+
+  copy->m_touched[last_space] = true;
 
   void* dst_pointer = copy->m_pointers[last_space];
   void* src_pointer = record->m_pointers[last_space];
