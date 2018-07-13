@@ -302,7 +302,10 @@ PointerRecord* ArrayManager::deepCopyRecord(PointerRecord const* record)
 
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     copy->m_owned[space] = true;
+    copy->m_touched[space] = false;
   }
+
+  copy->m_touched[last_space] = true;
 
   void* dst_pointer = copy->m_pointers[last_space];
   void* src_pointer = record->m_pointers[last_space];
@@ -310,6 +313,18 @@ PointerRecord* ArrayManager::deepCopyRecord(PointerRecord const* record)
   m_resource_manager.copy(dst_pointer, src_pointer);
 
   return copy;
+}
+
+std::unordered_map<void*, const PointerRecord*> ArrayManager::getPointerMap() const
+{
+  std::unordered_map<void*, const PointerRecord*> mapCopy;
+
+  for (auto entry : m_pointer_map)
+  {
+    mapCopy[entry.first] = entry.second;
+  }
+
+  return mapCopy;
 }
 
 } // end of namespace chai

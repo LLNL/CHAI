@@ -258,11 +258,17 @@ ManagedArray<T>::getActivePointer() const
 }
 
 
-template<typename T>
-ManagedArray<T>::operator ManagedArray<
-  typename std::conditional<!std::is_const<T>::value, 
-                            const T, 
-                            InvalidConstCast>::type> ()const
+//template<typename T>
+//ManagedArray<T>::operator ManagedArray<
+//  typename std::conditional<!std::is_const<T>::value, 
+//                            const T, 
+//                            InvalidConstCast>::type> ()const
+template< typename T>
+template< typename U>
+ManagedArray<T>::operator 
+typename std::enable_if< !std::is_const<U>::value , 
+                         ManagedArray<const U> >::type () const
+
 {
   return ManagedArray<const T>(const_cast<const T*>(m_active_pointer), 
   m_resource_manager, m_elems, m_pointer_record);

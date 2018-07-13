@@ -247,7 +247,10 @@ class ManagedArray : public CHAICopyable {
    * \brief 
    *
    */
-  operator ManagedArray<typename std::conditional<!std::is_const<T>::value, const T, InvalidConstCast>::type> () const;
+//  operator ManagedArray<typename std::conditional<!std::is_const<T>::value, const T, InvalidConstCast>::type> () const;
+  template< typename U = T >
+  operator typename std::enable_if< !std::is_const<U>::value ,
+                                    ManagedArray<const U> >::type () const;
 
 
   CHAI_HOST_DEVICE ManagedArray(T* data, ArrayManager* array_manager, size_t m_elems, PointerRecord* pointer_record);
