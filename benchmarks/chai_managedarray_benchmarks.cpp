@@ -47,7 +47,7 @@
 #include "chai/config.hpp"
 #include "chai/ManagedArray.hpp"
 
-#include "../util/forall.hpp"
+#include "../src/util/forall.hpp"
 
 void benchmark_managedarray_alloc_default(benchmark::State& state) {
   while (state.KeepRunning()) {

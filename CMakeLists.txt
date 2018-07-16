@@ -68,24 +68,43 @@ if (ENABLE_UM AND NOT ENABLE_CUDA)
   message(FATAL_ERROR "Option ENABLE_UM requires ENABLE_CUDA")
 endif()
 
-set(ENABLE_COPY_HEADERS On CACHE BOOL "")
+set(ENABLE_COPY_HEADERS Off CACHE BOOL "")
 set(BLT_CXX_STD c++11 CACHE STRING "")
 
 
 ################################
 # BLT
 ################################
-if (NOT EXISTS ${PROJECT_SOURCE_DIR}/blt/SetupBLT.cmake)
-  message(FATAL_ERROR "\
-  The BLT submodule is not present. \
-  If in git repository run the following two commands:\n \
-  git submodule init\n \
-  git submodule update")
-endif()
+if (NOT BLT_LOADED)
+  if (DEFINED BLT_SOURCE_DIR)
+    if (NOT EXISTS ${BLT_SOURCE_DIR}/SetupBLT.cmake)
+        message(FATAL_ERROR "Given BLT_SOURCE_DIR does not contain SetupBLT.cmake")
+    endif()
+  else ()
+    set (BLT_SOURCE_DIR ${PROJECT_SOURCE_DIR}/blt CACHE PATH "")
 
-include(blt/SetupBLT.cmake)
+    if (NOT EXISTS ${BLT_SOURCE_DIR}/SetupBLT.cmake)
+      message(FATAL_ERROR "\
+      The BLT submodule is not present. \
+      If in git repository run the following two commands:\n \
+      git submodule init\n \
+      git submodule update")
+    endif ()
+  endif ()
+
+  include(${BLT_SOURCE_DIR}/SetupBLT.cmake)
+endif()
 
 include(cmake/ChaiBasics.cmake)
 
 add_subdirectory(src)
+
+add_subdirectory(tests)
+
+if (ENABLE_BENCHMARKS)
+  add_subdirectory(benchmarks)
+endif()
+
+add_subdirectory(examples)
+
 add_subdirectory(docs)

@@ -49,7 +49,5 @@ if (DEFINED umpire_DIR)
     INCLUDES ${UMPIRE_INCLUDE_DIRS}
     LIBRARIES umpire)
 else ()
-  add_subdirectory(src/tpl/umpire)
+  add_subdirectory(${PROJECT_SOURCE_DIR}/src/tpl/umpire)
 endif()
-
-

@@ -201,7 +201,6 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   resetTouch(record);
 }
 
-CHAI_INLINE
 void* ArrayManager::allocate(
     PointerRecord* pointer_record, ExecutionSpace space)
 {
@@ -241,7 +240,6 @@ size_t ArrayManager::getSize(void* ptr)
   return pointer_record->m_size;
 }
 
-CHAI_INLINE
 void ArrayManager::setDefaultAllocationSpace(ExecutionSpace space)
 {
   m_default_allocation_space = space;
@@ -253,7 +251,6 @@ ExecutionSpace ArrayManager::getDefaultAllocationSpace()
 }
 
 
-CHAI_INLINE
 void ArrayManager::setUserCallback(void *pointer, UserCallback const &f)
 {
   // TODO ??
@@ -261,7 +258,6 @@ void ArrayManager::setUserCallback(void *pointer, UserCallback const &f)
   pointer_record->m_user_callback = f;
 }
 
-CHAI_INLINE
 PointerRecord* ArrayManager::getPointerRecord(void* pointer) 
 {
   auto record = m_pointer_map.find(pointer);

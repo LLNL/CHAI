@@ -47,11 +47,12 @@ static void cuda_test_ ## X ## Y();\
 TEST(X,Y) { cuda_test_ ## X ## Y();}\
 static void cuda_test_ ## X ## Y()
 
-#include "../util/forall.hpp"
+#include "chai/config.hpp"
+
+#include "../src/util/forall.hpp"
 
 #include "chai/ManagedArray.hpp"
 
-#include "chai/config.hpp"
 
 struct my_point {
   double x;
