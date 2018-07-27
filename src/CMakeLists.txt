@@ -70,6 +70,7 @@ endif ()
 set (chai_sources
   ArrayManager.cpp)
 
+set(ENABLE_FORTRAN Off CACHE Bool "Enable Fortran in Umpire")
 set (chai_depends
   umpire)
 
