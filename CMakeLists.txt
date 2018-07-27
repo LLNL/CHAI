@@ -55,6 +55,10 @@ option(DISABLE_RM "Make ManagedArray a thin wrapper" Off)
 mark_as_advanced(DISABLE_RM)
 option(ENABLE_UM "Use CUDA unified (managed) memory" Off)
 
+set(ENABLE_TESTS On CACHE Bool "")
+set(ENABLE_EXAMPLES On CACHE Bool "")
+set(ENABLE_DOCUMENTATION On CACHE Bool "")
+
 # options for Umpire as TPL
 set(ENABLE_GMOCK On CACHE Bool "")
 set(ENABLE_ASSERTS "Build Umpire with assert() enabled" On)
@@ -88,4 +92,7 @@ include(blt/SetupBLT.cmake)
 include(cmake/ChaiBasics.cmake)
 
 add_subdirectory(src)
-add_subdirectory(docs)
+
+if (ENABLE_DOCUMENTATION)
+  add_subdirectory(docs)
+endif()
