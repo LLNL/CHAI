@@ -209,6 +209,33 @@ class ArrayManager
    */
   void resetTouch(PointerRecord* pointer_record);
 
+  /*!
+   * \brief Find the PointerRecord corresponding to the raw pointer.
+   *
+   * \param pointer Raw pointer to find the PointerRecord for.
+   *
+   * \return PointerRecord containing the raw pointer, or an empty
+   *         PointerRecord if none found.
+   */
+  PointerRecord* getPointerRecord(void* pointer);
+
+  /*!
+   * \brief Create a copy of the given PointerRecord with a new allocation
+   *  in the active space.
+   *
+   * \param record The PointerRecord to copy.
+   *
+   * \return A copy of the given PointerRecord, must be free'd with delete.
+   */
+  PointerRecord* deepCopyRecord(PointerRecord const* record);
+
+  /*!
+   * \brief Create a copy of the pointer map.
+   *
+   * \return A copy of the pointer map. Can be used to find memory leaks.
+   */
+  std::unordered_map<void*, const PointerRecord*> getPointerMap() const;
+
   protected:
 
   /*!
@@ -263,16 +290,6 @@ class ArrayManager
   void move(PointerRecord* record, ExecutionSpace space);
 
   /*!
-   * \brief Find the PointerRecord corresponding to the raw pointer.
-   *
-   * \param pointer Raw pointer to find the PointerRecord for.
-   *
-   * \return PointerRecord containing the raw pointer, or an empty
-   *         PointerRecord if none found.
-   */
-  PointerRecord* getPointerRecord(void* pointer);
-
-  /*!
    * Pointer to singleton instance.
    */
   static ArrayManager* s_resource_manager_instance;
@@ -290,7 +307,7 @@ class ArrayManager
   /*!
    * Map of active ManagedArray pointers to their corresponding PointerRecord.
    */
-  std::unordered_map<void *, PointerRecord*> m_pointer_map;
+  std::unordered_map<void*, PointerRecord*> m_pointer_map;
 
   /*!
    *

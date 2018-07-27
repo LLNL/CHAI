@@ -88,6 +88,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
   m_resource_manager(other.m_resource_manager),
   m_elems(other.m_elems)
 {
+#if !defined(__CUDA_ARCH__)
+  moveInnerData();
+#endif
 }
 
 template<typename T>
@@ -247,9 +250,28 @@ ManagedArray<T>::operator= (std::nullptr_t from) {
   return *this;
 }
 
+template<typename T>
+template<bool B, typename std::enable_if<B, int>::type>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+void
+ManagedArray<T>::moveInnerData()
+{
+   for (int i = 0; i < size(); ++i)
+   {
+      // Copy constructor triggers data movement
+      T temp = T(m_active_pointer[i]);
+   }
+}
 
-
-
+template<typename T>
+template<bool B, typename std::enable_if<!B, int>::type>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+void
+ManagedArray<T>::moveInnerData()
+{
+}
 
 } // end of namespace chai
 
