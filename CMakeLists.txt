@@ -63,6 +63,7 @@ set(ENABLE_DOCUMENTATION On CACHE Bool "")
 set(ENABLE_GMOCK On CACHE Bool "")
 set(ENABLE_ASSERTS "Build Umpire with assert() enabled" On)
 set(ENABLE_GTEST_DEATH_TESTS ${ENABLE_ASSERTS} CACHE Bool "")
+set(ENABLE_FORTRAN Off CACHE Bool "Enable Fortran in Umpire")
 
 if (ENABLE_UM AND NOT ENABLE_CUDA)
   message(FATAL_ERROR "Option ENABLE_UM requires ENABLE_CUDA")
