@@ -823,6 +823,7 @@ CUDA_TEST(ManagedArray, MoveInnerData)
 #endif // defined(CHAI_ENABLE_CUDA)
 
 
+#ifndef CHAI_DISABLE_RM
 TEST(ManagedArray, DeepCopy) {
   chai::ManagedArray<float> array(10);
   ASSERT_EQ(array.size(), 10u);
@@ -846,8 +847,10 @@ TEST(ManagedArray, DeepCopy) {
   array.free();
   copy.free();
 }
+#endif
 
 #if defined(CHAI_ENABLE_CUDA)
+#ifndef CHAI_DISABLE_RM
 CUDA_TEST(ManagedArray, DeviceDeepCopy)
 {
   chai::ManagedArray<float> array(10, chai::GPU);
@@ -872,5 +875,6 @@ CUDA_TEST(ManagedArray, DeviceDeepCopy)
   array.free();
   copy.free();
 }
+#endif
 #endif // defined(CHAI_ENABLE_CUDA)
 

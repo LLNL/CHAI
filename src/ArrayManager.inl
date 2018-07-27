@@ -128,28 +128,32 @@ template<typename T>
 CHAI_INLINE
 typename ArrayManager::T_non_const<T> ArrayManager::pick(T* src_ptr, size_t index)
 {
-  auto dst_alloc_strategy = m_resource_manager.getAllocator("HOST").getAllocationStrategy();
-  auto src_alloc_strategy = m_resource_manager.getAllocator(const_cast<T_non_const<T>*>(src_ptr)).getAllocationStrategy();
-  T_non_const<T> dst;
-  m_resource_manager.transfer(&dst /*Host*/,
-                              const_cast<T_non_const<T>*>(src_ptr+index) /*Last touch*/,
-                              sizeof(T) /*size, pick 1 value of size sizeof(T)*/,
-                              dst_alloc_strategy,
-                              src_alloc_strategy);
-  return dst;
+  T_non_const<T> val;
+  m_resource_manager.registerAllocation(const_cast<T_non_const<T>*>(&val), new umpire::util::AllocationRecord{const_cast<T_non_const<T>*>(&val), sizeof(T), m_resource_manager.getAllocator("HOST").getAllocationStrategy()});
+  m_resource_manager.copy(const_cast<T_non_const<T>*>(&val), const_cast<T_non_const<T>*>(src_ptr+index), sizeof(T));
+  m_resource_manager.deregisterAllocation(&val);
+  return val;
+
+  //T_non_const<T> val;
+  //T_non_const<T>* pick = (T_non_const<T>*)m_allocators[CPU]->allocate(sizeof(T));
+  //m_resource_manager.copy(pick, const_cast<T_non_const<T>*>(src_ptr+index), sizeof(T));
+  //val = *pick;
+  //m_allocators[CPU]->deallocate(pick);
+  //return val;
 }
 
 template<typename T>
 CHAI_INLINE
 void ArrayManager::set(T* dst_ptr, size_t index, const T& val)
 {
-  auto src_alloc_strategy = m_resource_manager.getAllocator("HOST").getAllocationStrategy();
-  auto dst_alloc_strategy = m_resource_manager.getAllocator(const_cast<T_non_const<T>*>(dst_ptr)).getAllocationStrategy();
-  m_resource_manager.transfer(const_cast<T_non_const<T>*>(dst_ptr+index) /*Last touch*/,
-                              const_cast<T_non_const<T>*>(&val), /*Host*/
-                              sizeof(T) /*size, set 1 value of size sizeof(T)*/,
-                              dst_alloc_strategy,
-                              src_alloc_strategy);
+  m_resource_manager.registerAllocation(const_cast<T_non_const<T>*>(&val), new umpire::util::AllocationRecord{const_cast<T_non_const<T>*>(&val), sizeof(T), m_resource_manager.getAllocator("HOST").getAllocationStrategy()});
+  m_resource_manager.copy(const_cast<T_non_const<T>*>(dst_ptr+index), const_cast<T_non_const<T>*>(&val), sizeof(T));
+  m_resource_manager.deregisterAllocation(const_cast<T_non_const<T>*>(&val));
+
+  //T_non_const<T>* set = (T_non_const<T>*)m_allocators[CPU]->allocate(sizeof(T));
+  //*set = val;
+  //m_resource_manager.copy(const_cast<T_non_const<T>*>(dst_ptr+index), set, sizeof(T));
+  //m_allocators[CPU]->deallocate(set);
 }
 #endif
 

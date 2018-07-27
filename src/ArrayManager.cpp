@@ -275,7 +275,7 @@ void ArrayManager::setUserCallback(void *pointer, UserCallback const &f)
   pointer_record->m_user_callback = f;
 }
 
-CHAI_INLINE
+//CHAI_INLINE
 PointerRecord* ArrayManager::getPointerRecord(void* pointer) 
 {
   auto record = m_pointer_map.find(pointer);
