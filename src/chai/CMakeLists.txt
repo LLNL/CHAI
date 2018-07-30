@@ -87,7 +87,7 @@ blt_add_library(
 
 install(FILES ${chai_headers} DESTINATION include/chai/)
 
-install(FILES ..//util/forall.hpp DESTINATION include/chai/util/)
+install(FILES ../util/forall.hpp DESTINATION include/chai/util/)
 
 target_include_directories(
   chai
