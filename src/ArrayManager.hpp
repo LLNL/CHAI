@@ -76,6 +76,9 @@ class ArrayManager
 {
   public:
 
+  template <typename T>
+  using T_non_const = typename std::remove_const<T>::type;
+
   static PointerRecord s_null_record;
 
   /*!
@@ -175,6 +178,14 @@ class ArrayManager
    * \brief Free all allocations associated with the given PointerRecord.
    */
   void free(PointerRecord* pointer);
+
+#if defined(CHAI_ENABLE_PICK)
+  template<typename T>
+  T_non_const<T> pick(T* src_ptr, size_t index);
+
+  template<typename T>
+  void set(T* dst_ptr, size_t index, const T& val);
+#endif
 
   /*!
    * \brief Get the size of the given pointer.

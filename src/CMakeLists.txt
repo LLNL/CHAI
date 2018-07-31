@@ -41,14 +41,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
+set(CHAI_ENABLE_PICK ${ENABLE_PICK})
 set(CHAI_ENABLE_CUDA ${ENABLE_CUDA})
 set(CHAI_ENABLE_IMPLICIT_CONVERSIONS ${ENABLE_IMPLICIT_CONVERSIONS})
 set(CHAI_DISABLE_RM ${DISABLE_RM})
 set(CHAI_ENABLE_UM ${ENABLE_UM})
 
 configure_file(
-  ${PROJECT_SOURCE_DIR}/src/config.hpp.in
-  ${PROJECT_BINARY_DIR}/include/chai/config.hpp)
+  ${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in
+  ${CMAKE_BINARY_DIR}/include/chai/config.hpp)
 
 set (chai_headers
   ArrayManager.hpp
@@ -114,8 +115,12 @@ install(
 
 install(EXPORT chai-targets DESTINATION share/chai/cmake/)
 
-add_subdirectory(tests)
+if (ENABLE_TESTS)
+  add_subdirectory(tests)
+endif()
 if (ENABLE_BENCHMARKS)
   add_subdirectory(benchmarks)
 endif()
-add_subdirectory(examples)
+if (ENABLE_EXAMPLES)
+  add_subdirectory(examples)
+endif()

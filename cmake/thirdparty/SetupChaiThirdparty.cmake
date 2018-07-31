@@ -41,6 +41,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
+set(ENABLE_FORTRAN Off CACHE Bool "Enable Fortran in Umpire")
 if (DEFINED umpire_DIR)
   find_package(umpire REQUIRED)
 

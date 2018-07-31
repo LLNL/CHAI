@@ -95,7 +95,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_manager, size_t elems) :
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_manager, size_t elems, PointerRecord* pointer_record) :
   m_active_pointer(data), 
   m_resource_manager(array_manager),
   m_elems(elems)
@@ -161,6 +161,45 @@ CHAI_HOST void ManagedArray<T>::reset()
 }
 
 
+#if defined(CHAI_ENABLE_PICK)
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+typename ManagedArray<T>::T_non_const ManagedArray<T>::pick(size_t i) const { 
+#if !defined(__CUDA_ARCH__) && defined(CHAI_ENABLE_UM)
+  cudaDeviceSynchronize();
+#endif
+  return (T_non_const) m_active_pointer[i]; 
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T& val) const { 
+#if !defined(__CUDA_ARCH__) && defined(CHAI_ENABLE_UM)
+  cudaDeviceSynchronize();
+#endif
+  m_active_pointer[i] = val; 
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE void ManagedArray<T>::incr(size_t i) const { 
+#if !defined(__CUDA_ARCH__) && defined(CHAI_ENABLE_UM)
+  cudaDeviceSynchronize();
+#endif
+  ++m_active_pointer[i]; 
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE void ManagedArray<T>::decr(size_t i) const { 
+#if !defined(__CUDA_ARCH__) && defined(CHAI_ENABLE_UM)
+  cudaDeviceSynchronize();
+#endif
+  --m_active_pointer[i]; 
+}
+#endif
+
 template<typename T>
 CHAI_INLINE
 CHAI_HOST size_t ManagedArray<T>::size() const {
@@ -193,12 +232,12 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool test) :
 #endif
 
 template<typename T>
-template<bool B,typename std::enable_if<!B, int>::type>
-CHAI_INLINE
-CHAI_HOST_DEVICE
-ManagedArray<T>::operator ManagedArray<const T> () const
+template< typename U>
+ManagedArray<T>::operator 
+typename std::enable_if< !std::is_const<U>::value , 
+                         ManagedArray<const U> >::type () const
 {
-  return ManagedArray<const T>(const_cast<const T*>(m_active_pointer), m_resource_manager, m_elems);
+  return ManagedArray<const T>(const_cast<const T*>(m_active_pointer), m_resource_manager, m_elems, nullptr);
 }
 
 template<typename T>
