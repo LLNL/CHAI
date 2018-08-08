@@ -1,105 +1,57 @@
-sudo: required
+services: docker
 dist: trusty
 language: cpp
 env:
   global:
-    - DO_BUILD=yes
-    - DO_TEST=yes
+  - DO_BUILD=yes
+  - DO_TEST=yes
 matrix:
   include:
-  - compiler: gcc-4
-    addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-4.9 ] } }
+  - compiler: gcc5
     env:
-    - COMPILER=g++-4.9
+    - COMPILER=g++
+    - IMG=gcc-5
     - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=Off"
-  - compiler: gcc-6
-    addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-6 ] } }
+  - compiler: gcc6
     env:
-    - COMPILER=g++-6
+    - COMPILER=g++
+    - IMG=gcc-6
     - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=Off"
-  - compiler: gcc-6-disable-rm
-    addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-6 ] } }
+  - compiler: gcc7
     env:
-    - COMPILER=g++-6
-    - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=Off -DDISABLE_RM=On"
-  - compiler: gcc-7
-    addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-7 ] } }
-    env:
-    - COMPILER=g++-7
+    - COMPILER=g++
+    - IMG=gcc-7
     - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=Off"
-  - compiler: clang-3.5
-    addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-6 ] } }
+  - compiler: gcc8
+    env:
+    - COMPILER=g++
+    - IMG=gcc-8
+    - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=Off"
+  - compiler: clang4
     env:
     - COMPILER=clang++
-    - LLVM_VERSION=3.5.2
-    - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=Off -DENABLE_OPENMP=Off"
-  - compiler: clang-3.9
-    addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-6 ] } }
+    - IMG=clang-4
+    - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=Off"
+  - compiler: clang5
     env:
     - COMPILER=clang++
-    - LLVM_VERSION=3.9.1
-    - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=Off -DENABLE_OPENMP=Off"
-  - compiler: clang-4.0
-    addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-6 ] } }
+    - IMG=clang-5
+    - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=Off"
+  - compiler: clang6
     env:
     - COMPILER=clang++
-    - LLVM_VERSION=4.0.0
-    - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=Off -DENABLE_OPENMP=Off"
+    - IMG=clang-6
+    - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=Off"
   - compiler: nvcc
-    addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-4.9 ] } }
     env:
-    - COMPILER=g++-4.9
+    - COMPILER=g++
+    - IMG=nvcc-9
     - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=On"
-    - TRAVIS_INSTALL_COMPILER="nvcc"
     - DO_TEST=no
-    - BUILD_RAJA=yes
-  - compiler: nvcc-um-disable-rm
-    addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-4.9 ] } }
-    env:
-    - COMPILER=g++-4.9
-    - CMAKE_EXTRA_FLAGS="-DENABLE_CUDA=On -DENABLE_UM=On -DDISABLE_RM=On"
-    - TRAVIS_INSTALL_COMPILER="nvcc"
-    - DO_TEST=no
-  - compiler: gcc-4.9-debug
-    addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-4.9 ] } }
-    env:
-    - COMPILER=g++-4.9
-    - CMAKE_EXTRA_FLAGS="-DCMAKE_BUILD_TYPE=Debug  -DENABLE_CUDA=Off"
-  - compiler: clang-3.9-debug
-    addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-6 ] } }
-    env:
-    - COMPILER=clang++
-    - LLVM_VERSION=3.9.1
-    - CMAKE_EXTRA_FLAGS="-DCMAKE_BUILD_TYPE=Debug -DENABLE_CUDA=Off -DENABLE_OPENMP=Off"
-  - compiler: nvcc-debug
-    addons: { apt: { sources: [ ubuntu-toolchain-r-test ] , packages: [ g++-4.9 ] } }
-    env:
-    - COMPILER=g++-4.9
-    - CMAKE_EXTRA_FLAGS="-DCMAKE_BUILD_TYPE=Debug -DRAJA_ENABLE_CUDA=On"
-    - TRAVIS_INSTALL_COMPILER="nvcc"
-    - DO_TEST=no
-cache:
-  directories:
-  - $HOME/llvm
-before_install:
-- sudo apt-get update -qq
-- mkdir -p ${HOME}/download
-- if [[ -n "${LLVM_VERSION}" ]]; then ./scripts/travis/install_llvm.sh ; fi
-- CMAKE_URL="https://cmake.org/files/v3.9/cmake-3.9.6.tar.gz"
-- curl -o ${HOME}/cmake-tarball.tar.gz ${CMAKE_URL} &&
-  mkdir -p ${HOME}/cmake &&
-  tar xf ${HOME}/cmake-tarball.tar.gz -C ${HOME}/cmake --strip-components=1 &&
-  export PATH=${HOME}/cmake/bin:${PATH}
-- if [[ "${TRAVIS_INSTALL_COMPILER}" == "nvcc" ]]; then export DEBFILE=${HOME}/download/cuda-repo.deb; fi
-- if [[ "${TRAVIS_INSTALL_COMPILER}" == "nvcc" ]]; then export DOWNLOAD_URL=http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/cuda-repo-ubuntu1404_8.0.61-1_amd64.deb; fi
-- if [[ "${TRAVIS_INSTALL_COMPILER}" == "nvcc" ]]; then if [[ ! -f /usr/local/cuda-8.0/bin/nvcc ]]; then if [[ ! -f ${DEBFILE} ]]; then travis_retry wget -O ${DEBFILE} ${DOWNLOAD_URL}; fi &&
-  travis_retry sudo dpkg -i ${DEBFILE} &&
-  travis_retry sudo apt-get update -qq &&
-  travis_retry sudo apt-get install --no-install-suggests --no-install-recommends -y cuda-drivers cuda-core-8-0 cuda-cudart-dev-8-0 cuda-cufft-dev-8-0 &&
-  travis_retry sudo apt-get clean; fi &&
-  export CUDA_HOME=/usr/local/cuda-8.0 &&
-  export CUDA_TOOLKIT_ROOT_DIR=${CUDA_HOME} &&
-  export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH} &&
-  export PATH=${CUDA_HOME}/bin:${PATH}; fi
+
 script:
-- ./scripts/travis/build_and_test.sh
+- docker run --rm --user='root' -v ${TRAVIS_BUILD_DIR}:/home/axom axom/compilers:$IMG chown -R axom /home/axom
+- docker run --rm  -v ${TRAVIS_BUILD_DIR}:/home/axom -e COMPILER -e DO_BUILD -e DO_TEST -e CMAKE_EXTRA_FLAGS axom/compilers:$IMG ./scripts/travis/build_and_test.sh
+
+after_success:
+- if [[ "${CMAKE_EXTRA_FLAGS}" == *"ENABLE_COVERAGE"* ]] ; then bash <(curl -s https://codecov.io/bash) -a "-f" >& /dev/null; fi
