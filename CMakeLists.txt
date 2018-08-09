@@ -41,8 +41,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-cmake_minimum_required(VERSION 3.9)
-
 cmake_policy(SET CMP0057 NEW)
 
 project(Chai LANGUAGES CXX)
@@ -75,6 +73,11 @@ endif()
 set(ENABLE_COPY_HEADERS On CACHE BOOL "")
 set(BLT_CXX_STD c++11 CACHE STRING "")
 
+if (ENABLE_CUDA)
+  cmake_minimum_required(VERSION 3.9)
+else ()
+  cmake_minimum_required(VERSION 3.8)
+endif()
 
 ################################
 # BLT
