@@ -73,6 +73,12 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
 #if !defined(__CUDA_ARCH__)
   m_resource_manager = ArrayManager::getInstance();
   this->allocate(elems, space);
+  #if defined(CHAI_ENABLE_UM)
+  if(space == UM) {
+    m_pointer_record->m_pointers[CPU] = m_active_pointer;
+    m_pointer_record->m_pointers[GPU] = m_active_pointer;
+  }
+  #endif
 #endif
 }
 
@@ -189,6 +195,78 @@ CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::registerTouch(ExecutionSpace space) {
   m_resource_manager->registerTouch(m_pointer_record, space);
 }
+
+
+#if defined(CHAI_ENABLE_PICK)
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+typename ManagedArray<T>::T_non_const ManagedArray<T>::pick(size_t i) const { 
+  #if !defined(__CUDA_ARCH__)
+    #if defined(CHAI_ENABLE_UM)
+      if(m_pointer_record->m_pointers[UM] == m_active_pointer) {
+        cudaDeviceSynchronize();
+        return (T_non_const)(m_active_pointer[i]);
+      }
+    #endif
+    return m_resource_manager->pick(static_cast<T*>(m_pointer_record->m_pointers[m_pointer_record->m_last_space]), i);
+  #else
+    return (T_non_const)(m_active_pointer[i]); 
+  #endif
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T& val) const { 
+  #if !defined(__CUDA_ARCH__)
+    #if defined(CHAI_ENABLE_UM)
+      if(m_pointer_record->m_pointers[UM] == m_active_pointer) {
+        cudaDeviceSynchronize();
+        m_active_pointer[i] = val;
+        return;
+      }
+    #endif
+    m_resource_manager->set(static_cast<T*>(m_pointer_record->m_pointers[m_pointer_record->m_last_space]), i, val);
+  #else
+    m_active_pointer[i] = val; 
+  #endif
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST void ManagedArray<T>::modify(size_t i, const T& val) const { 
+  #if defined(CHAI_ENABLE_UM)
+    if(m_pointer_record->m_pointers[UM] == m_active_pointer) {
+      cudaDeviceSynchronize();
+      m_active_pointer[i] = m_active_pointer[i] + val;
+      return;
+    }
+  #endif
+    T_non_const temp = pick(i);
+    temp = temp + val;
+    set(i, temp);
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE void ManagedArray<T>::incr(size_t i) const { 
+  #if !defined(__CUDA_ARCH__)
+    modify(i, (T)1);
+  #else
+     ++m_active_pointer[i]; 
+  #endif
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE void ManagedArray<T>::decr(size_t i) const { 
+  #if !defined(__CUDA_ARCH__)
+    modify(i, (T)-1);
+  #else
+     --m_active_pointer[i]; 
+  #endif
+}
+#endif
 
 template <typename T>
 CHAI_INLINE
