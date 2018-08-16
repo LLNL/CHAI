@@ -118,6 +118,16 @@ class ManagedArray : public CHAICopyable {
   CHAI_HOST_DEVICE ManagedArray(ManagedArray const& other);
 
   /*!
+   * \brief Move constructor, does not handles data movement.
+   *
+   * The move constructor does not handle data movement and resets the array
+   * being moved.
+   *
+   * \param other ManagedArray being moved.
+   */
+  CHAI_HOST_DEVICE ManagedArray(ManagedArray&& other);
+
+  /*!
    * \brief Construct a ManagedArray from a nullptr.
    */
   CHAI_HOST_DEVICE ManagedArray(std::nullptr_t other);
@@ -251,7 +261,7 @@ class ManagedArray : public CHAICopyable {
 
 
   /*!
-   * \brief Assign a user-defined callback triggerd upon memory migration.
+   * \brief Assign a user-defined callback triggered upon memory migration.
 	 *
 	 * The callback is a function of the form
 	 * 
@@ -278,6 +288,16 @@ class ManagedArray : public CHAICopyable {
   CHAI_HOST_DEVICE ManagedArray(T* data, ArrayManager* array_manager, size_t m_elems, PointerRecord* pointer_record);
 
   CHAI_HOST_DEVICE ManagedArray<T>& operator= (std::nullptr_t);
+
+  /*!
+   * \brief Move assignment operator, does not handles data movement.
+   *
+   * The move assignment operator does not handle data movement and resets the
+   * array being moved.
+   *
+   * \param other ManagedArray being moved.
+   */
+  CHAI_HOST_DEVICE ManagedArray<T>& operator= (ManagedArray&& other);
 
   CHAI_HOST_DEVICE bool operator== (ManagedArray<T>& rhs);
 
@@ -378,6 +398,11 @@ ManagedArray<T>
 deepCopy(
     ManagedArray<T> const& array)
 {
+  if (array.size() == 0)
+  {
+    return ManagedArray<T>();
+  }
+
   T* data_ptr = array.getActivePointer();
   
   ArrayManager* manager = ArrayManager::getInstance();

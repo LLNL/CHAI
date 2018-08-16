@@ -53,6 +53,8 @@ static void cuda_test_ ## X ## Y()
 
 #include "chai/config.hpp"
 
+#include <utility>                // std::move
+
 struct my_point {
   double x;
   double y;
@@ -794,7 +796,7 @@ CUDA_TEST(ManagedArray, MoveInnerData)
         temp[j] = j;
      });
 
-     originalArray[i] = temp;
+     originalArray[i] = std::move(temp);
   }
 
   auto copiedArray = chai::ManagedArray<chai::ManagedArray<int>>(originalArray);

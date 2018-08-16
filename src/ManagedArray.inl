@@ -132,6 +132,19 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 
 template<typename T>
 CHAI_INLINE
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray&& other):
+  m_active_pointer(other.m_active_pointer),
+  m_resource_manager(other.m_resource_manager),
+  m_elems(other.m_elems),
+  m_pointer_record(other.m_pointer_record)
+{
+  other.m_active_pointer = nullptr;
+  other.m_elems = 0;
+  other.m_pointer_record = nullptr;
+}
+
+template<typename T>
+CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_manager, size_t elems, PointerRecord* pointer_record) :
   m_active_pointer(data), 
   m_resource_manager(array_manager),
@@ -277,7 +290,6 @@ void ManagedArray<T>::move(ExecutionSpace space)
 
   if (!std::is_const<T>::value) {
     CHAI_LOG("ManagedArray", "T is non-const, registering touch of pointer" << m_active_pointer);
-    T_non_const* non_const_pointer = const_cast<T_non_const*>(m_active_pointer);
     m_resource_manager->registerTouch(m_pointer_record);
   }
 }
@@ -361,6 +373,22 @@ ManagedArray<T>&
 ManagedArray<T>::operator= (std::nullptr_t from) {
   m_active_pointer = from;
   m_elems = 0;
+  return *this;
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+ManagedArray<T>&
+ManagedArray<T>::operator= (ManagedArray<T>&& other) {
+  m_active_pointer = other.m_active_pointer;
+  m_resource_manager = other.m_resource_manager;
+  m_elems = other.m_elems;
+  m_pointer_record = other.m_pointer_record;
+
+  other.m_active_pointer = nullptr;
+  other.m_elems = 0;
+  other.m_pointer_record = nullptr;
   return *this;
 }
 
