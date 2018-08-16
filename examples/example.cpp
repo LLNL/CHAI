@@ -41,7 +41,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 // ---------------------------------------------------------------------
 #include "chai/ManagedArray.hpp"
-#include "../util/forall.hpp"
+#include "../src/util/forall.hpp"
 
 #include <iostream>
 
