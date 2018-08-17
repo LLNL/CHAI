@@ -51,6 +51,7 @@ TEST(ArrayManager, Constructor) {
   ASSERT_NE(rm, nullptr);
 }
 
+#ifndef CHAI_DISABLE_RM
 TEST(ArrayManager, getPointerMap) {
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
 
@@ -100,4 +101,5 @@ TEST(ArrayManager, getPointerMap) {
   ASSERT_EQ(rm->getTotalNumArrays(), 2);
   ASSERT_EQ(rm->getTotalSize(), (sizeOfArray1 * sizeof(int)) + (sizeOfArray2 * sizeof(double)));
 }
+#endif
 
