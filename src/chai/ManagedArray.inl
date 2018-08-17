@@ -116,8 +116,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
   m_active_pointer = static_cast<T*>(m_resource_manager->move(const_cast<T_non_const*>(m_active_pointer), m_pointer_record));
   CHAI_LOG("ManagedArray", "Moved to " << m_active_pointer);
 
-  moveInnerImpl();
-
   /*
    * Register touch
    */
@@ -125,6 +123,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
     CHAI_LOG("ManagedArray", "T is non-const, registering touch of pointer" << m_active_pointer);
     m_resource_manager->registerTouch(m_pointer_record);
   }
+
+  /// Move nested ManagedArrays
+  moveInnerImpl();
 #endif
 }
 
@@ -375,7 +376,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE
 void
-ManagedArray<T>::setFrom(ManagedArray<T> const& other)
+ManagedArray<T>::setFrom(ManagedArray<T> const& other) const
 {
   m_active_pointer = other.m_active_pointer;
   m_resource_manager = other.m_resource_manager;

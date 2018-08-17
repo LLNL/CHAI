@@ -184,6 +184,29 @@ class ManagedArray : public CHAICopyable {
 	template<typename Idx>
   CHAI_HOST_DEVICE T& operator[](const Idx i) const;
 
+  /*!
+   * \brief get access to m_active_pointer
+   * @return a copy of m_active_pointer
+   */
+  T* getActivePointer() const;
+
+  /*!
+   * \brief
+   *
+   */
+//  operator ManagedArray<typename std::conditional<!std::is_const<T>::value, const T, InvalidConstCast>::type> () const;
+  template< typename U = T >
+  operator typename std::enable_if< !std::is_const<U>::value ,
+                                    ManagedArray<const U> >::type () const;
+
+
+  CHAI_HOST_DEVICE ManagedArray(T* data, ArrayManager* array_manager, size_t m_elems, PointerRecord* pointer_record);
+
+  CHAI_HOST_DEVICE ManagedArray<T>& operator= (std::nullptr_t);
+
+  CHAI_HOST_DEVICE bool operator== (ManagedArray<T>& rhs);
+
+
 #if defined(CHAI_ENABLE_PICK)
   /*!
    * \brief Return the value of element i in the ManagedArray.
@@ -222,6 +245,7 @@ class ManagedArray : public CHAICopyable {
   CHAI_HOST_DEVICE void decr(size_t i) const;
 #endif
 
+
 #if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
   /*!
    * \brief Cast the ManagedArray to a raw pointer.
@@ -241,13 +265,6 @@ class ManagedArray : public CHAICopyable {
   template<bool Q=0>
   CHAI_HOST_DEVICE ManagedArray(T* data, bool test=Q);
 #endif
-
-
-  /*!
-   * \brief get access to m_active_pointer
-   * @return a copy of m_active_pointer
-   */
-  T* getActivePointer() const;
 
 
 #ifndef CHAI_DISABLE_RM
@@ -272,24 +289,7 @@ class ManagedArray : public CHAICopyable {
    * this, it is a const function so we can call it on const objects
    * (note that the member variables are marked mutable).
    */
-  CHAI_HOST_DEVICE void setFrom(ManagedArray const& other);
-#endif
-
-  /*!
-   * \brief 
-   *
-   */
-//  operator ManagedArray<typename std::conditional<!std::is_const<T>::value, const T, InvalidConstCast>::type> () const;
-  template< typename U = T >
-  operator typename std::enable_if< !std::is_const<U>::value ,
-                                    ManagedArray<const U> >::type () const;
-
-
-  CHAI_HOST_DEVICE ManagedArray(T* data, ArrayManager* array_manager, size_t m_elems, PointerRecord* pointer_record);
-
-  CHAI_HOST_DEVICE ManagedArray<T>& operator= (std::nullptr_t);
-
-  CHAI_HOST_DEVICE bool operator== (ManagedArray<T>& rhs);
+  CHAI_HOST_DEVICE void setFrom(ManagedArray const& other) const;
 
   /*!
    * \brief Moves the inner data of a ManagedArray.
@@ -310,6 +310,8 @@ class ManagedArray : public CHAICopyable {
    */
   template<bool B = std::is_base_of<CHAICopyable, T>::value, typename std::enable_if<!B, int>::type = 0>
   CHAI_HOST_DEVICE void moveInnerImpl();
+#endif
+
 
   private:
   CHAI_HOST void modify(size_t i, const T& val) const;
@@ -322,17 +324,17 @@ class ManagedArray : public CHAICopyable {
   /*! 
    * Pointer to ArrayManager instance.
    */
-  ArrayManager* m_resource_manager;
+  mutable ArrayManager* m_resource_manager;
 
   /*!
    * Number of elements in the ManagedArray.
    */
-  size_t m_elems;
+  mutable size_t m_elems;
 
   /*!
    * Pointer to PointerRecord data.
    */
-  PointerRecord* m_pointer_record;
+  mutable PointerRecord* m_pointer_record;
   
 };
 

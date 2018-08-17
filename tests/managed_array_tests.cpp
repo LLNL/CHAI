@@ -783,7 +783,7 @@ CUDA_TEST(ManagedArray, Move)
 }
 #endif
 
-CUDA_TEST(ManagedArray, MoveInnerData)
+CUDA_TEST(ManagedArray, MoveInnerImpl)
 {
   chai::ManagedArray<chai::ManagedArray<int>> originalArray(3, chai::CPU);
 
