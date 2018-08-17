@@ -282,16 +282,6 @@ class ManagedArray : public CHAICopyable {
   CHAI_HOST void setUserCallback(UserCallback const &cback);
 
   /*!
-   * \brief Used to copy data from nested ManagedArrays.
-   *
-   * This is like a copy ctor for already-constructed objects.  This
-   * function modifies the internal state of this object.  Despite
-   * this, it is a const function so we can call it on const objects
-   * (note that the member variables are marked mutable).
-   */
-  CHAI_HOST_DEVICE void setFrom(ManagedArray const& other) const;
-
-  /*!
    * \brief Moves the inner data of a ManagedArray.
    *
    * Called in the copy constructor of ManagedArray. In this implementation, the inner
@@ -324,17 +314,17 @@ class ManagedArray : public CHAICopyable {
   /*! 
    * Pointer to ArrayManager instance.
    */
-  mutable ArrayManager* m_resource_manager;
+  ArrayManager* m_resource_manager;
 
   /*!
    * Number of elements in the ManagedArray.
    */
-  mutable size_t m_elems;
+  size_t m_elems;
 
   /*!
    * Pointer to PointerRecord data.
    */
-  mutable PointerRecord* m_pointer_record;
+  PointerRecord* m_pointer_record;
   
 };
 
