@@ -41,6 +41,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
+set(ENABLE_FORTRAN Off CACHE Bool "Enable Fortran in Umpire")
 if (DEFINED umpire_DIR)
   find_package(umpire REQUIRED)
 
@@ -49,7 +50,5 @@ if (DEFINED umpire_DIR)
     INCLUDES ${UMPIRE_INCLUDE_DIRS}
     LIBRARIES umpire)
 else ()
-  add_subdirectory(src/tpl/umpire)
+  add_subdirectory(${PROJECT_SOURCE_DIR}/src/tpl/umpire)
 endif()
-
-

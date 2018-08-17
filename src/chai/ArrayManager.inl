@@ -52,6 +52,10 @@
 
 #include "umpire/ResourceManager.hpp"
 
+#if defined(CHAI_ENABLE_UM)
+#include <cuda_runtime_api.h>
+#endif
+
 namespace chai {
 
 template<typename T>
@@ -118,6 +122,40 @@ void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* point
   pointer_record->m_size = sizeof(T) * elems;
   return pointer_record->m_pointers[my_space];
 }
+
+#if defined(CHAI_ENABLE_PICK)
+template<typename T>
+CHAI_INLINE
+typename ArrayManager::T_non_const<T> ArrayManager::pick(T* src_ptr, size_t index)
+{
+  T_non_const<T> val;
+  m_resource_manager.registerAllocation(const_cast<T_non_const<T>*>(&val), new umpire::util::AllocationRecord{const_cast<T_non_const<T>*>(&val), sizeof(T), m_resource_manager.getAllocator("HOST").getAllocationStrategy()});
+  m_resource_manager.copy(const_cast<T_non_const<T>*>(&val), const_cast<T_non_const<T>*>(src_ptr+index), sizeof(T));
+  m_resource_manager.deregisterAllocation(&val);
+  return val;
+
+  //T_non_const<T> val;
+  //T_non_const<T>* pick = (T_non_const<T>*)m_allocators[CPU]->allocate(sizeof(T));
+  //m_resource_manager.copy(pick, const_cast<T_non_const<T>*>(src_ptr+index), sizeof(T));
+  //val = *pick;
+  //m_allocators[CPU]->deallocate(pick);
+  //return val;
+}
+
+template<typename T>
+CHAI_INLINE
+void ArrayManager::set(T* dst_ptr, size_t index, const T& val)
+{
+  m_resource_manager.registerAllocation(const_cast<T_non_const<T>*>(&val), new umpire::util::AllocationRecord{const_cast<T_non_const<T>*>(&val), sizeof(T), m_resource_manager.getAllocator("HOST").getAllocationStrategy()});
+  m_resource_manager.copy(const_cast<T_non_const<T>*>(dst_ptr+index), const_cast<T_non_const<T>*>(&val), sizeof(T));
+  m_resource_manager.deregisterAllocation(const_cast<T_non_const<T>*>(&val));
+
+  //T_non_const<T>* set = (T_non_const<T>*)m_allocators[CPU]->allocate(sizeof(T));
+  //*set = val;
+  //m_resource_manager.copy(const_cast<T_non_const<T>*>(dst_ptr+index), set, sizeof(T));
+  //m_allocators[CPU]->deallocate(set);
+}
+#endif
 
 } // end of namespace chai
 
