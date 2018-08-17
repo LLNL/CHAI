@@ -781,7 +781,6 @@ CUDA_TEST(ManagedArray, Move)
 
   array.free();
 }
-#endif
 
 CUDA_TEST(ManagedArray, MoveInnerImpl)
 {
@@ -817,6 +816,7 @@ CUDA_TEST(ManagedArray, MoveInnerImpl)
   copiedArray.free();
 }
 
+#endif // CHAI_DISABLE_RM
 #endif // defined(CHAI_ENABLE_CUDA)
 
 
