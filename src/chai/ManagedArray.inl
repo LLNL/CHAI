@@ -394,6 +394,10 @@ ManagedArray<T>::moveInnerImpl()
   // Use reverse order to optimize cnmem deallocation
   for (int i = size() - 1; i >= 0; --i)
   {
+    // TODO: Investigate m_active_pointer[i] = T(m_active_pointer[i]);
+    // I think the current implementation fixed some obscure bug in the
+    // old version of CHAI. Arlie thinks it has something to do with
+    // temporaries and their lifetimes.
     T inner = T(m_active_pointer[i]);
     // The following may be slow.
     m_active_pointer[i].setFrom(inner);
