@@ -781,9 +781,8 @@ CUDA_TEST(ManagedArray, Move)
 
   array.free();
 }
-#endif
 
-CUDA_TEST(ManagedArray, MoveInnerData)
+CUDA_TEST(ManagedArray, MoveInnerImpl)
 {
   chai::ManagedArray<chai::ManagedArray<int>> originalArray(3, chai::CPU);
 
@@ -811,16 +810,13 @@ CUDA_TEST(ManagedArray, MoveInnerData)
 
   for (int i = 0; i < 3; ++i)
   {
-     // TODO: Free when deep copy is implemented
-     //originalArray[i].free();
      copiedArray[i].free();
   }
 
-  // TODO: Free when deep copy is implemented
-  //originalArray.free();
   copiedArray.free();
 }
 
+#endif // CHAI_DISABLE_RM
 #endif // defined(CHAI_ENABLE_CUDA)
 
 

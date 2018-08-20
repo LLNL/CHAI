@@ -113,11 +113,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 {
 #if !defined(__CUDA_ARCH__)
   CHAI_LOG("ManagedArray", "Moving " << m_active_pointer);
-
   m_active_pointer = static_cast<T*>(m_resource_manager->move(const_cast<T_non_const*>(m_active_pointer), m_pointer_record));
-
-  moveInnerData();
-
   CHAI_LOG("ManagedArray", "Moved to " << m_active_pointer);
 
   /*
@@ -127,6 +123,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
     CHAI_LOG("ManagedArray", "T is non-const, registering touch of pointer" << m_active_pointer);
     m_resource_manager->registerTouch(m_pointer_record);
   }
+
+  /// Move nested ManagedArrays
+  moveInnerImpl();
 #endif
 }
 
@@ -378,13 +377,12 @@ template<bool B, typename std::enable_if<B, int>::type>
 CHAI_INLINE
 CHAI_HOST_DEVICE
 void
-ManagedArray<T>::moveInnerData()
+ManagedArray<T>::moveInnerImpl()
 {
-   for (int i = 0; i < size(); ++i)
-   {
-      // Copy constructor triggers data movement
-      T temp = T(m_active_pointer[i]);
-   }
+  for (int i = 0; i < size(); ++i)
+  {
+    m_active_pointer[i] = T(m_active_pointer[i]);
+  }
 }
 
 template<typename T>
@@ -392,7 +390,7 @@ template<bool B, typename std::enable_if<!B, int>::type>
 CHAI_INLINE
 CHAI_HOST_DEVICE
 void
-ManagedArray<T>::moveInnerData()
+ManagedArray<T>::moveInnerImpl()
 {
 }
 
