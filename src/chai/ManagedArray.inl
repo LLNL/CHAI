@@ -379,8 +379,7 @@ CHAI_HOST_DEVICE
 void
 ManagedArray<T>::moveInnerImpl()
 {
-  // Use reverse order to optimize cnmem deallocation
-  for (int i = size() - 1; i >= 0; --i)
+  for (int i = 0; i < size(); ++i)
   {
     m_active_pointer[i] = T(m_active_pointer[i]);
   }
