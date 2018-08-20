@@ -337,4 +337,22 @@ std::unordered_map<void*, const PointerRecord*> ArrayManager::getPointerMap() co
   return mapCopy;
 }
 
+size_t ArrayManager::getTotalNumArrays() const
+{
+  return m_pointer_map.size();
+}
+
+// TODO: Investigate counting memory allocated in each execution space if possible
+size_t ArrayManager::getTotalSize() const
+{
+  size_t total = 0;
+
+  for (auto entry : m_pointer_map)
+  {
+    total += entry.second->m_size;
+  }
+
+  return total;
+}
+
 } // end of namespace chai

@@ -51,6 +51,7 @@ TEST(ArrayManager, Constructor) {
   ASSERT_NE(rm, nullptr);
 }
 
+#ifndef CHAI_DISABLE_RM
 TEST(ArrayManager, getPointerMap) {
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
 
@@ -67,6 +68,10 @@ TEST(ArrayManager, getPointerMap) {
   const chai::PointerRecord* record1Temp = map1[array1];
   ASSERT_EQ(record1Temp->m_size, sizeOfArray1 * sizeof(int));
   ASSERT_EQ(record1Temp->m_last_space, chai::CPU);
+
+  // Check total num arrays and total allocated memory
+  ASSERT_EQ(rm->getTotalNumArrays(), 1);
+  ASSERT_EQ(rm->getTotalSize(), sizeOfArray1 * sizeof(int));
 
   // Allocate another array
   size_t sizeOfArray2 = 4;
@@ -91,5 +96,10 @@ TEST(ArrayManager, getPointerMap) {
   // Check the equality of the records
   ASSERT_EQ(record1, record1Temp);
   ASSERT_NE(record1, record2);
+
+  // Check total num arrays and total allocated memory
+  ASSERT_EQ(rm->getTotalNumArrays(), 2);
+  ASSERT_EQ(rm->getTotalSize(), (sizeOfArray1 * sizeof(int)) + (sizeOfArray2 * sizeof(double)));
 }
+#endif
 
