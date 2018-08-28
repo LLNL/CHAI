@@ -52,6 +52,7 @@ option(ENABLE_IMPLICIT_CONVERSIONS "Enable implicit conversions to-from raw poin
 option(DISABLE_RM "Make ManagedArray a thin wrapper" Off)
 mark_as_advanced(DISABLE_RM)
 option(ENABLE_UM "Use CUDA unified (managed) memory" Off)
+option(ENABLE_COVERAGE "Enable code coverage" Off)
 
 set(ENABLE_TESTS On CACHE Bool "")
 set(ENABLE_EXAMPLES On CACHE Bool "")

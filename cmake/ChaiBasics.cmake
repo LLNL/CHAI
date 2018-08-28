@@ -43,4 +43,10 @@
 
 set (CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-extended-lambda")
 
+if (ENABLE_COVERAGE)
+  message(INFO "Coverage analysis enabled")
+  set(CMAKE_CXX_FLAGS "-coverage ${CMAKE_CXX_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS "-coverage ${CMAKE_EXE_LINKER_FLAGS}")
+endif ()
+
 include(${PROJECT_SOURCE_DIR}/cmake/thirdparty/SetupChaiThirdparty.cmake)
