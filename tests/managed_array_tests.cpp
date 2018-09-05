@@ -120,6 +120,18 @@ TEST(ManagedArray, Const) {
   });
 }
 
+TEST(ManagedArray, Slice) {
+  chai::ManagedArray<float> array(10);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  chai::ManagedArray<float> sl = array.slice(1,5);
+  sl.free();
+  array.free();
+}
+
 #if defined(CHAI_ENABLE_PICK)
 TEST(ManagedArray, PickHostFromHostConst) {
   chai::ManagedArray<int> array(10);
