@@ -174,6 +174,7 @@ class ManagedArray : public CHAICopyable {
 
   CHAI_HOST void move(ExecutionSpace space);
 
+  CHAI_HOST ManagedArray<T> getSlice(size_t begin, size_t end);
   /*!
    * \brief Return reference to i-th element of the ManagedArray.
    *

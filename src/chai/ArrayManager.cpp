@@ -182,22 +182,30 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
     return;
   }
 
+  PointerRecord* parent = record->m_parent_pointer_record;
+  if(parent) {
+    void* src_pointer = record->m_pointers[record->m_last_space];
+    void* parent_src_pointer = parent->m_pointers[parent->m_last_space];
+    size_t offset = (char*)src_pointer - (char*)parent_src_pointer;
+    move(parent, space);
+    void* dst_pointer = (void*)((char*)parent->m_pointers[space] + offset); 
+    registerPointer(dst_pointer, record, space);
+  } else { 
+    void* src_pointer = record->m_pointers[record->m_last_space];
+    void* dst_pointer = record->m_pointers[space];
 
-  void* src_pointer = record->m_pointers[record->m_last_space];
-  void* dst_pointer = record->m_pointers[space];
+    if (!dst_pointer) {
+      allocate(record, space);
+      dst_pointer = record->m_pointers[space];
+    }
 
-  if (!dst_pointer) {
-    allocate(record, space);
-    dst_pointer = record->m_pointers[space];
+    if (!record->m_touched[record->m_last_space]) {
+      return;
+    } else {
+      record->m_user_callback(ACTION_MOVE, space, record->m_size);
+      m_resource_manager.copy(dst_pointer, src_pointer);
+    }
   }
-
-  if (!record->m_touched[record->m_last_space]) {
-    return;
-  } else {
-    record->m_user_callback(ACTION_MOVE, space, record->m_size);
-    m_resource_manager.copy(dst_pointer, src_pointer);
-  }
-
   resetTouch(record);
 }
 

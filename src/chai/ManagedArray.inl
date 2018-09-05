@@ -141,6 +141,25 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
 
 template<typename T>
 CHAI_INLINE
+CHAI_HOST ManagedArray<T> ManagedArray<T>::getSlice(size_t offset, size_t elems) {
+  ManagedArray<T> slice;
+  if(!m_active_pointer || (offset + elems > size()) || (elems == 0)) {
+    CHAI_LOG("ManagedArray", "Invalid slice. No active pointer or index out of bounds");
+  } else {
+    ExecutionSpace space = m_pointer_record->m_last_space;
+    if (space == NONE) {
+      space = m_resource_manager->getDefaultAllocationSpace();
+    }
+    slice.m_resource_manager = m_resource_manager;
+    slice.m_pointer_record = m_resource_manager->registerSlice<T>(offset, elems, m_pointer_record, space);
+    slice.m_active_pointer = static_cast<T*>(slice.m_pointer_record->m_pointers[space]); 
+    slice.m_elems = elems;
+  }
+  return slice;
+}
+
+template<typename T>
+CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::allocate(size_t elems, ExecutionSpace space, UserCallback const &cback) {
   CHAI_LOG("ManagedArray", "Allocating array of size " << elems << " in space " << space);
 
