@@ -141,9 +141,6 @@ class ArrayManager
   template<typename T>
   PointerRecord* allocate(size_t elems, ExecutionSpace space=CPU, UserCallback const &cback=[](Action, ExecutionSpace, size_t){});
 
-  template<typename T>
-  PointerRecord* registerSlice(size_t offset, size_t elems, PointerRecord* parent, ExecutionSpace space);
-
   /*!
    * \brief Reallocate data.
    *

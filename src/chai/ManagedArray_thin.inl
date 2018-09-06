@@ -56,7 +56,8 @@ CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
   m_active_pointer(nullptr),
   m_resource_manager(nullptr),
-  m_elems(0)
+  m_elems(0),
+  m_is_slice(false)
 {
 }
 
@@ -66,7 +67,8 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
     size_t elems, ExecutionSpace space):
   m_active_pointer(nullptr),
   m_resource_manager(nullptr),
-  m_elems(elems)
+  m_elems(elems),
+  m_is_slice(false)
 {
   this->allocate(elems, space);
 }
@@ -76,7 +78,8 @@ CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t) :
   m_active_pointer(nullptr),
   m_resource_manager(nullptr),
-  m_elems(0)
+  m_elems(0),
+  m_is_slice(false)
 {
 }
 
@@ -86,7 +89,8 @@ CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
   m_active_pointer(other.m_active_pointer),
   m_resource_manager(other.m_resource_manager),
-  m_elems(other.m_elems)
+  m_elems(other.m_elems),
+  m_is_slice(other.m_is_slice)
 {
 }
 
@@ -95,60 +99,79 @@ CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_manager, size_t elems, PointerRecord* pointer_record) :
   m_active_pointer(data), 
   m_resource_manager(array_manager),
-  m_elems(elems)
+  m_elems(elems),
+  m_is_slice(false)
 {
 }
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST void ManagedArray<T>::allocate(size_t elems, ExecutionSpace space, 
-    UserCallback const &cback) {
-  CHAI_LOG("ManagedArray", "Allocating array of size " << elems << " in space " << space);
+CHAI_HOST ManagedArray<T> ManagedArray<T>::slice(size_t offset, size_t elems) {
+  ManagedArray<T> slice;
+  if(offset + elems > size()) {
+    CHAI_LOG("ManagedArray", "Invalid slice. No active pointer or index out of bounds");
+  } else {
+    slice.m_active_pointer = m_active_pointer + offset;
+    slice.m_elems = elems;
+    slice.m_is_slice = true;
+  }
+  return slice;
+}
 
-  m_elems = elems;
+template<typename T>
+CHAI_INLINE
+CHAI_HOST void ManagedArray<T>::allocate(size_t elems, ExecutionSpace space, UserCallback const &cback) {
+  if(!m_is_slice) {
+    CHAI_LOG("ManagedArray", "Allocating array of size " << elems << " in space " << space);
 
-#if defined(CHAI_ENABLE_UM)
-  cudaMallocManaged(&m_active_pointer, sizeof(T)*elems);
-#else
-  m_active_pointer = static_cast<T*>(malloc(sizeof(T)*elems));
-#endif
+    m_elems = elems;
 
-  CHAI_LOG("ManagedArray", "m_active_ptr allocated at address: " << m_active_pointer);
+  #if defined(CHAI_ENABLE_UM)
+    cudaMallocManaged(&m_active_pointer, sizeof(T)*elems);
+  #else
+    m_active_pointer = static_cast<T*>(malloc(sizeof(T)*elems));
+  #endif
+
+    CHAI_LOG("ManagedArray", "m_active_ptr allocated at address: " << m_active_pointer);
+  }
 }
 
 template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::reallocate(size_t new_elems)
 {
-  CHAI_LOG("ManagedArray", "Reallocating array of size " << m_elems << " with new size" << elems);
+  if(!m_is_slice) {
+    CHAI_LOG("ManagedArray", "Reallocating array of size " << m_elems << " with new size" << elems);
 
-  T* new_ptr;
-#if defined(CHAI_ENABLE_UM)
-  cudaMallocManaged(&new_ptr, sizeof(T)*new_elems);
+    T* new_ptr;
+  #if defined(CHAI_ENABLE_UM)
+    cudaMallocManaged(&new_ptr, sizeof(T)*new_elems);
 
-  cudaMemcpy(new_ptr, m_active_pointer, sizeof(T)*m_elems, cudaMemcpyDefault);
+    cudaMemcpy(new_ptr, m_active_pointer, sizeof(T)*m_elems, cudaMemcpyDefault);
 
-  cudaFree(m_active_pointer);
-#else  
-  new_ptr = static_cast<T*>(realloc(m_active_pointer, sizeof(T)*new_elems));
-#endif
+    cudaFree(m_active_pointer);
+  #else  
+    new_ptr = static_cast<T*>(realloc(m_active_pointer, sizeof(T)*new_elems));
+  #endif
 
-  m_elems = new_elems;
-  m_active_pointer = new_ptr;
+    m_elems = new_elems;
+    m_active_pointer = new_ptr;
 
-  CHAI_LOG("ManagedArray", "m_active_ptr reallocated at address: " << m_active_pointer);
+    CHAI_LOG("ManagedArray", "m_active_ptr reallocated at address: " << m_active_pointer);
+  }
 }
 
 template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::free()
 {
-  
-#if defined(CHAI_ENABLE_UM)
-  cudaFree(m_active_pointer);
-#else
-  ::free(m_active_pointer);
-#endif
+  if(!m_is_slice) {
+  #if defined(CHAI_ENABLE_UM)
+    cudaFree(m_active_pointer);
+  #else
+    ::free(m_active_pointer);
+  #endif
+  }
 }
 
 template<typename T>
@@ -223,7 +246,8 @@ CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool test) :
   m_active_pointer(data),
   m_resource_manager(ArrayManager::getInstance()),
-  m_elems(m_resource_manager->getSize(m_active_pointer))
+  m_elems(m_resource_manager->getSize(m_active_pointer)),
+  m_is_slice(false)
 {
 }
 #endif

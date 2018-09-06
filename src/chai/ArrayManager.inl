@@ -60,29 +60,6 @@ namespace chai {
 
 template<typename T>
 CHAI_INLINE
-PointerRecord* ArrayManager::registerSlice(size_t offset, size_t elems, PointerRecord* parent, ExecutionSpace space)
-{
-  if (space == NONE) {
-    return nullptr;
-  }
-
-  void* ret = nullptr;
-  ret = (void*)((char*)(parent->m_pointers[space]) + sizeof(T) * offset); 
-
-  auto record = registerPointer(ret, sizeof(T) * elems, space, false);
-  record->m_user_callback = parent->m_user_callback;  
-  
-  for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
-    record->m_owned[space] = false; // THOU SHALT NOT FREE
-    record->m_touched[space] = parent->m_touched[space];
-  }
-  record->m_parent_pointer_record = parent;
-  
-  return record;
-}
-
-template<typename T>
-CHAI_INLINE
 PointerRecord* ArrayManager::allocate(size_t elems, ExecutionSpace space, UserCallback const &f)
 {
   if (space == NONE) {

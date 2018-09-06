@@ -106,6 +106,7 @@ TEST(ManagedArray, SetOnHost) {
   array.free();
 }
 
+#if (!defined(CHAI_DISABLE_RM))
 TEST(ManagedArray, Const) {
   chai::ManagedArray<float> array(10);
 
@@ -119,6 +120,7 @@ TEST(ManagedArray, Const) {
       ASSERT_EQ(array_const[i], i);
   });
 }
+#endif
 
 TEST(ManagedArray, Slice) {
   chai::ManagedArray<float> array(10);
@@ -127,12 +129,36 @@ TEST(ManagedArray, Slice) {
       array[i] = i;
   });
 
-  chai::ManagedArray<float> sl = array.slice(1,5);
+  chai::ManagedArray<float> sl = array.slice(0,5);
   sl.free();
   array.free();
 }
 
+TEST(ManagedArray, SliceOfSlice) {
+  chai::ManagedArray<float> array(10);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  chai::ManagedArray<float> sl1 = array.slice(0,6);
+  chai::ManagedArray<float> sl2 = sl1.slice(3,3);
+
+  forall(sequential(), 0, 3, [=] (int i) {
+      sl1[i] = sl2[i];
+  });
+
+  forall(sequential(), 0, 3, [=] (int i) {
+    ASSERT_EQ(array[i], array[i+3]);
+  });
+
+  sl1.free();
+  sl2.free();
+  array.free();
+}
+
 #if defined(CHAI_ENABLE_PICK)
+#if (!defined(CHAI_DISABLE_RM))
 TEST(ManagedArray, PickHostFromHostConst) {
   chai::ManagedArray<int> array(10);
 
@@ -147,6 +173,7 @@ TEST(ManagedArray, PickHostFromHostConst) {
 
   array.free();
 }
+#endif
 
 TEST(ManagedArray, PickHostFromHost) {
   chai::ManagedArray<int> array(10);
@@ -201,6 +228,7 @@ TEST(ManagedArray, IncrementDecrementOnHost) {
 
 
 #if defined(CHAI_ENABLE_UM)
+#if (!defined(CHAI_DISABLE_RM))
 TEST(ManagedArray, PickHostFromHostConstUM) {
   chai::ManagedArray<int> array(10, chai::UM);
 
@@ -216,6 +244,7 @@ TEST(ManagedArray, PickHostFromHostConstUM) {
   array.free();
   //array_const.free();
 }
+#endif
 
 TEST(ManagedArray, PickHostFromHostUM) {
   chai::ManagedArray<int> array(10, chai::UM);
@@ -308,6 +337,7 @@ CUDA_TEST(ManagedArray, PickHostFromDeviceUM) {
   array.free();
 }
 
+#if (!defined(CHAI_DISABLE_RM))
 CUDA_TEST(ManagedArray, PickHostFromDeviceConstUM) {
   chai::ManagedArray<int> array(10, chai::UM);
 
@@ -323,6 +353,7 @@ CUDA_TEST(ManagedArray, PickHostFromDeviceConstUM) {
   array.free();
   //array_const.free();
 }
+#endif
 
 CUDA_TEST(ManagedArray, SetHostToDeviceUM) {
   chai::ManagedArray<int> array(10);
@@ -381,6 +412,28 @@ CUDA_TEST(ManagedArray, IncrementDecrementFromHostOnDeviceUM) {
 
   array.free();
 }
+
+CUDA_TEST(ManagedArray, PickandSetSliceDeviceToDeviceUM) {
+  chai::ManagedArray<int> array(10, chai::UM);
+  chai::ManagedArray<int> sl1 = array.slice(0,5);
+  chai::ManagedArray<int> sl2 = array.slice(5,5);
+
+  forall(cuda(), 0, 10, [=] __device__ (int i) {
+      array[i] = i;
+  });
+
+  forall(cuda(), 0, 5, [=] __device__ (int i) {
+      int temp = sl2.pick(i);
+      temp += sl2.pick(i);
+      sl1.set(i, temp);
+  });
+
+  forall(sequential(), 0, 5, [=] (int i) {
+    ASSERT_EQ(array[i], (i+5)*2);
+  });
+
+  array.free();
+}
 #endif
 
 #if (!defined(CHAI_DISABLE_RM))
@@ -406,6 +459,28 @@ CUDA_TEST(ManagedArray, PickandSetDeviceToDevice) {
 
   array1.free();
   array2.free();
+}
+
+CUDA_TEST(ManagedArray, PickandSetSliceDeviceToDevice) {
+  chai::ManagedArray<int> array(10);
+  chai::ManagedArray<int> sl1 = array.slice(0,5);
+  chai::ManagedArray<int> sl2 = array.slice(5,5);
+
+  forall(cuda(), 0, 10, [=] __device__ (int i) {
+      array[i] = i;
+  });
+
+  forall(cuda(), 0, 5, [=] __device__ (int i) {
+      int temp = sl2.pick(i);
+      temp += sl2.pick(i);
+      sl1.set(i, temp);
+  });
+
+  forall(sequential(), 0, 5, [=] (int i) {
+    ASSERT_EQ(array[i], (i+5)*2);
+  });
+
+  array.free();
 }
 
 
@@ -500,6 +575,52 @@ CUDA_TEST(ManagedArray, IncrementDecrementFromHostOnDevice) {
 }
 #endif
 #endif
+
+CUDA_TEST(ManagedArray, SliceOfSliceDevice) {
+  chai::ManagedArray<float> array(10);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  chai::ManagedArray<float> sl1 = array.slice(0,6);
+  chai::ManagedArray<float> sl2 = sl1.slice(3,3);
+
+  forall(cuda(), 0, 3, [=] __device__ (int i) {
+      sl1[i] = sl2[i];
+  });
+
+  forall(sequential(), 0, 3, [=] (int i) {
+    ASSERT_EQ(array[i], array[i+3]);
+  });
+
+  sl1.free();
+  sl2.free();
+  array.free();
+}
+
+CUDA_TEST(ManagedArray, SliceDevice) {
+  chai::ManagedArray<float> array(10);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  chai::ManagedArray<float> sl1 = array.slice(0,5);
+  chai::ManagedArray<float> sl2 = array.slice(5,5);
+
+  forall(cuda(), 0, 5, [=] __device__ (int i) {
+      sl1[i] = sl2[i];
+  });
+
+  forall(sequential(), 0, 5, [=] (int i) {
+    ASSERT_EQ(array[i], array[i+5]);
+  });
+
+  sl1.free();
+  sl2.free();
+  array.free();
+}
 
 CUDA_TEST(ManagedArray, SetOnDevice) {
   chai::ManagedArray<float> array(10);

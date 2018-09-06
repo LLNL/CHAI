@@ -89,8 +89,6 @@ struct PointerRecord
 	 * moved to, and the number of bytes moved.
    */
   UserCallback m_user_callback;
-
-  PointerRecord* m_parent_pointer_record = nullptr;
 };
 
 } // end of namespace chai
