@@ -1,32 +1,32 @@
 // ---------------------------------------------------------------------
 // Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
 // rights reserved.
-// 
+//
 // Produced at the Lawrence Livermore National Laboratory.
-// 
+//
 // This file is part of CHAI.
-// 
+//
 // LLNL-CODE-705877
-// 
+//
 // For details, see https:://github.com/LLNL/CHAI
 // Please also see the NOTICE and LICENSE files.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
-// 
+//
 // - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
-// 
+//
 // - Redistributions in binary form must reproduce the above copyright
 //   notice, this list of conditions and the following disclaimer in the
 //   documentation and/or other materials provided with the
 //   distribution.
-// 
+//
 // - Neither the name of the LLNS/LLNL nor the names of its contributors
 //   may be used to endorse or promote products derived from this
 //   software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 // LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -51,7 +51,8 @@
 
 #include "umpire/Allocator.hpp"
 
-namespace chai {
+namespace chai
+{
 
 /*!
  * \brief Singleton that manages caching and movement of ManagedArray objects.
@@ -74,8 +75,7 @@ namespace chai {
  */
 class ArrayManager
 {
-  public:
-
+public:
   template <typename T>
   using T_non_const = typename std::remove_const<T>::type;
 
@@ -86,7 +86,7 @@ class ArrayManager
    *
    * \return Pointer to the ArrayManager instance.
    *
-   */ 
+   */
   static ArrayManager* getInstance();
 
   /*!
@@ -104,12 +104,14 @@ class ArrayManager
   ExecutionSpace getExecutionSpace();
 
   /*!
-   * \brief Move data in pointer to the current execution space. 
+   * \brief Move data in pointer to the current execution space.
    *
    * \param pointer Pointer to data in any execution space.
    * \return Pointer to data in the current execution space.
    */
-  void* move(void* pointer, PointerRecord* pointer_record, ExecutionSpace=NONE);
+  void* move(void* pointer,
+             PointerRecord* pointer_record,
+             ExecutionSpace = NONE);
 
   /*!
    * \brief Register a touch of the pointer in the current execution space.
@@ -135,11 +137,14 @@ class ArrayManager
    * \param space The space in which to allocate the data.
    * \param cback User defined callback for memory events (alloc, free, move)
    * \tparam T The type of data to allocate.
-   * 
+   *
    * \return Pointer to the allocated memory.
    */
-  template<typename T>
-  PointerRecord* allocate(size_t elems, ExecutionSpace space=CPU, UserCallback const &cback=[](Action, ExecutionSpace, size_t){});
+  template <typename T>
+  PointerRecord* allocate(size_t elems,
+                          ExecutionSpace space = CPU,
+                          UserCallback const& cback =
+                              [](Action, ExecutionSpace, size_t) {});
 
   /*!
    * \brief Reallocate data.
@@ -149,10 +154,10 @@ class ArrayManager
    * \param ptr Pointer to address to reallocate
    * \param elems The number of elements to allocate.
    * \tparam T The type of data to allocate.
-   * 
+   *
    * \return Pointer to the allocated memory.
    */
-  template<typename T>
+  template <typename T>
   void* reallocate(void* pointer, size_t elems, PointerRecord* record);
 
   /*!
@@ -180,10 +185,10 @@ class ArrayManager
   void free(PointerRecord* pointer);
 
 #if defined(CHAI_ENABLE_PICK)
-  template<typename T>
+  template <typename T>
   T_non_const<T> pick(T* src_ptr, size_t index);
 
-  template<typename T>
+  template <typename T>
   void set(T* dst_ptr, size_t index, const T& val);
 #endif
 
@@ -195,12 +200,15 @@ class ArrayManager
    */
   size_t getSize(void* pointer);
 
-  PointerRecord* makeManaged(void* pointer, size_t size, ExecutionSpace space, bool owned);
+  PointerRecord* makeManaged(void* pointer,
+                             size_t size,
+                             ExecutionSpace space,
+                             bool owned);
 
   /*!
    * \brief Assign a user-defined callback triggerd upon memory operations.
    */
-  void setUserCallback(void *pointer, UserCallback const &f);
+  void setUserCallback(void* pointer, UserCallback const& f);
 
   /*!
    * \brief Set touched to false in all spaces for the given PointerRecord.
@@ -250,8 +258,7 @@ class ArrayManager
    */
   size_t getTotalSize() const;
 
-  protected:
-
+protected:
   /*!
    * \brief Construct a new ArrayManager.
    *
@@ -260,16 +267,15 @@ class ArrayManager
    */
   ArrayManager();
 
-  private:
-
+private:
   /*!
    * \brief Make a new allocation of the data described by the PointerRecord in
    * the given space.
    *
-   * \param pointer_record 
+   * \param pointer_record
    * \param space Space in which to make the allocation.
    */
-  void* allocate(PointerRecord* pointer_record, ExecutionSpace space=CPU);
+  void* allocate(PointerRecord* pointer_record, ExecutionSpace space = CPU);
 
   /*!
    * \brief Registering adding a new allocation to an existing PointerRecord.
@@ -278,8 +284,9 @@ class ArrayManager
    * \param record PointerRecord which this allocation is added to.
    * \param space Space in which the pointer was allocated.
    */
-  void registerPointer(
-      void* pointer, PointerRecord* record, ExecutionSpace space);
+  void registerPointer(void* pointer,
+                       PointerRecord* record,
+                       ExecutionSpace space);
 
   /*!
    * \brief Register a new allocation with the ArrayManager.
@@ -288,7 +295,10 @@ class ArrayManager
    * \param size Size of the allocation in bytes.
    * \param space Space in which the pointer was allocated.
    */
-  PointerRecord* registerPointer(void* pointer, size_t size, ExecutionSpace space=CPU, bool owned=true);
+  PointerRecord* registerPointer(void* pointer,
+                                 size_t size,
+                                 ExecutionSpace space = CPU,
+                                 bool owned = true);
 
   /*!
    * \brief Deregister a PointerRecord from the ArrayManager.
@@ -332,8 +342,8 @@ class ArrayManager
   umpire::ResourceManager& m_resource_manager;
 };
 
-} // end of namespace chai
+}  // end of namespace chai
 
 #include "chai/ArrayManager.inl"
 
-#endif // CHAI_ArrayManager_HPP
+#endif  // CHAI_ArrayManager_HPP

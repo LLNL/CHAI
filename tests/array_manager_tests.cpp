@@ -1,32 +1,32 @@
 // ---------------------------------------------------------------------
 // Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
 // rights reserved.
-// 
+//
 // Produced at the Lawrence Livermore National Laboratory.
-// 
+//
 // This file is part of CHAI.
-// 
+//
 // LLNL-CODE-705877
-// 
+//
 // For details, see https:://github.com/LLNL/CHAI
 // Please also see the NOTICE and LICENSE files.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
-// 
+//
 // - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
-// 
+//
 // - Redistributions in binary form must reproduce the above copyright
 //   notice, this list of conditions and the following disclaimer in the
 //   documentation and/or other materials provided with the
 //   distribution.
-// 
+//
 // - Neither the name of the LLNS/LLNL nor the names of its contributors
 //   may be used to endorse or promote products derived from this
 //   software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 // LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -46,21 +46,25 @@
 #include "chai/ManagedArray.hpp"
 #include "chai/PointerRecord.hpp"
 
-TEST(ArrayManager, Constructor) {
+TEST(ArrayManager, Constructor)
+{
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
   ASSERT_NE(rm, nullptr);
 }
 
 #ifndef CHAI_DISABLE_RM
-TEST(ArrayManager, getPointerMap) {
+TEST(ArrayManager, getPointerMap)
+{
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
 
   // Allocate one array
   size_t sizeOfArray1 = 5;
-  chai::ManagedArray<int> array1 = chai::ManagedArray<int>(sizeOfArray1, chai::CPU);
+  chai::ManagedArray<int> array1 =
+      chai::ManagedArray<int>(sizeOfArray1, chai::CPU);
 
   // Check map of pointers
-  std::unordered_map<void*, const chai::PointerRecord*> map1 = rm->getPointerMap();
+  std::unordered_map<void*, const chai::PointerRecord*> map1 =
+      rm->getPointerMap();
   ASSERT_EQ(map1.size(), 1);
 
   // Check some of the entries in the pointer record
@@ -75,10 +79,12 @@ TEST(ArrayManager, getPointerMap) {
 
   // Allocate another array
   size_t sizeOfArray2 = 4;
-  chai::ManagedArray<double> array2 = chai::ManagedArray<double>(sizeOfArray2, chai::CPU);
+  chai::ManagedArray<double> array2 =
+      chai::ManagedArray<double>(sizeOfArray2, chai::CPU);
 
   // Check map of pointers
-  std::unordered_map<void*, const chai::PointerRecord*> map2 = rm->getPointerMap();
+  std::unordered_map<void*, const chai::PointerRecord*> map2 =
+      rm->getPointerMap();
   ASSERT_EQ(map2.size(), 2);
 
   // Check that the entries in the first record are not changed
@@ -99,7 +105,7 @@ TEST(ArrayManager, getPointerMap) {
 
   // Check total num arrays and total allocated memory
   ASSERT_EQ(rm->getTotalNumArrays(), 2);
-  ASSERT_EQ(rm->getTotalSize(), (sizeOfArray1 * sizeof(int)) + (sizeOfArray2 * sizeof(double)));
+  ASSERT_EQ(rm->getTotalSize(),
+            (sizeOfArray1 * sizeof(int)) + (sizeOfArray2 * sizeof(double)));
 }
 #endif
-

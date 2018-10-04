@@ -1,32 +1,32 @@
 // ---------------------------------------------------------------------
 // Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
 // rights reserved.
-// 
+//
 // Produced at the Lawrence Livermore National Laboratory.
-// 
+//
 // This file is part of CHAI.
-// 
+//
 // LLNL-CODE-705877
-// 
+//
 // For details, see https:://github.com/LLNL/CHAI
 // Please also see the NOTICE and LICENSE files.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
-// 
+//
 // - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
-// 
+//
 // - Redistributions in binary form must reproduce the above copyright
 //   notice, this list of conditions and the following disclaimer in the
 //   documentation and/or other materials provided with the
 //   distribution.
-// 
+//
 // - Neither the name of the LLNS/LLNL nor the names of its contributors
 //   may be used to endorse or promote products derived from this
 //   software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 // LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -45,13 +45,14 @@
 
 #include "chai/config.hpp"
 
-#include "chai/ChaiMacros.hpp"
 #include "chai/ArrayManager.hpp"
+#include "chai/ChaiMacros.hpp"
 #include "chai/Types.hpp"
 
 #include <cstddef>
 
-namespace chai {
+namespace chai
+{
 
 
 struct InvalidConstCast;
@@ -64,7 +65,8 @@ struct InvalidConstCast;
  * If a class inherits from CHAICopyable, then the stored items of type T
  * are moved when the copy constructor is called.
  */
-class CHAICopyable {
+class CHAICopyable
+{
 };
 
 /*!
@@ -84,9 +86,9 @@ class CHAICopyable {
  * \tparam T The type of elements stored in the ManagedArray.
  */
 template <typename T>
-class ManagedArray : public CHAICopyable {
-  public:
-
+class ManagedArray : public CHAICopyable
+{
+public:
   using T_non_const = typename std::remove_const<T>::type;
 
   /*!
@@ -105,7 +107,7 @@ class ManagedArray : public CHAICopyable {
    * \param elems Number of elements in the array.
    * \param space Execution space in which to allocate the array.
    */
-  CHAI_HOST_DEVICE ManagedArray(size_t elems, ExecutionSpace space=NONE);
+  CHAI_HOST_DEVICE ManagedArray(size_t elems, ExecutionSpace space = NONE);
 
   /*!
    * \brief Copy constructor handles data movement.
@@ -133,8 +135,10 @@ class ManagedArray : public CHAICopyable {
    * \param space Execution space in which to allocate data.
    * \param cback User defined callback for memory events (alloc, free, move)
    */
-  CHAI_HOST void allocate(size_t elems, ExecutionSpace space=CPU, 
-    UserCallback const &cback=[](Action, ExecutionSpace, size_t){});
+  CHAI_HOST void allocate(size_t elems,
+                          ExecutionSpace space = CPU,
+                          UserCallback const& cback =
+                              [](Action, ExecutionSpace, size_t) {});
 
   /*!
    * \brief Reallocate data for the ManagedArray.
@@ -181,7 +185,7 @@ class ManagedArray : public CHAICopyable {
    *
    * \return Reference to i-th element.
    */
-	template<typename Idx>
+  template <typename Idx>
   CHAI_HOST_DEVICE T& operator[](const Idx i) const;
 
   /*!
@@ -194,17 +198,21 @@ class ManagedArray : public CHAICopyable {
    * \brief
    *
    */
-//  operator ManagedArray<typename std::conditional<!std::is_const<T>::value, const T, InvalidConstCast>::type> () const;
-  template< typename U = T >
-  operator typename std::enable_if< !std::is_const<U>::value ,
-                                    ManagedArray<const U> >::type () const;
+  //  operator ManagedArray<typename std::conditional<!std::is_const<T>::value,
+  //  const T, InvalidConstCast>::type> () const;
+  template <typename U = T>
+  operator typename std::enable_if<!std::is_const<U>::value,
+                                   ManagedArray<const U> >::type() const;
 
 
-  CHAI_HOST_DEVICE ManagedArray(T* data, ArrayManager* array_manager, size_t m_elems, PointerRecord* pointer_record);
+  CHAI_HOST_DEVICE ManagedArray(T* data,
+                                ArrayManager* array_manager,
+                                size_t m_elems,
+                                PointerRecord* pointer_record);
 
-  CHAI_HOST_DEVICE ManagedArray<T>& operator= (std::nullptr_t);
+  CHAI_HOST_DEVICE ManagedArray<T>& operator=(std::nullptr_t);
 
-  CHAI_HOST_DEVICE bool operator== (ManagedArray<T>& rhs);
+  CHAI_HOST_DEVICE bool operator==(ManagedArray<T>& rhs);
 
 
 #if defined(CHAI_ENABLE_PICK)
@@ -218,15 +226,15 @@ class ManagedArray : public CHAICopyable {
    * \tparam T_non_const The (non-const) type of data value in ManagedArray.
    */
   CHAI_HOST_DEVICE T_non_const pick(size_t i) const;
- 
+
   /*!
    * \brief Set the value of element i in the ManagedArray to be val.
    *
-   * \param index The index of the element to be set 
+   * \param index The index of the element to be set
    * \param val Source location of the value
    * \tparam T The type of data value in ManagedArray.
    */
-  CHAI_HOST_DEVICE void set(size_t i, T& val) const; 
+  CHAI_HOST_DEVICE void set(size_t i, T& val) const;
 
   /*!
    * \brief Increment the value of element i in the ManagedArray.
@@ -235,7 +243,7 @@ class ManagedArray : public CHAICopyable {
    * \tparam T The type of data value in ManagedArray.
    */
   CHAI_HOST_DEVICE void incr(size_t i) const;
- 
+
   /*!
    * \brief Decrement the value of element i in the ManagedArray.
    *
@@ -262,56 +270,61 @@ class ManagedArray : public CHAICopyable {
    * \param data Raw pointer to data.
    * \param enable Boolean argument (unused) added to differentiate constructor.
    */
-  template<bool Q=0>
-  CHAI_HOST_DEVICE ManagedArray(T* data, bool test=Q);
+  template <bool Q = 0>
+  CHAI_HOST_DEVICE ManagedArray(T* data, bool test = Q);
 #endif
 
 
 #ifndef CHAI_DISABLE_RM
   /*!
    * \brief Assign a user-defined callback triggerd upon memory migration.
-	 *
-	 * The callback is a function of the form
-	 * 
-	 *   void callback(chai::ExecutionSpace moved_to, size_t num_bytes)
-	 *
-	 * Where moved_to is the execution space that the data was moved to, and
-	 * num_bytes is the number of bytes moved.
-	 *
+   *
+   * The callback is a function of the form
+   *
+   *   void callback(chai::ExecutionSpace moved_to, size_t num_bytes)
+   *
+   * Where moved_to is the execution space that the data was moved to, and
+   * num_bytes is the number of bytes moved.
+   *
    */
-  CHAI_HOST void setUserCallback(UserCallback const &cback);
+  CHAI_HOST void setUserCallback(UserCallback const& cback);
 
   /*!
    * \brief Moves the inner data of a ManagedArray.
    *
-   * Called in the copy constructor of ManagedArray. In this implementation, the inner
-   * type inherits from CHAICopyable, so the inner data will be moved. For example, this
-   * version of the method is called when there are nested ManagedArrays.
+   * Called in the copy constructor of ManagedArray. In this implementation, the
+   * inner type inherits from CHAICopyable, so the inner data will be moved. For
+   * example, this version of the method is called when there are nested
+   * ManagedArrays.
    */
-  template<bool B = std::is_base_of<CHAICopyable, T>::value, typename std::enable_if<B, int>::type = 0>
+  template <bool B = std::is_base_of<CHAICopyable, T>::value,
+            typename std::enable_if<B, int>::type = 0>
   CHAI_HOST_DEVICE void moveInnerImpl();
 
   /*!
-   * \brief Does nothing since the inner data type does not inherit from CHAICopyable.
+   * \brief Does nothing since the inner data type does not inherit from
+   * CHAICopyable.
    *
-   * Called in the copy constructor of ManagedArray. In this implementation, the inner
-   * type does not inherit from CHAICopyable, so nothing will be done. For example, this
-   * version of the method is called when there are not nested ManagedArrays.
+   * Called in the copy constructor of ManagedArray. In this implementation, the
+   * inner type does not inherit from CHAICopyable, so nothing will be done. For
+   * example, this version of the method is called when there are not nested
+   * ManagedArrays.
    */
-  template<bool B = std::is_base_of<CHAICopyable, T>::value, typename std::enable_if<!B, int>::type = 0>
+  template <bool B = std::is_base_of<CHAICopyable, T>::value,
+            typename std::enable_if<!B, int>::type = 0>
   CHAI_HOST_DEVICE void moveInnerImpl();
 #endif
 
 
-  private:
+private:
   CHAI_HOST void modify(size_t i, const T& val) const;
 
-  /*! 
+  /*!
    * Currently active data pointer.
    */
   mutable T* m_active_pointer;
 
-  /*! 
+  /*!
    * Pointer to ArrayManager instance.
    */
   ArrayManager* m_resource_manager;
@@ -325,7 +338,6 @@ class ManagedArray : public CHAICopyable {
    * Pointer to PointerRecord data.
    */
   PointerRecord* m_pointer_record;
-  
 };
 
 /*!
@@ -345,16 +357,15 @@ class ManagedArray : public CHAICopyable {
  * \return A new ManagedArray containing the raw data pointer.
  */
 template <typename T>
-ManagedArray<T> 
-makeManagedArray(
-    T* data, 
-    size_t elems,
-    ExecutionSpace space,
-    bool owned)
+ManagedArray<T> makeManagedArray(T* data,
+                                 size_t elems,
+                                 ExecutionSpace space,
+                                 bool owned)
 {
   ArrayManager* manager = ArrayManager::getInstance();
 
-  PointerRecord* record = manager->makeManaged(data, sizeof(T)*elems, space, owned);
+  PointerRecord* record =
+      manager->makeManaged(data, sizeof(T) * elems, space, owned);
 
   ManagedArray<T> array = ManagedArray<T>(record, space);
 
@@ -366,8 +377,8 @@ makeManagedArray(
 }
 
 /*!
- * \brief Create a copy of the given ManagedArray with a single allocation in the active
- *  space of the given array.
+ * \brief Create a copy of the given ManagedArray with a single allocation in
+ * the active space of the given array.
  *
  * \param array The ManagedArray to copy.
  *
@@ -376,22 +387,20 @@ makeManagedArray(
  * \return A copy of the given ManagedArray.
  */
 template <typename T>
-ManagedArray<T>
-deepCopy(
-    ManagedArray<T> const& array)
+ManagedArray<T> deepCopy(ManagedArray<T> const& array)
 {
   T* data_ptr = array.getActivePointer();
-  
+
   ArrayManager* manager = ArrayManager::getInstance();
-  
+
   PointerRecord const* record = manager->getPointerRecord(data_ptr);
-  
+
   PointerRecord* copy_record = manager->deepCopyRecord(record);
 
   return ManagedArray<T>(copy_record, copy_record->m_last_space);
 }
 
-} // end of namespace chai
+}  // end of namespace chai
 
 #if defined(CHAI_DISABLE_RM)
 #include "chai/ManagedArray_thin.inl"
@@ -399,4 +408,4 @@ deepCopy(
 #include "chai/ManagedArray.inl"
 #endif
 
-#endif // CHAI_ManagedArray_HPP
+#endif  // CHAI_ManagedArray_HPP
