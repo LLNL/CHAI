@@ -251,6 +251,8 @@ public:
    */
   size_t getTotalSize() const;
 
+  int getAllocatorId(ExecutionSpace space) const;
+
 protected:
   /*!
    * \brief Construct a new ArrayManager.

@@ -312,6 +312,7 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
   pointer_record->m_pointers[space] = pointer;
   pointer_record->m_owned[space] = owned;
   pointer_record->m_size = size;
+  pointer_record->m_user_callback = [](Action, ExecutionSpace, size_t) {};
 
   registerPointer(pointer_record, space, owned);
 
@@ -377,6 +378,13 @@ size_t ArrayManager::getTotalSize() const
   }
 
   return total;
+}
+
+int
+ArrayManager::getAllocatorId(ExecutionSpace space) const
+{
+  return m_allocators[space]->getId();
+
 }
 
 }  // end of namespace chai

@@ -44,6 +44,7 @@
 #include "umpire/strategy/DynamicPool.hpp"
 
 #include "chai/ManagedArray.hpp"
+#include "../src/util/forall.hpp"
 
 #include <iostream>
 
@@ -56,9 +57,37 @@ int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv))
       rm.makeAllocator<umpire::strategy::DynamicPool>("cpu_pool",
                                                       rm.getAllocator("HOST"));
 
-  chai::ManagedArray<float> v1(100, {{chai::CPU}}, {{cpu_pool}});
-  chai::ManagedArray<float> v2(100, {{chai::CPU}}, {{cpu_pool}});
+#if defined(CHAI_ENABLE_CUDA)
+  auto gpu_pool =
+      rm.makeAllocator<umpire::strategy::DynamicPool>("gpu_pool",
+                                                      rm.getAllocator("DEVICE"));
+#endif
 
-  v1.free();
-  v2.free();
+  chai::ManagedArray<float> array(100, 
+      {{chai::CPU
+#if defined(CHAI_ENABLE_CUDA)
+      , chai::GPU
+#endif
+      }},
+      {{cpu_pool
+#if defined(CHAI_ENABLE_CUDA)
+      , gpu_pool
+#endif
+      }});
+
+  forall(sequential(), 0, 100, [=](int i) { array[i] = 0.0f; });
+
+#if defined(CHAI_ENABLE_CUDA)
+  forall(cuda(), 0, 100, [=] __device__(int i) { array[i] = 1.0f * i; });
+#else
+  forall(sequential(), 0, 100, [=] (int i) { array[i] = 1.0f * i; });
+#endif
+
+  forall(sequential(), 0, 100, [=] (int i) {
+      if (array[i] != (1.0f * i)) {
+        std::cout << "ERROR!" << std::endl;
+      }
+  });
+
+  array.free();
 }

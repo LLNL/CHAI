@@ -63,7 +63,10 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
   m_pointer_record->m_size = 0;
   m_pointer_record->m_user_callback = [](Action, ExecutionSpace, size_t) {};
 
-  // TODO: set up default allocators
+  for (int space = CPU;  space < NUM_EXECUTION_SPACES; space++) {
+    m_pointer_record->m_allocators[space] = 
+      m_resource_manager->getAllocatorId(ExecutionSpace(space));
+  }
 #endif
 }
 
