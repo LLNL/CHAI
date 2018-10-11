@@ -40,59 +40,25 @@
 // WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 // ---------------------------------------------------------------------
-#ifndef CHAI_PointerRecord_HPP
-#define CHAI_PointerRecord_HPP
+#include "umpire/ResourceManager.hpp"
+#include "umpire/strategy/DynamicPool.hpp"
 
-#include "chai/ExecutionSpaces.hpp"
-#include "chai/Types.hpp"
+#include "chai/ManagedArray.hpp"
 
-#include <cstddef>
-#include <functional>
+#include <iostream>
 
-namespace chai
+int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv))
 {
 
-/*!
- * \brief Struct holding details about each pointer.
- */
-struct PointerRecord {
-  /*!
-   * Size of pointer allocation in bytes
-   */
-  std::size_t m_size;
+  auto& rm = umpire::ResourceManager::getInstance();
 
-  /*!
-   * Array holding the pointer in each execution space.
-   */
-  void* m_pointers[NUM_EXECUTION_SPACES];
+  auto cpu_pool =
+      rm.makeAllocator<umpire::strategy::DynamicPool>("cpu_pool",
+                                                      rm.getAllocator("HOST"));
 
-  /*!
-   * Array holding touched state of pointer in each execution space.
-   */
-  bool m_touched[NUM_EXECUTION_SPACES];
+  chai::ManagedArray<float> v1(100, {{chai::CPU}}, {{cpu_pool}});
+  chai::ManagedArray<float> v2(100, {{chai::CPU}}, {{cpu_pool}});
 
-  /*!
-   * Execution space where this arary was last touched.
-   */
-  ExecutionSpace m_last_space;
-
-  /*!
-   * Array holding ownership status of each pointer.
-   */
-  bool m_owned[NUM_EXECUTION_SPACES];
-
-
-  /*!
-   * User defined callback triggered on memory operations.
-   *
-   * Function is passed the execution space that the memory is
-   * moved to, and the number of bytes moved.
-   */
-  UserCallback m_user_callback;
-
-  int m_allocators[NUM_EXECUTION_SPACES];
-};
-
-}  // end of namespace chai
-
-#endif  // CHAI_PointerRecord_HPP
+  v1.free();
+  v2.free();
+}

@@ -40,59 +40,51 @@
 // WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 // ---------------------------------------------------------------------
-#ifndef CHAI_PointerRecord_HPP
-#define CHAI_PointerRecord_HPP
+#include "gtest/gtest.h"
 
-#include "chai/ExecutionSpaces.hpp"
-#include "chai/Types.hpp"
+#define CUDA_TEST(X, Y)              \
+  static void cuda_test_##X##Y();    \
+  TEST(X, Y) { cuda_test_##X##Y(); } \
+  static void cuda_test_##X##Y()
 
-#include <cstddef>
-#include <functional>
+#include "chai/config.hpp"
 
-namespace chai
+#include "chai/ManagedArray.hpp"
+
+TEST(ManagedArray, DefaultConstructor)
 {
+  chai::ManagedArray<float> array;
+  ASSERT_EQ(array.size(), 0u);
+}
 
-/*!
- * \brief Struct holding details about each pointer.
- */
-struct PointerRecord {
-  /*!
-   * Size of pointer allocation in bytes
-   */
-  std::size_t m_size;
+TEST(ManagedArray, SizeConstructor)
+{
+  chai::ManagedArray<float> array(10);
+  ASSERT_EQ(array.size(), 10u);
+  array.free();
+}
 
-  /*!
-   * Array holding the pointer in each execution space.
-   */
-  void* m_pointers[NUM_EXECUTION_SPACES];
+TEST(ManagedArray, SpaceConstructorCPU)
+{
+  chai::ManagedArray<float> array(10, chai::CPU);
+  ASSERT_EQ(array.size(), 10u);
+  array.free();
+}
 
-  /*!
-   * Array holding touched state of pointer in each execution space.
-   */
-  bool m_touched[NUM_EXECUTION_SPACES];
+#if defined(CHAI_ENABLE_CUDA)
+TEST(ManagedArray, SpaceConstructorGPU)
+{
+  chai::ManagedArray<float> array(10, chai::GPU);
+  ASSERT_EQ(array.size(), 10u);
+  array.free();
+}
 
-  /*!
-   * Execution space where this arary was last touched.
-   */
-  ExecutionSpace m_last_space;
-
-  /*!
-   * Array holding ownership status of each pointer.
-   */
-  bool m_owned[NUM_EXECUTION_SPACES];
-
-
-  /*!
-   * User defined callback triggered on memory operations.
-   *
-   * Function is passed the execution space that the memory is
-   * moved to, and the number of bytes moved.
-   */
-  UserCallback m_user_callback;
-
-  int m_allocators[NUM_EXECUTION_SPACES];
-};
-
-}  // end of namespace chai
-
-#endif  // CHAI_PointerRecord_HPP
+#if defined(CHAI_ENABLE_UM)
+TEST(ManagedArray, SpaceConstructorUM)
+{
+  chai::ManagedArray<float> array(10, chai::UM);
+  ASSERT_EQ(array.size(), 10u);
+  array.free();
+}
+#endif
+#endif

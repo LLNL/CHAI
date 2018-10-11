@@ -59,44 +59,6 @@ struct my_point {
   double y;
 };
 
-TEST(ManagedArray, DefaultConstructor)
-{
-  chai::ManagedArray<float> array;
-  ASSERT_EQ(array.size(), 0u);
-}
-
-TEST(ManagedArray, SizeConstructor)
-{
-  chai::ManagedArray<float> array(10);
-  ASSERT_EQ(array.size(), 10u);
-  array.free();
-}
-
-TEST(ManagedArray, SpaceConstructorCPU)
-{
-  chai::ManagedArray<float> array(10, chai::CPU);
-  ASSERT_EQ(array.size(), 10u);
-  array.free();
-}
-
-#if defined(CHAI_ENABLE_CUDA)
-TEST(ManagedArray, SpaceConstructorGPU)
-{
-  chai::ManagedArray<float> array(10, chai::GPU);
-  ASSERT_EQ(array.size(), 10u);
-  array.free();
-}
-
-#if defined(CHAI_ENABLE_UM)
-TEST(ManagedArray, SpaceConstructorUM)
-{
-  chai::ManagedArray<float> array(10, chai::UM);
-  ASSERT_EQ(array.size(), 10u);
-  array.free();
-}
-#endif
-#endif
-
 TEST(ManagedArray, SetOnHost)
 {
   chai::ManagedArray<float> array(10);

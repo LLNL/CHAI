@@ -47,13 +47,14 @@
 
 namespace chai
 {
-typedef unsigned int uint;
 
+typedef unsigned int uint;
 
 enum Action { ACTION_ALLOC, ACTION_FREE, ACTION_MOVE };
 
 using UserCallback = std::function<void(Action, ExecutionSpace, size_t)>;
-}  // namespace chai
+
+} // end of namespace chai
 
 
 #endif
