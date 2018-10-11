@@ -64,16 +64,16 @@ int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv))
 #endif
 
   chai::ManagedArray<float> array(100, 
-      {{chai::CPU
+      std::initializer_list<chai::ExecutionSpace>{chai::CPU
 #if defined(CHAI_ENABLE_CUDA)
       , chai::GPU
 #endif
-      }},
-      {{cpu_pool
+      },
+      std::initializer_list<umpire::Allocator>{cpu_pool
 #if defined(CHAI_ENABLE_CUDA)
       , gpu_pool
 #endif
-      }});
+      });
 
   forall(sequential(), 0, 100, [=](int i) { array[i] = 0.0f; });
 

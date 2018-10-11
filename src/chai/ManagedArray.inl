@@ -199,11 +199,10 @@ CHAI_HOST void ManagedArray<T>::allocate(size_t elems, ExecutionSpace space, Use
     space = m_resource_manager->getDefaultAllocationSpace();
   }
 
-  m_pointer_record->m_user_callback = cback;  
-
+  m_pointer_record->m_user_callback = cback;
   m_elems = elems;
-
   m_resource_manager->allocate(m_pointer_record, space);
+
   m_active_pointer = static_cast<T*>(m_pointer_record->m_pointers[space]);
 
   CHAI_LOG("ManagedArray", "m_active_ptr allocated at address: " << m_active_pointer);

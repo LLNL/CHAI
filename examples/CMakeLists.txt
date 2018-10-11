@@ -44,7 +44,7 @@
 blt_add_executable(
   NAME chai-umpire-example.exe
   SOURCES chai-umpire-allocators.cpp
-  DEPENDS_ON chai)
+  DEPENDS_ON cuda chai)
 
 if (ENABLE_CUDA)
   blt_add_executable(
