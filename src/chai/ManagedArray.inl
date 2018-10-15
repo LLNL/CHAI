@@ -191,7 +191,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST void ManagedArray<T>::allocate(size_t elems, ExecutionSpace space, UserCallback const &cback) 
+CHAI_HOST void ManagedArray<T>::allocate(size_t elems, ExecutionSpace space, UserCallback cback) 
 {
   CHAI_LOG("ManagedArray", "Allocating array of size " << elems << " in space " << space);
 
@@ -201,6 +201,8 @@ CHAI_HOST void ManagedArray<T>::allocate(size_t elems, ExecutionSpace space, Use
 
   m_pointer_record->m_user_callback = cback;
   m_elems = elems;
+  m_pointer_record->m_size = sizeof(T)*elems;
+
   m_resource_manager->allocate(m_pointer_record, space);
 
   m_active_pointer = static_cast<T*>(m_pointer_record->m_pointers[space]);
