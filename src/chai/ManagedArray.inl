@@ -216,7 +216,11 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::free()
 {
-  if(!m_is_slice) m_resource_manager->free(m_pointer_record);
+  if(!m_is_slice) {
+    m_resource_manager->free(m_pointer_record);
+  } else {
+    CHAI_LOG("ManagedArray", "Cannot free a slice!");
+  }
 }
 
 template<typename T>
