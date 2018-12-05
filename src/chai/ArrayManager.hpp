@@ -131,20 +131,13 @@ public:
   void registerTouch(PointerRecord* pointer_record, ExecutionSpace space);
 
   /*!
-   * \brief Allocate data in the specified space.
+   * \brief Make a new allocation of the data described by the PointerRecord in
+   * the given space.
    *
-   * \param elems The number of elements to allocate.
-   * \param space The space in which to allocate the data.
-   * \param cback User defined callback for memory events (alloc, free, move)
-   * \tparam T The type of data to allocate.
-   *
-   * \return Pointer to the allocated memory.
+   * \param pointer_record
+   * \param space Space in which to make the allocation.
    */
-  template <typename T>
-  PointerRecord* allocate(size_t elems,
-                          ExecutionSpace space = CPU,
-                          UserCallback const& cback =
-                              [](Action, ExecutionSpace, size_t) {});
+  void allocate(PointerRecord* pointer_record, ExecutionSpace space = CPU);
 
   /*!
    * \brief Reallocate data.
@@ -258,6 +251,8 @@ public:
    */
   size_t getTotalSize() const;
 
+  int getAllocatorId(ExecutionSpace space) const;
+
 protected:
   /*!
    * \brief Construct a new ArrayManager.
@@ -268,37 +263,17 @@ protected:
   ArrayManager();
 
 private:
-  /*!
-   * \brief Make a new allocation of the data described by the PointerRecord in
-   * the given space.
-   *
-   * \param pointer_record
-   * \param space Space in which to make the allocation.
-   */
-  void* allocate(PointerRecord* pointer_record, ExecutionSpace space = CPU);
 
   /*!
-   * \brief Registering adding a new allocation to an existing PointerRecord.
+   * \brief Registering an allocation with the ArrayManager
    *
-   * \param pointer Pointer to the allocation to register.
-   * \param record PointerRecord which this allocation is added to.
+   * \param record PointerRecord of this allocation.
    * \param space Space in which the pointer was allocated.
+   * \param owned Should the allocation be free'd by CHAI?
    */
-  void registerPointer(void* pointer,
-                       PointerRecord* record,
-                       ExecutionSpace space);
-
-  /*!
-   * \brief Register a new allocation with the ArrayManager.
-   *
-   * \param pointer Pointer to the allocation to register.
-   * \param size Size of the allocation in bytes.
-   * \param space Space in which the pointer was allocated.
-   */
-  PointerRecord* registerPointer(void* pointer,
-                                 size_t size,
-                                 ExecutionSpace space = CPU,
-                                 bool owned = true);
+  void registerPointer(PointerRecord* record,
+                       ExecutionSpace space,
+                       bool owned = true);
 
   /*!
    * \brief Deregister a PointerRecord from the ArrayManager.

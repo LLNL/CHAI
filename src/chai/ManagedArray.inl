@@ -58,21 +58,71 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
 {
 #if !defined(__CUDA_ARCH__)
   m_resource_manager = ArrayManager::getInstance();
+
+  m_pointer_record = new PointerRecord{};
+  m_pointer_record->m_size = 0;
+  m_pointer_record->m_user_callback = [](Action, ExecutionSpace, size_t) {};
+
+  for (int space = CPU;  space < NUM_EXECUTION_SPACES; space++) {
+    m_pointer_record->m_allocators[space] = 
+      m_resource_manager->getAllocatorId(ExecutionSpace(space));
+  }
 #endif
 }
 
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
-    size_t elems, ExecutionSpace space):
-  m_active_pointer(nullptr),
-  m_resource_manager(nullptr),
-  m_elems(elems),
-  m_pointer_record(nullptr)
+    std::initializer_list<chai::ExecutionSpace> spaces,
+    std::initializer_list<umpire::Allocator> allocators):
+  ManagedArray()
 {
 #if !defined(__CUDA_ARCH__)
-  m_resource_manager = ArrayManager::getInstance();
+  int i = 0;
+  for (auto& space : spaces) {
+    m_pointer_record->m_allocators[space] = allocators.begin()[i++].getId();
+  }
+#endif
+
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
+    size_t elems, 
+    ExecutionSpace space) :
+  ManagedArray()
+{
+#if !defined(__CUDA_ARCH__)
+  m_elems = elems;
+  m_pointer_record->m_size = sizeof(T)*m_elems;
+
   this->allocate(elems, space);
+
+#if defined(CHAI_ENABLE_UM)
+  if(space == UM) {
+    m_pointer_record->m_pointers[CPU] = m_active_pointer;
+    m_pointer_record->m_pointers[GPU] = m_active_pointer;
+  }
+#endif
+#endif
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
+    size_t elems, 
+    std::initializer_list<chai::ExecutionSpace> spaces,
+    std::initializer_list<umpire::Allocator> allocators,
+    ExecutionSpace space):
+  ManagedArray(spaces, allocators)
+{
+#if !defined(__CUDA_ARCH__)
+  m_elems = elems;
+  m_pointer_record->m_size = sizeof(T)*elems;
+
+  this->allocate(elems, space);
+
   #if defined(CHAI_ENABLE_UM)
   if(space == UM) {
     m_pointer_record->m_pointers[CPU] = m_active_pointer;
@@ -141,15 +191,22 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST void ManagedArray<T>::allocate(size_t elems, ExecutionSpace space, UserCallback const &cback) {
+CHAI_HOST void ManagedArray<T>::allocate(size_t elems, 
+    ExecutionSpace space, 
+    const UserCallback& cback) 
+{
   CHAI_LOG("ManagedArray", "Allocating array of size " << elems << " in space " << space);
 
   if (space == NONE) {
     space = m_resource_manager->getDefaultAllocationSpace();
   }
 
+  m_pointer_record->m_user_callback = cback;
   m_elems = elems;
-  m_pointer_record = m_resource_manager->allocate<T>(elems, space, cback);
+  m_pointer_record->m_size = sizeof(T)*elems;
+
+  m_resource_manager->allocate(m_pointer_record, space);
+
   m_active_pointer = static_cast<T*>(m_pointer_record->m_pointers[space]);
 
   CHAI_LOG("ManagedArray", "m_active_ptr allocated at address: " << m_active_pointer);
