@@ -1,32 +1,32 @@
 // ---------------------------------------------------------------------
 // Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
 // rights reserved.
-// 
+//
 // Produced at the Lawrence Livermore National Laboratory.
-// 
+//
 // This file is part of CHAI.
-// 
+//
 // LLNL-CODE-705877
-// 
+//
 // For details, see https:://github.com/LLNL/CHAI
 // Please also see the NOTICE and LICENSE files.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
-// 
+//
 // - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
-// 
+//
 // - Redistributions in binary form must reproduce the above copyright
 //   notice, this list of conditions and the following disclaimer in the
 //   documentation and/or other materials provided with the
 //   distribution.
-// 
+//
 // - Neither the name of the LLNS/LLNL nor the names of its contributors
 //   may be used to endorse or promote products derived from this
 //   software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 // LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -43,17 +43,19 @@
 #ifndef CHAI_forall_HPP
 #define CHAI_forall_HPP
 
-#include "chai/config.hpp"
-#include "chai/ExecutionSpaces.hpp"
 #include "chai/ArrayManager.hpp"
+#include "chai/ExecutionSpaces.hpp"
+#include "chai/config.hpp"
 
 #if defined(CHAI_ENABLE_UM)
 #include <cuda_runtime_api.h>
 #endif
 
-struct sequential {};
+struct sequential {
+};
 #if defined(CHAI_ENABLE_CUDA)
-struct cuda {};
+struct cuda {
+};
 #endif
 
 template <typename LOOP_BODY>
@@ -68,7 +70,8 @@ void forall_kernel_cpu(int begin, int end, LOOP_BODY body)
  * \brief Run forall kernel on CPU.
  */
 template <typename LOOP_BODY>
-void forall(sequential, int begin, int end, LOOP_BODY body) {
+void forall(sequential, int begin, int end, LOOP_BODY body)
+{
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
 
 #if defined(CHAI_ENABLE_UM)
@@ -84,7 +87,8 @@ void forall(sequential, int begin, int end, LOOP_BODY body) {
 
 #if defined(CHAI_ENABLE_CUDA)
 template <typename LOOP_BODY>
-__global__ void forall_kernel_gpu(int start, int length, LOOP_BODY body) {
+__global__ void forall_kernel_gpu(int start, int length, LOOP_BODY body)
+{
   int idx = blockDim.x * blockIdx.x + threadIdx.x;
 
   if (idx < length) {
@@ -96,18 +100,19 @@ __global__ void forall_kernel_gpu(int start, int length, LOOP_BODY body) {
  * \brief Run forall kernel on GPU.
  */
 template <typename LOOP_BODY>
-void forall(cuda, int begin, int end, LOOP_BODY&& body) {
+void forall(cuda, int begin, int end, LOOP_BODY&& body)
+{
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
 
   rm->setExecutionSpace(chai::GPU);
 
   size_t blockSize = 32;
-  size_t gridSize = (end - begin + blockSize - 1)/blockSize;
+  size_t gridSize = (end - begin + blockSize - 1) / blockSize;
 
-  forall_kernel_gpu<<<gridSize, blockSize>>>(begin, end-begin, body);
+  forall_kernel_gpu<<<gridSize, blockSize>>>(begin, end - begin, body);
 
   rm->setExecutionSpace(chai::NONE);
 }
 #endif
 
-#endif // CHAI_forall_HPP
+#endif  // CHAI_forall_HPP
