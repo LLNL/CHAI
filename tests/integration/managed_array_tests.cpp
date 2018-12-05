@@ -656,8 +656,8 @@ CUDA_TEST(ManagedArray, UserCallback)
   array.allocate(20,
                  chai::CPU,
                  [&](chai::Action act, chai::ExecutionSpace s, size_t bytes) {
-                   // printf("cback: act=%d, space=%d, bytes=%ld\n",
-                   //   (int)act, (int)s, (long)bytes);
+                    printf("cback: act=%d, space=%d, bytes=%ld\n",
+                      (int)act, (int)s, (long)bytes);
                    if (act == chai::ACTION_MOVE) {
                      if (s == chai::CPU) {
                        ++num_d2h;
