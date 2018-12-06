@@ -49,6 +49,9 @@
 #include "chai/ChaiMacros.hpp"
 #include "chai/Types.hpp"
 
+#include "umpire/Allocator.hpp"
+
+#include <array>
 #include <cstddef>
 
 namespace chai
@@ -91,10 +94,14 @@ class ManagedArray : public CHAICopyable
 public:
   using T_non_const = typename std::remove_const<T>::type;
 
+  CHAI_HOST_DEVICE ManagedArray();
+
   /*!
    * \brief Default constructor creates a ManagedArray with no allocations.
    */
-  CHAI_HOST_DEVICE ManagedArray();
+  CHAI_HOST_DEVICE ManagedArray(
+      std::initializer_list<chai::ExecutionSpace> spaces,
+      std::initializer_list<umpire::Allocator> allocators);
 
   /*!
    * \brief Constructor to create a ManagedArray with specified size, allocated
@@ -107,7 +114,15 @@ public:
    * \param elems Number of elements in the array.
    * \param space Execution space in which to allocate the array.
    */
-  CHAI_HOST_DEVICE ManagedArray(size_t elems, ExecutionSpace space = NONE);
+  CHAI_HOST_DEVICE ManagedArray(
+      size_t elems,
+      ExecutionSpace space = NONE);
+
+  CHAI_HOST_DEVICE ManagedArray(
+      size_t elems,
+      std::initializer_list<chai::ExecutionSpace> spaces,
+      std::initializer_list<umpire::Allocator> allocators,
+      ExecutionSpace space = NONE);
 
   /*!
    * \brief Copy constructor handles data movement.

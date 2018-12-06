@@ -40,59 +40,54 @@
 // WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 // ---------------------------------------------------------------------
-#ifndef CHAI_PointerRecord_HPP
-#define CHAI_PointerRecord_HPP
+#include "umpire/ResourceManager.hpp"
+#include "umpire/strategy/DynamicPool.hpp"
 
-#include "chai/ExecutionSpaces.hpp"
-#include "chai/Types.hpp"
+#include "chai/ManagedArray.hpp"
+#include "../src/util/forall.hpp"
 
-#include <cstddef>
-#include <functional>
+#include <iostream>
 
-namespace chai
+int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv))
 {
 
-/*!
- * \brief Struct holding details about each pointer.
- */
-struct PointerRecord {
-  /*!
-   * Size of pointer allocation in bytes
-   */
-  std::size_t m_size;
+  auto& rm = umpire::ResourceManager::getInstance();
 
-  /*!
-   * Array holding the pointer in each execution space.
-   */
-  void* m_pointers[NUM_EXECUTION_SPACES];
+  auto cpu_pool =
+      rm.makeAllocator<umpire::strategy::DynamicPool>("cpu_pool",
+                                                      rm.getAllocator("HOST"));
 
-  /*!
-   * Array holding touched state of pointer in each execution space.
-   */
-  bool m_touched[NUM_EXECUTION_SPACES];
+#if defined(CHAI_ENABLE_CUDA)
+  auto gpu_pool =
+      rm.makeAllocator<umpire::strategy::DynamicPool>("gpu_pool",
+                                                      rm.getAllocator("DEVICE"));
+#endif
 
-  /*!
-   * Execution space where this arary was last touched.
-   */
-  ExecutionSpace m_last_space;
+  chai::ManagedArray<float> array(100, 
+      std::initializer_list<chai::ExecutionSpace>{chai::CPU
+#if defined(CHAI_ENABLE_CUDA)
+      , chai::GPU
+#endif
+      },
+      std::initializer_list<umpire::Allocator>{cpu_pool
+#if defined(CHAI_ENABLE_CUDA)
+      , gpu_pool
+#endif
+      });
 
-  /*!
-   * Array holding ownership status of each pointer.
-   */
-  bool m_owned[NUM_EXECUTION_SPACES];
+  forall(sequential(), 0, 100, [=](int i) { array[i] = 0.0f; });
 
+#if defined(CHAI_ENABLE_CUDA)
+  forall(cuda(), 0, 100, [=] __device__(int i) { array[i] = 1.0f * i; });
+#else
+  forall(sequential(), 0, 100, [=] (int i) { array[i] = 1.0f * i; });
+#endif
 
-  /*!
-   * User defined callback triggered on memory operations.
-   *
-   * Function is passed the execution space that the memory is
-   * moved to, and the number of bytes moved.
-   */
-  UserCallback m_user_callback;
+  forall(sequential(), 0, 100, [=] (int i) {
+      if (array[i] != (1.0f * i)) {
+        std::cout << "ERROR!" << std::endl;
+      }
+  });
 
-  int m_allocators[NUM_EXECUTION_SPACES];
-};
-
-}  // end of namespace chai
-
-#endif  // CHAI_PointerRecord_HPP
+  array.free();
+}

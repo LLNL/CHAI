@@ -60,26 +60,6 @@ namespace chai {
 
 template<typename T>
 CHAI_INLINE
-PointerRecord* ArrayManager::allocate(size_t elems, ExecutionSpace space, UserCallback const &f)
-{
-  if (space == NONE) {
-    return nullptr;
-  }
-
-  void * ret = nullptr;
-  ret = m_allocators[space]->allocate(sizeof(T) * elems);
-
-  CHAI_LOG("ArrayManager", "Allocated array at: " << ret);
-
-  auto record = registerPointer(ret, sizeof(T) * elems, space);
-  record->m_user_callback = f;  
-  record->m_user_callback(ACTION_ALLOC, space, sizeof(T) * elems);
-  
-  return record;
-}
-
-template<typename T>
-CHAI_INLINE
 void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* pointer_record)
 {
   ExecutionSpace my_space;
@@ -133,13 +113,6 @@ typename ArrayManager::T_non_const<T> ArrayManager::pick(T* src_ptr, size_t inde
   m_resource_manager.copy(const_cast<T_non_const<T>*>(&val), const_cast<T_non_const<T>*>(src_ptr+index), sizeof(T));
   m_resource_manager.deregisterAllocation(&val);
   return val;
-
-  //T_non_const<T> val;
-  //T_non_const<T>* pick = (T_non_const<T>*)m_allocators[CPU]->allocate(sizeof(T));
-  //m_resource_manager.copy(pick, const_cast<T_non_const<T>*>(src_ptr+index), sizeof(T));
-  //val = *pick;
-  //m_allocators[CPU]->deallocate(pick);
-  //return val;
 }
 
 template<typename T>
@@ -149,11 +122,6 @@ void ArrayManager::set(T* dst_ptr, size_t index, const T& val)
   m_resource_manager.registerAllocation(const_cast<T_non_const<T>*>(&val), new umpire::util::AllocationRecord{const_cast<T_non_const<T>*>(&val), sizeof(T), m_resource_manager.getAllocator("HOST").getAllocationStrategy()});
   m_resource_manager.copy(const_cast<T_non_const<T>*>(dst_ptr+index), const_cast<T_non_const<T>*>(&val), sizeof(T));
   m_resource_manager.deregisterAllocation(const_cast<T_non_const<T>*>(&val));
-
-  //T_non_const<T>* set = (T_non_const<T>*)m_allocators[CPU]->allocate(sizeof(T));
-  //*set = val;
-  //m_resource_manager.copy(const_cast<T_non_const<T>*>(dst_ptr+index), set, sizeof(T));
-  //m_allocators[CPU]->deallocate(set);
 }
 #endif
 

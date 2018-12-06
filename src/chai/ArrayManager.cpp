@@ -81,44 +81,28 @@ ArrayManager::ArrayManager()
 #endif
 }
 
-PointerRecord* ArrayManager::registerPointer(void* pointer,
-                                             size_t size,
-                                             ExecutionSpace space,
-                                             bool owned)
+void ArrayManager::registerPointer(
+   PointerRecord* record,
+   ExecutionSpace space,
+   bool owned)
 {
   CHAI_LOG("ArrayManager", "Registering " << pointer << " in space " << space);
+
+  auto pointer = record->m_pointers[space];
 
   auto found_pointer_record = m_pointer_map.find(pointer);
-
-  if (found_pointer_record != m_pointer_map.end()) {
-  } else {
-    m_pointer_map[pointer] = new PointerRecord();
+  if (found_pointer_record == m_pointer_map.end()) {
+    m_pointer_map[pointer] = record; 
   }
 
-  auto& pointer_record = m_pointer_map[pointer];
-
-  pointer_record->m_pointers[space] = pointer;
-  pointer_record->m_size = size;
-  pointer_record->m_last_space = space;
+  //record->m_last_space = space;
 
   for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
-    pointer_record->m_owned[i] = true;
+    record->m_owned[i] = true;
   }
-  pointer_record->m_owned[space] = owned;
-  pointer_record->m_user_callback = [](Action, ExecutionSpace, size_t) {};
-
-  return pointer_record;
+  record->m_owned[space] = owned;
 }
 
-void ArrayManager::registerPointer(void* pointer,
-                                   PointerRecord* record,
-                                   ExecutionSpace space)
-{
-  CHAI_LOG("ArrayManager", "Registering " << pointer << " in space " << space);
-
-  record->m_pointers[space] = pointer;
-  m_pointer_map[pointer] = record;
-}
 
 void ArrayManager::deregisterPointer(PointerRecord* record)
 {
@@ -219,18 +203,19 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   resetTouch(record);
 }
 
-void* ArrayManager::allocate(PointerRecord* pointer_record,
-                             ExecutionSpace space)
+void ArrayManager::allocate(
+    PointerRecord* pointer_record,
+           ExecutionSpace space)
 {
-  void* ret = nullptr;
   auto size = pointer_record->m_size;
+  auto alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[space]);
 
   pointer_record->m_user_callback(ACTION_ALLOC, space, size);
 
-  ret = m_allocators[space]->allocate(size);
-  registerPointer(ret, pointer_record, space);
+  pointer_record->m_pointers[space] =  alloc.allocate(size);
+  registerPointer(pointer_record, space);
 
-  return ret;
+  CHAI_LOG("ArrayManager", "Allocated array at: " << ret);
 }
 
 void ArrayManager::free(PointerRecord* pointer_record)
@@ -245,7 +230,11 @@ void ArrayManager::free(PointerRecord* pointer_record)
                                           ExecutionSpace(UM),
                                           pointer_record->m_size);
           m_pointer_map.erase(space_ptr);
-          m_allocators[UM]->deallocate(space_ptr);
+
+          auto alloc = m_resource_manager.getAllocator(
+              pointer_record->m_allocators[space]);
+          alloc.deallocate(space_ptr);
+
           for (int space_t = CPU; space_t < NUM_EXECUTION_SPACES; ++space_t) {
             if (space_ptr == pointer_record->m_pointers[space_t])
               pointer_record->m_pointers[space_t] = nullptr;
@@ -256,7 +245,11 @@ void ArrayManager::free(PointerRecord* pointer_record)
                                           ExecutionSpace(space),
                                           pointer_record->m_size);
           m_pointer_map.erase(space_ptr);
-          m_allocators[space]->deallocate(space_ptr);
+
+          auto alloc = m_resource_manager.getAllocator(
+              pointer_record->m_allocators[space]);
+          alloc.deallocate(space_ptr);
+
           pointer_record->m_pointers[space] = nullptr;
 #if defined(CHAI_ENABLE_UM)
         }
@@ -314,7 +307,14 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
       new umpire::util::AllocationRecord{
           pointer, size, m_allocators[space]->getAllocationStrategy()});
 
-  auto pointer_record = registerPointer(pointer, size, space, owned);
+  auto pointer_record = new PointerRecord{};
+
+  pointer_record->m_pointers[space] = pointer;
+  pointer_record->m_owned[space] = owned;
+  pointer_record->m_size = size;
+  pointer_record->m_user_callback = [](Action, ExecutionSpace, size_t) {};
+
+  registerPointer(pointer_record, space, owned);
 
   // TODO Is this a problem?
   // for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
@@ -378,6 +378,13 @@ size_t ArrayManager::getTotalSize() const
   }
 
   return total;
+}
+
+int
+ArrayManager::getAllocatorId(ExecutionSpace space) const
+{
+  return m_allocators[space]->getId();
+
 }
 
 }  // end of namespace chai
