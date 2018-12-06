@@ -193,6 +193,7 @@ public:
 
   CHAI_HOST void move(ExecutionSpace space);
 
+  CHAI_HOST ManagedArray<T> slice(size_t begin, size_t end);
   /*!
    * \brief Return reference to i-th element of the ManagedArray.
    *
@@ -207,7 +208,7 @@ public:
    * \brief get access to m_active_pointer
    * @return a copy of m_active_pointer
    */
-  T* getActivePointer() const;
+  T* getActiveBasePointer() const;
 
   /*!
    * \brief
@@ -338,6 +339,7 @@ private:
    * Currently active data pointer.
    */
   mutable T* m_active_pointer;
+  mutable T* m_active_base_pointer;
 
   /*!
    * Pointer to ArrayManager instance.
@@ -348,11 +350,15 @@ private:
    * Number of elements in the ManagedArray.
    */
   size_t m_elems;
+  size_t m_offset = 0;
 
   /*!
    * Pointer to PointerRecord data.
    */
   PointerRecord* m_pointer_record;
+ 
+  bool m_is_slice = false;
+ 
 };
 
 /*!
@@ -404,8 +410,8 @@ ManagedArray<T> makeManagedArray(T* data,
 template <typename T>
 ManagedArray<T> deepCopy(ManagedArray<T> const& array)
 {
-  T* data_ptr = array.getActivePointer();
-
+  T* data_ptr = array.getActiveBasePointer();
+  
   ArrayManager* manager = ArrayManager::getInstance();
 
   PointerRecord const* record = manager->getPointerRecord(data_ptr);
