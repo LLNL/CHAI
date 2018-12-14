@@ -1,4 +1,4 @@
-# CHAI v1.0
+# CHAI v1.1
 
 [![Build Status](https://travis-ci.org/LLNL/CHAI.svg?branch=develop)](https://travis-ci.org/LLNL/CHAI)
 
