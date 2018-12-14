@@ -1,8 +1,8 @@
-######################################################################
+#######################################################################
 # Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 # rights reserved.
 # 
-# Produced at the Lawrence Livermore National Laboratory
+# Produced at the Lawrence Livermore National Laboratory.
 # 
 # This file is part of CHAI.
 # 
@@ -41,6 +41,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-set (CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-extended-lambda")
+blt_add_executable(
+  NAME chai-umpire-example.exe
+  SOURCES chai-umpire-allocators.cpp
+  DEPENDS_ON cuda chai)
 
-include(${PROJECT_SOURCE_DIR}/cmake/thirdparty/SetupChaiThirdparty.cmake)
+if (ENABLE_CUDA)
+  blt_add_executable(
+    NAME chai-example.exe
+    SOURCES example.cpp
+    DEPENDS_ON cuda chai)
+endif ()

@@ -1,5 +1,5 @@
 #######################################################################
-# Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
+# Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 # rights reserved.
 # 
 # Produced at the Lawrence Livermore National Laboratory.
@@ -41,77 +41,4 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-configure_file(
-  ${PROJECT_SOURCE_DIR}/src/config.hpp.in
-  ${PROJECT_BINARY_DIR}/include/chai/config.hpp)
-
-set (chai_headers
-  ArrayManager.hpp
-  ArrayManager.inl
-  ChaiMacros.hpp
-  ExecutionSpaces.hpp
-  ManagedArray.hpp
-  ManagedArray.inl
-  PointerRecord.hpp
-  Types.hpp)
-
-if(ENABLE_THIN_UM)
-  set(chai_headers
-    ${chai_headers}
-    ManagedArray_thin.inl)
-endif ()
-
-set (chai_sources
-  ArrayManager.cpp)
-
-set (chai_depends)
-
-if (ENABLE_CUDA)
-  set (chai_depends
-    cuda_runtime)
-endif ()
-if (ENABLE_CNMEM)
-  set (chai_depends
-    ${chai_depends}
-    cnmem)
-endif()
-
-blt_add_library(
-  NAME chai
-  SOURCES ${chai_sources}
-  HEADERS ${chai_headers}
-  HEADERS_OUTPUT_SUBDIR chai
-  DEPENDS_ON ${chai_depends})
-
-install(FILES util/forall.hpp DESTINATION include/chai/util/)
-
-target_include_directories(
-  chai
-  PRIVATE ${PROJECT_BINARY_DIR}/include)
-
-configure_file(
-  ${PROJECT_SOURCE_DIR}/src/chai-config.cmake.in
-  ${PROJECT_BINARY_DIR}/share/chai/cmake/chai-config.cmake)
-
-install(
-  FILES ${PROJECT_BINARY_DIR}/share/chai/cmake/chai-config.cmake
-  DESTINATION share/chai/cmake/)
-
-install(
-  FILES ${PROJECT_BINARY_DIR}/include/chai/config.hpp
-  DESTINATION include/chai)
-
-install(
-  TARGETS chai
-  EXPORT chai-targets
-  RUNTIME DESTINATION lib
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib)
-
-install(EXPORT chai-targets DESTINATION share/chai/cmake/)
-
-add_subdirectory(tests)
-if (ENABLE_BENCHMARKS)
-  add_subdirectory(benchmarks)
-endif()
-add_subdirectory(examples)
+add_subdirectory(chai)

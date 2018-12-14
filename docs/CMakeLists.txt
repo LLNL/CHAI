@@ -1,5 +1,5 @@
 #######################################################################
-# Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
+# Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 # rights reserved.
 # 
 # Produced at the Lawrence Livermore National Laboratory.
@@ -47,8 +47,8 @@ endif ()
 
 if (SPHINX_FOUND)
   set (SPHINX_HTML_THEME "import sphinx_rtd_theme\n
-  html_theme = \"sphinx_rtd_theme\"\n
-  html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]")
+html_theme = \"sphinx_rtd_theme\"\n
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]")
 
   add_subdirectory(sphinx)
 endif ()

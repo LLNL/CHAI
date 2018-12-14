@@ -1,8 +1,8 @@
-######################################################################
+#######################################################################
 # Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 # rights reserved.
 # 
-# Produced at the Lawrence Livermore National Laboratory
+# Produced at the Lawrence Livermore National Laboratory.
 # 
 # This file is part of CHAI.
 # 
@@ -41,6 +41,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-set (CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-extended-lambda")
+add_subdirectory(unit)
 
-include(${PROJECT_SOURCE_DIR}/cmake/thirdparty/SetupChaiThirdparty.cmake)
+add_subdirectory(integration)

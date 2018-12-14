@@ -1,8 +1,9 @@
-######################################################################
+#!/bin/bash
+#######################################################################
 # Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 # rights reserved.
 # 
-# Produced at the Lawrence Livermore National Laboratory
+# Produced at the Lawrence Livermore National Laboratory.
 # 
 # This file is part of CHAI.
 # 
@@ -41,6 +42,19 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-set (CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-extended-lambda")
+TAR_CMD=gtar
+VERSION=1.1.0
 
-include(${PROJECT_SOURCE_DIR}/cmake/thirdparty/SetupChaiThirdparty.cmake)
+git archive --prefix=chai-${VERSION}/ -o chai-${VERSION}.tar HEAD 2> /dev/null
+
+echo "Running git archive submodules..."
+
+p=`pwd` && (echo .; git submodule foreach) | while read entering path; do
+    temp="${path%\'}";
+    temp="${temp#\'}";
+    path=$temp;
+    [ "$path" = "" ] && continue;
+    (cd $path && git archive --prefix=chai-${VERSION}/$path/ HEAD > $p/tmp.tar && ${TAR_CMD} --concatenate --file=$p/chai-${VERSION}.tar $p/tmp.tar && rm $p/tmp.tar);
+done
+
+gzip chai-${VERSION}.tar

@@ -40,79 +40,15 @@
 // WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 // ---------------------------------------------------------------------
-#ifndef CHAI_forall_HPP
-#define CHAI_forall_HPP
+#ifndef CHAI_chai_benchmark_utils_HPP
+#define CHAI_chai_benchmark_utils_HPP
 
-#include "chai/ArrayManager.hpp"
-#include "chai/ExecutionSpaces.hpp"
-#include "chai/config.hpp"
+#include "benchmark/benchmark_api.h"
 
-#if defined(CHAI_ENABLE_UM)
-#include <cuda_runtime_api.h>
-#endif
-
-struct sequential {
-};
-#if defined(CHAI_ENABLE_CUDA)
-struct cuda {
-};
-#endif
-
-template <typename LOOP_BODY>
-void forall_kernel_cpu(int begin, int end, LOOP_BODY body)
+static void malloc_ranges(benchmark::internal::Benchmark* b)
 {
-  for (int i = 0; i < (end - begin); ++i) {
-    body(i);
-  }
+  // for (int i = 1; i <= (1<<30); i*=2)
+  //      b->Args(i);
 }
 
-/*
- * \brief Run forall kernel on CPU.
- */
-template <typename LOOP_BODY>
-void forall(sequential, int begin, int end, LOOP_BODY body)
-{
-  chai::ArrayManager* rm = chai::ArrayManager::getInstance();
-
-#if defined(CHAI_ENABLE_UM)
-  cudaDeviceSynchronize();
-#endif
-
-  rm->setExecutionSpace(chai::CPU);
-
-  forall_kernel_cpu(begin, end, body);
-
-  rm->setExecutionSpace(chai::NONE);
-}
-
-#if defined(CHAI_ENABLE_CUDA)
-template <typename LOOP_BODY>
-__global__ void forall_kernel_gpu(int start, int length, LOOP_BODY body)
-{
-  int idx = blockDim.x * blockIdx.x + threadIdx.x;
-
-  if (idx < length) {
-    body(idx);
-  }
-}
-
-/*
- * \brief Run forall kernel on GPU.
- */
-template <typename LOOP_BODY>
-void forall(cuda, int begin, int end, LOOP_BODY&& body)
-{
-  chai::ArrayManager* rm = chai::ArrayManager::getInstance();
-
-  rm->setExecutionSpace(chai::GPU);
-
-  size_t blockSize = 32;
-  size_t gridSize = (end - begin + blockSize - 1) / blockSize;
-
-  forall_kernel_gpu<<<gridSize, blockSize>>>(begin, end - begin, body);
-
-  rm->setExecutionSpace(chai::NONE);
-}
-#endif
-
-#endif  // CHAI_forall_HPP
+#endif  // CHAI_chai_benchmark_utils_HPP

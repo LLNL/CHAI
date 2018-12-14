@@ -40,79 +40,54 @@
 // WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 // ---------------------------------------------------------------------
-#ifndef CHAI_forall_HPP
-#define CHAI_forall_HPP
+#include "umpire/ResourceManager.hpp"
+#include "umpire/strategy/DynamicPool.hpp"
 
-#include "chai/ArrayManager.hpp"
-#include "chai/ExecutionSpaces.hpp"
-#include "chai/config.hpp"
+#include "chai/ManagedArray.hpp"
+#include "../src/util/forall.hpp"
 
-#if defined(CHAI_ENABLE_UM)
-#include <cuda_runtime_api.h>
-#endif
+#include <iostream>
 
-struct sequential {
-};
-#if defined(CHAI_ENABLE_CUDA)
-struct cuda {
-};
-#endif
-
-template <typename LOOP_BODY>
-void forall_kernel_cpu(int begin, int end, LOOP_BODY body)
+int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv))
 {
-  for (int i = 0; i < (end - begin); ++i) {
-    body(i);
-  }
-}
 
-/*
- * \brief Run forall kernel on CPU.
- */
-template <typename LOOP_BODY>
-void forall(sequential, int begin, int end, LOOP_BODY body)
-{
-  chai::ArrayManager* rm = chai::ArrayManager::getInstance();
+  auto& rm = umpire::ResourceManager::getInstance();
 
-#if defined(CHAI_ENABLE_UM)
-  cudaDeviceSynchronize();
-#endif
-
-  rm->setExecutionSpace(chai::CPU);
-
-  forall_kernel_cpu(begin, end, body);
-
-  rm->setExecutionSpace(chai::NONE);
-}
+  auto cpu_pool =
+      rm.makeAllocator<umpire::strategy::DynamicPool>("cpu_pool",
+                                                      rm.getAllocator("HOST"));
 
 #if defined(CHAI_ENABLE_CUDA)
-template <typename LOOP_BODY>
-__global__ void forall_kernel_gpu(int start, int length, LOOP_BODY body)
-{
-  int idx = blockDim.x * blockIdx.x + threadIdx.x;
-
-  if (idx < length) {
-    body(idx);
-  }
-}
-
-/*
- * \brief Run forall kernel on GPU.
- */
-template <typename LOOP_BODY>
-void forall(cuda, int begin, int end, LOOP_BODY&& body)
-{
-  chai::ArrayManager* rm = chai::ArrayManager::getInstance();
-
-  rm->setExecutionSpace(chai::GPU);
-
-  size_t blockSize = 32;
-  size_t gridSize = (end - begin + blockSize - 1) / blockSize;
-
-  forall_kernel_gpu<<<gridSize, blockSize>>>(begin, end - begin, body);
-
-  rm->setExecutionSpace(chai::NONE);
-}
+  auto gpu_pool =
+      rm.makeAllocator<umpire::strategy::DynamicPool>("gpu_pool",
+                                                      rm.getAllocator("DEVICE"));
 #endif
 
-#endif  // CHAI_forall_HPP
+  chai::ManagedArray<float> array(100, 
+      std::initializer_list<chai::ExecutionSpace>{chai::CPU
+#if defined(CHAI_ENABLE_CUDA)
+      , chai::GPU
+#endif
+      },
+      std::initializer_list<umpire::Allocator>{cpu_pool
+#if defined(CHAI_ENABLE_CUDA)
+      , gpu_pool
+#endif
+      });
+
+  forall(sequential(), 0, 100, [=](int i) { array[i] = 0.0f; });
+
+#if defined(CHAI_ENABLE_CUDA)
+  forall(cuda(), 0, 100, [=] __device__(int i) { array[i] = 1.0f * i; });
+#else
+  forall(sequential(), 0, 100, [=] (int i) { array[i] = 1.0f * i; });
+#endif
+
+  forall(sequential(), 0, 100, [=] (int i) {
+      if (array[i] != (1.0f * i)) {
+        std::cout << "ERROR!" << std::endl;
+      }
+  });
+
+  array.free();
+}

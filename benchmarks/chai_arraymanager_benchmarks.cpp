@@ -40,79 +40,50 @@
 // WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 // ---------------------------------------------------------------------
-#ifndef CHAI_forall_HPP
-#define CHAI_forall_HPP
+#include <climits>
+
+#include "benchmark/benchmark_api.h"
 
 #include "chai/ArrayManager.hpp"
-#include "chai/ExecutionSpaces.hpp"
-#include "chai/config.hpp"
 
-#if defined(CHAI_ENABLE_UM)
-#include <cuda_runtime_api.h>
-#endif
-
-struct sequential {
-};
-#if defined(CHAI_ENABLE_CUDA)
-struct cuda {
-};
-#endif
-
-template <typename LOOP_BODY>
-void forall_kernel_cpu(int begin, int end, LOOP_BODY body)
-{
-  for (int i = 0; i < (end - begin); ++i) {
-    body(i);
-  }
-}
-
-/*
- * \brief Run forall kernel on CPU.
- */
-template <typename LOOP_BODY>
-void forall(sequential, int begin, int end, LOOP_BODY body)
-{
-  chai::ArrayManager* rm = chai::ArrayManager::getInstance();
-
-#if defined(CHAI_ENABLE_UM)
-  cudaDeviceSynchronize();
-#endif
-
-  rm->setExecutionSpace(chai::CPU);
-
-  forall_kernel_cpu(begin, end, body);
-
-  rm->setExecutionSpace(chai::NONE);
-}
-
-#if defined(CHAI_ENABLE_CUDA)
-template <typename LOOP_BODY>
-__global__ void forall_kernel_gpu(int start, int length, LOOP_BODY body)
-{
-  int idx = blockDim.x * blockIdx.x + threadIdx.x;
-
-  if (idx < length) {
-    body(idx);
-  }
-}
-
-/*
- * \brief Run forall kernel on GPU.
- */
-template <typename LOOP_BODY>
-void forall(cuda, int begin, int end, LOOP_BODY&& body)
-{
-  chai::ArrayManager* rm = chai::ArrayManager::getInstance();
-
-  rm->setExecutionSpace(chai::GPU);
-
-  size_t blockSize = 32;
-  size_t gridSize = (end - begin + blockSize - 1) / blockSize;
-
-  forall_kernel_gpu<<<gridSize, blockSize>>>(begin, end - begin, body);
-
-  rm->setExecutionSpace(chai::NONE);
-}
-#endif
-
-#endif  // CHAI_forall_HPP
+// void benchmark_arraymanager_alloc_default(benchmark::State& state) {
+//   chai::ArrayManager* manager = chai::ArrayManager::getInstance();
+//
+//   while (state.KeepRunning()) {
+//     void* ptr = manager->allocate<char>(state.range(0));
+//     manager->free(ptr);
+//   }
+//
+//   state.SetItemsProcessed(state.iterations() * state.range(0));
+// }
+//
+// void benchmark_arraymanager_alloc_cpu(benchmark::State& state) {
+//   chai::ArrayManager* manager = chai::ArrayManager::getInstance();
+//
+//   while (state.KeepRunning()) {
+//     void* ptr = manager->allocate<char>(state.range(0), chai::CPU);
+//     manager->free(ptr);
+//   }
+//
+//   state.SetItemsProcessed(state.iterations() * state.range(0));
+//
+// }
+//
+// BENCHMARK(benchmark_arraymanager_alloc_default)->Range(1, INT_MAX);
+// BENCHMARK(benchmark_arraymanager_alloc_cpu)->Range(1, INT_MAX);
+//
+// #if defined(CHAI_ENABLE_CUDA)
+// void benchmark_arraymanager_alloc_gpu(benchmark::State& state) {
+//   chai::ArrayManager* manager = chai::ArrayManager::getInstance();
+//
+//   while (state.KeepRunning()) {
+//     void* ptr = manager->allocate<char>(state.range(0), chai::GPU);
+//     manager->free(ptr);
+//   }
+//
+//   state.SetItemsProcessed(state.iterations() * state.range(0));
+// }
+// BENCHMARK(benchmark_arraymanager_alloc_gpu)->Range(1, INT_MAX);
+// #endif
+//
+BENCHMARK_MAIN();

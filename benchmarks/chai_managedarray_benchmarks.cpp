@@ -40,79 +40,74 @@
 // WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 // ---------------------------------------------------------------------
-#ifndef CHAI_forall_HPP
-#define CHAI_forall_HPP
+#include <climits>
 
-#include "chai/ArrayManager.hpp"
-#include "chai/ExecutionSpaces.hpp"
+#include "benchmark/benchmark_api.h"
+
+#include "chai/ManagedArray.hpp"
 #include "chai/config.hpp"
 
-#if defined(CHAI_ENABLE_UM)
-#include <cuda_runtime_api.h>
-#endif
+#include "../src/util/forall.hpp"
 
-struct sequential {
-};
-#if defined(CHAI_ENABLE_CUDA)
-struct cuda {
-};
-#endif
-
-template <typename LOOP_BODY>
-void forall_kernel_cpu(int begin, int end, LOOP_BODY body)
+void benchmark_managedarray_alloc_default(benchmark::State& state)
 {
-  for (int i = 0; i < (end - begin); ++i) {
-    body(i);
+  while (state.KeepRunning()) {
+    chai::ManagedArray<char> array(state.range(0));
+    array.free();
   }
+
+  state.SetItemsProcessed(state.iterations() * state.range(0));
 }
 
-/*
- * \brief Run forall kernel on CPU.
- */
-template <typename LOOP_BODY>
-void forall(sequential, int begin, int end, LOOP_BODY body)
+void benchmark_managedarray_alloc_cpu(benchmark::State& state)
 {
-  chai::ArrayManager* rm = chai::ArrayManager::getInstance();
+  while (state.KeepRunning()) {
+    chai::ManagedArray<char> array(state.range(0), chai::CPU);
+    array.free();
+  }
 
-#if defined(CHAI_ENABLE_UM)
-  cudaDeviceSynchronize();
-#endif
-
-  rm->setExecutionSpace(chai::CPU);
-
-  forall_kernel_cpu(begin, end, body);
-
-  rm->setExecutionSpace(chai::NONE);
+  state.SetItemsProcessed(state.iterations() * state.range(0));
 }
+
+BENCHMARK(benchmark_managedarray_alloc_default)->Range(1, INT_MAX);
+BENCHMARK(benchmark_managedarray_alloc_cpu)->Range(1, INT_MAX);
 
 #if defined(CHAI_ENABLE_CUDA)
-template <typename LOOP_BODY>
-__global__ void forall_kernel_gpu(int start, int length, LOOP_BODY body)
+void benchmark_managedarray_alloc_gpu(benchmark::State& state)
 {
-  int idx = blockDim.x * blockIdx.x + threadIdx.x;
-
-  if (idx < length) {
-    body(idx);
+  while (state.KeepRunning()) {
+    chai::ManagedArray<char> array(state.range(0), chai::GPU);
+    array.free();
   }
+
+  state.SetItemsProcessed(state.iterations() * state.range(0));
 }
-
-/*
- * \brief Run forall kernel on GPU.
- */
-template <typename LOOP_BODY>
-void forall(cuda, int begin, int end, LOOP_BODY&& body)
-{
-  chai::ArrayManager* rm = chai::ArrayManager::getInstance();
-
-  rm->setExecutionSpace(chai::GPU);
-
-  size_t blockSize = 32;
-  size_t gridSize = (end - begin + blockSize - 1) / blockSize;
-
-  forall_kernel_gpu<<<gridSize, blockSize>>>(begin, end - begin, body);
-
-  rm->setExecutionSpace(chai::NONE);
-}
+BENCHMARK(benchmark_managedarray_alloc_gpu)->Range(1, INT_MAX);
 #endif
 
-#endif  // CHAI_forall_HPP
+
+#if defined(CHAI_ENABLE_CUDA)
+void benchmark_managedarray_move(benchmark::State& state)
+{
+  chai::ManagedArray<char> array(state.range(0));
+
+  forall(sequential(), 0, 1, [=](int i) { array[i] = 'b'; });
+
+  /*
+   * Move data back and forth between CPU and GPU.
+   *
+   * Kernels just touch the data, but are still included in timing.
+   */
+  while (state.KeepRunning()) {
+    forall(cuda(), 0, 1, [=] __device__(int i) { array[i] = 'a'; });
+
+    forall(sequential(), 0, 1, [=](int i) { array[i] = 'b'; });
+  }
+
+  array.free();
+}
+
+BENCHMARK(benchmark_managedarray_move)->Range(1, INT_MAX);
+#endif
+
+BENCHMARK_MAIN();

@@ -40,79 +40,59 @@
 // WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 // ---------------------------------------------------------------------
-#ifndef CHAI_forall_HPP
-#define CHAI_forall_HPP
+#ifndef CHAI_PointerRecord_HPP
+#define CHAI_PointerRecord_HPP
 
-#include "chai/ArrayManager.hpp"
 #include "chai/ExecutionSpaces.hpp"
-#include "chai/config.hpp"
+#include "chai/Types.hpp"
 
-#if defined(CHAI_ENABLE_UM)
-#include <cuda_runtime_api.h>
-#endif
+#include <cstddef>
+#include <functional>
 
-struct sequential {
-};
-#if defined(CHAI_ENABLE_CUDA)
-struct cuda {
-};
-#endif
-
-template <typename LOOP_BODY>
-void forall_kernel_cpu(int begin, int end, LOOP_BODY body)
+namespace chai
 {
-  for (int i = 0; i < (end - begin); ++i) {
-    body(i);
-  }
-}
 
-/*
- * \brief Run forall kernel on CPU.
+/*!
+ * \brief Struct holding details about each pointer.
  */
-template <typename LOOP_BODY>
-void forall(sequential, int begin, int end, LOOP_BODY body)
-{
-  chai::ArrayManager* rm = chai::ArrayManager::getInstance();
+struct PointerRecord {
+  /*!
+   * Size of pointer allocation in bytes
+   */
+  std::size_t m_size;
 
-#if defined(CHAI_ENABLE_UM)
-  cudaDeviceSynchronize();
-#endif
+  /*!
+   * Array holding the pointer in each execution space.
+   */
+  void* m_pointers[NUM_EXECUTION_SPACES];
 
-  rm->setExecutionSpace(chai::CPU);
+  /*!
+   * Array holding touched state of pointer in each execution space.
+   */
+  bool m_touched[NUM_EXECUTION_SPACES];
 
-  forall_kernel_cpu(begin, end, body);
+  /*!
+   * Execution space where this arary was last touched.
+   */
+  ExecutionSpace m_last_space;
 
-  rm->setExecutionSpace(chai::NONE);
-}
+  /*!
+   * Array holding ownership status of each pointer.
+   */
+  bool m_owned[NUM_EXECUTION_SPACES];
 
-#if defined(CHAI_ENABLE_CUDA)
-template <typename LOOP_BODY>
-__global__ void forall_kernel_gpu(int start, int length, LOOP_BODY body)
-{
-  int idx = blockDim.x * blockIdx.x + threadIdx.x;
 
-  if (idx < length) {
-    body(idx);
-  }
-}
+  /*!
+   * User defined callback triggered on memory operations.
+   *
+   * Function is passed the execution space that the memory is
+   * moved to, and the number of bytes moved.
+   */
+  UserCallback m_user_callback;
 
-/*
- * \brief Run forall kernel on GPU.
- */
-template <typename LOOP_BODY>
-void forall(cuda, int begin, int end, LOOP_BODY&& body)
-{
-  chai::ArrayManager* rm = chai::ArrayManager::getInstance();
+  int m_allocators[NUM_EXECUTION_SPACES];
+};
 
-  rm->setExecutionSpace(chai::GPU);
+}  // end of namespace chai
 
-  size_t blockSize = 32;
-  size_t gridSize = (end - begin + blockSize - 1) / blockSize;
-
-  forall_kernel_gpu<<<gridSize, blockSize>>>(begin, end - begin, body);
-
-  rm->setExecutionSpace(chai::NONE);
-}
-#endif
-
-#endif  // CHAI_forall_HPP
+#endif  // CHAI_PointerRecord_HPP
