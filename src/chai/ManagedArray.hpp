@@ -304,6 +304,11 @@ public:
    *
    */
   CHAI_HOST void setUserCallback(UserCallback const& cback);
+#endif
+
+
+private:
+  CHAI_HOST void modify(size_t i, const T& val) const;
 
   /*!
    * \brief Moves the inner data of a ManagedArray.
@@ -315,7 +320,7 @@ public:
    */
   template <bool B = std::is_base_of<CHAICopyable, T>::value,
             typename std::enable_if<B, int>::type = 0>
-  CHAI_HOST_DEVICE void moveInnerImpl();
+  CHAI_HOST void moveInnerImpl(ExecutionSpace space);
 
   /*!
    * \brief Does nothing since the inner data type does not inherit from
@@ -328,12 +333,7 @@ public:
    */
   template <bool B = std::is_base_of<CHAICopyable, T>::value,
             typename std::enable_if<!B, int>::type = 0>
-  CHAI_HOST_DEVICE void moveInnerImpl();
-#endif
-
-
-private:
-  CHAI_HOST void modify(size_t i, const T& val) const;
+  CHAI_HOST void moveInnerImpl(ExecutionSpace space);
 
   /*!
    * Currently active data pointer.
