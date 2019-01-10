@@ -268,10 +268,10 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t elems)
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST void ManagedArray<T>::free()
+CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
 {
   if(!m_is_slice) {
-    m_resource_manager->free(m_pointer_record);
+    m_resource_manager->free(m_pointer_record, space);
   } else {
     CHAI_LOG("ManagedArray", "Cannot free a slice!");
   }
@@ -317,7 +317,7 @@ typename ManagedArray<T>::T_non_const ManagedArray<T>::pick(size_t i) const {
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T& val) const { 
+CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const { 
   #if !defined(__CUDA_ARCH__)
     #if defined(CHAI_ENABLE_UM)
       if(m_pointer_record->m_pointers[UM] == m_active_pointer) {
@@ -441,6 +441,19 @@ ManagedArray<T>::getActiveBasePointer() const
   return m_active_base_pointer;
 }
 
+template<typename T>
+T*
+ManagedArray<T>::getActivePointer() const
+{
+  return m_active_pointer;
+}
+
+template<typename T> 
+T*
+ManagedArray<T>::getPointer(ExecutionSpace space) const { 
+   return m_pointer_record->m_pointers[space];
+}
+
 
 //template<typename T>
 //ManagedArray<T>::operator ManagedArray<
@@ -488,7 +501,8 @@ ManagedArray<T>::moveInnerImpl()
 {
   for (int i = 0; i < size(); ++i)
   {
-    m_active_pointer[i] = T(m_active_pointer[i]);
+    auto inner = T(m_active_pointer[i]);
+    m_active_pointer[i].shallowCopy(inner);
   }
 }
 

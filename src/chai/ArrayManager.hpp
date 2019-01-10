@@ -175,7 +175,7 @@ public:
   /*!
    * \brief Free all allocations associated with the given PointerRecord.
    */
-  void free(PointerRecord* pointer);
+  void free(PointerRecord* pointer, ExecutionSpace space = NONE);
 
 #if defined(CHAI_ENABLE_PICK)
   template <typename T>

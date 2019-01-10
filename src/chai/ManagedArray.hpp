@@ -167,7 +167,7 @@ public:
   /*!
    * \brief Free all data allocated by this ManagedArray.
    */
-  CHAI_HOST void free();
+  CHAI_HOST void free(ExecutionSpace space = NONE);
 
   /*!
    * \brief Reset array state.
@@ -206,9 +206,21 @@ public:
 
   /*!
    * \brief get access to m_active_pointer
+   * @return a copy of m_active_base_pointer
+   */
+  CHAI_HOST_DEVICE T* getActiveBasePointer() const;
+  
+  /*!
+   * \brief get access to m_active_pointer
    * @return a copy of m_active_pointer
    */
-  T* getActiveBasePointer() const;
+  CHAI_HOST_DEVICE T* getActivePointer() const;
+
+  /*!
+   * \brief get access to the pointer in the given execution space
+   * @return a copy of the pointer in the given execution space
+   */
+  CHAI_HOST T* getPointer(ExecutionSpace space) const;
 
   /*!
    * \brief
@@ -250,7 +262,7 @@ public:
    * \param val Source location of the value
    * \tparam T The type of data value in ManagedArray.
    */
-  CHAI_HOST_DEVICE void set(size_t i, T& val) const;
+  CHAI_HOST_DEVICE void set(size_t i, T val) const;
 
   /*!
    * \brief Increment the value of element i in the ManagedArray.
@@ -331,6 +343,17 @@ public:
   CHAI_HOST_DEVICE void moveInnerImpl();
 #endif
 
+  void shallowCopy(ManagedArray<T> const & other) const {
+     m_active_pointer = other.m_active_pointer;
+     m_active_base_pointer = other.m_active_base_pointer;
+     m_resource_manager = other.m_resource_manager;
+     m_elems = other.m_elems;
+     m_offset = other.m_offset;
+     m_pointer_record = other.m_pointer_record;
+     m_is_slice = other.m_is_slice;
+  }
+
+
 
 private:
   CHAI_HOST void modify(size_t i, const T& val) const;
@@ -344,20 +367,20 @@ private:
   /*!
    * Pointer to ArrayManager instance.
    */
-  ArrayManager* m_resource_manager;
+  mutable ArrayManager* m_resource_manager;
 
   /*!
    * Number of elements in the ManagedArray.
    */
-  size_t m_elems;
-  size_t m_offset = 0;
+  mutable size_t m_elems;
+  mutable size_t m_offset = 0;
 
   /*!
    * Pointer to PointerRecord data.
    */
-  PointerRecord* m_pointer_record;
+  mutable PointerRecord* m_pointer_record;
  
-  bool m_is_slice = false;
+  mutable bool m_is_slice = false;
  
 };
 

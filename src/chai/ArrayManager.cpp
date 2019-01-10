@@ -218,43 +218,45 @@ void ArrayManager::allocate(
   CHAI_LOG("ArrayManager", "Allocated array at: " << ret);
 }
 
-void ArrayManager::free(PointerRecord* pointer_record)
+void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFree)
 {
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
-    if (pointer_record->m_pointers[space]) {
-      if (pointer_record->m_owned[space]) {
-        void* space_ptr = pointer_record->m_pointers[space];
+    if (space == spaceToFree || spaceToFree == NONE) {
+       if (pointer_record->m_pointers[space]) {
+         if (pointer_record->m_owned[space]) {
+           void* space_ptr = pointer_record->m_pointers[space];
 #if defined(CHAI_ENABLE_UM)
-        if (space_ptr == pointer_record->m_pointers[UM]) {
-          pointer_record->m_user_callback(ACTION_FREE,
-                                          ExecutionSpace(UM),
-                                          pointer_record->m_size);
-          m_pointer_map.erase(space_ptr);
+           if (space_ptr == pointer_record->m_pointers[UM]) {
+             pointer_record->m_user_callback(ACTION_FREE,
+                                             ExecutionSpace(UM),
+                                             pointer_record->m_size);
+             m_pointer_map.erase(space_ptr);
 
-          auto alloc = m_resource_manager.getAllocator(
-              pointer_record->m_allocators[space]);
-          alloc.deallocate(space_ptr);
+             auto alloc = m_resource_manager.getAllocator(
+                 pointer_record->m_allocators[space]);
+             alloc.deallocate(space_ptr);
 
-          for (int space_t = CPU; space_t < NUM_EXECUTION_SPACES; ++space_t) {
-            if (space_ptr == pointer_record->m_pointers[space_t])
-              pointer_record->m_pointers[space_t] = nullptr;
-          }
-        } else {
+             for (int space_t = CPU; space_t < NUM_EXECUTION_SPACES; ++space_t) {
+               if (space_ptr == pointer_record->m_pointers[space_t])
+                 pointer_record->m_pointers[space_t] = nullptr;
+             }
+           } else {
 #endif
-          pointer_record->m_user_callback(ACTION_FREE,
-                                          ExecutionSpace(space),
-                                          pointer_record->m_size);
-          m_pointer_map.erase(space_ptr);
+             pointer_record->m_user_callback(ACTION_FREE,
+                                             ExecutionSpace(space),
+                                             pointer_record->m_size);
+             m_pointer_map.erase(space_ptr);
 
-          auto alloc = m_resource_manager.getAllocator(
-              pointer_record->m_allocators[space]);
-          alloc.deallocate(space_ptr);
+             auto alloc = m_resource_manager.getAllocator(
+                 pointer_record->m_allocators[space]);
+             alloc.deallocate(space_ptr);
 
-          pointer_record->m_pointers[space] = nullptr;
+             pointer_record->m_pointers[space] = nullptr;
 #if defined(CHAI_ENABLE_UM)
-        }
+           }
 #endif
-      }
+         }
+       }
     }
   }
 

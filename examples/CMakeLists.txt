@@ -41,10 +41,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
+set (CHAI_UMPIRE_DEPENDS chai)
+if (ENABLE_CUDA)
+   list(APPEND CHAI_UMPIRE_DEPENDS cuda) 
+endif()
+
 blt_add_executable(
   NAME chai-umpire-example.exe
   SOURCES chai-umpire-allocators.cpp
-  DEPENDS_ON cuda chai)
+  DEPENDS_ON ${CHAI_UMPIRE_DEPENDS})
 
 if (ENABLE_CUDA)
   blt_add_executable(
