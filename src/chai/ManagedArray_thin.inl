@@ -135,9 +135,8 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_manager, size_t elems, PointerRecord* pointer_record) :
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* , size_t elems, PointerRecord* ) :
   m_active_pointer(data), 
-  m_resource_manager(array_manager),
   m_elems(elems),
   m_is_slice(false)
 {
@@ -184,14 +183,19 @@ CHAI_HOST void ManagedArray<T>::allocate(size_t elems, ExecutionSpace space, Use
     CHAI_LOG("ManagedArray", "Allocating array of size " << elems << " in space " << space);
 
     m_elems = elems;
+    if (m_elems != 0 ) {
 
-  #if defined(CHAI_ENABLE_UM)
-    cudaMallocManaged(&m_active_pointer, sizeof(T)*elems);
-  #else
-    m_active_pointer = static_cast<T*>(malloc(sizeof(T)*elems));
-  #endif
+     #if defined(CHAI_ENABLE_UM)
+       cudaMallocManaged(&m_active_pointer, sizeof(T)*elems);
+     #else
+       m_active_pointer = static_cast<T*>(malloc(sizeof(T)*elems));
+     #endif
+    }
+    else {
+       m_active_pointer = nullptr;
+    }
 
-    CHAI_LOG("ManagedArray", "m_active_ptr allocated at address: " << m_active_pointer);
+    CHAI_LOG("ManagedArray", "m_active_ptr allocated at address: " << (void *)m_active_pointer);
   }
 }
 
@@ -204,19 +208,28 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t new_elems)
 
     T* new_ptr;
   #if defined(CHAI_ENABLE_UM)
-    cudaMallocManaged(&new_ptr, sizeof(T)*new_elems);
+    if (new_elems != 0) { 
+       cudaMallocManaged(&new_ptr, sizeof(T)*new_elems);
 
-    cudaMemcpy(new_ptr, m_active_pointer, sizeof(T)*m_elems, cudaMemcpyDefault);
+       cudaMemcpy(new_ptr, m_active_pointer, sizeof(T)*m_elems, cudaMemcpyDefault);
+    } else {
+       new_ptr = nullptr;
+    }
 
     cudaFree(m_active_pointer);
   #else  
-    new_ptr = static_cast<T*>(realloc(m_active_pointer, sizeof(T)*new_elems));
+    if (new_elems == 0) { 
+       ::free(m_active_pointer);
+       new_ptr = nullptr;
+    } else {
+       new_ptr = static_cast<T*>(realloc(m_active_pointer, sizeof(T)*new_elems));
+    }
   #endif
 
     m_elems = new_elems;
     m_active_pointer = new_ptr;
 
-    CHAI_LOG("ManagedArray", "m_active_ptr reallocated at address: " << m_active_pointer);
+    CHAI_LOG("ManagedArray", "m_active_ptr reallocated at address: " << (void *) m_active_pointer);
   }
 }
 
