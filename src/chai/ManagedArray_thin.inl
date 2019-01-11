@@ -244,6 +244,7 @@ CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
       #else
         ::free(m_active_pointer);
       #endif
+      m_active_pointer = nullptr;
       }
    }
 }

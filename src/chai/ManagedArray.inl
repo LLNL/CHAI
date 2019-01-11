@@ -272,6 +272,8 @@ CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
 {
   if(!m_is_slice) {
     m_resource_manager->free(m_pointer_record, space);
+    m_active_pointer = nullptr;
+    m_active_base_pointer = nullptr;
   } else {
     CHAI_LOG("ManagedArray", "Cannot free a slice!");
   }
