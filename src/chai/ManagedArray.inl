@@ -63,8 +63,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
   m_resource_manager = ArrayManager::getInstance();
 
   m_pointer_record = new PointerRecord{};
-  m_pointer_record->m_size = 0;
-  m_pointer_record->m_user_callback = [](Action, ExecutionSpace, size_t) {};
 
   for (int space = CPU;  space < NUM_EXECUTION_SPACES; space++) {
     m_pointer_record->m_allocators[space] = 
@@ -408,13 +406,13 @@ CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
 template<typename T>
 template<bool Q>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool ) :
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, CHAIDISAMBIGUATE, bool ) :
   m_active_pointer(data),
   m_active_base_pointer(data),
 #if !defined(__CUDA_ARCH__)
   m_resource_manager(ArrayManager::getInstance()),
-  m_elems(m_resource_manager->getSize(m_active_base_pointer)),
-  m_pointer_record(m_resource_manager->getPointerRecord(data)),
+  m_elems(m_resource_manager->getSize((void *)m_active_base_pointer)),
+  m_pointer_record(m_resource_manager->getPointerRecord((void *)data)),
 #else
   m_resource_manager(nullptr),
   m_elems(0),
@@ -443,7 +441,7 @@ ManagedArray<T>::getActivePointer() const
 template<typename T> 
 T*
 ManagedArray<T>::getPointer(ExecutionSpace space) const { 
-   return m_pointer_record->m_pointers[space];
+   return (T*) m_pointer_record->m_pointers[space];
 }
 
 

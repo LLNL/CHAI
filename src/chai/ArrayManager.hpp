@@ -253,6 +253,12 @@ public:
 
   int getAllocatorId(ExecutionSpace space) const;
 
+  /*!
+   * \brief Wraps our resource manager's copy.
+   *
+   */
+  void copy(void * dst, void * src, size_t size); 
+
 protected:
   /*!
    * \brief Construct a new ArrayManager.

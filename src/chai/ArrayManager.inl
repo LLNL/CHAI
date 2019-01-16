@@ -125,6 +125,11 @@ void ArrayManager::set(T* dst_ptr, size_t index, const T& val)
 }
 #endif
 
+CHAI_INLINE
+void ArrayManager::copy(void * dst, void * src, size_t size) {
+   m_resource_manager.copy(dst,src,size);
+}
+
 } // end of namespace chai
 
 #endif // CHAI_ArrayManager_INL

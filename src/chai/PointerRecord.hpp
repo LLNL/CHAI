@@ -91,6 +91,19 @@ struct PointerRecord {
   UserCallback m_user_callback;
 
   int m_allocators[NUM_EXECUTION_SPACES];
+
+  /*!
+   * \brief Default constructor
+   *
+   */
+  PointerRecord() : m_size(0), m_last_space(NONE) { 
+     m_user_callback = [] (Action, ExecutionSpace, size_t) {};
+     for (int i = 0; i < NUM_EXECUTION_SPACES; ++i ) {
+        m_pointers[i] = nullptr;
+        m_touched[i] = false;
+        m_owned[i] = false;
+     }
+  }
 };
 
 }  // end of namespace chai

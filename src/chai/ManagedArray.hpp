@@ -310,7 +310,7 @@ public:
    * \param data Raw pointer to data.
    * \param enable Boolean argument (unused) added to differentiate constructor.
    */
-  template<bool Q=0>
+  template<bool Q=false>
   CHAI_HOST_DEVICE ManagedArray(T* data, CHAIDISAMBIGUATE test = CHAIDISAMBIGUATE(), bool foo=Q);
 #endif
 
