@@ -73,6 +73,18 @@ class CHAICopyable
 };
 
 /*!
+ * \class CHAIDISAMBIGUATE
+ *
+ * \brief Type to disambiguate otherwise ambiguous constructors.
+ *
+ */
+class CHAIDISAMBIGUATE { 
+ public:
+ CHAI_HOST_DEVICE CHAIDISAMBIGUATE() {};
+ CHAI_HOST_DEVICE ~CHAIDISAMBIGUATE() {};
+};
+
+/*!
  * \class ManagedArray
  *
  * \brief Provides an array-like class that automatically transfers data
@@ -298,8 +310,8 @@ public:
    * \param data Raw pointer to data.
    * \param enable Boolean argument (unused) added to differentiate constructor.
    */
-  template <bool Q = 0>
-  CHAI_HOST_DEVICE ManagedArray(T* data, bool test = Q);
+  template<bool Q=0>
+  CHAI_HOST_DEVICE ManagedArray(T* data, CHAIDISAMBIGUATE test = CHAIDISAMBIGUATE(), bool foo=Q);
 #endif
 
 
@@ -354,9 +366,9 @@ public:
   }
 
 
-
 private:
   CHAI_HOST void modify(size_t i, const T& val) const;
+protected:
 
   /*!
    * Currently active data pointer.
@@ -443,6 +455,25 @@ ManagedArray<T> deepCopy(ManagedArray<T> const& array)
 
   return ManagedArray<T>(copy_record, copy_record->m_last_space);
 }
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST ManagedArray<T> ManagedArray<T>::slice(size_t offset, size_t elems) {
+  ManagedArray<T> slice;
+  slice.m_resource_manager = m_resource_manager;
+  if(offset + elems > size()) {
+    CHAI_LOG("ManagedArray", "Invalid slice. No active pointer or index out of bounds");
+  } else {
+    slice.m_pointer_record = m_pointer_record;
+    slice.m_active_base_pointer = m_active_base_pointer;
+    slice.m_offset = offset + m_offset;
+    slice.m_active_pointer = m_active_base_pointer + slice.m_offset;
+    slice.m_elems = elems;
+    slice.m_is_slice = true;
+  }
+  return slice;
+}
+
 
 }  // end of namespace chai
 

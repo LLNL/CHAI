@@ -205,23 +205,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
 {
 }
 
-template<typename T>
-CHAI_INLINE
-CHAI_HOST ManagedArray<T> ManagedArray<T>::slice(size_t offset, size_t elems) {
-  ManagedArray<T> slice;
-  slice.m_resource_manager = m_resource_manager;
-  if(offset + elems > size()) {
-    CHAI_LOG("ManagedArray", "Invalid slice. No active pointer or index out of bounds");
-  } else {
-    slice.m_pointer_record = m_pointer_record;
-    slice.m_active_base_pointer = m_active_base_pointer;
-    slice.m_offset = offset + m_offset;
-    slice.m_active_pointer = m_active_base_pointer + slice.m_offset;
-    slice.m_elems = elems;
-    slice.m_is_slice = true;
-  }
-  return slice;
-}
 
 template<typename T>
 CHAI_HOST void ManagedArray<T>::allocate(
@@ -230,22 +213,24 @@ CHAI_HOST void ManagedArray<T>::allocate(
     const UserCallback& cback) 
 {
   if(!m_is_slice) {
-    CHAI_LOG("ManagedArray", "Allocating array of size " << elems << " in space " << space);
+     if (elems > 0) { 
+       CHAI_LOG("ManagedArray", "Allocating array of size " << elems << " in space " << space);
 
-      if (space == NONE) {
-        space = m_resource_manager->getDefaultAllocationSpace();
-      }
+       if (space == NONE) {
+          space = m_resource_manager->getDefaultAllocationSpace();
+       }
 
-  m_pointer_record->m_user_callback = cback;
-  m_elems = elems;
-  m_pointer_record->m_size = sizeof(T)*elems;
+       m_pointer_record->m_user_callback = cback;
+       m_elems = elems;
+       m_pointer_record->m_size = sizeof(T)*elems;
 
-  m_resource_manager->allocate(m_pointer_record, space);
+       m_resource_manager->allocate(m_pointer_record, space);
 
-  m_active_base_pointer = static_cast<T*>(m_pointer_record->m_pointers[space]);
-  m_active_pointer = m_active_base_pointer; // Cannot be a slice
+       m_active_base_pointer = static_cast<T*>(m_pointer_record->m_pointers[space]);
+       m_active_pointer = m_active_base_pointer; // Cannot be a slice
 
-    CHAI_LOG("ManagedArray", "m_active_ptr allocated at address: " << m_active_pointer);
+       CHAI_LOG("ManagedArray", "m_active_ptr allocated at address: " << m_active_pointer);
+     }
   }
 }
 
@@ -254,16 +239,21 @@ CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::reallocate(size_t elems)
 {
   if(!m_is_slice) {
-    CHAI_LOG("ManagedArray", "Reallocating array of size " << m_elems << " with new size" << elems);
+    if (elems > 0) {
+       CHAI_LOG("ManagedArray", "Reallocating array of size " << m_elems << " with new size" << elems);
 
-    m_elems = elems;
-    m_active_base_pointer =
-      static_cast<T*>(m_resource_manager->reallocate<T>(m_active_base_pointer, elems,
-                                                      m_pointer_record));
-    m_active_pointer = m_active_base_pointer; // Cannot be a slice
+       m_elems = elems;
+       m_active_base_pointer =
+         static_cast<T*>(m_resource_manager->reallocate<T>(m_active_base_pointer, elems,
+                                                         m_pointer_record));
+       m_active_pointer = m_active_base_pointer; // Cannot be a slice
 
-    CHAI_LOG("ManagedArray", "m_active_ptr reallocated at address: " << m_active_pointer);
-  }
+       CHAI_LOG("ManagedArray", "m_active_ptr reallocated at address: " << m_active_pointer);
+       }
+       else {
+          this->free();
+       }
+   }
 }
 
 template<typename T>
@@ -501,9 +491,12 @@ CHAI_HOST_DEVICE
 void
 ManagedArray<T>::moveInnerImpl()
 {
-  for (int i = 0; i < size(); ++i)
+  int len = m_pointer_record->m_size / sizeof(T);
+  for (int i = 0; i < len; ++i)
   {
-    auto inner = T(m_active_pointer[i]);
+    // trigger the copy constructor
+    T inner = T(m_active_pointer[i]);
+    // ensure the inner type gets the state of the result of the copy
     m_active_pointer[i].shallowCopy(inner);
   }
 }
