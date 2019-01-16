@@ -111,6 +111,8 @@ void forall(cuda, int begin, int end, LOOP_BODY&& body)
 
   forall_kernel_gpu<<<gridSize, blockSize>>>(begin, end - begin, body);
 
+  cudaDeviceSynchronize();
+  
   rm->setExecutionSpace(chai::NONE);
 }
 #endif

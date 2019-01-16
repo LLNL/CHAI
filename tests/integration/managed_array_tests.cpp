@@ -562,11 +562,13 @@ CUDA_TEST(ManagedArray, SliceDevice) {
 }
 
 CUDA_TEST(ManagedArray, SetOnDevice) {
-  chai::ManagedArray<float> array(10);
+  chai::ManagedArray<int> array(10);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) { array[i] = i; });
+  forall(sequential(), 0, 10, [=](int i) { array[i] = i; });
 
-  forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
+  forall(cuda(), 0, 10, [=] __device__(int i) { array[i] *= 2; });
+
+  forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], 2 * i); });
 
   array.free();
 }
@@ -840,31 +842,193 @@ CUDA_TEST(ManagedArray, Move)
   array.free();
 }
 
-CUDA_TEST(ManagedArray, MoveInnerImpl)
+/**
+ * This test creates an array of arrays where the outer array is on the
+ * CPU and the inner arrays are on the GPU. It then captures the outer array
+ * on the CPU and checks that the inner arrays were moved to the CPU.
+ */
+CUDA_TEST(ManagedArray, MoveInnerToHost)
 {
-  chai::ManagedArray<chai::ManagedArray<int>> originalArray(3, chai::CPU);
+  const int N = 5;
 
-  for (int i = 0; i < 3; ++i) {
-    auto temp = chai::ManagedArray<int>(5, chai::GPU);
+  /* Create the outer array. */
+  chai::ManagedArray<chai::ManagedArray<int>> originalArray(N);
 
-    forall(cuda(), 0, 5, [=] __device__(int j) { temp[j] = j; });
+  /* Loop over the outer array and populate it with arrays on the GPU. */
+  forall(sequential(), 0, N,
+    [=](int i)
+    {
+      chai::ManagedArray<int> temp(N, chai::GPU);
 
-    originalArray[i] = temp;
+      forall(cuda(), 0, N,
+        [=] __device__(int j)
+        {
+          temp[j] = N * i + j;
+        }
+      );
+
+      originalArray[i] = temp;
+    }
+  );
+
+  /* Capture the outer array and check that the values of the inner array are
+   * correct. */
+  forall(sequential(), 0, N,
+    [=](int i)
+    {
+      for (int j = 0; j < N; ++j)
+      {
+        ASSERT_EQ(originalArray[i][j], N * i + j);
+      }
+    }
+  );
+
+  for (int i = 0; i < N; ++i) {
+    originalArray[i].free();
   }
 
-  auto copiedArray = chai::ManagedArray<chai::ManagedArray<int>>(originalArray);
+  originalArray.free();
+}
 
-  for (int i = 0; i < 3; ++i) {
-    auto temp = copiedArray[i];
+/**
+ * This test creates an array of arrays where both the outer array and inner
+ * arrays are on the CPU. It then captures the outer array on the GPU and
+ * modifies the values of the inner arrays. Finally it captures the outer array
+ * on the CPU and checks that the values of the inner arrays were modified
+ * correctly. 
+ */
+CUDA_TEST(ManagedArray, MoveInnerToDevice)
+{
+  const int N = 5;
 
-    forall(sequential(), 0, 5, [=](int j) { ASSERT_EQ(temp[j], j); });
+  /* Create the outer array. */
+  chai::ManagedArray<chai::ManagedArray<int>> originalArray(N);
+
+  /* Loop over the outer array and populate it with arrays on the CPU. */
+  forall(sequential(), 0, N,
+    [=](int i)
+    {
+      chai::ManagedArray<int> temp(N);
+
+      forall(sequential(), 0, N,
+        [=](int j)
+        {
+          temp[j] = N * i + j;
+        }
+      );
+
+      originalArray[i] = temp;
+    }
+  );
+
+  /* Capture the outer array on the GPU and update the values of the inner
+   * arrays. */
+  forall(cuda(), 0, N,
+    [=] __device__(int i)
+    {
+      for( int j = 0; j < N; ++j)
+      {
+        originalArray[i][j] *= 2;
+      }
+    }
+  );
+
+  /* Capture the outer array on the CPU and check the values of the inner
+   * arrays. */
+  forall(sequential(), 0, N,
+    [=](int i)
+    {
+      for (int j = 0; j < N; ++j)
+      {
+        ASSERT_EQ(originalArray[i][j], 2 * (N * i + j));
+      }
+    }
+  );
+
+  for (int i = 0; i < N; ++i) {
+    originalArray[i].free();
   }
 
-  for (int i = 0; i < 3; ++i) {
-    copiedArray[i].free();
-  }
+  originalArray.free();
+}
 
-  copiedArray.free();
+/**
+ * This test creates an array of arrays of arrays where all of the arrays begin
+ * on the CPU. It then captures the outermost array on the GPU and modifies the
+ * values of the innermost arrays. Finally it captures the outermost array
+ * on the CPU and checks that the values of the innermost arrays were modified
+ * correctly. 
+ */
+CUDA_TEST(ManagedArray, MoveInnerToDevice2)
+{
+  const int N = 5;
+
+  /* Create the outermost array on the CPU. */
+  chai::ManagedArray<chai::ManagedArray<chai::ManagedArray<int>>> originalArray(N);
+
+  forall(sequential(), 0, N,
+    [=](int i)
+    {
+      /* Create the middle array on the CPU. */
+      chai::ManagedArray<chai::ManagedArray<int>> middle(N);
+
+      forall(sequential(), 0, N,
+        [=](int j)
+        {
+          /* Create the innermost array on the CPU. */
+          chai::ManagedArray<int> inner(N);
+          forall(sequential(), 0, N,
+            [=](int k)
+            {
+              inner[k] =  N * N * i + N * j + k;
+            }
+          );
+
+          middle[j] = inner;
+        }
+      );
+
+      originalArray[i] = middle;
+    }
+  );
+
+  /* Capture the outermost array on the GPU and update the values of the
+   * innermost arrays. */
+  forall(cuda(), 0, N,
+    [=] __device__(int i)
+    {
+      for( int j = 0; j < N; ++j)
+      {
+        for (int k = 0; k < N; ++k)
+        { 
+          originalArray[i][j][k] *= 2;
+        }
+      }
+    }
+  );
+
+  /* Capture the outermost array on the CPU and check the values of the
+   * innermost arrays. */
+  forall(sequential(), 0, N,
+    [=](int i)
+    {
+      for( int j = 0; j < N; ++j)
+      {
+        for (int k = 0; k < N; ++k)
+        { 
+          ASSERT_EQ(originalArray[i][j][k], 2 * (N * N * i + N * j + k));
+        }
+      }
+    }
+  );
+
+  for (int i = 0; i < N; ++i) {
+    for (int j = 0; j < N; ++j) {
+      originalArray[i][j].free();
+    }
+    originalArray[i].free();
+  }
+  originalArray.free();
 }
 
 #endif  // CHAI_DISABLE_RM
