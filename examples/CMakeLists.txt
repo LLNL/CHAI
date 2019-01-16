@@ -46,7 +46,7 @@ set (chai_umpire_example_depends
 
 if (ENABLE_CUDA)
   set (chai_umpire_example_depends
-    ${chai_umpire_example_depends{
+    ${chai_umpire_example_depends}
     cuda)
 endif()
 
