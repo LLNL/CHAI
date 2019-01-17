@@ -144,6 +144,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t) :
   m_pointer_record(nullptr),
   m_is_slice(false)
 {
+#if !defined(__CUDA_ARCH__)
+   m_resource_manager = ArrayManager::getInstance();
+#endif
 }
 
 template<typename T>
@@ -151,12 +154,15 @@ CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(PointerRecord* record, ExecutionSpace space):
   m_active_pointer(static_cast<T*>(record->m_pointers[space])),
   m_active_base_pointer(static_cast<T*>(record->m_pointers[space])),
-  m_resource_manager(ArrayManager::getInstance()),
+  m_resource_manager(),
   m_elems(record->m_size/sizeof(T)),
   m_offset(0),
   m_pointer_record(record),
   m_is_slice(false)
 {
+#if !defined(__CUDA_ARCH__)
+   m_resource_manager = ArrayManager::getInstance();
+#endif
 }
 
 
@@ -201,6 +207,11 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
   m_pointer_record(pointer_record),
   m_is_slice(false)
 {
+#if !defined(__CUDA_ARCH__)
+   if (m_resource_manager == nullptr) {
+      m_resource_manager = ArrayManager::getInstance();
+   }
+#endif
 }
 
 

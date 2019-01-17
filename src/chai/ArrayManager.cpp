@@ -109,8 +109,9 @@ void ArrayManager::deregisterPointer(PointerRecord* record)
   for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
     if (record->m_pointers[i]) m_pointer_map.erase(record->m_pointers[i]);
   }
-
-  delete record;
+  if (record != &s_null_record) {
+     delete record;
+  }
 }
 
 void ArrayManager::setExecutionSpace(ExecutionSpace space)
@@ -259,8 +260,10 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
        }
     }
   }
-
-  delete pointer_record;
+  
+  if (pointer_record != &s_null_record) {
+     delete pointer_record;
+  }
 }
 
 
