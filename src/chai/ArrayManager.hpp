@@ -258,18 +258,7 @@ public:
    *
    */
   void copy(void * dst, void * src, size_t size); 
-
-protected:
-  /*!
-   * \brief Construct a new ArrayManager.
-   *
-   * The constructor is a protected member, ensuring that it can
-   * only be called by the singleton getInstance method.
-   */
-  ArrayManager();
-
-private:
-
+  
   /*!
    * \brief Registering an allocation with the ArrayManager
    *
@@ -281,6 +270,18 @@ private:
                        ExecutionSpace space,
                        bool owned = true);
 
+protected:
+  /*!
+   * \brief Construct a new ArrayManager.
+   *
+   * The constructor is a protected member, ensuring that it can
+   * only be called by the singleton getInstance method.
+   */
+  ArrayManager();
+
+
+
+private:
   /*!
    * \brief Deregister a PointerRecord from the ArrayManager.
    */

@@ -101,6 +101,19 @@ void ArrayManager::registerPointer(
     record->m_owned[i] = true;
   }
   record->m_owned[space] = owned;
+
+  // register with umpire if it's not there, update size info if it is
+  auto allocation_record = m_resource_manager.findAllocationRecord(pointer);
+  if (allocation_record) {
+     allocation_record->m_size = record->m_size;
+  } else {
+     umpire::util::AllocationRecord * new_allocation_record = new umpire::util::AllocationRecord();
+     new_allocation_record->m_ptr = pointer;
+     new_allocation_record->m_size = record->m_size;
+     new_allocation_record->m_strategy = m_resource_manager.getAllocator(record->m_allocators[space]).getAllocationStrategy(); 
+
+     m_resource_manager.registerAllocation(pointer, new_allocation_record);
+  }
 }
 
 
@@ -307,10 +320,15 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
                                          ExecutionSpace space,
                                          bool owned)
 {
-  m_resource_manager.registerAllocation(
-      pointer,
-      new umpire::util::AllocationRecord{
-          pointer, size, m_allocators[space]->getAllocationStrategy()});
+  auto allocation_record = m_resource_manager.findAllocationRecord(pointer);
+  if (allocation_record) {
+     allocation_record->m_size = size;
+  } else {
+     m_resource_manager.registerAllocation(
+         pointer,
+         new umpire::util::AllocationRecord{
+             pointer, size, m_allocators[space]->getAllocationStrategy()});
+  }
 
   auto pointer_record = new PointerRecord{};
 
