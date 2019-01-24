@@ -336,6 +336,10 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
   pointer_record->m_owned[space] = owned;
   pointer_record->m_size = size;
   pointer_record->m_user_callback = [](Action, ExecutionSpace, size_t) {};
+  
+  for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) { 
+    pointer_record->m_allocators[space] = getAllocatorId(ExecutionSpace(space));
+  }
 
   registerPointer(pointer_record, space, owned);
 

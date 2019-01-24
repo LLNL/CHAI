@@ -48,12 +48,17 @@
 
 namespace chai {
 
-CHAI_INLINE
-CHAI_HOST PointerRecord * makePointerRecord() {
-   PointerRecord * record = new PointerRecord();
+CHAI_INLINE 
+CHAI_HOST void initRecordAllocators(PointerRecord * record) {
    for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) { 
      record->m_allocators[space] = ArrayManager::getInstance()->getAllocatorId(ExecutionSpace(space));
    }
+}
+
+CHAI_INLINE
+CHAI_HOST PointerRecord * makePointerRecord() {
+   PointerRecord * record = new PointerRecord();
+   initRecordAllocators(record);
    return record;
 }
 
@@ -217,7 +222,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
    if (m_resource_manager == nullptr) {
       m_resource_manager = ArrayManager::getInstance();
    }
-   if (m_pointer_record == &chai::ArrayManager::s_null_record) {
+   if (m_pointer_record == &chai::ArrayManager::s_null_record || m_pointer_record==nullptr) {
       bool owned = true;
       m_pointer_record = m_resource_manager->makeManaged((void *) data, sizeof(T)*m_elems,ExecutionSpace(CPU),true);
    }
