@@ -167,6 +167,8 @@ public:
                           UserCallback const& cback =
                               [](Action, ExecutionSpace, size_t) {});
 
+
+
   /*!
    * \brief Reallocate data for the ManagedArray.
    *
@@ -368,6 +370,25 @@ public:
 
 private:
   CHAI_HOST void modify(size_t i, const T& val) const;
+  // The following are only used by ManagedArray.inl, but for template shenanigan reasons
+  // need to be defined here. 
+#if !defined(CHAI_DISABLE_RM)
+  // if T is a CHAICopyable, then it is important to initialize all the
+  // ManagedArrays to nullptr at allocation, since it is extremely easy to
+  // trigger a moveInnerImpl, which expects inner values to be initialized.
+  template<bool B = std::is_base_of<CHAICopyable, T>::value,
+           typename std::enable_if<B, int>::type = 0>
+  CHAI_HOST void initInner() {
+    for (int i = 0; i < m_elems; ++i ) {
+      m_active_base_pointer[i] = nullptr;
+    }
+  }
+
+  // Do not deep initialize if T is not a CHAICopyable. 
+  template<bool B = std::is_base_of<CHAICopyable, T>::value,
+           typename std::enable_if<!B, int>::type = 0>
+  CHAI_HOST void initInner() {}
+#endif
 protected:
 
   /*!

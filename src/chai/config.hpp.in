@@ -49,5 +49,6 @@
 #cmakedefine CHAI_DISABLE_RM
 #cmakedefine CHAI_ENABLE_UM
 #cmakedefine CHAI_DEBUG
+#cmakedefine CHAI_DEBUG_2
 
 #endif // CHAI_config_HPP

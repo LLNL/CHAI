@@ -55,13 +55,6 @@ CHAI_HOST void initRecordAllocators(PointerRecord * record) {
    }
 }
 
-CHAI_INLINE
-CHAI_HOST PointerRecord * makePointerRecord() {
-   PointerRecord * record = new PointerRecord();
-   initRecordAllocators(record);
-   return record;
-}
-
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
@@ -76,7 +69,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
 #if !defined(__CUDA_ARCH__)
   m_resource_manager = ArrayManager::getInstance();
 
-  m_pointer_record = makePointerRecord();
+  m_pointer_record = m_resource_manager->makeManaged((void *)m_active_base_pointer,m_elems*sizeof(T),CPU,true);
 #endif
 }
 
@@ -245,7 +238,7 @@ CHAI_HOST void ManagedArray<T>::allocate(
           space = m_resource_manager->getDefaultAllocationSpace();
        }
        if (m_pointer_record == nullptr) {
-          m_pointer_record = makePointerRecord();
+          m_pointer_record = m_resource_manager->makeManaged((void *) m_active_base_pointer,m_elems*sizeof(T),CPU,true);
        }
 
        m_pointer_record->m_user_callback = cback;
@@ -257,10 +250,18 @@ CHAI_HOST void ManagedArray<T>::allocate(
        m_active_base_pointer = static_cast<T*>(m_pointer_record->m_pointers[space]);
        m_active_pointer = m_active_base_pointer; // Cannot be a slice
 
+       // if T is a CHAICopyable, then it is important to initialize all the
+       // ManagedArrays to nullptr at allocation, since it is extremely easy to
+       // trigger a moveInnerImpl, which expects inner values to be initialized.
+       initInner();
+
        CHAI_LOG("ManagedArray", "m_active_ptr allocated at address: " << m_active_pointer);
      }
   }
 }
+
+
+
 
 template<typename T>
 CHAI_INLINE
@@ -268,9 +269,12 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t elems)
 {
   if(!m_is_slice) {
     if (elems > 0) {
+       if (m_elems == 0 && m_active_base_pointer == nullptr) {
+          return allocate(elems, CPU);
+       }
        CHAI_LOG("ManagedArray", "Reallocating array of size " << m_elems << " with new size" << elems);
        if (m_pointer_record == nullptr) {
-          m_pointer_record  = makePointerRecord();
+          m_pointer_record = m_resource_manager->makeManaged((void *)m_active_base_pointer,m_elems*sizeof(T),CPU,true);
        }
 
        m_elems = elems;
@@ -310,7 +314,8 @@ CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::reset()
 {
   if (m_pointer_record == nullptr) {
-     m_pointer_record = makePointerRecord();
+     CHAI_LOG_2("ManagedArray.inl","registerTouch called on ManagedArray with nullptr pointer record.");
+     m_pointer_record = m_resource_manager->makeManaged((void *)m_active_base_pointer,m_elems*sizeof(T),CPU,true);
   }
   m_resource_manager->resetTouch(m_pointer_record);
 }
@@ -325,7 +330,8 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::registerTouch(ExecutionSpace space) {
   if (m_pointer_record == nullptr) {
-     m_pointer_record = makePointerRecord();
+     CHAI_LOG_2("ManagedArray.inl","registerTouch called on ManagedArray with nullptr pointer record.");
+     m_pointer_record = m_resource_manager->makeManaged((void *)m_active_base_pointer,m_elems*sizeof(T),CPU,true);
   }
   m_resource_manager->registerTouch(m_pointer_record, space);
 }
@@ -479,8 +485,8 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, CHAIDISAMBIGUATE, bool )
   m_is_slice(false)
 {
 #if !defined(__CUDA_ARCH__)
-   if (m_pointer_record == &ArrayManager::s_null_record) {
-      CHAI_LOG("ManagedArray","REINTEGRATED external pointer unknown by CHAI.");
+   if (m_pointer_record == &ArrayManager::s_null_record || m_active_pointer != m_pointer_record->m_pointers[CPU]) {
+      CHAI_LOG_2("ManagedArray","REINTEGRATED external pointer unknown by CHAI.");
    }
 #endif
 }
@@ -540,7 +546,7 @@ ManagedArray<T>::operator= (std::nullptr_t from) {
         m_pointer_record->m_pointers[i] = nullptr;
      }
   } else {
-     m_pointer_record = makePointerRecord();
+     m_pointer_record = m_resource_manager->makeManaged((void *)m_active_base_pointer,m_elems*sizeof(T),CPU,true);
   }
   return *this;
 }

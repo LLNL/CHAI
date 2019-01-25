@@ -70,4 +70,11 @@
 #define CHAI_LOG(file, msg)
 #endif
 
+#if defined(CHAI_DEBUG_2) || defined(CHAI_DEBUG)
+#define CHAI_LOG_2(file, msg) \
+  std::cerr << "[" << file << "] " << msg << std::endl;
+#else
+#define CHAI_LOG_2(file, msg)
+#endif
+
 #endif  // CHAI_ChaiMacros_HPP

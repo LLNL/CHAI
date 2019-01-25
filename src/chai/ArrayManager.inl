@@ -67,12 +67,13 @@ void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* point
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     if (pointer_record->m_pointers[space] == pointer) {
       my_space = static_cast<ExecutionSpace>(space);
+      break;
     }
   }
 
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     if(!pointer_record->m_owned[space]) {
-      CHAI_LOG("ArrayManager", "Cannot reallocate unowned pointer");
+      CHAI_LOG_2("ArrayManager", "Cannot reallocate unowned pointer");
       return pointer_record->m_pointers[my_space];
     }
   }

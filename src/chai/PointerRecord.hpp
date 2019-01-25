@@ -101,7 +101,7 @@ struct PointerRecord {
      for (int space = 0; space < NUM_EXECUTION_SPACES; ++space ) {
         m_pointers[space] = nullptr;
         m_touched[space] = false;
-        m_owned[space] = false;
+        m_owned[space] = true;
      }
   }
 };
