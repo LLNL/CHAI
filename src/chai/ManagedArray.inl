@@ -222,7 +222,7 @@ CHAI_HOST void ManagedArray<T>::allocate(
       space = m_resource_manager->getDefaultAllocationSpace();
     }
 
-    m_pointer_record->m_user_callback = cback;
+    setUserCallback(cback);
     m_elems = elems;
     m_pointer_record->m_size = sizeof(T)*elems;
 

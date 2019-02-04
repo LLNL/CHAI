@@ -823,6 +823,216 @@ CUDA_TEST(ManagedArray, UserCallback)
   ASSERT_EQ(bytes_alloc, 2 * 20 * sizeof(float));
   ASSERT_EQ(bytes_free, 2 * 20 * sizeof(float));
 }
+
+CUDA_TEST(ManagedArray, CallBackConst)
+{
+  int num_h2d = 0;
+  int num_d2h = 0;
+
+  auto callBack = [&](chai::Action act, chai::ExecutionSpace s, size_t bytes)
+  {
+    printf("cback: act=%d, space=%d, bytes=%ld\n", (int) act, (int) s, (long) bytes);
+    if (act == chai::ACTION_MOVE)
+    {
+      if (s == chai::CPU)
+      {
+        printf("Moved to host\n");
+        ++num_d2h;
+      }
+      else if (s == chai::GPU)
+      {
+        printf("Moved to device\n");
+        ++num_h2d;
+      }
+    }
+  };
+
+  chai::ManagedArray<int> array(100);
+  array.setUserCallback(callBack);
+
+  // Set the values.
+  forall(sequential(), 0, 100, [=](int i) { array[i] = i; });
+
+  // Create a const copy and move it to the device.
+  chai::ManagedArray<int const> array_const = array;
+  forall(cuda(), 0, 100, [=] __device__(int i) { assert(array_const[i] == i); });
+
+  // Change the values, use a for-loop so as to not trigger a movement.
+  for (int i = 0; i < 100; ++i)
+  {
+    array[i] = 2 * i;
+  }
+
+  // Capture the array on host, should not trigger a movement.
+  forall(sequential(), 0, 100, [=](int i) { ASSERT_EQ(array[i], 2 * i); });
+
+  ASSERT_EQ(num_h2d, 1);
+  ASSERT_EQ(num_d2h, 0);
+
+  array.free();
+}
+
+CUDA_TEST(ManagedArray, CallBackConstArray)
+{
+  int num_h2d = 0;
+  int num_d2h = 0;
+
+  auto callBack = [&](chai::Action act, chai::ExecutionSpace s, size_t bytes)
+  {
+    printf("cback: act=%d, space=%d, bytes=%ld\n", (int) act, (int) s, (long) bytes);
+    if (act == chai::ACTION_MOVE)
+    {
+      if (s == chai::CPU)
+      {
+        printf("Moved to host\n");
+        ++num_d2h;
+      }
+      else if (s == chai::GPU)
+      {
+        printf("Moved to device\n");
+        ++num_h2d;
+      }
+    }
+  };
+
+  const int N = 5;
+
+  /* Create the outer array. */
+  chai::ManagedArray<chai::ManagedArray<int>> outerArray(N);
+  outerArray.setUserCallback(callBack);
+
+  /* Loop over the outer array and populate it with arrays on the CPU. */
+  forall(sequential(), 0, N,
+    [=](int i)
+    {
+      chai::ManagedArray<int> temp(N);
+      temp.setUserCallback(callBack);
+
+      forall(sequential(), 0, N,
+        [=](int j)
+        {
+          temp[j] = N * i + j;
+        }
+      );
+
+      outerArray[i] = temp;
+    }
+  );
+
+  // Create a const copy and move it to the device.
+  chai::ManagedArray<chai::ManagedArray<int> const> outerArrayConst = outerArray;
+  forall(cuda(), 0, N,
+    [=] __device__(int i)
+    {
+      for( int j = 0; j < N; ++j)
+      {
+        assert(outerArrayConst[i][j] == N * i + j);
+      }
+    }
+  );
+
+  // Capture the array on host, should not trigger a movement of the outer array.
+  forall(sequential(), 0, N,
+    [=](int i)
+    {
+      for (int j = 0; j < N; ++j)
+      {
+        ASSERT_EQ(outerArray[i][j], N * i + j);
+      }
+    }
+  );
+
+  ASSERT_EQ(num_h2d, N + 1);
+  ASSERT_EQ(num_d2h, N);
+
+  for (int i = 0; i < N; ++i) {
+    outerArray[i].free();
+  }
+
+  outerArray.free();
+}
+
+CUDA_TEST(ManagedArray, CallBackConstArrayConst)
+{
+  int num_h2d = 0;
+  int num_d2h = 0;
+
+  auto callBack = [&](chai::Action act, chai::ExecutionSpace s, size_t bytes)
+  {
+    printf("cback: act=%d, space=%d, bytes=%ld\n", (int) act, (int) s, (long) bytes);
+    if (act == chai::ACTION_MOVE)
+    {
+      if (s == chai::CPU)
+      {
+        printf("Moved to host\n");
+        ++num_d2h;
+      }
+      else if (s == chai::GPU)
+      {
+        printf("Moved to device\n");
+        ++num_h2d;
+      }
+    }
+  };
+
+  const int N = 5;
+
+  /* Create the outer array. */
+  chai::ManagedArray<chai::ManagedArray<int>> outerArray(N);
+  outerArray.setUserCallback(callBack);
+
+  /* Loop over the outer array and populate it with arrays on the CPU. */
+  forall(sequential(), 0, N,
+    [=](int i)
+    {
+      chai::ManagedArray<int> temp(N);
+      temp.setUserCallback(callBack);
+
+      forall(sequential(), 0, N,
+        [=](int j)
+        {
+          temp[j] = N * i + j;
+        }
+      );
+
+      outerArray[i] = temp;
+    }
+  );
+
+  // Create a const copy of int const and move it to the device.
+  chai::ManagedArray<chai::ManagedArray<int const> const> outerArrayConst = 
+    reinterpret_cast<chai::ManagedArray<chai::ManagedArray<int const> const> &>(outerArray);
+  forall(cuda(), 0, N,
+    [=] __device__(int i)
+    {
+      for( int j = 0; j < N; ++j)
+      {
+        assert(outerArrayConst[i][j] == N * i + j);
+      }
+    }
+  );
+
+  // Capture the array on host, should not trigger a movement of the outer array.
+  forall(sequential(), 0, N,
+    [=](int i)
+    {
+      for (int j = 0; j < N; ++j)
+      {
+        ASSERT_EQ(outerArray[i][j], N * i + j);
+      }
+    }
+  );
+
+  ASSERT_EQ(num_h2d, N + 1);
+  ASSERT_EQ(num_d2h, 0);
+
+  for (int i = 0; i < N; ++i) {
+    outerArray[i].free();
+  }
+
+  outerArray.free();
+}
+
 #endif
 #endif
 
@@ -852,7 +1062,7 @@ CUDA_TEST(ManagedArray, MoveInnerToHost)
   const int N = 5;
 
   /* Create the outer array. */
-  chai::ManagedArray<chai::ManagedArray<int>> originalArray(N);
+  chai::ManagedArray<chai::ManagedArray<int>> outerArray(N);
 
   /* Loop over the outer array and populate it with arrays on the GPU. */
   forall(sequential(), 0, N,
@@ -867,7 +1077,7 @@ CUDA_TEST(ManagedArray, MoveInnerToHost)
         }
       );
 
-      originalArray[i] = temp;
+      outerArray[i] = temp;
     }
   );
 
@@ -878,16 +1088,16 @@ CUDA_TEST(ManagedArray, MoveInnerToHost)
     {
       for (int j = 0; j < N; ++j)
       {
-        ASSERT_EQ(originalArray[i][j], N * i + j);
+        ASSERT_EQ(outerArray[i][j], N * i + j);
       }
     }
   );
 
   for (int i = 0; i < N; ++i) {
-    originalArray[i].free();
+    outerArray[i].free();
   }
 
-  originalArray.free();
+  outerArray.free();
 }
 
 /**
@@ -902,7 +1112,7 @@ CUDA_TEST(ManagedArray, MoveInnerToDevice)
   const int N = 5;
 
   /* Create the outer array. */
-  chai::ManagedArray<chai::ManagedArray<int>> originalArray(N);
+  chai::ManagedArray<chai::ManagedArray<int>> outerArray(N);
 
   /* Loop over the outer array and populate it with arrays on the CPU. */
   forall(sequential(), 0, N,
@@ -917,7 +1127,7 @@ CUDA_TEST(ManagedArray, MoveInnerToDevice)
         }
       );
 
-      originalArray[i] = temp;
+      outerArray[i] = temp;
     }
   );
 
@@ -928,7 +1138,7 @@ CUDA_TEST(ManagedArray, MoveInnerToDevice)
     {
       for( int j = 0; j < N; ++j)
       {
-        originalArray[i][j] *= 2;
+        outerArray[i][j] *= 2;
       }
     }
   );
@@ -940,16 +1150,16 @@ CUDA_TEST(ManagedArray, MoveInnerToDevice)
     {
       for (int j = 0; j < N; ++j)
       {
-        ASSERT_EQ(originalArray[i][j], 2 * (N * i + j));
+        ASSERT_EQ(outerArray[i][j], 2 * (N * i + j));
       }
     }
   );
 
   for (int i = 0; i < N; ++i) {
-    originalArray[i].free();
+    outerArray[i].free();
   }
 
-  originalArray.free();
+  outerArray.free();
 }
 
 /**
@@ -964,31 +1174,30 @@ CUDA_TEST(ManagedArray, MoveInnerToDevice2)
   const int N = 5;
 
   /* Create the outermost array on the CPU. */
-  chai::ManagedArray<chai::ManagedArray<chai::ManagedArray<int>>> originalArray(N);
+  chai::ManagedArray<chai::ManagedArray<chai::ManagedArray<int>>> outerArray(N);
 
   forall(sequential(), 0, N,
     [=](int i)
     {
       /* Create the middle array on the CPU. */
       chai::ManagedArray<chai::ManagedArray<int>> middle(N);
+      middle.registerTouch(chai::CPU);
 
-      forall(sequential(), 0, N,
-        [=](int j)
+      for( int j = 0; j < N; ++j )
+      {
+        /* Create the innermost array on the CPU. */
+        chai::ManagedArray<int> inner(N);
+        inner.registerTouch(chai::CPU);
+
+        for( int k = 0; k < N; ++k )
         {
-          /* Create the innermost array on the CPU. */
-          chai::ManagedArray<int> inner(N);
-          forall(sequential(), 0, N,
-            [=](int k)
-            {
-              inner[k] =  N * N * i + N * j + k;
-            }
-          );
-
-          middle[j] = inner;
+          inner[k] =  N * N * i + N * j + k;
         }
-      );
 
-      originalArray[i] = middle;
+        middle[j] = inner;
+      }
+
+      outerArray[i] = middle;
     }
   );
 
@@ -1001,7 +1210,7 @@ CUDA_TEST(ManagedArray, MoveInnerToDevice2)
       {
         for (int k = 0; k < N; ++k)
         { 
-          originalArray[i][j][k] *= 2;
+          outerArray[i][j][k] *= 2;
         }
       }
     }
@@ -1016,7 +1225,7 @@ CUDA_TEST(ManagedArray, MoveInnerToDevice2)
       {
         for (int k = 0; k < N; ++k)
         { 
-          ASSERT_EQ(originalArray[i][j][k], 2 * (N * N * i + N * j + k));
+          ASSERT_EQ(outerArray[i][j][k], 2 * (N * N * i + N * j + k));
         }
       }
     }
@@ -1024,11 +1233,11 @@ CUDA_TEST(ManagedArray, MoveInnerToDevice2)
 
   for (int i = 0; i < N; ++i) {
     for (int j = 0; j < N; ++j) {
-      originalArray[i][j].free();
+      outerArray[i][j].free();
     }
-    originalArray[i].free();
+    outerArray[i].free();
   }
-  originalArray.free();
+  outerArray.free();
 }
 
 #endif  // CHAI_DISABLE_RM
