@@ -303,7 +303,10 @@ public:
    * num_bytes is the number of bytes moved.
    *
    */
-  CHAI_HOST void setUserCallback(UserCallback const& cback);
+  CHAI_HOST void setUserCallback(UserCallback const& cback)
+  {
+    m_pointer_record->m_user_callback = cback;
+  }
 #endif
 
 

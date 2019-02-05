@@ -222,7 +222,7 @@ CHAI_HOST void ManagedArray<T>::allocate(
       space = m_resource_manager->getDefaultAllocationSpace();
     }
 
-    m_pointer_record->m_user_callback = cback;
+    setUserCallback(cback);
     m_elems = elems;
     m_pointer_record->m_size = sizeof(T)*elems;
 
@@ -371,8 +371,10 @@ void ManagedArray<T>::move(ExecutionSpace space)
 
   if (!std::is_const<T>::value) {
     CHAI_LOG("ManagedArray", "T is non-const, registering touch of pointer" << m_active_pointer);
-    m_resource_manager->registerTouch(m_pointer_record);
+    m_resource_manager->registerTouch(m_pointer_record, space);
   }
+
+  if (space != NONE) m_pointer_record->m_last_space = space;
 
   /* When moving from GPU to CPU we need to move the inner arrays after the outer array. */
 #if defined(CHAI_ENABLE_CUDA)
@@ -484,15 +486,16 @@ CHAI_INLINE
 CHAI_HOST
 void
 ManagedArray<T>::moveInnerImpl(ExecutionSpace space) {
-  if (space == chai::NONE) {
+  if (space == NONE) {
     return;
   }
 
   ExecutionSpace const prev_space = m_resource_manager->getExecutionSpace();
   m_resource_manager->setExecutionSpace(space);
 
+  T_non_const* non_const_active_base_pointer = const_cast<T_non_const*>(m_active_base_pointer);
   for (int i = 0; i < size(); ++i) {
-    m_active_pointer[i] = T(m_active_pointer[i]);
+    non_const_active_base_pointer[i] = T(m_active_base_pointer[i]);
   }
 
   m_resource_manager->setExecutionSpace(prev_space);
