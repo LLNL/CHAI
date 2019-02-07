@@ -63,7 +63,7 @@
 
 #define CHAI_UNUSED_ARG(X)
 
-#if CHAI_DEBUG
+#if defined(CHAI_DEBUG)
 #define CHAI_LOG(file, msg) \
   std::cerr << "[" << file << "] " << msg << std::endl;
 #else

@@ -86,9 +86,9 @@ void ArrayManager::registerPointer(
    ExecutionSpace space,
    bool owned)
 {
-  CHAI_LOG("ArrayManager", "Registering " << pointer << " in space " << space);
-
   auto pointer = record->m_pointers[space];
+
+  CHAI_LOG("ArrayManager", "Registering " << pointer << " in space " << space);
 
   auto found_pointer_record = m_pointer_map.find(pointer);
   if (found_pointer_record == m_pointer_map.end()) {
@@ -103,28 +103,46 @@ void ArrayManager::registerPointer(
   record->m_owned[space] = owned;
 
   // register with umpire if it's not there, update size info if it is
-  auto allocation_record = m_resource_manager.findAllocationRecord(pointer);
-  if (allocation_record) {
-     allocation_record->m_size = record->m_size;
-  } else {
-     umpire::util::AllocationRecord * new_allocation_record = new umpire::util::AllocationRecord();
-     new_allocation_record->m_ptr = pointer;
-     new_allocation_record->m_size = record->m_size;
-     new_allocation_record->m_strategy = m_resource_manager.getAllocator(record->m_allocators[space]).getAllocationStrategy(); 
+  if (pointer) {
+     auto allocation_record = m_resource_manager.findAllocationRecord(pointer);
+     if (allocation_record) {
+        allocation_record->m_size = record->m_size;
+     } else {
+        umpire::util::AllocationRecord * new_allocation_record = new umpire::util::AllocationRecord();
+        new_allocation_record->m_ptr = pointer;
+        new_allocation_record->m_size = record->m_size;
+        new_allocation_record->m_strategy = m_resource_manager.getAllocator(record->m_allocators[space]).getAllocationStrategy(); 
 
-     m_resource_manager.registerAllocation(pointer, new_allocation_record);
+        m_resource_manager.registerAllocation(pointer, new_allocation_record);
+     }
   }
 }
 
 
-void ArrayManager::deregisterPointer(PointerRecord* record)
+void ArrayManager::deregisterPointer(PointerRecord* record, bool deregisterFromUmpire)
 {
   for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
-    if (record->m_pointers[i]) m_pointer_map.erase(record->m_pointers[i]);
+    void * pointer = record->m_pointers[i];
+    if (pointer) {
+       if (deregisterFromUmpire) {
+          m_resource_manager.deregisterAllocation(pointer);
+       }
+       m_pointer_map.erase(pointer);
+    }
   }
   if (record != &s_null_record) {
      delete record;
   }
+}
+
+void * ArrayManager::frontOfAllocation(void * pointer) {
+  if (pointer) {
+    auto allocation_record = m_resource_manager.findAllocationRecord(pointer);
+    if (allocation_record) {
+      return allocation_record -> m_ptr;
+    }
+  }
+  return nullptr;
 }
 
 void ArrayManager::setExecutionSpace(ExecutionSpace space)
@@ -159,10 +177,11 @@ ExecutionSpace ArrayManager::getExecutionSpace()
 
 void ArrayManager::registerTouch(PointerRecord* pointer_record)
 {
-  CHAI_LOG("ArrayManager",
-           pointer << " touched in space " << m_current_execution_space);
 
   if (m_current_execution_space == NONE) return;
+
+  CHAI_LOG("ArrayManager",
+           pointer_record->m_pointers[m_current_execution_space] << " touched in space " << m_current_execution_space);
 
   registerTouch(pointer_record, m_current_execution_space);
 }
@@ -229,7 +248,7 @@ void ArrayManager::allocate(
   pointer_record->m_pointers[space] =  alloc.allocate(size);
   registerPointer(pointer_record, space);
 
-  CHAI_LOG("ArrayManager", "Allocated array at: " << ret);
+  CHAI_LOG("ArrayManager", "Allocated array at: " << pointer_record->m_pointers[space]);
 }
 
 void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFree)
@@ -274,7 +293,7 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
     }
   }
   
-  if (pointer_record != &s_null_record) {
+  if (pointer_record != &s_null_record && spaceToFree == NONE) {
      delete pointer_record;
   }
 }
@@ -320,16 +339,6 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
                                          ExecutionSpace space,
                                          bool owned)
 {
-  auto allocation_record = m_resource_manager.findAllocationRecord(pointer);
-  if (allocation_record) {
-     allocation_record->m_size = size;
-  } else {
-     m_resource_manager.registerAllocation(
-         pointer,
-         new umpire::util::AllocationRecord{
-             pointer, size, m_allocators[space]->getAllocationStrategy()});
-  }
-
   auto pointer_record = new PointerRecord{};
 
   pointer_record->m_pointers[space] = pointer;

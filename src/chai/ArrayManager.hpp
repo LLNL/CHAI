@@ -173,7 +173,9 @@ public:
   ExecutionSpace getDefaultAllocationSpace();
 
   /*!
-   * \brief Free all allocations associated with the given PointerRecord.
+   * \brief Free allocation(s) associated with the given PointerRecord.
+   *        Default (space == NONE) will free all allocations and delete 
+   *        the pointer record.
    */
   void free(PointerRecord* pointer, ExecutionSpace space = NONE);
 
@@ -270,6 +272,16 @@ public:
                        ExecutionSpace space,
                        bool owned = true);
 
+  /*!
+   * \brief Deregister a PointerRecord from the ArrayManager.
+   */
+  void deregisterPointer(PointerRecord* record, bool deregisterFromUmpire=false);
+
+  /*!
+   * \brief Returns the front of the allocation associated with this pointer, nullptr if allocation not found.
+   */
+  void * frontOfAllocation(void * pointer); 
+
 protected:
   /*!
    * \brief Construct a new ArrayManager.
@@ -282,10 +294,6 @@ protected:
 
 
 private:
-  /*!
-   * \brief Deregister a PointerRecord from the ArrayManager.
-   */
-  void deregisterPointer(PointerRecord* record);
 
   /*!
    * \brief Move data in PointerRecord to the corresponding ExecutionSpace.
