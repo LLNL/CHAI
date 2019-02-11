@@ -282,6 +282,13 @@ public:
    */
   void * frontOfAllocation(void * pointer); 
 
+  /*!
+   * \brief set the allocator for an execution space.
+   */
+  void setAllocator(ExecutionSpace space, umpire::Allocator &allocator);
+
+
+
 protected:
   /*!
    * \brief Construct a new ArrayManager.

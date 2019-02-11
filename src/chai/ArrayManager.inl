@@ -131,6 +131,11 @@ void ArrayManager::copy(void * dst, void * src, size_t size) {
    m_resource_manager.copy(dst,src,size);
 }
 
+CHAI_INLINE
+void ArrayManager::setAllocator(ExecutionSpace space, umpire::Allocator &allocator) {
+   *m_allocators[space] = allocator;
+}
+
 } // end of namespace chai
 
 #endif // CHAI_ArrayManager_INL
