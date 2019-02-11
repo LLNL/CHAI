@@ -364,6 +364,55 @@ ManagedArray<T>::operator== (ManagedArray<T>& rhs)
   return (m_active_pointer ==  rhs.m_active_pointer);
 }
 
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+bool
+ManagedArray<T>::operator!= (ManagedArray<T>& rhs) const
+{
+  return (m_active_pointer !=  rhs.m_active_pointer);
+}
+
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+bool
+ManagedArray<T>::operator== (T * from) const {
+   return m_active_pointer == from;
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+bool
+ManagedArray<T>::operator!= (T * from) const {
+   return m_active_pointer != from;
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+bool
+ManagedArray<T>::operator== (std::nullptr_t from) const {
+   return m_active_pointer == from;
+}
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+bool
+ManagedArray<T>::operator!= (std::nullptr_t from) const {
+   return m_active_pointer != from;
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+bool
+ManagedArray<T>::explicit operator bool () const {
+   return m_active_pointer != nullptr;
+}
+
 } // end of namespace chai
 
 #endif // CHAI_ManagedArray_thin_INL

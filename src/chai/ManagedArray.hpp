@@ -254,7 +254,19 @@ public:
 
   CHAI_HOST_DEVICE ManagedArray<T>& operator=(std::nullptr_t);
 
-  CHAI_HOST_DEVICE bool operator==(ManagedArray<T>& rhs);
+
+  CHAI_HOST_DEVICE bool operator==(ManagedArray<T>& rhs) const;
+  CHAI_HOST_DEVICE bool operator!=(ManagedArray<T>& from) const;
+  
+  CHAI_HOST_DEVICE bool operator==(T* from) const;
+  CHAI_HOST_DEVICE bool operator!=(T* from) const;
+
+  CHAI_HOST_DEVICE bool operator==(std::nullptr_t from) const;
+  CHAI_HOST_DEVICE bool operator!=(std::nullptr_t from) const;
+
+
+
+  CHAI_HOST_DEVICE explicit operator bool () const;
 
 
 #if defined(CHAI_ENABLE_PICK)
