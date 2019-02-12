@@ -44,7 +44,6 @@
 set(ENABLE_FORTRAN Off CACHE Bool "Enable Fortran in Umpire")
 if (DEFINED umpire_DIR)
   find_package(umpire REQUIRED)
-  message("UMPIRE FOUND ${UMPIRE_FOUND}, ${UMPIRE_INCLUDE_DIRS}, ${UMPIRE_LIBRARY}")
 
   blt_register_library(
     NAME umpire
