@@ -349,7 +349,15 @@ typename ManagedArray<T>::T_non_const ManagedArray<T>::pick(size_t i) const {
         return (T_non_const)(m_active_pointer[i]);
       }
     #endif
-    return m_resource_manager->pick(static_cast<T*>((void*)((char*)m_pointer_record->m_pointers[m_pointer_record->m_last_space]+sizeof(T)*m_offset)), i);
+    bool old_space = m_pointer_record->m_last_space;
+    if (old_space == NONE) {
+       m_pointer_record->m_last_space = CPU;
+    }
+    ManagedArray<T>::T_non_const to_return = m_resource_manager->pick(static_cast<T*>((void*)((char*)m_pointer_record->m_pointers[m_pointer_record->m_last_space]+sizeof(T)*m_offset)), i);
+    if (old_space == NONE) {
+       m_pointer_record->m_last_space = NONE;
+    }
+    return to_return;
   #else
     return (T_non_const)(m_active_pointer[i]); 
   #endif
@@ -366,6 +374,11 @@ CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const {
         return;
       }
     #endif
+    void * dst_ptr; 
+    if (m_pointer_record->m_last_space == NONE) {
+       m_pointer_record->m_last_space = CPU;
+       m_pointer_record->m_touched[CPU] = true;
+    }
     m_resource_manager->set(static_cast<T*>((void*)((char*)m_pointer_record->m_pointers[m_pointer_record->m_last_space]+sizeof(T)*m_offset)), i, val);
   #else
     m_active_pointer[i] = val; 
