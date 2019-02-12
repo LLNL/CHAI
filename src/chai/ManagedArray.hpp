@@ -348,8 +348,6 @@ public:
 
 
 private:
-  CHAI_HOST void modify(size_t i, const T& val) const;
-
   /*!
    * \brief Moves the inner data of a ManagedArray.
    *
@@ -376,6 +374,7 @@ private:
   CHAI_HOST_DEVICE void moveInnerImpl();
 #endif
 
+public:
   void shallowCopy(ManagedArray<T> const & other) const {
      m_active_pointer = other.m_active_pointer;
      m_active_base_pointer = other.m_active_base_pointer;
