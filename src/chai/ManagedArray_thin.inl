@@ -359,7 +359,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE
 bool
-ManagedArray<T>::operator== (ManagedArray<T>& rhs)
+ManagedArray<T>::operator== (ManagedArray<T>& rhs) const
 {
   return (m_active_pointer ==  rhs.m_active_pointer);
 }
@@ -408,8 +408,7 @@ ManagedArray<T>::operator!= (std::nullptr_t from) const {
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE
-bool
-ManagedArray<T>::explicit operator bool () const {
+ManagedArray<T>::operator bool () const {
    return m_active_pointer != nullptr;
 }
 

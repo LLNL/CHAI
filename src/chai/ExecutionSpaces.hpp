@@ -66,6 +66,12 @@ enum ExecutionSpace {
   // NUM_EXECUTION_SPACES should always be last!
   /*! Used to count total number of spaces */
   NUM_EXECUTION_SPACES
+#if !defined(CHAI_ENABLE_CUDA)
+  ,GPU
+#endif
+#if !defined(CHAI_ENABLE_UM)
+  ,UM
+#endif
 };
 
 }  // end of namespace chai
