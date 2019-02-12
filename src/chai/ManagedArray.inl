@@ -623,7 +623,7 @@ ManagedArray<T>::operator bool () const {
 template<typename T>
 template<bool B, typename std::enable_if<B, int>::type>
 CHAI_INLINE
-CHAI_HOST_DEVICE
+CHAI_HOST
 void
 ManagedArray<T>::moveInnerImpl()
 {
@@ -640,7 +640,7 @@ ManagedArray<T>::moveInnerImpl()
 template<typename T>
 template<bool B, typename std::enable_if<!B, int>::type>
 CHAI_INLINE
-CHAI_HOST_DEVICE
+CHAI_HOST
 void
 ManagedArray<T>::moveInnerImpl()
 {

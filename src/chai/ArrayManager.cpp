@@ -177,9 +177,6 @@ ExecutionSpace ArrayManager::getExecutionSpace()
 
 void ArrayManager::registerTouch(PointerRecord* pointer_record)
 {
-
-  if (m_current_execution_space == NONE) return;
-
   CHAI_LOG("ArrayManager",
            pointer_record->m_pointers[m_current_execution_space] << " touched in space " << m_current_execution_space);
 
@@ -189,6 +186,11 @@ void ArrayManager::registerTouch(PointerRecord* pointer_record)
 void ArrayManager::registerTouch(PointerRecord* pointer_record,
                                  ExecutionSpace space)
 {
+  CHAI_LOG("ArrayManager",
+           pointer << " touched in space " << space);
+
+  if (space == NONE) return;
+
   pointer_record->m_touched[space] = true;
   pointer_record->m_last_space = space;
 }

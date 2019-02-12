@@ -341,7 +341,14 @@ public:
    * num_bytes is the number of bytes moved.
    *
    */
-  CHAI_HOST void setUserCallback(UserCallback const& cback);
+  CHAI_HOST void setUserCallback(UserCallback const& cback)
+  {
+    m_pointer_record->m_user_callback = cback;
+  }
+
+
+private:
+  CHAI_HOST void modify(size_t i, const T& val) const;
 
   /*!
    * \brief Moves the inner data of a ManagedArray.
@@ -353,7 +360,7 @@ public:
    */
   template <bool B = std::is_base_of<CHAICopyable, T>::value,
             typename std::enable_if<B, int>::type = 0>
-  CHAI_HOST_DEVICE void moveInnerImpl();
+  CHAI_HOST void moveInnerImpl();
 
   /*!
    * \brief Does nothing since the inner data type does not inherit from
