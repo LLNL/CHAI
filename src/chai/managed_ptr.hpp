@@ -6,6 +6,9 @@
 
 #include "../util/forall.hpp"
 
+// Standard libary headers
+#include <cstddef>
+
 namespace chai {
    ///
    /// @class managed_ptr<T>
@@ -54,6 +57,22 @@ namespace chai {
          ///
          /// @author Alan Dayton
          ///
+         /// Default constructor.
+         /// Initializes the reference count to 0.
+         ///
+         constexpr managed_ptr() noexcept {}
+
+         ///
+         /// @author Alan Dayton
+         ///
+         /// Construct from nullptr.
+         /// Initializes the reference count to 0.
+         ///
+         constexpr managed_ptr(std::nullptr_t) noexcept {}
+
+         ///
+         /// @author Alan Dayton
+         ///
          /// Constructs a managed_ptr from the given pointer.
          /// Takes the given host pointer and creates a copy of the object on the GPU.
          ///
@@ -70,6 +89,33 @@ namespace chai {
                D derivedCopy = *(static_cast<D*>(basePtr));
                (void) derivedCopy;
             };
+         }
+
+         ///
+         /// @author Alan Dayton
+         ///
+         /// Copy constructor.
+         /// Constructs a copy of the given managed_ptr and increases the reference count.
+         ///
+         /// @param[in] other The managed_ptr to copy.
+         ///
+         CHAI_HOST_DEVICE managed_ptr(const managed_ptr& other) noexcept :
+            m_cpu(other.m_cpu),
+#ifdef __CUDACC__
+            m_gpu(other.m_gpu),
+#endif
+            m_numReferences(other.m_numReferences),
+            m_copyConstructor(other.m_copyConstructor),
+            m_destructor(other.m_destructor) {
+
+#ifndef __CUDA_ARCH__
+               // Increment the number of references.
+               (*m_numReferences)++;
+
+               // Trigger copy constructor so that any ManagedArrays in the object
+               // are copied to the right data space.
+               m_copyConstructor(m_cpu);
+#endif
          }
 
          ///
@@ -103,49 +149,37 @@ namespace chai {
          ///
          /// @author Alan Dayton
          ///
-         /// Copy constructor.
-         /// Constructs a copy of the given managed_ptr and increases the reference count.
+         /// Destructor. Decreases the reference count and if this is the last reference,
+         ///    clean up.
          ///
-         /// @param[in] other The managed_ptr to copy.
-         ///
-         CHAI_HOST_DEVICE managed_ptr(const managed_ptr<T>& other) :
-            m_cpu(other.m_cpu),
-#ifdef __CUDACC__
-            m_gpu(other.m_gpu),
-#endif
-            m_numReferences(other.m_numReferences),
-            m_copyConstructor(other.m_copyConstructor),
-            m_destructor(other.m_destructor) {
-
+         CHAI_HOST_DEVICE ~managed_ptr() {
 #ifndef __CUDA_ARCH__
-               // Increment the number of references.
-               (*m_numReferences)++;
+            if (m_numReferences) {
+               (*m_numReferences)--;
 
-               // Trigger copy constructor so that any ManagedArrays in the object
-               // are copied to the right data space.
-               m_copyConstructor(m_cpu);
+               if (m_numReferences && *m_numReferences == 0) {
+                  delete m_numReferences;
+
+                  m_destructor(m_cpu);
+
+#ifdef __CUDACC__
+                  destroyDevicePtr();
+#endif
+               }
+            }
 #endif
          }
 
          ///
          /// @author Alan Dayton
          ///
-         /// Destructor. Decreases the reference count and if this is the last reference,
-         ///    clean up.
+         /// Returns the CPU or GPU pointer depending on the calling context.
          ///
-         CHAI_HOST_DEVICE ~managed_ptr() {
+         CHAI_HOST_DEVICE inline T* get() const {
 #ifndef __CUDA_ARCH__
-            (*m_numReferences)--;
-
-            if (m_numReferences && *m_numReferences == 0) {
-               delete m_numReferences;
-
-               m_destructor(m_cpu);
-
-#ifdef __CUDACC__
-               destroyDevicePtr();
-#endif
-            }
+            return m_cpu;
+#else
+            return m_gpu;
 #endif
          }
 
@@ -239,6 +273,84 @@ namespace chai {
 
          template <class D> friend class managed_ptr; /// Needed for the converting constructor
    };
+
+   /// Comparison operators
+
+   ///
+   /// @author Alan Dayton
+   ///
+   /// Equals comparison.
+   ///
+   /// @param[in] lhs The first managed_ptr to compare
+   /// @param[in] rhs The second managed_ptr to compare
+   ///
+   template <class T, class U>
+   inline bool operator==(const managed_ptr<T>& lhs, const managed_ptr<U>& rhs) noexcept {
+      return lhs.get() == rhs.get();
+   }
+
+   ///
+   /// @author Alan Dayton
+   ///
+   /// Not equals comparison.
+   ///
+   /// @param[in] lhs The first managed_ptr to compare
+   /// @param[in] rhs The second managed_ptr to compare
+   ///
+   template <class T, class U>
+   inline bool operator!=(const managed_ptr<T>& lhs, const managed_ptr<U>& rhs) noexcept {
+      return lhs.get() != rhs.get();
+   }
+
+   /// Comparison operators with nullptr
+
+   ///
+   /// @author Alan Dayton
+   ///
+   /// Equals comparison with nullptr.
+   ///
+   /// @param[in] lhs The managed_ptr to compare to nullptr
+   ///
+   template<class T>
+   inline bool operator==(const managed_ptr<T>& lhs, std::nullptr_t) noexcept {
+      return lhs.get() == nullptr;
+   }
+
+   ///
+   /// @author Alan Dayton
+   ///
+   /// Equals comparison with nullptr.
+   ///
+   /// @param[in] rhs The managed_ptr to compare to nullptr
+   ///
+   template<class T>
+   inline bool operator==(std::nullptr_t, const managed_ptr<T>& rhs) noexcept {
+      return nullptr == rhs.get();
+   }
+
+   ///
+   /// @author Alan Dayton
+   ///
+   /// Not equals comparison with nullptr.
+   ///
+   /// @param[in] lhs The managed_ptr to compare to nullptr
+   ///
+   template<class T>
+   inline bool operator!=(const managed_ptr<T>& lhs, std::nullptr_t) noexcept {
+      return lhs.get() != nullptr;
+   }
+
+   ///
+   /// @author Alan Dayton
+   ///
+   /// Not equals comparison with nullptr.
+   ///
+   /// @param[in] rhs The managed_ptr to compare to nullptr
+   ///
+   template<class T>
+   inline bool operator!=(std::nullptr_t, const managed_ptr<T>& rhs) noexcept {
+      return nullptr != rhs.get();
+   }
 
    ///
    /// @author Alan Dayton

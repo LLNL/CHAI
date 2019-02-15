@@ -58,23 +58,33 @@
 
 class TestBase {
    public:
-      TestBase() : m_value(0) {}
-      TestBase(const int value) : m_value(value) {}
+      TestBase() {}
 
-      CHAI_HOST_DEVICE virtual int getValue() const { return m_value; }
-
-   protected:
-      int m_value;
-
+      CHAI_HOST_DEVICE virtual int getValue() const = 0;
 };
 
 class TestDerived : public TestBase {
    public:
-      TestDerived() : TestBase(1) {}
-      TestDerived(const int value) : TestBase(value) {}
+      TestDerived() : TestBase(), m_value(0) {}
+      TestDerived(const int value) : TestBase(), m_value(value) {}
 
       CHAI_HOST_DEVICE virtual int getValue() const { return m_value; }
+
+   private:
+      int m_value;
 };
+
+TEST(managed_ptr, DefaultConstructor)
+{
+  chai::managed_ptr<TestDerived> derived;
+  ASSERT_EQ(derived.get(), nullptr);
+}
+
+TEST(managed_ptr, nullptrConstructor)
+{
+  chai::managed_ptr<TestDerived> derived = nullptr;
+  ASSERT_EQ(derived.get(), nullptr);
+}
 
 TEST(managed_ptr, HostPtrConstructor)
 {
