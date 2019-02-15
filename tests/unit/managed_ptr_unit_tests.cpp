@@ -315,3 +315,63 @@ TEST(managed_ptr, conversion_copy_assignment_operator_from_default_constructed)
   ASSERT_EQ(nullptr, otherDerived);
 }
 
+TEST(managed_ptr, copy_assignment_operator_from_host_ptr_constructed)
+{
+  const int expectedValue1 = rand();
+  const int expectedValue2 = rand();
+
+  chai::managed_ptr<TestDerived> derived(new TestDerived(expectedValue1));
+  chai::managed_ptr<TestDerived> otherDerived(new TestDerived(expectedValue2));
+  chai::managed_ptr<TestDerived> thirdDerived(otherDerived);
+
+  thirdDerived = derived;
+
+  ASSERT_NE(derived.get(), nullptr);
+  ASSERT_EQ(derived.use_count(), 2);
+  ASSERT_EQ(bool(derived), true);
+  ASSERT_NE(derived, nullptr);
+  ASSERT_NE(nullptr, derived);
+
+  ASSERT_NE(otherDerived.get(), nullptr);
+  ASSERT_EQ(otherDerived.use_count(), 1);
+  ASSERT_EQ(bool(otherDerived), true);
+  ASSERT_NE(otherDerived, nullptr);
+  ASSERT_NE(nullptr, otherDerived);
+
+  ASSERT_NE(thirdDerived.get(), nullptr);
+  ASSERT_EQ(thirdDerived.use_count(), 2);
+  ASSERT_EQ(bool(thirdDerived), true);
+  ASSERT_NE(thirdDerived, nullptr);
+  ASSERT_NE(nullptr, thirdDerived);
+}
+
+TEST(managed_ptr, conversion_copy_assignment_operator_from_host_ptr_constructed)
+{
+  const int expectedValue1 = rand();
+  const int expectedValue2 = rand();
+
+  chai::managed_ptr<TestDerived> derived(new TestDerived(expectedValue1));
+  chai::managed_ptr<TestDerived> otherDerived(new TestDerived(expectedValue2));
+  chai::managed_ptr<TestBase> thirdDerived(otherDerived);
+
+  thirdDerived = derived;
+
+  ASSERT_NE(derived.get(), nullptr);
+  ASSERT_EQ(derived.use_count(), 2);
+  ASSERT_EQ(bool(derived), true);
+  ASSERT_NE(derived, nullptr);
+  ASSERT_NE(nullptr, derived);
+
+  ASSERT_NE(otherDerived.get(), nullptr);
+  ASSERT_EQ(otherDerived.use_count(), 1);
+  ASSERT_EQ(bool(otherDerived), true);
+  ASSERT_NE(otherDerived, nullptr);
+  ASSERT_NE(nullptr, otherDerived);
+
+  ASSERT_NE(thirdDerived.get(), nullptr);
+  ASSERT_EQ(thirdDerived.use_count(), 2);
+  ASSERT_EQ(bool(thirdDerived), true);
+  ASSERT_NE(thirdDerived, nullptr);
+  ASSERT_NE(nullptr, thirdDerived);
+}
+

@@ -109,16 +109,8 @@ namespace chai {
             m_numReferences(other.m_numReferences),
             m_copyConstructor(other.m_copyConstructor),
             m_destructor(other.m_destructor) {
-
 #ifndef __CUDA_ARCH__
-            if (m_numReferences) {
-               // Increment the number of references.
-               (*m_numReferences)++;
-
-               // Trigger copy constructor so that any ManagedArrays in the object
-               // are copied to the right data space.
-               m_copyConstructor(m_cpu);
-            }
+               incrementReferenceCount();
 #endif
          }
 
@@ -141,14 +133,7 @@ namespace chai {
             m_copyConstructor(other.m_copyConstructor),
             m_destructor(other.m_destructor) {
 #ifndef __CUDA_ARCH__
-               if (m_numReferences) {
-                  // Increment the number of references.
-                  (*m_numReferences)++;
-
-                  // Trigger copy constructor so that any ManagedArrays in the object
-                  // are copied to the right data space.
-                  m_copyConstructor(m_cpu);
-               }
+               incrementReferenceCount();
 #endif
          }
 
@@ -160,19 +145,7 @@ namespace chai {
          ///
          CHAI_HOST_DEVICE ~managed_ptr() {
 #ifndef __CUDA_ARCH__
-            if (m_numReferences) {
-               (*m_numReferences)--;
-
-               if (m_numReferences && *m_numReferences == 0) {
-                  delete m_numReferences;
-
-                  m_destructor(m_cpu);
-
-#ifdef __CUDACC__
-                  destroyDevicePtr();
-#endif
-               }
-            }
+            decrementReferenceCount();
 #endif
          }
 
@@ -186,6 +159,10 @@ namespace chai {
          ///
          CHAI_HOST_DEVICE managed_ptr& operator=(const managed_ptr& other) noexcept {
             if (this != &other) {
+#ifndef __CUDA_ARCH__
+               decrementReferenceCount();
+#endif
+
                m_cpu = other.m_cpu;
 #ifdef __CUDACC__
                m_gpu = other.m_gpu;
@@ -195,13 +172,7 @@ namespace chai {
                m_destructor = other.m_destructor;
 
 #ifndef __CUDA_ARCH__
-               if (m_numReferences) {
-                  (*m_numReferences)++;
-
-                  // Trigger copy constructor so that any ManagedArrays in the object
-                  // are copied to the right data space.
-                  m_copyConstructor(m_cpu);
-               }
+               incrementReferenceCount();
 #endif
             }
 
@@ -219,6 +190,10 @@ namespace chai {
          ///
          template<class D>
          CHAI_HOST_DEVICE managed_ptr& operator=(const managed_ptr<D>& other) noexcept {
+#ifndef __CUDA_ARCH__
+            decrementReferenceCount();
+#endif
+
             m_cpu = other.m_cpu;
 #ifdef __CUDACC__
             m_gpu = other.m_gpu;
@@ -228,13 +203,7 @@ namespace chai {
             m_destructor = other.m_destructor;
 
 #ifndef __CUDA_ARCH__
-            if (m_numReferences) {
-               (*m_numReferences)++;
-
-               // Trigger copy constructor so that any ManagedArrays in the object
-               // are copied to the right data space.
-               m_copyConstructor(m_cpu);
-            }
+            incrementReferenceCount();
 #endif
 
             return *this;
@@ -369,6 +338,44 @@ namespace chai {
          void (*m_destructor)(void*); /// A function that casts to the derived type and calls delete on it.
 
          template <class D> friend class managed_ptr; /// Needed for the converting constructor
+
+         ///
+         /// @author Alan Dayton
+         ///
+         /// Increments the reference count and calls the copy constructor to
+         ///    trigger data movement.
+         ///
+         CHAI_HOST void incrementReferenceCount() {
+            if (m_numReferences) {
+               (*m_numReferences)++;
+
+               // Trigger copy constructor so that any ManagedArrays in the object
+               // are copied to the right data space.
+               m_copyConstructor(m_cpu);
+            }
+         }
+
+         ///
+         /// @author Alan Dayton
+         ///
+         /// Decrements the reference counter. If the resulting number of references
+         ///    is 0, clean up the object.
+         ///
+         CHAI_HOST void decrementReferenceCount() {
+            if (m_numReferences) {
+               (*m_numReferences)--;
+
+               if (*m_numReferences == 0) {
+                  delete m_numReferences;
+
+                  m_destructor(m_cpu);
+
+#ifdef __CUDACC__
+                  destroyDevicePtr();
+#endif
+               }
+            }
+         }
    };
 
    /// Comparison operators
