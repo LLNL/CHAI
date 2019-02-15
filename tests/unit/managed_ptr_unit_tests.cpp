@@ -202,3 +202,116 @@ CUDA_TEST(managed_ptr, cuda_converting_make_managed)
   ASSERT_EQ(array[0], expectedValue);
 }
 
+TEST(managed_ptr, copy_constructor)
+{
+  const int expectedValue = rand();
+  chai::managed_ptr<TestDerived> derived(new TestDerived(expectedValue));
+  chai::managed_ptr<TestDerived> otherDerived(derived);
+
+  ASSERT_NE(derived.get(), nullptr);
+  ASSERT_EQ(derived.use_count(), 2);
+  ASSERT_EQ(bool(derived), true);
+  ASSERT_NE(derived, nullptr);
+  ASSERT_NE(nullptr, derived);
+
+  ASSERT_NE(otherDerived.get(), nullptr);
+  ASSERT_EQ(otherDerived.use_count(), 2);
+  ASSERT_EQ(bool(otherDerived), true);
+  ASSERT_NE(otherDerived, nullptr);
+  ASSERT_NE(nullptr, otherDerived);
+}
+
+TEST(managed_ptr, copy_assignment_operator)
+{
+  const int expectedValue = rand();
+  chai::managed_ptr<TestDerived> derived(new TestDerived(expectedValue));
+  chai::managed_ptr<TestDerived> otherDerived;
+  otherDerived = derived;
+
+  ASSERT_NE(derived.get(), nullptr);
+  ASSERT_EQ(derived.use_count(), 2);
+  ASSERT_EQ(bool(derived), true);
+  ASSERT_NE(derived, nullptr);
+  ASSERT_NE(nullptr, derived);
+
+  ASSERT_NE(otherDerived.get(), nullptr);
+  ASSERT_EQ(otherDerived.use_count(), 2);
+  ASSERT_EQ(bool(otherDerived), true);
+  ASSERT_NE(otherDerived, nullptr);
+  ASSERT_NE(nullptr, otherDerived);
+}
+
+TEST(managed_ptr, copy_constructor_from_default_constructed)
+{
+  chai::managed_ptr<TestDerived> derived;
+  chai::managed_ptr<TestDerived> otherDerived(derived);
+
+  ASSERT_EQ(derived.get(), nullptr);
+  ASSERT_EQ(derived.use_count(), 0);
+  ASSERT_EQ(bool(derived), false);
+  ASSERT_EQ(derived, nullptr);
+  ASSERT_EQ(nullptr, derived);
+
+  ASSERT_EQ(otherDerived.get(), nullptr);
+  ASSERT_EQ(otherDerived.use_count(), 0);
+  ASSERT_EQ(bool(otherDerived), false);
+  ASSERT_EQ(otherDerived, nullptr);
+  ASSERT_EQ(nullptr, otherDerived);
+}
+
+TEST(managed_ptr, copy_assignment_operator_from_default_constructed)
+{
+  chai::managed_ptr<TestDerived> derived;
+  chai::managed_ptr<TestDerived> otherDerived;
+  otherDerived = derived;
+
+  ASSERT_EQ(derived.get(), nullptr);
+  ASSERT_EQ(derived.use_count(), 0);
+  ASSERT_EQ(bool(derived), false);
+  ASSERT_EQ(derived, nullptr);
+  ASSERT_EQ(nullptr, derived);
+
+  ASSERT_EQ(otherDerived.get(), nullptr);
+  ASSERT_EQ(otherDerived.use_count(), 0);
+  ASSERT_EQ(bool(otherDerived), false);
+  ASSERT_EQ(otherDerived, nullptr);
+  ASSERT_EQ(nullptr, otherDerived);
+}
+
+TEST(managed_ptr, conversion_copy_constructor_from_default_constructed)
+{
+  chai::managed_ptr<TestDerived> derived;
+  chai::managed_ptr<TestBase> otherDerived(derived);
+
+  ASSERT_EQ(derived.get(), nullptr);
+  ASSERT_EQ(derived.use_count(), 0);
+  ASSERT_EQ(bool(derived), false);
+  ASSERT_EQ(derived, nullptr);
+  ASSERT_EQ(nullptr, derived);
+
+  ASSERT_EQ(otherDerived.get(), nullptr);
+  ASSERT_EQ(otherDerived.use_count(), 0);
+  ASSERT_EQ(bool(otherDerived), false);
+  ASSERT_EQ(otherDerived, nullptr);
+  ASSERT_EQ(nullptr, otherDerived);
+}
+
+TEST(managed_ptr, conversion_copy_assignment_operator_from_default_constructed)
+{
+  chai::managed_ptr<TestDerived> derived;
+  chai::managed_ptr<TestBase> otherDerived;
+  otherDerived = derived;
+
+  ASSERT_EQ(derived.get(), nullptr);
+  ASSERT_EQ(derived.use_count(), 0);
+  ASSERT_EQ(bool(derived), false);
+  ASSERT_EQ(derived, nullptr);
+  ASSERT_EQ(nullptr, derived);
+
+  ASSERT_EQ(otherDerived.get(), nullptr);
+  ASSERT_EQ(otherDerived.use_count(), 0);
+  ASSERT_EQ(bool(otherDerived), false);
+  ASSERT_EQ(otherDerived, nullptr);
+  ASSERT_EQ(nullptr, otherDerived);
+}
+

@@ -111,12 +111,14 @@ namespace chai {
             m_destructor(other.m_destructor) {
 
 #ifndef __CUDA_ARCH__
+            if (m_numReferences) {
                // Increment the number of references.
                (*m_numReferences)++;
 
                // Trigger copy constructor so that any ManagedArrays in the object
                // are copied to the right data space.
                m_copyConstructor(m_cpu);
+            }
 #endif
          }
 
@@ -139,12 +141,14 @@ namespace chai {
             m_copyConstructor(other.m_copyConstructor),
             m_destructor(other.m_destructor) {
 #ifndef __CUDA_ARCH__
-               // Increment the number of references.
-               (*m_numReferences)++;
+               if (m_numReferences) {
+                  // Increment the number of references.
+                  (*m_numReferences)++;
 
-               // Trigger copy constructor so that any ManagedArrays in the object
-               // are copied to the right data space.
-               m_copyConstructor(m_cpu);
+                  // Trigger copy constructor so that any ManagedArrays in the object
+                  // are copied to the right data space.
+                  m_copyConstructor(m_cpu);
+               }
 #endif
          }
 
@@ -191,11 +195,13 @@ namespace chai {
                m_destructor = other.m_destructor;
 
 #ifndef __CUDA_ARCH__
-               (*m_numReferences)++;
+               if (m_numReferences) {
+                  (*m_numReferences)++;
 
-               // Trigger copy constructor so that any ManagedArrays in the object
-               // are copied to the right data space.
-               m_copyConstructor(m_cpu);
+                  // Trigger copy constructor so that any ManagedArrays in the object
+                  // are copied to the right data space.
+                  m_copyConstructor(m_cpu);
+               }
 #endif
             }
 
@@ -213,23 +219,23 @@ namespace chai {
          ///
          template<class D>
          CHAI_HOST_DEVICE managed_ptr& operator=(const managed_ptr<D>& other) noexcept {
-            if (this != &other) {
-               m_cpu = other.m_cpu;
+            m_cpu = other.m_cpu;
 #ifdef __CUDACC__
-               m_gpu = other.m_gpu;
+            m_gpu = other.m_gpu;
 #endif
-               m_numReferences = other.m_numReferences;
-               m_copyConstructor = other.m_copyConstructor;
-               m_destructor = other.m_destructor;
+            m_numReferences = other.m_numReferences;
+            m_copyConstructor = other.m_copyConstructor;
+            m_destructor = other.m_destructor;
 
 #ifndef __CUDA_ARCH__
+            if (m_numReferences) {
                (*m_numReferences)++;
 
                // Trigger copy constructor so that any ManagedArrays in the object
                // are copied to the right data space.
                m_copyConstructor(m_cpu);
-#endif
             }
+#endif
 
             return *this;
          }
