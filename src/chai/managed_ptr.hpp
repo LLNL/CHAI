@@ -130,7 +130,7 @@ namespace chai {
          /// @param[in] other The managed_ptr to copy.
          ///
          template <typename D>
-         CHAI_HOST_DEVICE managed_ptr(managed_ptr<D> const & other) :
+         CHAI_HOST_DEVICE managed_ptr(managed_ptr<D> const & other) noexcept :
             m_cpu(other.m_cpu),
 #ifdef __CUDACC__
             m_gpu(other.m_gpu),
@@ -170,6 +170,68 @@ namespace chai {
                }
             }
 #endif
+         }
+
+         ///
+         /// @author Alan Dayton
+         ///
+         /// Copy assignment operator.
+         /// Copies the given managed_ptr and increases the reference count.
+         ///
+         /// @param[in] other The managed_ptr to copy.
+         ///
+         CHAI_HOST_DEVICE managed_ptr& operator=(const managed_ptr& other) noexcept {
+            if (this != &other) {
+               m_cpu = other.m_cpu;
+#ifdef __CUDACC__
+               m_gpu = other.m_gpu;
+#endif
+               m_numReferences = other.m_numReferences;
+               m_copyConstructor = other.m_copyConstructor;
+               m_destructor = other.m_destructor;
+
+#ifndef __CUDA_ARCH__
+               (*m_numReferences)++;
+
+               // Trigger copy constructor so that any ManagedArrays in the object
+               // are copied to the right data space.
+               m_copyConstructor(m_cpu);
+#endif
+            }
+
+            return *this;
+         }
+
+         ///
+         /// @author Alan Dayton
+         ///
+         /// Conversion copy assignment operator.
+         /// Copies the given managed_ptr and increases the reference count.
+         ///    D must be convertible to T.
+         ///
+         /// @param[in] other The managed_ptr to copy.
+         ///
+         template<class D>
+         CHAI_HOST_DEVICE managed_ptr& operator=(const managed_ptr<D>& other) noexcept {
+            if (this != &other) {
+               m_cpu = other.m_cpu;
+#ifdef __CUDACC__
+               m_gpu = other.m_gpu;
+#endif
+               m_numReferences = other.m_numReferences;
+               m_copyConstructor = other.m_copyConstructor;
+               m_destructor = other.m_destructor;
+
+#ifndef __CUDA_ARCH__
+               (*m_numReferences)++;
+
+               // Trigger copy constructor so that any ManagedArrays in the object
+               // are copied to the right data space.
+               m_copyConstructor(m_cpu);
+#endif
+            }
+
+            return *this;
          }
 
          ///
