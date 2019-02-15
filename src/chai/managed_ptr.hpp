@@ -60,7 +60,7 @@ namespace chai {
          /// Default constructor.
          /// Initializes the reference count to 0.
          ///
-         constexpr managed_ptr() noexcept {}
+         CHAI_HOST constexpr managed_ptr() noexcept {}
 
          ///
          /// @author Alan Dayton
@@ -68,7 +68,7 @@ namespace chai {
          /// Construct from nullptr.
          /// Initializes the reference count to 0.
          ///
-         constexpr managed_ptr(std::nullptr_t) noexcept {}
+         CHAI_HOST constexpr managed_ptr(std::nullptr_t) noexcept {}
 
          ///
          /// @author Alan Dayton
@@ -79,7 +79,9 @@ namespace chai {
          /// @param[in] cpuPtr The host pointer to take ownership of
          ///
          template <typename D>
-         explicit managed_ptr(D* ptr) : m_cpu(ptr), m_numReferences(new std::size_t{1}) {
+         CHAI_HOST explicit managed_ptr(D* ptr) :
+            m_cpu(ptr),
+            m_numReferences(new std::size_t{1}) {
 #ifdef __CUDACC__
             createDevicePtr(*ptr);
 #endif
@@ -128,7 +130,7 @@ namespace chai {
          /// @param[in] other The managed_ptr to copy.
          ///
          template <typename D>
-         managed_ptr(managed_ptr<D> const & other) :
+         CHAI_HOST_DEVICE managed_ptr(managed_ptr<D> const & other) :
             m_cpu(other.m_cpu),
 #ifdef __CUDACC__
             m_gpu(other.m_gpu),
@@ -209,6 +211,33 @@ namespace chai {
 #endif
          }
 
+         ///
+         /// @author Alan Dayton
+         ///
+         /// Returns the number of managed_ptrs owning these pointers.
+         ///
+         CHAI_HOST std::size_t use_count() const {
+            if (m_numReferences) {
+               return *m_numReferences;
+            }
+            else {
+               return 0;
+            }
+         }
+
+         ///
+         /// @author Alan Dayton
+         ///
+         /// Returns true if the contained pointer is not nullptr, false otherwise.
+         ///
+         CHAI_HOST_DEVICE inline explicit operator bool() const noexcept {
+#ifndef __CUDA_ARCH__
+            return m_cpu != nullptr;
+#else
+            return m_gpu != nullptr;
+#endif
+         }
+
 #ifdef __CUDACC__
          ///
          /// @author Alan Dayton
@@ -218,7 +247,7 @@ namespace chai {
          ///    lambdas can only be in public methods.
          ///
          template <typename D>
-         void createDevicePtr(const D& obj) {
+         CHAI_HOST void createDevicePtr(const D& obj) {
             chai::ManagedArray<D*> temp(1, chai::GPU);
 
             forall(cuda(), 0, 1, [=] __device__ (int i) {
@@ -243,7 +272,7 @@ namespace chai {
          /// Should be called only by the destructor, but extended __host__ __device__
          ///    lambdas can only be in public methods.
          ///
-         void destroyDevicePtr() {
+         CHAI_HOST void destroyDevicePtr() {
             chai::ManagedArray<T*> temp(1, chai::CPU);
             temp[0] = m_gpu;
 
