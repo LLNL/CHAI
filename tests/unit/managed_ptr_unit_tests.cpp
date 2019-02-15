@@ -78,12 +78,20 @@ TEST(managed_ptr, DefaultConstructor)
 {
   chai::managed_ptr<TestDerived> derived;
   ASSERT_EQ(derived.get(), nullptr);
+  ASSERT_EQ(derived.use_count(), 0);
+  ASSERT_EQ(bool(derived), false);
+  ASSERT_EQ(derived, nullptr);
+  ASSERT_EQ(nullptr, derived);
 }
 
 TEST(managed_ptr, nullptrConstructor)
 {
   chai::managed_ptr<TestDerived> derived = nullptr;
   ASSERT_EQ(derived.get(), nullptr);
+  ASSERT_EQ(derived.use_count(), 0);
+  ASSERT_EQ(bool(derived), false);
+  ASSERT_EQ(derived, nullptr);
+  ASSERT_EQ(nullptr, derived);
 }
 
 TEST(managed_ptr, HostPtrConstructor)
@@ -91,9 +99,42 @@ TEST(managed_ptr, HostPtrConstructor)
   const int expectedValue = rand();
   chai::managed_ptr<TestDerived> derived(new TestDerived(expectedValue));
   ASSERT_EQ(derived->getValue(), expectedValue);
+
+  ASSERT_NE(derived.get(), nullptr);
+  ASSERT_EQ(derived.use_count(), 1);
+  ASSERT_EQ(bool(derived), true);
+  ASSERT_NE(derived, nullptr);
+  ASSERT_NE(nullptr, derived);
 }
 
 CUDA_TEST(managed_ptr, cuda_HostPtrConstructor)
+{
+  const int expectedValue = rand();
+  chai::managed_ptr<TestDerived> derived(new TestDerived(expectedValue));
+  chai::ManagedArray<int> array(1, chai::GPU);
+  
+  forall(cuda(), 0, 1, [=] __device__ (int i) {
+    array[i] = derived->getValue();
+  });
+
+  array.move(chai::CPU);
+  ASSERT_EQ(array[0], expectedValue);
+}
+
+TEST(managed_ptr, ConvertingPtrConstructor)
+{
+  const int expectedValue = rand();
+  chai::managed_ptr<TestBase> derived(new TestDerived(expectedValue));
+  ASSERT_EQ(derived->getValue(), expectedValue);
+
+  ASSERT_NE(derived.get(), nullptr);
+  ASSERT_EQ(derived.use_count(), 1);
+  ASSERT_EQ(bool(derived), true);
+  ASSERT_NE(derived, nullptr);
+  ASSERT_NE(nullptr, derived);
+}
+
+CUDA_TEST(managed_ptr, cuda_ConvertingPtrConstructor)
 {
   const int expectedValue = rand();
   chai::managed_ptr<TestBase> derived(new TestDerived(expectedValue));
@@ -112,9 +153,42 @@ TEST(managed_ptr, make_managed)
   const int expectedValue = rand();
   auto derived = chai::make_managed<TestDerived>(expectedValue);
   ASSERT_EQ((*derived).getValue(), expectedValue);
+
+  ASSERT_NE(derived.get(), nullptr);
+  ASSERT_EQ(derived.use_count(), 1);
+  ASSERT_EQ(bool(derived), true);
+  ASSERT_NE(derived, nullptr);
+  ASSERT_NE(nullptr, derived);
 }
 
 CUDA_TEST(managed_ptr, cuda_make_managed)
+{
+  const int expectedValue = rand();
+  auto derived = chai::make_managed<TestDerived>(expectedValue);
+  chai::ManagedArray<int> array(1, chai::GPU);
+  
+  forall(cuda(), 0, 1, [=] __device__ (int i) {
+    array[i] = (*derived).getValue();
+  });
+
+  array.move(chai::CPU);
+  ASSERT_EQ(array[0], expectedValue);
+}
+
+TEST(managed_ptr, converting_make_managed)
+{
+  const int expectedValue = rand();
+  chai::managed_ptr<TestBase> derived = chai::make_managed<TestDerived>(expectedValue);
+  ASSERT_EQ((*derived).getValue(), expectedValue);
+
+  ASSERT_NE(derived.get(), nullptr);
+  ASSERT_EQ(derived.use_count(), 1);
+  ASSERT_EQ(bool(derived), true);
+  ASSERT_NE(derived, nullptr);
+  ASSERT_NE(nullptr, derived);
+}
+
+CUDA_TEST(managed_ptr, cuda_converting_make_managed)
 {
   const int expectedValue = rand();
   chai::managed_ptr<TestBase> derived = chai::make_managed<TestDerived>(expectedValue);
