@@ -56,15 +56,24 @@
 // Standard library headers
 #include <cstdlib>
 
-class TestDerived {
+class TestBase {
    public:
-      TestDerived() : m_value(0) {}
-      TestDerived(const int value) : m_value(value) {}
+      TestBase() : m_value(0) {}
+      TestBase(const int value) : m_value(value) {}
 
-      int getValue() const { return m_value; }
+      CHAI_HOST_DEVICE virtual int getValue() const { return m_value; }
 
-   private:
+   protected:
       int m_value;
+
+};
+
+class TestDerived : public TestBase {
+   public:
+      TestDerived() : TestBase(1) {}
+      TestDerived(const int value) : TestBase(value) {}
+
+      CHAI_HOST_DEVICE virtual int getValue() const { return m_value; }
 };
 
 TEST(managed_ptr, HostPtrConstructor)
@@ -77,7 +86,7 @@ TEST(managed_ptr, HostPtrConstructor)
 CUDA_TEST(managed_ptr, cuda_HostPtrConstructor)
 {
   const int expectedValue = rand();
-  chai::managed_ptr<TestDerived> derived(new TestDerived(expectedValue));
+  chai::managed_ptr<TestBase> derived(new TestDerived(expectedValue));
   chai::ManagedArray<int> array(1, chai::GPU);
   
   forall(cuda(), 0, 1, [=] __device__ (int i) {
@@ -98,7 +107,7 @@ TEST(managed_ptr, make_managed)
 CUDA_TEST(managed_ptr, cuda_make_managed)
 {
   const int expectedValue = rand();
-  auto derived = chai::make_managed<TestDerived>(expectedValue);
+  chai::managed_ptr<TestBase> derived = chai::make_managed<TestDerived>(expectedValue);
   chai::ManagedArray<int> array(1, chai::GPU);
   
   forall(cuda(), 0, 1, [=] __device__ (int i) {
