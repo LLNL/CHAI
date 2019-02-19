@@ -105,7 +105,7 @@ class TestContainer {
       chai::managed_ptr<TestInnerBase> m_innerType;
 };
 
-TEST(managed_ptr, inner_ManagedArray)
+TEST(managed_ptr, inner_managed_array)
 {
   const int expectedValue = rand();
 
@@ -161,3 +161,29 @@ CUDA_TEST(managed_ptr, cuda_inner_managed_ptr)
   ASSERT_EQ(results[0], expectedValue);
 }
 
+TEST(managed_ptr, nested_managed_ptr)
+{
+  const int expectedValue = rand();
+
+  chai::managed_ptr<TestInner> derived(new TestInner(expectedValue));
+  chai::managed_ptr<TestContainer> container(new TestContainer(derived));
+
+  ASSERT_EQ(container->getValue(), expectedValue);
+}
+
+CUDA_TEST(managed_ptr, cuda_nested_managed_ptr)
+{
+  const int expectedValue = rand();
+
+  chai::managed_ptr<TestInner> derived(new TestInner(expectedValue));
+  chai::managed_ptr<TestContainer> container(new TestContainer(derived));
+
+  chai::ManagedArray<int> results(1, chai::GPU);
+  
+  forall(cuda(), 0, 1, [=] __device__ (int i) {
+    results[i] = container->getValue();
+  });
+
+  results.move(chai::CPU);
+  ASSERT_EQ(results[0], expectedValue);
+}
