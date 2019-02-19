@@ -74,6 +74,37 @@ class TestDerived : public TestBase {
       chai::ManagedArray<int> m_values;
 };
 
+class TestInnerBase {
+   public:
+      TestInnerBase() {}
+
+      CHAI_HOST_DEVICE virtual int getValue() = 0;
+};
+
+class TestInner : public TestInnerBase {
+   public:
+      TestInner() : TestInnerBase(), m_value(0) {}
+      TestInner(int value) : TestInnerBase(), m_value(value) {}
+
+      CHAI_HOST_DEVICE virtual int getValue() { return m_value; }
+
+   private:
+      int m_value;
+};
+
+class TestContainer {
+   public:
+      TestContainer() : m_innerType(nullptr) {}
+      TestContainer(chai::managed_ptr<TestInnerBase> innerType) : m_innerType(innerType) {}
+
+      CHAI_HOST_DEVICE virtual int getValue() const {
+         return m_innerType->getValue();
+      }
+
+   private:
+      chai::managed_ptr<TestInnerBase> m_innerType;
+};
+
 TEST(managed_ptr, inner_ManagedArray)
 {
   const int expectedValue = rand();
@@ -97,6 +128,33 @@ CUDA_TEST(managed_ptr, cuda_inner_ManagedArray)
   
   forall(cuda(), 0, 1, [=] __device__ (int i) {
     results[i] = derived->getValue(i);
+  });
+
+  results.move(chai::CPU);
+  ASSERT_EQ(results[0], expectedValue);
+}
+
+TEST(managed_ptr, inner_managed_ptr)
+{
+  const int expectedValue = rand();
+
+  chai::managed_ptr<TestInner> derived(new TestInner(expectedValue));
+  TestContainer container(derived);
+
+  ASSERT_EQ(container.getValue(), expectedValue);
+}
+
+CUDA_TEST(managed_ptr, cuda_inner_managed_ptr)
+{
+  const int expectedValue = rand();
+
+  chai::managed_ptr<TestInner> derived(new TestInner(expectedValue));
+  TestContainer container(derived);
+
+  chai::ManagedArray<int> results(1, chai::GPU);
+  
+  forall(cuda(), 0, 1, [=] __device__ (int i) {
+    results[i] = container.getValue();
   });
 
   results.move(chai::CPU);
