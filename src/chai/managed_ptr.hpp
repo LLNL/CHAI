@@ -81,7 +81,14 @@ namespace chai {
          template <typename D>
          CHAI_HOST explicit managed_ptr(D* ptr) :
             m_cpu(ptr),
-            m_numReferences(new std::size_t{1}) {
+            m_numReferences(new std::size_t{1})
+         {
+            static_assert(std::is_base_of<T, D>::value ||
+                          std::is_convertible<D, T>::value,
+                          "Type D must a descendent of or be convertible to type T.");
+            static_assert(std::is_copy_constructible<D>::value,
+                          "Type D must be copy constructible.");
+
 #ifdef __CUDACC__
             createDevicePtr(*ptr);
 #endif
@@ -131,7 +138,14 @@ namespace chai {
 #endif
             m_numReferences(other.m_numReferences),
             m_copyConstructor(other.m_copyConstructor),
-            m_destructor(other.m_destructor) {
+            m_destructor(other.m_destructor)
+         {
+            static_assert(std::is_base_of<T, D>::value ||
+                          std::is_convertible<D, T>::value,
+                          "Type D must a descendent of or be convertible to type T.");
+            static_assert(std::is_copy_constructible<D>::value,
+                          "Type D must be copy constructible.");
+
 #ifndef __CUDA_ARCH__
                incrementReferenceCount();
 #endif
@@ -190,6 +204,12 @@ namespace chai {
          ///
          template<class D>
          CHAI_HOST_DEVICE managed_ptr& operator=(const managed_ptr<D>& other) noexcept {
+            static_assert(std::is_base_of<T, D>::value ||
+                          std::is_convertible<D, T>::value,
+                          "Type D must a descendent of or be convertible to type T.");
+            static_assert(std::is_copy_constructible<D>::value,
+                          "Type D must be copy constructible.");
+
 #ifndef __CUDA_ARCH__
             decrementReferenceCount();
 #endif
@@ -337,7 +357,8 @@ namespace chai {
 
          void (*m_destructor)(void*); /// A function that casts to the derived type and calls delete on it.
 
-         template <class D> friend class managed_ptr; /// Needed for the converting constructor
+         template <typename D>
+         friend class managed_ptr; /// Needed for the converting constructor
 
          ///
          /// @author Alan Dayton
