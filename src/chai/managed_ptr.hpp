@@ -8,8 +8,63 @@
 
 // Standard libary headers
 #include <cstddef>
+#include <tuple>
 
 namespace chai {
+
+#ifdef __CUDACC__
+   namespace detail {
+      ///
+      /// @author Alan Dayton
+      ///
+      /// Creates a new T on the device.
+      ///
+      /// @param[out] devicePtr Used to return the device pointer to the new T
+      /// @param[in]  args The arguments to T's constructor
+      ///
+      /// @note Cannot capture argument packs in an extended device lambda,
+      ///       so explicit kernel is needed.
+      ///
+      template <typename T, typename... Args>
+      __global__ void createDevicePtr(T*& devicePtr, Args... args)
+      {
+         devicePtr = new T(std::forward<Args>(args)...);
+      }
+
+      ///
+      /// @author Alan Dayton
+      ///
+      /// Destroys the device pointer.
+      ///
+      /// @param[out] devicePtr The device pointer to call delete on
+      ///
+      template <typename T>
+      __global__ void destroyDevicePtr(T*& devicePtr)
+      {
+         if (devicePtr) {
+            delete devicePtr;
+         }
+      }
+
+      ///
+      /// @author Alan Dayton
+      ///
+      /// Creates a new T on the device.
+      ///
+      /// @param[in]  args The arguments to T's constructor
+      ///
+      /// @return The device pointer to the new T
+      ///
+      template <typename T, typename... Args>
+      CHAI_HOST T* createDevicePtr(Args&&... args) {
+         T* devicePtr;
+         createDevicePtr<<<1, 1>>>(devicePtr, args...);
+         cudaDeviceSynchronize();
+         return devicePtr;
+      }
+   }
+#endif
+
    ///
    /// @class managed_ptr<T>
    /// @author Alan Dayton
@@ -19,36 +74,34 @@ namespace chai {
    ///    is destroyed. If we ever do multi-threading on the CPU, locking will
    ///    need to be added to the reference counter.
    /// Requirements:
-   ///    The actual type created (D in the first constructor) must be copy
-   ///       constructible and the copy constructor must call the base class
-   ///       copy constructors to avoid slicing. The default constructor has
-   ///       the correct behavior, but only if the whole inheritance chain uses
-   ///       the default copy constructor. Otherwise, at whatever point the
-   ///       default is no longer used, the the base class copy constructors
-   ///       must be called to avoid copy slicing. If the copy constructors are
-   ///       private, this class must be declared as a friend.
-   ///    The actual type created (D in the first constructor) must be convertible
-   ///       to T (e.g. T is a base class of D).
+   ///    The actual type created (U in the first constructor) must be convertible
+   ///       to T (e.g. T is a base class of U or there is a user defined conversion).
    ///    This wrapper does NOT automatically sync the GPU copy if the CPU copy is
-   ///       updated and vice versa. The one exception to this is that if the class
-   ///       has chai::ManagedArray members or members that inherit chai::ManagedArray,
-   ///       these will be kept in sync (hence the need for D to be copy constructible).
-   ///       HOWEVER, the chai::ManagedArray members must be initialized upon object
-   ///       construction. Otherwise, if you wish to keep the CPU and GPU copies in sync,
-   ///       you must explicitly call the same modifying function in the CPU context and
-   ///       in the GPU context.
-   ///    Do NOT pass the base pointer type to the constructor. Always pass the derived
-   ///       type.
-   ///    Pointer types members of T must be chai::ManagedArrays or managed_ptrs to be
-   ///       accessible on the GPU. The same requirements apply to inner managed_ptrs.
-   ///       Requirements for using chai::ManagedArrays in the proper context still apply.
+   ///       updated and vice versa. The one exception to this is nested ManagedArrays
+   ///       and managed_ptrs, but only if they are registered via the registerArguments
+   ///       method. The factory method make_managed will register arguments passed
+   ///       to it automatically. Otherwise, if you wish to keep the CPU and GPU copies
+   ///       in sync, you must explicitly modify the object in both the CPU context
+   ///       and the GPU context.
+   ///    Members of T that are raw pointers need to be initialized correctly with a
+   ///       host or device pointer. If it is desired that these be kept in sync,
+   ///       pass a ManagedArray to the make_managed function in place of a raw array.
+   ///       Or, if this is after the managed_ptr has been constructed, use the same
+   ///       ManagedArray in both the CPU and GPU contexts to initialize the raw pointer
+   ///       member and then register the ManagedArray with the registerArguments
+   ///       method on the managed_ptr. If only a raw array is passed to make_managed,
+   ///       accessing that member will be valid in the correct context. To prevent the
+   ///       accidental use of them in the wrong context, any methods that access raw
+   ///       pointers not initialized in both contexts should be __host__ only or
+   ///       __device__ only. Special care should be taken when passing raw pointers
+   ///       as arguments to member functions.
    ///    Methods that can be called on the CPU and GPU must be declared with the
-   ///       __host__ __device__ specifiers. This includes the constructors (including
-   ///       copy constructors) and destructors.
+   ///       __host__ __device__ specifiers. This includes the constructors being
+   ///       used and destructors.
    ///    Raw pointer members still can be used, but they will only be valid on the host.
    ///       To prevent accidentally using them in a device context, any methods that
    ///       access raw pointers should be host only.
-   ///    Be especially careful of passing raw pointers to member functions.
+   ///
    template <typename T>
    class managed_ptr {
       public:
@@ -60,7 +113,7 @@ namespace chai {
          /// Default constructor.
          /// Initializes the reference count to 0.
          ///
-         CHAI_HOST constexpr managed_ptr() noexcept {}
+         CHAI_HOST_DEVICE constexpr managed_ptr() noexcept {}
 
          ///
          /// @author Alan Dayton
@@ -68,37 +121,7 @@ namespace chai {
          /// Construct from nullptr.
          /// Initializes the reference count to 0.
          ///
-         CHAI_HOST constexpr managed_ptr(std::nullptr_t) noexcept {}
-
-         ///
-         /// @author Alan Dayton
-         ///
-         /// Constructs a managed_ptr from the given pointer.
-         /// Takes the given host pointer and creates a copy of the object on the GPU.
-         ///
-         /// @param[in] cpuPtr The host pointer to take ownership of
-         ///
-         template <typename D>
-         CHAI_HOST explicit managed_ptr(D* ptr) :
-            m_cpu(ptr),
-            m_numReferences(new std::size_t{1})
-         {
-            static_assert(std::is_base_of<T, D>::value ||
-                          std::is_convertible<D, T>::value,
-                          "Type D must a descendent of or be convertible to type T.");
-            static_assert(std::is_copy_constructible<D>::value,
-                          "Type D must be copy constructible.");
-
-#ifdef __CUDACC__
-            createDevicePtr(*ptr);
-#endif
-
-            // Need to be able to access the copy constructor if T is a base pointer type
-            m_copyConstructor = [] (void* basePtr) {
-               D derivedCopy = *(static_cast<D*>(basePtr));
-               (void) derivedCopy;
-            };
-         }
+         CHAI_HOST_DEVICE constexpr managed_ptr(std::nullptr_t) noexcept {}
 
          ///
          /// @author Alan Dayton
@@ -109,13 +132,15 @@ namespace chai {
          /// @param[in] other The managed_ptr to copy.
          ///
          CHAI_HOST_DEVICE managed_ptr(const managed_ptr& other) noexcept :
-            m_cpu(other.m_cpu),
 #ifdef __CUDACC__
             m_gpu(other.m_gpu),
+            m_copyArguments(other.m_copyArguments),
+            m_copier(other.m_copier),
+            m_deleter(other.m_deleter),
 #endif
-            m_numReferences(other.m_numReferences),
-            m_copyConstructor(other.m_copyConstructor),
-            m_destructor(other.m_destructor) {
+            m_cpu(other.m_cpu),
+            m_numReferences(other.m_numReferences)
+         {
 #ifndef __CUDA_ARCH__
                incrementReferenceCount();
 #endif
@@ -126,25 +151,24 @@ namespace chai {
          ///
          /// Copy constructor.
          /// Constructs a copy of the given managed_ptr and increases the reference count.
-         ///    D must be convertible to T.
+         ///    U must be convertible to T.
          ///
          /// @param[in] other The managed_ptr to copy.
          ///
-         template <typename D>
-         CHAI_HOST_DEVICE managed_ptr(managed_ptr<D> const & other) noexcept :
-            m_cpu(other.m_cpu),
+         template <typename U>
+         CHAI_HOST_DEVICE managed_ptr(managed_ptr<U> const & other) noexcept :
 #ifdef __CUDACC__
             m_gpu(other.m_gpu),
+            m_copyArguments(other.m_copyArguments),
+            m_copier(other.m_copier),
+            m_deleter(other.m_deleter),
 #endif
-            m_numReferences(other.m_numReferences),
-            m_copyConstructor(other.m_copyConstructor),
-            m_destructor(other.m_destructor)
+            m_cpu(other.m_cpu),
+            m_numReferences(other.m_numReferences)
          {
-            static_assert(std::is_base_of<T, D>::value ||
-                          std::is_convertible<D, T>::value,
-                          "Type D must a descendent of or be convertible to type T.");
-            static_assert(std::is_copy_constructible<D>::value,
-                          "Type D must be copy constructible.");
+            static_assert(std::is_base_of<T, U>::value ||
+                          std::is_convertible<U, T>::value,
+                          "Type U must a descendent of or be convertible to type T.");
 
 #ifndef __CUDA_ARCH__
                incrementReferenceCount();
@@ -177,13 +201,14 @@ namespace chai {
                decrementReferenceCount();
 #endif
 
-               m_cpu = other.m_cpu;
 #ifdef __CUDACC__
                m_gpu = other.m_gpu;
+               m_copyArguments = other.m_copyArguments,
+               m_copier = other.m_copier,
+               m_deleter = other.m_deleter,
 #endif
+               m_cpu = other.m_cpu;
                m_numReferences = other.m_numReferences;
-               m_copyConstructor = other.m_copyConstructor;
-               m_destructor = other.m_destructor;
 
 #ifndef __CUDA_ARCH__
                incrementReferenceCount();
@@ -198,29 +223,28 @@ namespace chai {
          ///
          /// Conversion copy assignment operator.
          /// Copies the given managed_ptr and increases the reference count.
-         ///    D must be convertible to T.
+         ///    U must be convertible to T.
          ///
          /// @param[in] other The managed_ptr to copy.
          ///
-         template<class D>
-         CHAI_HOST_DEVICE managed_ptr& operator=(const managed_ptr<D>& other) noexcept {
-            static_assert(std::is_base_of<T, D>::value ||
-                          std::is_convertible<D, T>::value,
-                          "Type D must a descendent of or be convertible to type T.");
-            static_assert(std::is_copy_constructible<D>::value,
-                          "Type D must be copy constructible.");
+         template<class U>
+         CHAI_HOST_DEVICE managed_ptr& operator=(const managed_ptr<U>& other) noexcept {
+            static_assert(std::is_base_of<T, U>::value ||
+                          std::is_convertible<U, T>::value,
+                          "Type U must a descendent of or be convertible to type T.");
 
 #ifndef __CUDA_ARCH__
             decrementReferenceCount();
 #endif
 
-            m_cpu = other.m_cpu;
 #ifdef __CUDACC__
             m_gpu = other.m_gpu;
+            m_copyArguments = other.m_copyArguments,
+            m_copier = other.m_copier,
+            m_deleter = other.m_deleter,
 #endif
+            m_cpu = other.m_cpu;
             m_numReferences = other.m_numReferences;
-            m_copyConstructor = other.m_copyConstructor;
-            m_destructor = other.m_destructor;
 
 #ifndef __CUDA_ARCH__
             incrementReferenceCount();
@@ -295,70 +319,41 @@ namespace chai {
 #endif
          }
 
-#ifdef __CUDACC__
          ///
          /// @author Alan Dayton
          ///
-         /// Creates the device pointer.
-         /// Should be called only by the constructor, but extended __host__ __device__
-         ///    lambdas can only be in public methods.
+         /// Saves the arguments in order to later call their copy constructor.
          ///
-         template <typename D>
-         CHAI_HOST void createDevicePtr(const D& obj) {
-            chai::ManagedArray<D*> temp(1, chai::GPU);
+         /// @param[in] args The arguments to save..
+         ///
+         template <typename... Args>
+         CHAI_HOST void registerArguments(Args&&... args) {
+            m_copyArguments = (void*) new std::tuple<Args...>(args...);
 
-            forall(cuda(), 0, 1, [=] __device__ (int i) {
-               temp[i] = new D(obj);
-            });
+            m_copier = [] (void* copyArguments) {
+               std::tuple<Args...>(*(static_cast<std::tuple<Args...>*>(copyArguments)));
+            };
 
-            temp.move(chai::CPU);
-            m_gpu = temp[0];
-            temp.free();
-
-            // __host__ __device__ functions can't be created in constructor
-            // Need to be able to delete the original type if T is a base pointer type
-            m_destructor = [] CHAI_HOST_DEVICE (void* basePtr) {
-               delete static_cast<D*>(basePtr);
+            m_deleter = [] (void* copyArguments) {
+               delete static_cast<std::tuple<Args...>*>(copyArguments);
             };
          }
 
-         ///
-         /// @author Alan Dayton
-         ///
-         /// Cleans up the device pointer.
-         /// Should be called only by the destructor, but extended __host__ __device__
-         ///    lambdas can only be in public methods.
-         ///
-         CHAI_HOST void destroyDevicePtr() {
-            chai::ManagedArray<T*> temp(1, chai::CPU);
-            temp[0] = m_gpu;
-
-            // Does not capture "this"
-            void (*destructor)(void*) = m_destructor;
-
-            forall(cuda(), 0, 1, [=] __device__ (int i) {
-               destructor(temp[i]);
-            });
-
-            temp.free();
-         }
-#endif
-
       private:
-         T* m_cpu = nullptr; /// The host pointer
-
 #ifdef __CUDACC__
          T* m_gpu = nullptr; /// The device pointer
+         void* m_copyArguments = nullptr; /// ManagedArrays or managed_ptrs which need the copy constructor called on them
+         void (*m_copier)(void*); /// Casts m_copyArguments to the appropriate type and calls the copy constructor
+         void (*m_deleter)(void*); /// Casts m_copyArguments to the appropriate type and calls delete
 #endif
-
+         T* m_cpu = nullptr; /// The host pointer
          size_t* m_numReferences = nullptr; /// The reference counter
 
-         void (*m_copyConstructor)(void*); /// A function that casts to the derived type and calls the copy constructor so that chai::ManagedArrays are moved to the correct execution space.
-
-         void (*m_destructor)(void*); /// A function that casts to the derived type and calls delete on it.
-
-         template <typename D>
+         template <typename U>
          friend class managed_ptr; /// Needed for the converting constructor
+
+         template <typename U, typename... Args>
+         friend managed_ptr<U> make_managed(Args&&... args);
 
          ///
          /// @author Alan Dayton
@@ -370,9 +365,7 @@ namespace chai {
             if (m_numReferences) {
                (*m_numReferences)++;
 
-               // Trigger copy constructor so that any ManagedArrays in the object
-               // are copied to the right data space.
-               m_copyConstructor(m_cpu);
+               m_copier(m_copyArguments);
             }
          }
 
@@ -389,13 +382,47 @@ namespace chai {
                if (*m_numReferences == 0) {
                   delete m_numReferences;
 
-                  m_destructor(m_cpu);
+                  if (m_deleter) {
+                     m_deleter(m_copyArguments);
+                  }
+
+                  delete m_cpu;
 
 #ifdef __CUDACC__
-                  destroyDevicePtr();
+                  detail::destroyDevicePtr<<<1, 1>>>(m_gpu);
+                  cudaDeviceSynchronize();
 #endif
                }
             }
+         }
+
+         ///
+         /// @author Alan Dayton
+         ///
+         /// Constructs a managed_ptr from the given host and device pointers.
+         ///
+         /// @param[in] cpuPtr The host pointer to take ownership of
+         /// @param[in] gpuPtr The device pointer to take ownership of
+         ///
+#ifdef __CUDACC__
+         template <typename U, typename V=U>
+         CHAI_HOST managed_ptr(U* cpuPtr, V* gpuPtr) :
+            m_gpu(gpuPtr),
+#else
+         template <typename U>
+         CHAI_HOST managed_ptr(U* cpuPtr) :
+#endif
+            m_cpu(cpuPtr),
+            m_numReferences(new std::size_t{1})
+         {
+            static_assert(std::is_base_of<T, U>::value ||
+                          std::is_convertible<U, T>::value,
+                          "Type U must a descendent of or be convertible to type T.");
+#ifdef __CUDACC__
+            static_assert(std::is_base_of<T, V>::value ||
+                          std::is_convertible<V, T>::value,
+                          "Type V must a descendent of or be convertible to type T.");
+#endif
          }
    };
 
@@ -410,7 +437,8 @@ namespace chai {
    /// @param[in] rhs The second managed_ptr to compare
    ///
    template <class T, class U>
-   inline bool operator==(const managed_ptr<T>& lhs, const managed_ptr<U>& rhs) noexcept {
+   CHAI_HOST_DEVICE CHAI_INLINE
+   bool operator==(const managed_ptr<T>& lhs, const managed_ptr<U>& rhs) noexcept {
       return lhs.get() == rhs.get();
    }
 
@@ -423,7 +451,8 @@ namespace chai {
    /// @param[in] rhs The second managed_ptr to compare
    ///
    template <class T, class U>
-   inline bool operator!=(const managed_ptr<T>& lhs, const managed_ptr<U>& rhs) noexcept {
+   CHAI_HOST_DEVICE CHAI_INLINE
+   bool operator!=(const managed_ptr<T>& lhs, const managed_ptr<U>& rhs) noexcept {
       return lhs.get() != rhs.get();
    }
 
@@ -437,7 +466,8 @@ namespace chai {
    /// @param[in] lhs The managed_ptr to compare to nullptr
    ///
    template<class T>
-   inline bool operator==(const managed_ptr<T>& lhs, std::nullptr_t) noexcept {
+   CHAI_HOST_DEVICE CHAI_INLINE
+   bool operator==(const managed_ptr<T>& lhs, std::nullptr_t) noexcept {
       return lhs.get() == nullptr;
    }
 
@@ -449,7 +479,8 @@ namespace chai {
    /// @param[in] rhs The managed_ptr to compare to nullptr
    ///
    template<class T>
-   inline bool operator==(std::nullptr_t, const managed_ptr<T>& rhs) noexcept {
+   CHAI_HOST_DEVICE CHAI_INLINE
+   bool operator==(std::nullptr_t, const managed_ptr<T>& rhs) noexcept {
       return nullptr == rhs.get();
    }
 
@@ -461,7 +492,8 @@ namespace chai {
    /// @param[in] lhs The managed_ptr to compare to nullptr
    ///
    template<class T>
-   inline bool operator!=(const managed_ptr<T>& lhs, std::nullptr_t) noexcept {
+   CHAI_HOST_DEVICE CHAI_INLINE
+   bool operator!=(const managed_ptr<T>& lhs, std::nullptr_t) noexcept {
       return lhs.get() != nullptr;
    }
 
@@ -473,7 +505,8 @@ namespace chai {
    /// @param[in] rhs The managed_ptr to compare to nullptr
    ///
    template<class T>
-   inline bool operator!=(std::nullptr_t, const managed_ptr<T>& rhs) noexcept {
+   CHAI_HOST_DEVICE CHAI_INLINE
+   bool operator!=(std::nullptr_t, const managed_ptr<T>& rhs) noexcept {
       return nullptr != rhs.get();
    }
 
@@ -487,7 +520,20 @@ namespace chai {
    ///
    template <typename T, typename... Args>
    managed_ptr<T> make_managed(Args&&... args) {
-      return managed_ptr<T>(new T(std::forward<Args>(args)...));
+      static_assert(std::is_constructible<T, Args...>::value,
+                    "Type T must be constructible with the given arguments.");
+
+      T* cpuPtr = new T(args...);
+
+#ifdef __CUDACC__
+      T* gpuPtr = detail::createDevicePtr<T>(args...);
+      managed_ptr<T> result(cpuPtr, gpuPtr);
+#else
+      managed_ptr<T> result(cpuPtr);
+#endif
+
+      result.registerArguments(std::forward<Args>(args)...);
+      return result;
    }
 } // namespace chai
 
