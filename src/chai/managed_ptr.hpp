@@ -319,6 +319,8 @@ namespace chai {
 #endif
          }
 
+         CHAI_HOST_DEVICE inline operator T*() const { return get(); }
+
          ///
          /// @author Alan Dayton
          ///

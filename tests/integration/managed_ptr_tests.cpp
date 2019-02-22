@@ -56,6 +56,28 @@
 // Standard library headers
 #include <cstdlib>
 
+class RawArrayClass {
+   public:
+      CHAI_HOST_DEVICE RawArrayClass() : m_values(nullptr) {}
+      CHAI_HOST_DEVICE RawArrayClass(int* values) : m_values(values) {}
+
+      CHAI_HOST_DEVICE int getValue(const int i) const { return m_values[i]; }
+
+   private:
+      int* m_values;
+};
+
+class RawPointerClass {
+   public:
+      CHAI_HOST_DEVICE RawPointerClass() : m_innerClass(nullptr) {}
+      CHAI_HOST_DEVICE RawPointerClass(RawArrayClass* innerClass) : m_innerClass(innerClass) {}
+
+      CHAI_HOST_DEVICE int getValue(const int i) const { return m_innerClass->getValue(i); }
+
+   private:
+      RawArrayClass* m_innerClass;
+};
+
 class TestBase {
    public:
       CHAI_HOST_DEVICE TestBase() {}
@@ -105,7 +127,36 @@ class TestContainer {
       chai::managed_ptr<TestInner> m_innerType;
 };
 
-TEST(managed_ptr, inner_managed_array)
+TEST(managed_ptr, class_with_raw_array)
+{
+  const int expectedValue = rand();
+
+  chai::ManagedArray<int> array(1, chai::CPU);
+  array[0] = expectedValue;
+
+  auto rawArrayClass = chai::make_managed<RawArrayClass>(array);
+  ASSERT_EQ(rawArrayClass->getValue(0), expectedValue);
+}
+
+CUDA_TEST(managed_ptr, cuda_class_with_raw_array)
+{
+  const int expectedValue = rand();
+
+  chai::ManagedArray<int> array(1, chai::CPU);
+  array[0] = expectedValue;
+
+  auto rawArrayClass = chai::make_managed<RawArrayClass>(array);
+  chai::ManagedArray<int> results(1, chai::GPU);
+
+  forall(cuda(), 0, 1, [=] __device__ (int i) {
+    results[i] = rawArrayClass->getValue(i);
+  });
+
+  results.move(chai::CPU);
+  ASSERT_EQ(results[0], expectedValue);
+}
+
+TEST(managed_ptr, class_with_managed_array)
 {
   const int expectedValue = rand();
 
@@ -116,7 +167,7 @@ TEST(managed_ptr, inner_managed_array)
   ASSERT_EQ(derived->getValue(0), expectedValue);
 }
 
-CUDA_TEST(managed_ptr, cuda_inner_managed_array)
+CUDA_TEST(managed_ptr, cuda_class_with_managed_array)
 {
   const int expectedValue = rand();
 
@@ -134,7 +185,40 @@ CUDA_TEST(managed_ptr, cuda_inner_managed_array)
   ASSERT_EQ(results[0], expectedValue);
 }
 
-TEST(managed_ptr, inner_managed_ptr)
+TEST(managed_ptr, class_with_raw_ptr)
+{
+  const int expectedValue = rand();
+
+  chai::ManagedArray<int> array(1, chai::CPU);
+  array[0] = expectedValue;
+
+  auto rawArrayClass = chai::make_managed<RawArrayClass>(array);
+  auto rawPointerClass = chai::make_managed<RawPointerClass>(rawArrayClass);
+
+  ASSERT_EQ((*rawPointerClass).getValue(0), expectedValue);
+}
+
+CUDA_TEST(managed_ptr, cuda_class_with_raw_ptr)
+{
+  const int expectedValue = rand();
+
+  chai::ManagedArray<int> array(1, chai::CPU);
+  array[0] = expectedValue;
+
+  auto rawArrayClass = chai::make_managed<RawArrayClass>(array);
+  auto rawPointerClass = chai::make_managed<RawPointerClass>(rawArrayClass);
+
+  chai::ManagedArray<int> results(1, chai::GPU);
+
+  forall(cuda(), 0, 1, [=] __device__ (int i) {
+    results[i] = (*rawPointerClass).getValue(i);
+  });
+
+  results.move(chai::CPU);
+  ASSERT_EQ(results[0], expectedValue);
+}
+
+TEST(managed_ptr, class_with_managed_ptr)
 {
   const int expectedValue = rand();
 
@@ -144,11 +228,11 @@ TEST(managed_ptr, inner_managed_ptr)
   ASSERT_EQ(container.getValue(), expectedValue);
 }
 
-CUDA_TEST(managed_ptr, cuda_inner_managed_ptr)
+CUDA_TEST(managed_ptr, cuda_class_with_managed_ptr)
 {
   const int expectedValue = rand();
 
-  chai::managed_ptr<TestInner> derived = chai::make_managed<TestInner>(expectedValue);
+  auto derived = chai::make_managed<TestInner>(expectedValue);
   TestContainer container(derived);
 
   chai::ManagedArray<int> results(1, chai::GPU);
