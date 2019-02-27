@@ -25,10 +25,32 @@ namespace chai {
       /// @note Cannot capture argument packs in an extended device lambda,
       ///       so explicit kernel is needed.
       ///
-      template <typename T, typename... Args>
+      template <typename T,
+                typename std::enable_if<std::is_class<T>::value, int>::type = 0,
+                typename... Args>
       __global__ void createDevicePtr(T*& devicePtr, Args... args)
       {
          devicePtr = new T(std::forward<Args>(args)...);
+      }
+
+      ///
+      /// @author Alan Dayton
+      ///
+      /// Creates a new object on the device by calling the given factory method.
+      ///
+      /// @param[out] devicePtr Used to return the device pointer to the new object
+      /// @param[in]  f The factory method
+      /// @param[in]  args The arguments to the factory method
+      ///
+      /// @note Cannot capture argument packs in an extended device lambda,
+      ///       so explicit kernel is needed.
+      ///
+      template <typename F,
+                typename std::enable_if<!std::is_class<F>::value, int>::type = 0,
+                typename... Args>
+      __global__ void createDevicePtr(F f, typename std::add_lvalue_reference<typename std::result_of<F(Args...)>::type>::type devicePtr, Args... args)
+      {
+         devicePtr = f(std::forward<Args>(args)...);
       }
 
       ///
@@ -55,10 +77,32 @@ namespace chai {
       ///
       /// @return The device pointer to the new T
       ///
-      template <typename T, typename... Args>
+      template <typename T,
+                typename std::enable_if<std::is_class<T>::value, int>::type = 0,
+                typename... Args>
       CHAI_HOST T* createDevicePtr(Args&&... args) {
          T* devicePtr;
          createDevicePtr<<<1, 1>>>(devicePtr, args...);
+         cudaDeviceSynchronize();
+         return devicePtr;
+      }
+
+      ///
+      /// @author Alan Dayton
+      ///
+      /// Calls a factory method to create a new object on the device.
+      ///
+      /// @param[in]  f    The factory method
+      /// @param[in]  args The arguments to the factory method
+      ///
+      /// @return The device pointer to the new object
+      ///
+      template <typename F,
+                typename std::enable_if<!std::is_class<F>::value, int>::type = 0,
+                typename... Args>
+      CHAI_HOST typename std::result_of<F(Args...)>::type createDevicePtr(F f, Args&&... args) {
+         typename std::result_of<F(Args...)>::type devicePtr;
+         createDevicePtr<<<1, 1>>>(f, devicePtr, args...);
          cudaDeviceSynchronize();
          return devicePtr;
       }
@@ -354,8 +398,15 @@ namespace chai {
          template <typename U>
          friend class managed_ptr; /// Needed for the converting constructor
 
-         template <typename U, typename... Args>
+         template <typename U,
+                   typename std::enable_if<std::is_class<U>::value, int>::type,
+                   typename... Args>
          friend managed_ptr<U> make_managed(Args&&... args);
+
+         template <typename F,
+                   typename std::enable_if<!std::is_class<F>::value, int>::type,
+                   typename... Args>
+         managed_ptr<typename std::remove_pointer<typename std::result_of<F(Args...)>::type>::type> make_managed(F f, Args&&... args);
 
          ///
          /// @author Alan Dayton
@@ -406,6 +457,7 @@ namespace chai {
          /// @param[in] cpuPtr The host pointer to take ownership of
          /// @param[in] gpuPtr The device pointer to take ownership of
          ///
+      public:
 #ifdef __CUDACC__
          template <typename U, typename V=U>
          CHAI_HOST managed_ptr(U* cpuPtr, V* gpuPtr) :
@@ -520,7 +572,9 @@ namespace chai {
    ///
    /// @params[in] args The arguments to T's constructor
    ///
-   template <typename T, typename... Args>
+   template <typename T,
+             typename std::enable_if<std::is_class<T>::value, int>::type = 0,
+             typename... Args>
    managed_ptr<T> make_managed(Args&&... args) {
       static_assert(std::is_constructible<T, Args...>::value,
                     "Type T must be constructible with the given arguments.");
@@ -532,6 +586,33 @@ namespace chai {
       managed_ptr<T> result(cpuPtr, gpuPtr);
 #else
       managed_ptr<T> result(cpuPtr);
+#endif
+
+      result.registerArguments(std::forward<Args>(args)...);
+      return result;
+   }
+
+   ///
+   /// @author Alan Dayton
+   ///
+   /// Makes a managed_ptr<T>.
+   /// Factory function to create managed_ptrs.
+   ///
+   /// @params[in] args The arguments to T's constructor
+   ///
+   template <typename F,
+             typename std::enable_if<!std::is_class<F>::value, int>::type = 0,
+             typename... Args>
+   managed_ptr<typename std::remove_pointer<typename std::result_of<F(Args...)>::type>::type> make_managed(F f, Args&&... args) {
+      using R = typename std::remove_pointer<typename std::result_of<F(Args...)>::type>::type;
+
+      R* cpuPtr = f(args...);
+
+#ifdef __CUDACC__
+      R* gpuPtr = detail::createDevicePtr<F>(f, args...);
+      managed_ptr<R> result(cpuPtr, gpuPtr);
+#else
+      managed_ptr<R> result(cpuPtr);
 #endif
 
       result.registerArguments(std::forward<Args>(args)...);

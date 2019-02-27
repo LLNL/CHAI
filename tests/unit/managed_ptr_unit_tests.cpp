@@ -60,6 +60,8 @@ class TestBase {
    public:
       CHAI_HOST_DEVICE TestBase() {}
 
+      CHAI_HOST_DEVICE static TestBase* Factory(const int value);
+
       CHAI_HOST_DEVICE virtual int getValue() const = 0;
 };
 
@@ -73,6 +75,14 @@ class TestDerived : public TestBase {
    private:
       int m_value;
 };
+
+CHAI_HOST_DEVICE TestBase* TestBase::Factory(const int value) {
+   return new TestDerived(value);
+}
+
+CHAI_HOST_DEVICE TestBase* Factory(const int value) {
+   return new TestDerived(value);
+}
 
 TEST(managed_ptr, default_constructor)
 {
@@ -230,6 +240,38 @@ CUDA_TEST(managed_ptr, cuda_make_managed)
   EXPECT_FALSE(array3[2]);
   EXPECT_TRUE(array3[3]);
   EXPECT_TRUE(array3[4]);
+}
+
+TEST(managed_ptr, make_managed_from_factory_function)
+{
+  const int expectedValue = rand();
+  auto derived = chai::make_managed(&Factory, expectedValue);
+
+  EXPECT_EQ((*derived).getValue(), expectedValue);
+
+  EXPECT_NE(derived.get(), nullptr);
+  EXPECT_EQ(derived.use_count(), 1);
+  EXPECT_TRUE(derived);
+  EXPECT_FALSE(derived == nullptr);
+  EXPECT_FALSE(nullptr == derived);
+  EXPECT_TRUE(derived != nullptr);
+  EXPECT_TRUE(nullptr != derived);
+}
+
+TEST(managed_ptr, make_managed_from_factory_static_member_function)
+{
+  const int expectedValue = rand();
+  auto derived = chai::make_managed(&TestBase::Factory, expectedValue);
+
+  EXPECT_EQ((*derived).getValue(), expectedValue);
+
+  EXPECT_NE(derived.get(), nullptr);
+  EXPECT_EQ(derived.use_count(), 1);
+  EXPECT_TRUE(derived);
+  EXPECT_FALSE(derived == nullptr);
+  EXPECT_FALSE(nullptr == derived);
+  EXPECT_TRUE(derived != nullptr);
+  EXPECT_TRUE(nullptr != derived);
 }
 
 TEST(managed_ptr, copy_constructor)
