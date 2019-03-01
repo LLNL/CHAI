@@ -2,9 +2,6 @@
 #define MANAGED_PTR_H_
 
 #include "chai/ChaiMacros.hpp"
-#include "chai/ManagedArray.hpp"
-
-#include "../util/forall.hpp"
 
 // Standard libary headers
 #include <cstddef>

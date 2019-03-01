@@ -48,10 +48,10 @@
   static void cuda_test_##X##Y()
 
 #include "chai/config.hpp"
+#include "chai/ManagedArray.hpp"
+#include "chai/managed_ptr.hpp"
 
 #include "../src/util/forall.hpp"
-
-#include "chai/managed_ptr.hpp"
 
 // Standard library headers
 #include <cstdlib>
