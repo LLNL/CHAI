@@ -84,6 +84,14 @@ CHAI_HOST_DEVICE TestBase* Factory(const int value) {
    return new TestDerived(value);
 }
 
+CHAI_HOST_DEVICE TestBase* OverloadedFactory() {
+   return new TestDerived(-1);
+}
+
+CHAI_HOST_DEVICE TestBase* OverloadedFactory(const int value) {
+   return new TestDerived(value);
+}
+
 TEST(managed_ptr, default_constructor)
 {
   chai::managed_ptr<TestDerived> derived;
@@ -245,7 +253,49 @@ CUDA_TEST(managed_ptr, cuda_make_managed)
 TEST(managed_ptr, make_managed_from_factory_function)
 {
   const int expectedValue = rand();
-  auto derived = chai::make_managed(&Factory, expectedValue);
+  auto derived = chai::make_managed_from_factory<TestBase>(Factory, expectedValue);
+
+  EXPECT_EQ((*derived).getValue(), expectedValue);
+
+  EXPECT_NE(derived.get(), nullptr);
+  EXPECT_EQ(derived.use_count(), 1);
+  EXPECT_TRUE(derived);
+  EXPECT_FALSE(derived == nullptr);
+  EXPECT_FALSE(nullptr == derived);
+  EXPECT_TRUE(derived != nullptr);
+  EXPECT_TRUE(nullptr != derived);
+}
+
+CUDA_TEST(managed_ptr, make_managed_from_factory_lambda)
+{
+  const int expectedValue = rand();
+
+  auto factory = [] CHAI_HOST_DEVICE (const int value) {
+    return new TestDerived(value);
+  };
+
+  auto derived = chai::make_managed_from_factory<TestBase>(factory, expectedValue);
+
+  EXPECT_EQ((*derived).getValue(), expectedValue);
+
+  EXPECT_NE(derived.get(), nullptr);
+  EXPECT_EQ(derived.use_count(), 1);
+  EXPECT_TRUE(derived);
+  EXPECT_FALSE(derived == nullptr);
+  EXPECT_FALSE(nullptr == derived);
+  EXPECT_TRUE(derived != nullptr);
+  EXPECT_TRUE(nullptr != derived);
+}
+
+CUDA_TEST(managed_ptr, make_managed_from_overloaded_factory_function)
+{
+  const int expectedValue = rand();
+
+  auto factory = [] CHAI_HOST_DEVICE (const int value) {
+    return OverloadedFactory(value);
+  };
+
+  auto derived = chai::make_managed_from_factory<TestBase>(factory, expectedValue);
 
   EXPECT_EQ((*derived).getValue(), expectedValue);
 
@@ -261,7 +311,7 @@ TEST(managed_ptr, make_managed_from_factory_function)
 TEST(managed_ptr, make_managed_from_factory_static_member_function)
 {
   const int expectedValue = rand();
-  auto derived = chai::make_managed(&TestBase::Factory, expectedValue);
+  auto derived = chai::make_managed_from_factory<TestBase>(&TestBase::Factory, expectedValue);
 
   EXPECT_EQ((*derived).getValue(), expectedValue);
 

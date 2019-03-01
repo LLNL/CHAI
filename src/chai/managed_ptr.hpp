@@ -26,9 +26,8 @@ namespace chai {
       ///       so explicit kernel is needed.
       ///
       template <typename T,
-                typename std::enable_if<std::is_class<T>::value, int>::type = 0,
                 typename... Args>
-      __global__ void createDevicePtr(T*& devicePtr, Args... args)
+      __global__ void make_on_device(T*& devicePtr, Args... args)
       {
          devicePtr = new T(std::forward<Args>(args)...);
       }
@@ -45,10 +44,10 @@ namespace chai {
       /// @note Cannot capture argument packs in an extended device lambda,
       ///       so explicit kernel is needed.
       ///
-      template <typename F,
-                typename std::enable_if<!std::is_class<F>::value, int>::type = 0,
+      template <typename T,
+                typename F,
                 typename... Args>
-      __global__ void createDevicePtr(F f, typename std::add_lvalue_reference<typename std::result_of<F(Args...)>::type>::type devicePtr, Args... args)
+      __global__ void make_on_device_from_factory(T*& devicePtr, F f, Args... args)
       {
          devicePtr = f(std::forward<Args>(args)...);
       }
@@ -78,11 +77,10 @@ namespace chai {
       /// @return The device pointer to the new T
       ///
       template <typename T,
-                typename std::enable_if<std::is_class<T>::value, int>::type = 0,
                 typename... Args>
-      CHAI_HOST T* createDevicePtr(Args&&... args) {
+      CHAI_HOST T* make_on_device(Args&&... args) {
          T* devicePtr;
-         createDevicePtr<<<1, 1>>>(devicePtr, args...);
+         make_on_device<<<1, 1>>>(devicePtr, args...);
          cudaDeviceSynchronize();
          return devicePtr;
       }
@@ -97,12 +95,12 @@ namespace chai {
       ///
       /// @return The device pointer to the new object
       ///
-      template <typename F,
-                typename std::enable_if<!std::is_class<F>::value, int>::type = 0,
+      template <typename T,
+                typename F,
                 typename... Args>
-      CHAI_HOST typename std::result_of<F(Args...)>::type createDevicePtr(F f, Args&&... args) {
-         typename std::result_of<F(Args...)>::type devicePtr;
-         createDevicePtr<<<1, 1>>>(f, devicePtr, args...);
+      CHAI_HOST T* make_on_device_from_factory(F f, Args&&... args) {
+         T* devicePtr;
+         make_on_device_from_factory<T><<<1, 1>>>(devicePtr, f, args...);
          cudaDeviceSynchronize();
          return devicePtr;
       }
@@ -573,7 +571,6 @@ namespace chai {
    /// @params[in] args The arguments to T's constructor
    ///
    template <typename T,
-             typename std::enable_if<std::is_class<T>::value, int>::type = 0,
              typename... Args>
    managed_ptr<T> make_managed(Args&&... args) {
       static_assert(std::is_constructible<T, Args...>::value,
@@ -582,7 +579,7 @@ namespace chai {
       T* cpuPtr = new T(args...);
 
 #ifdef __CUDACC__
-      T* gpuPtr = detail::createDevicePtr<T>(args...);
+      T* gpuPtr = detail::make_on_device<T>(args...);
       managed_ptr<T> result(cpuPtr, gpuPtr);
 #else
       managed_ptr<T> result(cpuPtr);
@@ -598,21 +595,29 @@ namespace chai {
    /// Makes a managed_ptr<T>.
    /// Factory function to create managed_ptrs.
    ///
-   /// @params[in] args The arguments to T's constructor
+   /// @params[in] f The factory function that will create the object
+   /// @params[in] args The arguments to the factory function
    ///
-   template <typename F,
-             typename std::enable_if<!std::is_class<F>::value, int>::type = 0,
+   template <typename T,
+             typename F,
              typename... Args>
-   managed_ptr<typename std::remove_pointer<typename std::result_of<F(Args...)>::type>::type> make_managed(F f, Args&&... args) {
+   managed_ptr<T> make_managed_from_factory(F f, Args&&... args) {
+      static_assert(std::is_pointer<typename std::result_of<F(Args...)>::type>::value,
+                    "Factory function must return a pointer");
+
       using R = typename std::remove_pointer<typename std::result_of<F(Args...)>::type>::type;
+
+      static_assert(std::is_base_of<T, R>::value ||
+                    std::is_convertible<R, T>::value,
+                    "Factory function must have a return type that is a descendent of or is convertible to type T.");
 
       R* cpuPtr = f(args...);
 
 #ifdef __CUDACC__
-      R* gpuPtr = detail::createDevicePtr<F>(f, args...);
-      managed_ptr<R> result(cpuPtr, gpuPtr);
+      R* gpuPtr = detail::make_on_device_from_factory<R>(f, args...);
+      managed_ptr<T> result(cpuPtr, gpuPtr);
 #else
-      managed_ptr<R> result(cpuPtr);
+      managed_ptr<T> result(cpuPtr);
 #endif
 
       result.registerArguments(std::forward<Args>(args)...);
