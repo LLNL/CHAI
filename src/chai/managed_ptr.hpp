@@ -113,33 +113,31 @@ namespace chai {
    ///    is destroyed. If we ever do multi-threading on the CPU, locking will
    ///    need to be added to the reference counter.
    /// Requirements:
-   ///    The actual type created (U in the first constructor) must be convertible
+   ///    The underlying type created (U in the first constructor) must be convertible
    ///       to T (e.g. T is a base class of U or there is a user defined conversion).
    ///    This wrapper does NOT automatically sync the GPU copy if the CPU copy is
    ///       updated and vice versa. The one exception to this is nested ManagedArrays
    ///       and managed_ptrs, but only if they are registered via the registerArguments
-   ///       method. The factory method make_managed will register arguments passed
-   ///       to it automatically. Otherwise, if you wish to keep the CPU and GPU copies
-   ///       in sync, you must explicitly modify the object in both the CPU context
-   ///       and the GPU context.
+   ///       method. The factory methods make_managed and make_managed_from_factory
+   ///       will register arguments passed to them automatically. Otherwise, if you
+   ///       wish to keep the CPU and GPU instances in sync, you must explicitly modify
+   ///       the object in both the CPU context and the GPU context.
    ///    Members of T that are raw pointers need to be initialized correctly with a
    ///       host or device pointer. If it is desired that these be kept in sync,
-   ///       pass a ManagedArray to the make_managed function in place of a raw array.
-   ///       Or, if this is after the managed_ptr has been constructed, use the same
-   ///       ManagedArray in both the CPU and GPU contexts to initialize the raw pointer
-   ///       member and then register the ManagedArray with the registerArguments
-   ///       method on the managed_ptr. If only a raw array is passed to make_managed,
-   ///       accessing that member will be valid in the correct context. To prevent the
-   ///       accidental use of them in the wrong context, any methods that access raw
-   ///       pointers not initialized in both contexts should be __host__ only or
-   ///       __device__ only. Special care should be taken when passing raw pointers
-   ///       as arguments to member functions.
+   ///       pass a ManagedArray to the make_managed or make_managed_from_factory
+   ///       functions in place of a raw array. Or, if this is after the managed_ptr
+   ///       has been constructed, use the same ManagedArray in both the CPU and GPU
+   ///       contexts to initialize the raw pointer member and then register the
+   ///       ManagedArray with the registerArguments method on the managed_ptr.
+   ///       If only a raw array is passed to make_managed, accessing that member
+   ///       will be valid only in the correct context. To prevent the accidental
+   ///       use of that member in the wrong context, any methods that access raw
+   ///       pointers not initialized in both contexts as previously described
+   ///       should be __host__ only or __device__ only. Special care should be
+   ///       taken when passing raw pointers as arguments to member functions.
    ///    Methods that can be called on the CPU and GPU must be declared with the
    ///       __host__ __device__ specifiers. This includes the constructors being
    ///       used and destructors.
-   ///    Raw pointer members still can be used, but they will only be valid on the host.
-   ///       To prevent accidentally using them in a device context, any methods that
-   ///       access raw pointers should be host only.
    ///
    template <typename T>
    class managed_ptr {
