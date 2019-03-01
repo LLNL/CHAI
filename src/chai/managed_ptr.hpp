@@ -394,14 +394,13 @@ namespace chai {
          friend class managed_ptr; /// Needed for the converting constructor
 
          template <typename U,
-                   typename std::enable_if<std::is_class<U>::value, int>::type,
                    typename... Args>
          friend managed_ptr<U> make_managed(Args&&... args);
 
-         template <typename F,
-                   typename std::enable_if<!std::is_class<F>::value, int>::type,
+         template <typename U,
+                   typename F,
                    typename... Args>
-         managed_ptr<typename std::remove_pointer<typename std::result_of<F(Args...)>::type>::type> make_managed(F f, Args&&... args);
+         friend managed_ptr<U> make_managed_from_factory(F&& f, Args&&... args);
 
          ///
          /// @author Alan Dayton
@@ -598,7 +597,7 @@ namespace chai {
    template <typename T,
              typename F,
              typename... Args>
-   managed_ptr<T> make_managed_from_factory(F f, Args&&... args) {
+   managed_ptr<T> make_managed_from_factory(F&& f, Args&&... args) {
       static_assert(std::is_pointer<typename std::result_of<F(Args...)>::type>::value,
                     "Factory function must return a pointer");
 
