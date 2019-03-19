@@ -47,6 +47,12 @@
   TEST(X, Y) { cuda_test_##X##Y(); } \
   static void cuda_test_##X##Y()
 
+#ifdef NDEBUG
+#define device_assert(EXP) if( !EXP ) asm ("trap;")
+#else
+#define device_assert(EXP) assert(EXP)
+#endif
+
 #include "chai/config.hpp"
 
 #include "../src/util/forall.hpp"
@@ -71,7 +77,8 @@ TEST(ManagedArray, SetOnHost)
 }
 
 #if (!defined(CHAI_DISABLE_RM))
-TEST(ManagedArray, Const) {
+TEST(ManagedArray, Const)
+{
   chai::ManagedArray<float> array(10);
 
   forall(sequential(), 0, 10, [=](int i) { array[i] = i; });
@@ -79,6 +86,8 @@ TEST(ManagedArray, Const) {
   chai::ManagedArray<const float> array_const(array);
 
   forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array_const[i], i); });
+
+  array.free();
 }
 #endif
 
@@ -605,6 +614,8 @@ TEST(ManagedArray, Allocate)
 
   array.allocate(10);
   ASSERT_EQ(array.size(), 10u);
+
+  array.free();
 }
 
 TEST(ManagedArray, ReallocateCPU)
@@ -625,6 +636,8 @@ TEST(ManagedArray, ReallocateCPU)
       ASSERT_EQ(array[i], i);
     }
   });
+
+  array.free();
 }
 
 #if defined(CHAI_ENABLE_CUDA)
@@ -646,15 +659,19 @@ CUDA_TEST(ManagedArray, ReallocateGPU)
       ASSERT_EQ(array[i], i);
     }
   });
+
+  array.free();
 }
 #endif
 
 TEST(ManagedArray, NullpointerConversions)
 {
   chai::ManagedArray<float> a;
+  a.free();
   a = nullptr;
 
   chai::ManagedArray<const float> b;
+  b.free();
   b = nullptr;
 
   ASSERT_EQ(a.size(), 0u);
@@ -672,6 +689,7 @@ TEST(ManagedArray, ImplicitConversions)
 
   chai::ManagedArray<float> a2 = a;
 
+  a.free();
   SUCCEED();
 }
 #endif
@@ -689,6 +707,8 @@ TEST(ManagedArray, PodTest)
     ASSERT_EQ(array[i].x, i);
     ASSERT_EQ(array[i].y, i * 2.0);
   });
+
+  array.free();
 }
 
 #if defined(CHAI_ENABLE_CUDA)
@@ -705,13 +725,15 @@ CUDA_TEST(ManagedArray, PodTestGPU)
     ASSERT_EQ(array[i].x, i);
     ASSERT_EQ(array[i].y, i * 2.0);
   });
+
+  array.free();
 }
 #endif
 
 #ifndef CHAI_DISABLE_RM
 TEST(ManagedArray, ExternalConstructorUnowned)
 {
-  float* data = new float[100];
+  float* data = static_cast<float*>(std::malloc(100 * sizeof(float)));
 
   for (int i = 0; i < 100; i++) {
     data[i] = 1.0f * i;
@@ -724,12 +746,16 @@ TEST(ManagedArray, ExternalConstructorUnowned)
 
   array.free();
 
-  ASSERT_NE(nullptr, data);
+  for (int i = 0; i < 100; i++) {
+    ASSERT_EQ(data[i], 1.0f * i);
+  }
+
+  std::free(data);
 }
 
 TEST(ManagedArray, ExternalConstructorOwned)
 {
-  float* data = new float[20];
+  float* data = static_cast<float*>(std::malloc(20 * sizeof(float)));
 
   for (int i = 0; i < 20; i++) {
     data[i] = 1.0f * i;
@@ -751,6 +777,7 @@ TEST(ManagedArray, Reset)
   forall(sequential(), 0, 20, [=](int i) { array[i] = 1.0f * i; });
 
   array.reset();
+  array.free();
 }
 
 #if defined(CHAI_ENABLE_CUDA)
@@ -766,6 +793,8 @@ CUDA_TEST(ManagedArray, ResetDevice)
   array.reset();
 
   forall(sequential(), 0, 20, [=](int i) { ASSERT_EQ(array[i], 0.0f); });
+
+  array.free();
 }
 #endif
 #endif
@@ -855,7 +884,7 @@ CUDA_TEST(ManagedArray, CallBackConst)
 
   // Create a const copy and move it to the device.
   chai::ManagedArray<int const> array_const = array;
-  forall(cuda(), 0, 100, [=] __device__(int i) { assert(array_const[i] == i); });
+  forall(cuda(), 0, 100, [=] __device__(int i) { device_assert(array_const[i] == i); });
 
   // Change the values, use a for-loop so as to not trigger a movement.
   for (int i = 0; i < 100; ++i)
@@ -926,7 +955,7 @@ CUDA_TEST(ManagedArray, CallBackConstArray)
     {
       for( int j = 0; j < N; ++j)
       {
-        assert(outerArrayConst[i][j] == N * i + j);
+        device_assert(outerArrayConst[i][j] == N * i + j);
       }
     }
   );
@@ -1007,7 +1036,7 @@ CUDA_TEST(ManagedArray, CallBackConstArrayConst)
     {
       for( int j = 0; j < N; ++j)
       {
-        assert(outerArrayConst[i][j] == N * i + j);
+        device_assert(outerArrayConst[i][j] == N * i + j);
       }
     }
   );
@@ -1291,3 +1320,14 @@ CUDA_TEST(ManagedArray, DeviceDeepCopy)
 }
 #endif
 #endif  // defined(CHAI_ENABLE_CUDA)
+
+int main( int argc, char* argv[] )
+{
+  int result = 0;
+  testing::InitGoogleTest( &argc, argv );
+  result = RUN_ALL_TESTS();
+
+  chai::ArrayManager::finalize();
+
+  return result;
+}

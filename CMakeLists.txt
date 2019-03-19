@@ -47,24 +47,20 @@ project(Chai LANGUAGES CXX)
 
 set(ENABLE_CUDA On CACHE BOOL "Enable CUDA")
 set(ENABLE_OPENMP On CACHE BOOL "Enable OpenMP")
-set(ENABLE_BENCHMARKS On CACHE Bool "Enable benchmarks")
+set(ENABLE_BENCHMARKS On CACHE BOOL "Enable benchmarks")
 option(ENABLE_IMPLICIT_CONVERSIONS "Enable implicit conversions to-from raw pointers" On)
 option(DISABLE_RM "Make ManagedArray a thin wrapper" Off)
 mark_as_advanced(DISABLE_RM)
 option(ENABLE_UM "Use CUDA unified (managed) memory" Off)
 
-set(ENABLE_TESTS On CACHE Bool "")
-set(ENABLE_EXAMPLES On CACHE Bool "")
-set(ENABLE_DOCUMENTATION On CACHE Bool "")
+set(ENABLE_TESTS On CACHE BOOL "")
+set(ENABLE_EXAMPLES On CACHE BOOL "")
+set(ENABLE_DOCUMENTATION On CACHE BOOL "")
 
 # options for Umpire as TPL
-set(ENABLE_GMOCK On CACHE Bool "")
+set(ENABLE_GMOCK On CACHE BOOL "")
 set(ENABLE_ASSERTS "Build Umpire with assert() enabled" On)
-set(ENABLE_GTEST_DEATH_TESTS ${ENABLE_ASSERTS} CACHE Bool "")
-
-if (ENABLE_UM AND NOT ENABLE_CUDA)
-  message(FATAL_ERROR "Option ENABLE_UM requires ENABLE_CUDA")
-endif()
+set(ENABLE_GTEST_DEATH_TESTS ${ENABLE_ASSERTS} CACHE BOOL "")
 
 if (ENABLE_UM AND NOT ENABLE_CUDA)
   message(FATAL_ERROR "Option ENABLE_UM requires ENABLE_CUDA")

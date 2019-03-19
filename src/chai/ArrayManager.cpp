@@ -81,6 +81,20 @@ ArrayManager::ArrayManager()
 #endif
 }
 
+void ArrayManager::finalize()
+{
+  delete s_resource_manager_instance->m_allocators[CPU];
+#if defined(CHAI_ENABLE_CUDA)
+  delete s_resource_manager_instance->m_allocators[GPU];
+#endif
+#if defined(CHAI_ENABLE_UM)
+  delete s_resource_manager_instance->m_allocators[UM];
+#endif
+
+  s_resource_manager_instance->m_resource_manager.finalize();
+  delete s_resource_manager_instance;
+}
+
 void ArrayManager::registerPointer(
    PointerRecord* record,
    ExecutionSpace space,
@@ -220,6 +234,8 @@ void ArrayManager::allocate(
 
 void ArrayManager::free(PointerRecord* pointer_record)
 {
+  if (pointer_record == nullptr) return;
+
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     if (pointer_record->m_pointers[space]) {
       if (pointer_record->m_owned[space]) {
@@ -254,6 +270,10 @@ void ArrayManager::free(PointerRecord* pointer_record)
 #if defined(CHAI_ENABLE_UM)
         }
 #endif
+      }
+      else
+      {
+        delete m_resource_manager.deregisterAllocation(pointer_record->m_pointers[space]);
       }
     }
   }
