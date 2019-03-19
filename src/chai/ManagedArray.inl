@@ -194,7 +194,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
 template<typename T>
 CHAI_INLINE
 CHAI_HOST ManagedArray<T> ManagedArray<T>::slice(size_t offset, size_t elems) {
-  ManagedArray<T> slice;
+  ManagedArray<T> slice(nullptr);
   slice.m_resource_manager = m_resource_manager;
   if(offset + elems > size()) {
     CHAI_LOG("ManagedArray", "Invalid slice. No active pointer or index out of bounds");
@@ -258,6 +258,7 @@ CHAI_HOST void ManagedArray<T>::free()
 {
   if(!m_is_slice) {
     m_resource_manager->free(m_pointer_record);
+    m_pointer_record = nullptr;
   } else {
     CHAI_LOG("ManagedArray", "Cannot free a slice!");
   }
@@ -272,7 +273,7 @@ CHAI_HOST void ManagedArray<T>::reset()
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST size_t ManagedArray<T>::size() const {
+CHAI_HOST_DEVICE size_t ManagedArray<T>::size() const {
   return m_elems;
 }
 
@@ -464,11 +465,23 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE
 ManagedArray<T>&
-ManagedArray<T>::operator= (std::nullptr_t from) {
-  m_active_pointer = from;
-  m_active_base_pointer = from;
+ManagedArray<T>::operator= (ManagedArray && other) {
+  *this = other;
+  other = nullptr;
+  return *this;
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+ManagedArray<T>&
+ManagedArray<T>::operator= (std::nullptr_t) {
+  m_active_pointer = nullptr;
+  m_active_base_pointer = nullptr;
   m_elems = 0;
   m_offset = 0;
+  m_pointer_record = nullptr;
+  m_is_slice = false;
   return *this;
 }
 
