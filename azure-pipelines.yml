@@ -40,4 +40,5 @@ steps:
   inputs:
     testResultsFormat: 'cTest'
     testResultsFiles: '**/Test.xml'
+    testRunTitle: '$(docker_target) Tests'
   condition: ne( variables['docker_target'], 'nvcc')
