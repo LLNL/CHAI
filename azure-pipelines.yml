@@ -31,7 +31,8 @@ steps:
     arguments: '--target $(docker_target)'
 - script: |
     echo "$(Build.Repository.Name):$(Build.BuildID)"
-    CID=$(docker create $(Build.Repository.Name):$(Build.BuildId))
+    echo "llnl-chai-$(docker_target):$(Build.BuildId)"
+    CID=$(docker create llnl-chai-$(docker_target):$(Build.BuildId))
     echo ${CID}
     docker cp ${CID}:/home/axom/workspace/build local-build
     docker rm ${CID}
