@@ -30,7 +30,7 @@ steps:
     dockerFile: Dockerfile
     arguments: '--target $(docker_target)'
 - script: |
-  CID = $(docker create $($(Build.Repository.Name):$(Build.BuildId)))
+  CID = $(docker create $(Build.Repository.Name):$(Build.BuildId))
   docker cp ${CID}:/home/axom/workspace/build local-build
   docker rm ${CID}
   displayName: 'Copy test artifacts'
