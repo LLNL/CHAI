@@ -30,9 +30,9 @@ steps:
     dockerFile: Dockerfile
     arguments: '--target $(docker_target)'
 - script: |
-  CID = $(docker create $(Build.Repository.Name):$(Build.BuildId))
-  docker cp ${CID}:/home/axom/workspace/build local-build
-  docker rm ${CID}
+    CID=$(docker create $(Build.Repository.Name):$(Build.BuildId))
+    docker cp ${CID}:/home/axom/workspace/build local-build
+    docker rm ${CID}
   displayName: 'Copy test artifacts'
   condition: not( eq( variables['docker_target'], 'nvcc')
 - task: PublishTestResults@2
