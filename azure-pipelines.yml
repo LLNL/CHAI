@@ -25,7 +25,7 @@ steps:
   clean: boolean
   submodules: recursive
 - task: Docker@1
-  command: build
   inputs:
+    command: build
     dockerFile: Dockerfile
     arguments: '--target ${docker_target}'
