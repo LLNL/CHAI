@@ -28,4 +28,4 @@ steps:
   inputs:
     command: build
     dockerFile: Dockerfile
-    arguments: '--target ${docker_target}'
+    arguments: '--target $(docker_target)'
