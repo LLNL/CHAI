@@ -220,6 +220,8 @@ void ArrayManager::allocate(
 
 void ArrayManager::free(PointerRecord* pointer_record)
 {
+  if (pointer_record == nullptr) return;
+
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     if (pointer_record->m_pointers[space]) {
       if (pointer_record->m_owned[space]) {
@@ -254,6 +256,10 @@ void ArrayManager::free(PointerRecord* pointer_record)
 #if defined(CHAI_ENABLE_UM)
         }
 #endif
+      }
+      else
+      {
+        delete m_resource_manager.deregisterAllocation(pointer_record->m_pointers[space]);
       }
     }
   }

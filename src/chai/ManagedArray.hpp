@@ -51,7 +51,6 @@
 
 #include "umpire/Allocator.hpp"
 
-#include <array>
 #include <cstddef>
 
 namespace chai
@@ -153,7 +152,7 @@ public:
   CHAI_HOST void allocate(size_t elems,
                           ExecutionSpace space = CPU,
                           UserCallback const& cback =
-                              [](Action, ExecutionSpace, size_t) {});
+                          [](Action, ExecutionSpace, size_t) {});
 
   /*!
    * \brief Reallocate data for the ManagedArray.
@@ -182,7 +181,7 @@ public:
    *
    * \return The number of elements in the array
    */
-  CHAI_HOST size_t size() const;
+  CHAI_HOST_DEVICE size_t size() const;
 
   /*!
    * \brief Register this ManagedArray object as 'touched' in the given space.
@@ -225,6 +224,10 @@ public:
                                 ArrayManager* array_manager,
                                 size_t m_elems,
                                 PointerRecord* pointer_record);
+
+  ManagedArray<T>& operator=(ManagedArray const & other) = default;
+
+  CHAI_HOST_DEVICE ManagedArray<T>& operator=(ManagedArray && other);
 
   CHAI_HOST_DEVICE ManagedArray<T>& operator=(std::nullptr_t);
 

@@ -41,4 +41,4 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-add_doxygen_target(chai_doxgen)
+blt_add_doxygen_target(chai_doxgen)
