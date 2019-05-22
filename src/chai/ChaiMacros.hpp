@@ -45,7 +45,7 @@
 
 #include "chai/config.hpp"
 
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA) && defined(__CUDACC__)
 
 #define CHAI_HOST __host__
 #define CHAI_DEVICE __device__
