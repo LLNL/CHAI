@@ -52,6 +52,7 @@ namespace chai
 ArrayManager* ArrayManager::s_resource_manager_instance = nullptr;
 PointerRecord ArrayManager::s_null_record = PointerRecord();
 
+CHAI_HOST_DEVICE
 ArrayManager* ArrayManager::getInstance()
 {
   if (!s_resource_manager_instance) {
@@ -71,7 +72,7 @@ ArrayManager::ArrayManager()
 
   m_allocators[CPU] =
       new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
   m_allocators[GPU] =
       new umpire::Allocator(m_resource_manager.getAllocator("DEVICE"));
 #endif
@@ -259,7 +260,7 @@ void ArrayManager::free(PointerRecord* pointer_record)
       }
       else
       {
-        delete m_resource_manager.deregisterAllocation(pointer_record->m_pointers[space]);
+        m_resource_manager.deregisterAllocation(pointer_record->m_pointers[space]);
       }
     }
   }
@@ -310,7 +311,7 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
 {
   m_resource_manager.registerAllocation(
       pointer,
-      new umpire::util::AllocationRecord{
+      umpire::util::AllocationRecord{
           pointer, size, m_allocators[space]->getAllocationStrategy()});
 
   auto pointer_record = new PointerRecord{};

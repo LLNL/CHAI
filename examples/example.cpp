@@ -72,7 +72,7 @@ int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv))
   std::cout << " ]" << std::endl;
 
   std::cout << "Setting v2 and device_array on device." << std::endl;
-  forall(cuda(), 0, 10, [=] __device__(int i) {
+  forall(gpu(), 0, 10, [=] __device__(int i) {
     v2[i] = v1[i] * 2.0f;
     device_array[i] = i;
   });
@@ -82,7 +82,7 @@ int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv))
   std::cout << " ]" << std::endl;
 
   std::cout << "Doubling v2 on device." << std::endl;
-  forall(cuda(), 0, 10, [=] __device__(int i) { v2[i] *= 2.0f; });
+  forall(gpu(), 0, 10, [=] __device__(int i) { v2[i] *= 2.0f; });
 
   std::cout << "Casting v2 to a pointer." << std::endl;
   float* raw_v2 = v2;

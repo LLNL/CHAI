@@ -43,6 +43,7 @@
 #ifndef CHAI_ArrayManager_HPP
 #define CHAI_ArrayManager_HPP
 
+#include "chai/ChaiMacros.hpp"
 #include "chai/ExecutionSpaces.hpp"
 #include "chai/PointerRecord.hpp"
 #include "chai/Types.hpp"
@@ -87,6 +88,7 @@ public:
    * \return Pointer to the ArrayManager instance.
    *
    */
+  CHAI_HOST_DEVICE
   static ArrayManager* getInstance();
 
   /*!

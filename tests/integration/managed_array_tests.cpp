@@ -42,10 +42,10 @@
 // ---------------------------------------------------------------------
 #include "gtest/gtest.h"
 
-#define CUDA_TEST(X, Y)              \
-  static void cuda_test_##X##Y();    \
-  TEST(X, Y) { cuda_test_##X##Y(); } \
-  static void cuda_test_##X##Y()
+#define GPU_TEST(X, Y)              \
+  static void gpu_test_##X##Y();    \
+  TEST(X, Y) { gpu_test_##X##Y(); } \
+  static void gpu_test_##X##Y()
 
 #ifdef NDEBUG
 #define device_assert(EXP) if( !EXP ) asm ("trap;")
@@ -262,18 +262,18 @@ TEST(ManagedArray, IncrementDecrementOnHostUM)
 
 #endif
 
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 #if defined(CHAI_ENABLE_PICK)
 
 #if defined(CHAI_ENABLE_UM)
-CUDA_TEST(ManagedArray, PickandSetDeviceToDeviceUM)
+GPU_TEST(ManagedArray, PickandSetDeviceToDeviceUM)
 {
   chai::ManagedArray<int> array1(10, chai::UM);
   chai::ManagedArray<int> array2(10, chai::UM);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) { array1[i] = i; });
+  forall(gpu(), 0, 10, [=] __device__(int i) { array1[i] = i; });
 
-  forall(cuda(), 0, 10, [=] __device__(int i) {
+  forall(gpu(), 0, 10, [=] __device__(int i) {
     int temp = array1.pick(i);
     array2.set(i, temp);
   });
@@ -284,11 +284,11 @@ CUDA_TEST(ManagedArray, PickandSetDeviceToDeviceUM)
   array2.free();
 }
 
-CUDA_TEST(ManagedArray, PickHostFromDeviceUM)
+GPU_TEST(ManagedArray, PickHostFromDeviceUM)
 {
   chai::ManagedArray<int> array(10, chai::UM);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) { array[i] = i; });
+  forall(gpu(), 0, 10, [=] __device__(int i) { array[i] = i; });
 
   int temp = array.pick(5);
   ASSERT_EQ(temp, 5);
@@ -297,10 +297,10 @@ CUDA_TEST(ManagedArray, PickHostFromDeviceUM)
 }
 
 #if (!defined(CHAI_DISABLE_RM))
-CUDA_TEST(ManagedArray, PickHostFromDeviceConstUM) {
+GPU_TEST(ManagedArray, PickHostFromDeviceConstUM) {
   chai::ManagedArray<int> array(10, chai::UM);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) { array[i] = i; });
+  forall(gpu(), 0, 10, [=] __device__(int i) { array[i] = i; });
 
   chai::ManagedArray<const int> array_const(array);
 
@@ -312,11 +312,11 @@ CUDA_TEST(ManagedArray, PickHostFromDeviceConstUM) {
 }
 #endif
 
-CUDA_TEST(ManagedArray, SetHostToDeviceUM)
+GPU_TEST(ManagedArray, SetHostToDeviceUM)
 {
   chai::ManagedArray<int> array(10);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) { array[i] = i; });
+  forall(gpu(), 0, 10, [=] __device__(int i) { array[i] = i; });
 
   int temp = 10;
   array.set(5, temp);
@@ -326,17 +326,17 @@ CUDA_TEST(ManagedArray, SetHostToDeviceUM)
   array.free();
 }
 
-CUDA_TEST(ManagedArray, IncrementDecrementOnDeviceUM)
+GPU_TEST(ManagedArray, IncrementDecrementOnDeviceUM)
 {
   chai::ManagedArray<int> arrayI(10, chai::UM);
   chai::ManagedArray<int> arrayD(10, chai::UM);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) {
+  forall(gpu(), 0, 10, [=] __device__(int i) {
     arrayI[i] = i;
     arrayD[i] = i;
   });
 
-  forall(cuda(), 0, 10, [=] __device__(int i) {
+  forall(gpu(), 0, 10, [=] __device__(int i) {
     arrayI.incr(i);
     arrayD.decr(i);
   });
@@ -350,11 +350,11 @@ CUDA_TEST(ManagedArray, IncrementDecrementOnDeviceUM)
   arrayD.free();
 }
 
-CUDA_TEST(ManagedArray, IncrementDecrementFromHostOnDeviceUM)
+GPU_TEST(ManagedArray, IncrementDecrementFromHostOnDeviceUM)
 {
   chai::ManagedArray<int> array(10, chai::UM);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) { array[i] = i; });
+  forall(gpu(), 0, 10, [=] __device__(int i) { array[i] = i; });
 
   array.incr(5);
   array.decr(9);
@@ -369,16 +369,16 @@ CUDA_TEST(ManagedArray, IncrementDecrementFromHostOnDeviceUM)
   array.free();
 }
 
-CUDA_TEST(ManagedArray, PickandSetSliceDeviceToDeviceUM) {
+GPU_TEST(ManagedArray, PickandSetSliceDeviceToDeviceUM) {
   chai::ManagedArray<int> array(10, chai::UM);
   chai::ManagedArray<int> sl1 = array.slice(0,5);
   chai::ManagedArray<int> sl2 = array.slice(5,5);
 
-  forall(cuda(), 0, 10, [=] __device__ (int i) {
+  forall(gpu(), 0, 10, [=] __device__ (int i) {
       array[i] = i;
   });
 
-  forall(cuda(), 0, 5, [=] __device__ (int i) {
+  forall(gpu(), 0, 5, [=] __device__ (int i) {
       int temp = sl2.pick(i);
       temp += sl2.pick(i);
       sl1.set(i, temp);
@@ -393,16 +393,16 @@ CUDA_TEST(ManagedArray, PickandSetSliceDeviceToDeviceUM) {
 #endif
 
 #if (!defined(CHAI_DISABLE_RM))
-CUDA_TEST(ManagedArray, PickandSetDeviceToDevice)
+GPU_TEST(ManagedArray, PickandSetDeviceToDevice)
 {
   chai::ManagedArray<int> array1(10);
   chai::ManagedArray<int> array2(10);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) { array1[i] = i; });
+  forall(gpu(), 0, 10, [=] __device__(int i) { array1[i] = i; });
 
   chai::ManagedArray<const int> array_const(array1);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) {
+  forall(gpu(), 0, 10, [=] __device__(int i) {
     int temp = array1.pick(i);
     temp += array_const.pick(i);
     array2.set(i, temp);
@@ -414,16 +414,16 @@ CUDA_TEST(ManagedArray, PickandSetDeviceToDevice)
   array2.free();
 }
 
-CUDA_TEST(ManagedArray, PickandSetSliceDeviceToDevice) {
+GPU_TEST(ManagedArray, PickandSetSliceDeviceToDevice) {
   chai::ManagedArray<int> array(10);
   chai::ManagedArray<int> sl1 = array.slice(0,5);
   chai::ManagedArray<int> sl2 = array.slice(5,5);
 
-  forall(cuda(), 0, 10, [=] __device__ (int i) {
+  forall(gpu(), 0, 10, [=] __device__ (int i) {
       array[i] = i;
   });
 
-  forall(cuda(), 0, 5, [=] __device__ (int i) {
+  forall(gpu(), 0, 5, [=] __device__ (int i) {
       int temp = sl2.pick(i);
       temp += sl2.pick(i);
       sl1.set(i, temp);
@@ -437,11 +437,11 @@ CUDA_TEST(ManagedArray, PickandSetSliceDeviceToDevice) {
 }
 
 
-CUDA_TEST(ManagedArray, PickHostFromDevice)
+GPU_TEST(ManagedArray, PickHostFromDevice)
 {
   chai::ManagedArray<int> array(10);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) { array[i] = i; });
+  forall(gpu(), 0, 10, [=] __device__(int i) { array[i] = i; });
 
   int temp = array.pick(5);
   ASSERT_EQ(temp, 5);
@@ -449,11 +449,11 @@ CUDA_TEST(ManagedArray, PickHostFromDevice)
   array.free();
 }
 
-CUDA_TEST(ManagedArray, PickHostFromDeviceConst)
+GPU_TEST(ManagedArray, PickHostFromDeviceConst)
 {
   chai::ManagedArray<int> array(10);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) { array[i] = i; });
+  forall(gpu(), 0, 10, [=] __device__(int i) { array[i] = i; });
 
   chai::ManagedArray<const int> array_const(array);
 
@@ -466,11 +466,11 @@ CUDA_TEST(ManagedArray, PickHostFromDeviceConst)
   // array_const.free();
 }
 
-CUDA_TEST(ManagedArray, SetHostToDevice)
+GPU_TEST(ManagedArray, SetHostToDevice)
 {
   chai::ManagedArray<int> array(10);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) { array[i] = i; });
+  forall(gpu(), 0, 10, [=] __device__(int i) { array[i] = i; });
 
   int temp = 10;
   array.set(5, temp);
@@ -479,17 +479,17 @@ CUDA_TEST(ManagedArray, SetHostToDevice)
 
   array.free();
 }
-CUDA_TEST(ManagedArray, IncrementDecrementOnDevice)
+GPU_TEST(ManagedArray, IncrementDecrementOnDevice)
 {
   chai::ManagedArray<int> arrayI(10);
   chai::ManagedArray<int> arrayD(10);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) {
+  forall(gpu(), 0, 10, [=] __device__(int i) {
     arrayI[i] = i;
     arrayD[i] = i;
   });
 
-  forall(cuda(), 0, 10, [=] __device__(int i) {
+  forall(gpu(), 0, 10, [=] __device__(int i) {
     arrayI.incr(i);
     arrayD.decr(i);
   });
@@ -503,11 +503,11 @@ CUDA_TEST(ManagedArray, IncrementDecrementOnDevice)
   arrayD.free();
 }
 
-CUDA_TEST(ManagedArray, IncrementDecrementFromHostOnDevice)
+GPU_TEST(ManagedArray, IncrementDecrementFromHostOnDevice)
 {
   chai::ManagedArray<int> array(10);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) { array[i] = i; });
+  forall(gpu(), 0, 10, [=] __device__(int i) { array[i] = i; });
 
   array.incr(5);
   array.decr(9);
@@ -524,7 +524,7 @@ CUDA_TEST(ManagedArray, IncrementDecrementFromHostOnDevice)
 #endif
 #endif
 
-CUDA_TEST(ManagedArray, SliceOfSliceDevice) {
+GPU_TEST(ManagedArray, SliceOfSliceDevice) {
   chai::ManagedArray<float> array(10);
 
   forall(sequential(), 0, 10, [=] (int i) {
@@ -534,7 +534,7 @@ CUDA_TEST(ManagedArray, SliceOfSliceDevice) {
   chai::ManagedArray<float> sl1 = array.slice(0,6);
   chai::ManagedArray<float> sl2 = sl1.slice(3,3);
 
-  forall(cuda(), 0, 3, [=] __device__ (int i) {
+  forall(gpu(), 0, 3, [=] __device__ (int i) {
       sl1[i] = sl2[i];
   });
 
@@ -547,7 +547,7 @@ CUDA_TEST(ManagedArray, SliceOfSliceDevice) {
   array.free();
 }
 
-CUDA_TEST(ManagedArray, SliceDevice) {
+GPU_TEST(ManagedArray, SliceDevice) {
   chai::ManagedArray<float> array(10);
 
   forall(sequential(), 0, 10, [=] (int i) {
@@ -557,7 +557,7 @@ CUDA_TEST(ManagedArray, SliceDevice) {
   chai::ManagedArray<float> sl1 = array.slice(0,5);
   chai::ManagedArray<float> sl2 = array.slice(5,5);
 
-  forall(cuda(), 0, 5, [=] __device__ (int i) {
+  forall(gpu(), 0, 5, [=] __device__ (int i) {
       sl1[i] = sl2[i];
   });
 
@@ -570,23 +570,23 @@ CUDA_TEST(ManagedArray, SliceDevice) {
   array.free();
 }
 
-CUDA_TEST(ManagedArray, SetOnDevice) {
+GPU_TEST(ManagedArray, SetOnDevice) {
   chai::ManagedArray<int> array(10);
 
   forall(sequential(), 0, 10, [=](int i) { array[i] = i; });
 
-  forall(cuda(), 0, 10, [=] __device__(int i) { array[i] *= 2; });
+  forall(gpu(), 0, 10, [=] __device__(int i) { array[i] *= 2; });
 
   forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], 2 * i); });
 
   array.free();
 }
 
-CUDA_TEST(ManagedArray, GetGpuOnHost)
+GPU_TEST(ManagedArray, GetGpuOnHost)
 {
   chai::ManagedArray<float> array(10, chai::GPU);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) { array[i] = i; });
+  forall(gpu(), 0, 10, [=] __device__(int i) { array[i] = i; });
 
   forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
 
@@ -594,11 +594,11 @@ CUDA_TEST(ManagedArray, GetGpuOnHost)
 }
 
 #if defined(CHAI_ENABLE_UM)
-CUDA_TEST(ManagedArray, SetOnDeviceUM)
+GPU_TEST(ManagedArray, SetOnDeviceUM)
 {
   chai::ManagedArray<float> array(10, chai::UM);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) { array[i] = i; });
+  forall(gpu(), 0, 10, [=] __device__(int i) { array[i] = i; });
 
   forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
 
@@ -640,13 +640,13 @@ TEST(ManagedArray, ReallocateCPU)
   array.free();
 }
 
-#if defined(CHAI_ENABLE_CUDA)
-CUDA_TEST(ManagedArray, ReallocateGPU)
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+GPU_TEST(ManagedArray, ReallocateGPU)
 {
   chai::ManagedArray<float> array(10);
   ASSERT_EQ(array.size(), 10u);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) { array[i] = i; });
+  forall(gpu(), 0, 10, [=] __device__(int i) { array[i] = i; });
 
   array.reallocate(20);
   ASSERT_EQ(array.size(), 20u);
@@ -713,12 +713,12 @@ TEST(ManagedArray, PodTest)
   array.free();
 }
 
-#if defined(CHAI_ENABLE_CUDA)
-CUDA_TEST(ManagedArray, PodTestGPU)
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+GPU_TEST(ManagedArray, PodTestGPU)
 {
   chai::ManagedArray<my_point> array(1);
 
-  forall(cuda(), 0, 1, [=] __device__(int i) {
+  forall(gpu(), 0, 1, [=] __device__(int i) {
     array[i].x = (double)i;
     array[i].y = (double)i * 2.0;
   });
@@ -782,15 +782,15 @@ TEST(ManagedArray, Reset)
   array.free();
 }
 
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 #ifndef CHAI_DISABLE_RM
-CUDA_TEST(ManagedArray, ResetDevice)
+GPU_TEST(ManagedArray, ResetDevice)
 {
   chai::ManagedArray<float> array(20);
 
   forall(sequential(), 0, 20, [=](int i) { array[i] = 0.0f; });
 
-  forall(cuda(), 0, 20, [=] __device__(int i) { array[i] = 1.0f * i; });
+  forall(gpu(), 0, 20, [=] __device__(int i) { array[i] = 1.0f * i; });
 
   array.reset();
 
@@ -802,9 +802,9 @@ CUDA_TEST(ManagedArray, ResetDevice)
 #endif
 
 
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 #ifndef CHAI_DISABLE_RM
-CUDA_TEST(ManagedArray, UserCallback)
+GPU_TEST(ManagedArray, UserCallback)
 {
   int num_h2d = 0;
   int num_d2h = 0;
@@ -840,7 +840,7 @@ CUDA_TEST(ManagedArray, UserCallback)
   for (int iter = 0; iter < 10; ++iter) {
     forall(sequential(), 0, 20, [=](int i) { array[i] = 0.0f; });
 
-    forall(cuda(), 0, 20, [=] __device__(int i) { array[i] = 1.0f * i; });
+    forall(gpu(), 0, 20, [=] __device__(int i) { array[i] = 1.0f * i; });
   }
 
 
@@ -855,7 +855,7 @@ CUDA_TEST(ManagedArray, UserCallback)
   ASSERT_EQ(bytes_free, 2 * 20 * sizeof(float));
 }
 
-CUDA_TEST(ManagedArray, CallBackConst)
+GPU_TEST(ManagedArray, CallBackConst)
 {
   int num_h2d = 0;
   int num_d2h = 0;
@@ -886,7 +886,15 @@ CUDA_TEST(ManagedArray, CallBackConst)
 
   // Create a const copy and move it to the device.
   chai::ManagedArray<int const> array_const = array;
-  forall(cuda(), 0, 100, [=] __device__(int i) { device_assert(array_const[i] == i); });
+
+  /* array to store error flags on device */
+  chai::ManagedArray<int> error_flag(100);
+
+  forall(gpu(), 0, 100, [=] __device__(int i) { error_flag[i] = (array_const[i] == i) ? 0 : 1; });
+
+  // Check error flags on host
+  forall(sequential(), 0, 100, [=](int i) { ASSERT_EQ(error_flag[i], 0); });
+  error_flag.free();
 
   // Change the values, use a for-loop so as to not trigger a movement.
   for (int i = 0; i < 100; ++i)
@@ -903,7 +911,7 @@ CUDA_TEST(ManagedArray, CallBackConst)
   array.free();
 }
 
-CUDA_TEST(ManagedArray, CallBackConstArray)
+GPU_TEST(ManagedArray, CallBackConstArray)
 {
   int num_h2d = 0;
   int num_d2h = 0;
@@ -932,12 +940,17 @@ CUDA_TEST(ManagedArray, CallBackConstArray)
   chai::ManagedArray<chai::ManagedArray<int>> outerArray(N);
   outerArray.setUserCallback(callBack);
 
+  /* array to store error flags on device */
+  chai::ManagedArray<chai::ManagedArray<int>> outerErrorArray(N); 
+
   /* Loop over the outer array and populate it with arrays on the CPU. */
   forall(sequential(), 0, N,
     [=](int i)
     {
       chai::ManagedArray<int> temp(N);
       temp.setUserCallback(callBack);
+
+      chai::ManagedArray<int> errorTemp(N);
 
       forall(sequential(), 0, N,
         [=](int j)
@@ -947,17 +960,29 @@ CUDA_TEST(ManagedArray, CallBackConstArray)
       );
 
       outerArray[i] = temp;
+      outerErrorArray[i] = errorTemp;
     }
   );
 
   // Create a const copy and move it to the device.
   chai::ManagedArray<chai::ManagedArray<int> const> outerArrayConst = outerArray;
-  forall(cuda(), 0, N,
+  forall(gpu(), 0, N,
     [=] __device__(int i)
     {
       for( int j = 0; j < N; ++j)
       {
-        device_assert(outerArrayConst[i][j] == N * i + j);
+        outerErrorArray[i][j] = (outerArrayConst[i][j] == N * i + j) ? 0 : 1;
+      }
+    }
+  );
+
+  // Check error flags on host
+  forall(sequential(), 0, N,
+    [=](int i)
+    {
+      for (int j = 0; j < N; ++j)
+      {
+        ASSERT_EQ(outerErrorArray[i][j], 0);
       }
     }
   );
@@ -978,12 +1003,14 @@ CUDA_TEST(ManagedArray, CallBackConstArray)
 
   for (int i = 0; i < N; ++i) {
     outerArray[i].free();
+    outerErrorArray[i].free();
   }
 
   outerArray.free();
+  outerErrorArray.free();
 }
 
-CUDA_TEST(ManagedArray, CallBackConstArrayConst)
+GPU_TEST(ManagedArray, CallBackConstArrayConst)
 {
   int num_h2d = 0;
   int num_d2h = 0;
@@ -1012,12 +1039,17 @@ CUDA_TEST(ManagedArray, CallBackConstArrayConst)
   chai::ManagedArray<chai::ManagedArray<int>> outerArray(N);
   outerArray.setUserCallback(callBack);
 
+  /* array to store error flags on device */
+  chai::ManagedArray<chai::ManagedArray<int>> outerErrorArray(N); 
+
   /* Loop over the outer array and populate it with arrays on the CPU. */
   forall(sequential(), 0, N,
     [=](int i)
     {
       chai::ManagedArray<int> temp(N);
       temp.setUserCallback(callBack);
+
+      chai::ManagedArray<int> errorTemp(N);
 
       forall(sequential(), 0, N,
         [=](int j)
@@ -1027,18 +1059,30 @@ CUDA_TEST(ManagedArray, CallBackConstArrayConst)
       );
 
       outerArray[i] = temp;
+      outerErrorArray[i] = errorTemp;
     }
   );
 
   // Create a const copy of int const and move it to the device.
   chai::ManagedArray<chai::ManagedArray<int const> const> outerArrayConst = 
     reinterpret_cast<chai::ManagedArray<chai::ManagedArray<int const> const> &>(outerArray);
-  forall(cuda(), 0, N,
+  forall(gpu(), 0, N,
     [=] __device__(int i)
     {
       for( int j = 0; j < N; ++j)
       {
-        device_assert(outerArrayConst[i][j] == N * i + j);
+        outerErrorArray[i][j] = (outerArrayConst[i][j] == N * i + j) ? 0 : 1;
+      }
+    }
+  );
+
+  // Check error flags on host
+  forall(sequential(), 0, N,
+    [=](int i)
+    {
+      for (int j = 0; j < N; ++j)
+      {
+        ASSERT_EQ(outerErrorArray[i][j], 0);
       }
     }
   );
@@ -1059,22 +1103,24 @@ CUDA_TEST(ManagedArray, CallBackConstArrayConst)
 
   for (int i = 0; i < N; ++i) {
     outerArray[i].free();
+    outerErrorArray[i].free();
   }
 
   outerArray.free();
+  outerErrorArray.free();
 }
 
 #endif
 #endif
 
 
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 #ifndef CHAI_DISABLE_RM
-CUDA_TEST(ManagedArray, Move)
+GPU_TEST(ManagedArray, Move)
 {
   chai::ManagedArray<float> array(10, chai::GPU);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) { array[i] = i; });
+  forall(gpu(), 0, 10, [=] __device__(int i) { array[i] = i; });
 
   array.move(chai::CPU);
 
@@ -1088,7 +1134,7 @@ CUDA_TEST(ManagedArray, Move)
  * CPU and the inner arrays are on the GPU. It then captures the outer array
  * on the CPU and checks that the inner arrays were moved to the CPU.
  */
-CUDA_TEST(ManagedArray, MoveInnerToHost)
+GPU_TEST(ManagedArray, MoveInnerToHost)
 {
   const int N = 5;
 
@@ -1101,7 +1147,7 @@ CUDA_TEST(ManagedArray, MoveInnerToHost)
     {
       chai::ManagedArray<int> temp(N, chai::GPU);
 
-      forall(cuda(), 0, N,
+      forall(gpu(), 0, N,
         [=] __device__(int j)
         {
           temp[j] = N * i + j;
@@ -1138,7 +1184,7 @@ CUDA_TEST(ManagedArray, MoveInnerToHost)
  * on the CPU and checks that the values of the inner arrays were modified
  * correctly. 
  */
-CUDA_TEST(ManagedArray, MoveInnerToDevice)
+GPU_TEST(ManagedArray, MoveInnerToDevice)
 {
   const int N = 5;
 
@@ -1164,7 +1210,7 @@ CUDA_TEST(ManagedArray, MoveInnerToDevice)
 
   /* Capture the outer array on the GPU and update the values of the inner
    * arrays. */
-  forall(cuda(), 0, N,
+  forall(gpu(), 0, N,
     [=] __device__(int i)
     {
       for( int j = 0; j < N; ++j)
@@ -1200,7 +1246,7 @@ CUDA_TEST(ManagedArray, MoveInnerToDevice)
  * on the CPU and checks that the values of the innermost arrays were modified
  * correctly. 
  */
-CUDA_TEST(ManagedArray, MoveInnerToDevice2)
+GPU_TEST(ManagedArray, MoveInnerToDevice2)
 {
   const int N = 5;
 
@@ -1234,7 +1280,7 @@ CUDA_TEST(ManagedArray, MoveInnerToDevice2)
 
   /* Capture the outermost array on the GPU and update the values of the
    * innermost arrays. */
-  forall(cuda(), 0, N,
+  forall(gpu(), 0, N,
     [=] __device__(int i)
     {
       for( int j = 0; j < N; ++j)
@@ -1272,7 +1318,7 @@ CUDA_TEST(ManagedArray, MoveInnerToDevice2)
 }
 
 #endif  // CHAI_DISABLE_RM
-#endif  // defined(CHAI_ENABLE_CUDA)
+#endif  // defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 
 
 #ifndef CHAI_DISABLE_RM
@@ -1298,19 +1344,19 @@ TEST(ManagedArray, DeepCopy)
 }
 #endif
 
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 #ifndef CHAI_DISABLE_RM
-CUDA_TEST(ManagedArray, DeviceDeepCopy)
+GPU_TEST(ManagedArray, DeviceDeepCopy)
 {
   chai::ManagedArray<float> array(10, chai::GPU);
   ASSERT_EQ(array.size(), 10u);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) { array[i] = i; });
+  forall(gpu(), 0, 10, [=] __device__(int i) { array[i] = i; });
 
   chai::ManagedArray<float> copy = chai::deepCopy(array);
   ASSERT_EQ(copy.size(), 10u);
 
-  forall(cuda(), 0, 10, [=] __device__(int i) { array[i] = -5.5 * i; });
+  forall(gpu(), 0, 10, [=] __device__(int i) { array[i] = -5.5 * i; });
 
   forall(sequential(), 0, 10, [=](int i) {
     ASSERT_EQ(copy[i], i);
@@ -1321,4 +1367,4 @@ CUDA_TEST(ManagedArray, DeviceDeepCopy)
   copy.free();
 }
 #endif
-#endif  // defined(CHAI_ENABLE_CUDA)
+#endif  // defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)

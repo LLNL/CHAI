@@ -57,7 +57,7 @@ int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv))
       rm.makeAllocator<umpire::strategy::DynamicPool>("cpu_pool",
                                                       rm.getAllocator("HOST"));
 
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
   auto gpu_pool =
       rm.makeAllocator<umpire::strategy::DynamicPool>("gpu_pool",
                                                       rm.getAllocator("DEVICE"));
@@ -65,20 +65,20 @@ int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv))
 
   chai::ManagedArray<float> array(100, 
       std::initializer_list<chai::ExecutionSpace>{chai::CPU
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
       , chai::GPU
 #endif
       },
       std::initializer_list<umpire::Allocator>{cpu_pool
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
       , gpu_pool
 #endif
       });
 
   forall(sequential(), 0, 100, [=](int i) { array[i] = 0.0f; });
 
-#if defined(CHAI_ENABLE_CUDA)
-  forall(cuda(), 0, 100, [=] __device__(int i) { array[i] = 1.0f * i; });
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+  forall(gpu(), 0, 100, [=] __device__(int i) { array[i] = 1.0f * i; });
 #else
   forall(sequential(), 0, 100, [=] (int i) { array[i] = 1.0f * i; });
 #endif

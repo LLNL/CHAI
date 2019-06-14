@@ -59,7 +59,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
   m_pointer_record(nullptr),
   m_is_slice(false)
 {
-#if !defined(__CUDA_ARCH__)
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   m_resource_manager = ArrayManager::getInstance();
 
   m_pointer_record = new PointerRecord{};
@@ -80,7 +80,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
     std::initializer_list<umpire::Allocator> allocators):
   ManagedArray()
 {
-#if !defined(__CUDA_ARCH__)
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   int i = 0;
   for (auto& space : spaces) {
     m_pointer_record->m_allocators[space] = allocators.begin()[i++].getId();
@@ -96,7 +96,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
     ExecutionSpace space) :
   ManagedArray()
 {
-#if !defined(__CUDA_ARCH__)
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   m_elems = elems;
   m_pointer_record->m_size = sizeof(T)*m_elems;
 
@@ -120,7 +120,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
     ExecutionSpace space):
   ManagedArray(spaces, allocators)
 {
-#if !defined(__CUDA_ARCH__)
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   m_elems = elems;
   m_pointer_record->m_size = sizeof(T)*elems;
 
@@ -173,7 +173,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
   m_pointer_record(other.m_pointer_record),
   m_is_slice(other.m_is_slice)
 {
-#if !defined(__CUDA_ARCH__)
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   move(m_resource_manager->getExecutionSpace());
 #endif
 }
@@ -289,7 +289,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE
 typename ManagedArray<T>::T_non_const ManagedArray<T>::pick(size_t i) const { 
-  #if !defined(__CUDA_ARCH__)
+  #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
     #if defined(CHAI_ENABLE_UM)
       if(m_pointer_record->m_pointers[UM] == m_active_base_pointer) {
         cudaDeviceSynchronize();
@@ -305,7 +305,7 @@ typename ManagedArray<T>::T_non_const ManagedArray<T>::pick(size_t i) const {
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T& val) const { 
-  #if !defined(__CUDA_ARCH__)
+  #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
     #if defined(CHAI_ENABLE_UM)
       if(m_pointer_record->m_pointers[UM] == m_active_pointer) {
         cudaDeviceSynchronize();
@@ -337,7 +337,7 @@ CHAI_HOST void ManagedArray<T>::modify(size_t i, const T& val) const {
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE void ManagedArray<T>::incr(size_t i) const { 
-  #if !defined(__CUDA_ARCH__)
+  #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
     modify(i, (T)1);
   #else
      ++m_active_pointer[i]; 
@@ -347,7 +347,7 @@ CHAI_HOST_DEVICE void ManagedArray<T>::incr(size_t i) const {
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE void ManagedArray<T>::decr(size_t i) const { 
-  #if !defined(__CUDA_ARCH__)
+  #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
     modify(i, (T)-1);
   #else
      --m_active_pointer[i]; 
@@ -396,7 +396,7 @@ CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const Idx i) const {
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
-#if !defined(__CUDA_ARCH__)
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   ExecutionSpace prev_space = m_resource_manager->getExecutionSpace();
   m_resource_manager->setExecutionSpace(CPU);
   auto non_const_active_base_pointer = const_cast<T_non_const*>(static_cast<T*>(m_active_base_pointer));
@@ -422,7 +422,7 @@ CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool ) :
   m_active_pointer(data),
   m_active_base_pointer(data),
-#if !defined(__CUDA_ARCH__)
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   m_resource_manager(ArrayManager::getInstance()),
   m_elems(m_resource_manager->getSize(m_active_base_pointer)),
   m_pointer_record(m_resource_manager->getPointerRecord(data)),

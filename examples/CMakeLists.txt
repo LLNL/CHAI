@@ -49,15 +49,20 @@ if (ENABLE_CUDA)
     ${chai_umpire_example_depends}
     cuda)
 endif()
+if (ENABLE_HIP)
+  set (chai_umpire_example_depends
+    ${chai_umpire_example_depends}
+    hip)
+endif()
 
 blt_add_executable(
   NAME chai-umpire-example.exe
   SOURCES chai-umpire-allocators.cpp
   DEPENDS_ON ${chai_umpire_example_depends})
 
-if (ENABLE_CUDA)
+if (ENABLE_CUDA OR ENABLE_HIP)
   blt_add_executable(
     NAME chai-example.exe
     SOURCES example.cpp
-    DEPENDS_ON cuda chai)
+    DEPENDS_ON ${chai_umpire_example_depends})
 endif ()

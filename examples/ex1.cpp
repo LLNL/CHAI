@@ -53,7 +53,7 @@ int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv))
   /*
    * Fill data on the device
    */
-  forall(cuda(), 0, 50, [=] __device__(int i) { array[i] = i * 2.0f; });
+  forall(gpu(), 0, 50, [=] __device__(int i) { array[i] = i * 2.0f; });
 
   /*
    * Print the array on the host, data is automatically copied back.
