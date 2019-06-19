@@ -49,21 +49,18 @@
 namespace chai
 {
 
-ArrayManager* ArrayManager::s_resource_manager_instance = nullptr;
 PointerRecord ArrayManager::s_null_record = PointerRecord();
 
 ArrayManager* ArrayManager::getInstance()
 {
-  if (!s_resource_manager_instance) {
-    s_resource_manager_instance = new ArrayManager();
-  }
-
-  return s_resource_manager_instance;
+  static ArrayManager s_resource_manager_instance;
+  return &s_resource_manager_instance;
 }
 
-ArrayManager::ArrayManager()
-    : m_pointer_map(),
-      m_resource_manager(umpire::ResourceManager::getInstance())
+ArrayManager::ArrayManager() :
+  m_pointer_map{},
+  m_allocators{},
+  m_resource_manager{umpire::ResourceManager::getInstance()}
 {
   m_pointer_map.clear();
   m_current_execution_space = NONE;
@@ -90,11 +87,7 @@ void ArrayManager::registerPointer(
 
   auto pointer = record->m_pointers[space];
 
-  auto found_pointer_record = m_pointer_map.find(pointer);
-  if (found_pointer_record == m_pointer_map.end()) {
-    m_pointer_map[pointer] = record; 
-  }
-
+  m_pointer_map.insert(pointer, record);
   //record->m_last_space = space;
 
   for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
@@ -259,7 +252,7 @@ void ArrayManager::free(PointerRecord* pointer_record)
       }
       else
       {
-        delete m_resource_manager.deregisterAllocation(pointer_record->m_pointers[space]);
+        m_resource_manager.deregisterAllocation(pointer_record->m_pointers[space]);
       }
     }
   }
@@ -296,11 +289,7 @@ void ArrayManager::setUserCallback(void* pointer, UserCallback const& f)
 PointerRecord* ArrayManager::getPointerRecord(void* pointer)
 {
   auto record = m_pointer_map.find(pointer);
-  if (record != m_pointer_map.end()) {
-    return record->second;
-  } else {
-    return &s_null_record;
-  }
+  return record->second ? *record->second : &s_null_record;
 }
 
 PointerRecord* ArrayManager::makeManaged(void* pointer,
@@ -310,8 +299,7 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
 {
   m_resource_manager.registerAllocation(
       pointer,
-      new umpire::util::AllocationRecord{
-          pointer, size, m_allocators[space]->getAllocationStrategy()});
+      {pointer, size, m_allocators[space]->getAllocationStrategy()});
 
   auto pointer_record = new PointerRecord{};
 
@@ -335,7 +323,7 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
 PointerRecord* ArrayManager::deepCopyRecord(PointerRecord const* record)
 {
   PointerRecord* copy = new PointerRecord();
-  size_t const size = record->m_size;
+  const size_t size = record->m_size;
   copy->m_size = size;
   copy->m_user_callback = [](Action, ExecutionSpace, size_t) {};
 
@@ -359,13 +347,13 @@ PointerRecord* ArrayManager::deepCopyRecord(PointerRecord const* record)
   return copy;
 }
 
-std::unordered_map<void*, const PointerRecord*> ArrayManager::getPointerMap()
-    const
+std::unordered_map<void*, const PointerRecord*>
+ArrayManager::getPointerMap() const
 {
   std::unordered_map<void*, const PointerRecord*> mapCopy;
 
   for (auto entry : m_pointer_map) {
-    mapCopy[entry.first] = entry.second;
+    mapCopy[entry.first] = *entry.second;
   }
 
   return mapCopy;
@@ -380,7 +368,7 @@ size_t ArrayManager::getTotalSize() const
   size_t total = 0;
 
   for (auto entry : m_pointer_map) {
-    total += entry.second->m_size;
+    total += (*entry.second)->m_size;
   }
 
   return total;

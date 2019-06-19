@@ -50,6 +50,7 @@
 #include <unordered_map>
 
 #include "umpire/Allocator.hpp"
+#include "umpire/util/MemoryMap.hpp"
 
 namespace chai
 {
@@ -78,6 +79,8 @@ class ArrayManager
 public:
   template <typename T>
   using T_non_const = typename std::remove_const<T>::type;
+
+  using PointerMap = umpire::util::MemoryMap<PointerRecord*>;
 
   static PointerRecord s_null_record;
 
@@ -289,11 +292,6 @@ private:
   void move(PointerRecord* record, ExecutionSpace space);
 
   /*!
-   * Pointer to singleton instance.
-   */
-  static ArrayManager* s_resource_manager_instance;
-
-  /*!
    * Current execution space.
    */
   ExecutionSpace m_current_execution_space;
@@ -306,15 +304,17 @@ private:
   /*!
    * Map of active ManagedArray pointers to their corresponding PointerRecord.
    */
-  std::unordered_map<void*, PointerRecord*> m_pointer_map;
+  PointerMap m_pointer_map;
 
   /*!
    *
    * \brief Array of umpire::Allocators, indexed by ExecutionSpace.
    */
-  umpire::Allocator* m_allocators[NUM_EXECUTION_SPACES] = {};
+  umpire::Allocator* m_allocators[NUM_EXECUTION_SPACES];
 
   umpire::ResourceManager& m_resource_manager;
+
+  mutable std::mutex m_mutex;
 };
 
 }  // end of namespace chai
