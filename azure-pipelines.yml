@@ -24,6 +24,9 @@ steps:
 - checkout: self
   clean: boolean
   submodules: recursive
+- script: |
+    docker version
+  displayName: 'Docker Version'
 - task: Docker@2
   inputs:
     command: build
