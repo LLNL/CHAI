@@ -24,7 +24,7 @@ steps:
 - checkout: self
   clean: boolean
   submodules: recursive
-- task: Docker@1
+- task: Docker@2
   inputs:
     command: build
     dockerFile: Dockerfile
