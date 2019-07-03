@@ -32,6 +32,7 @@ steps:
     command: build
     dockerFile: Dockerfile
     arguments: '--target $(docker_target)'
+    buildContext: ''
 - script: |
     CID=$(docker create llnl/chai:$(Build.BuildId))
     echo ${CID}
