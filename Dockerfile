@@ -1,7 +1,8 @@
 FROM axom/compilers:gcc-5 AS gcc5
 COPY --chown=axom:axom . /home/axom/workspace
-WORKDIR /home/axom/workspace
+WORKDIR /home/axom
 RUN ls -la
+RUN pwd
 RUN mkdir build && cd build && cmake -DCMAKE_CXX_COMPILER=g++ -DENABLE_CUDA=OFF ..
 RUN cd build && make -j 16
 RUN cd build && ctest -T test
