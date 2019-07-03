@@ -3,6 +3,7 @@ COPY --chown=axom:axom . /home/axom/workspace/
 WORKDIR /home/axom/workspace
 RUN ls -la
 RUN pwd
+RUN sudo chown axom:axom .
 RUN mkdir build && cd build && cmake -DCMAKE_CXX_COMPILER=g++ -DENABLE_CUDA=OFF ..
 RUN cd build && make -j 16
 RUN cd build && ctest -T test
