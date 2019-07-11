@@ -9,16 +9,18 @@ function or_die () {
     fi
 }
 
-source ~/.bashrc
-cd ${TRAVIS_BUILD_DIR}
-or_die mkdir travis-build
-or_die mkdir travis-install
+threads=3
+top_dir=$(pwd)
+travis_build_dir=${top_dir}/travis-build
+travis_install_dir=${top_dir}/travis-install
 
-cd travis-build
+or_die mkdir $travis_build_dir
+or_die mkdir $travis_install_dir
 
 if [[ "$DO_BUILD" == "yes" ]] ; then
-    or_die cmake -DCMAKE_CXX_COMPILER="${COMPILER}" -DCMAKE_INSTALL_PREFIX=${TRAVIS_BUILD_DIR}/travis-install ${CMAKE_EXTRA_FLAGS} ../
-    or_die make -j 3 VERBOSE=1
+    or_die cd $travis_build_dir
+    or_die cmake -DCMAKE_CXX_COMPILER="${COMPILER}" ${CMAKE_EXTRA_FLAGS} -DCMAKE_INSTALL_PREFIX=$travis_install_dir ../
+    or_die make -j $threads VERBOSE=1
     or_die make install
     if [[ "${DO_TEST}" == "yes" ]] ; then
         or_die ctest -V
@@ -26,13 +28,13 @@ if [[ "$DO_BUILD" == "yes" ]] ; then
 fi
 
 if [[ "$BUILD_RAJA" == "yes" ]] ; then
-  or_die cd ${TRAVIS_BUILD_DIR}/../
+  or_die cd $top_dir
   or_die git clone --recursive -b develop https://github.com/LLNL/RAJA.git
   or_die cd RAJA
   or_die mkdir build
   or_die cd build
-  or_die cmake -DCMAKE_CXX_COMPILER="${COMPILER}" ${CMAKE_EXTRA_FLAGS} -DENABLE_CHAI=On -Dchai_DIR=${TRAVIS_BUILD_DIR}/travis-install/share/chai/cmake ../
-  or_die make -j 3 VERBOSE=2
+  or_die cmake -DCMAKE_CXX_COMPILER="${COMPILER}" ${CMAKE_EXTRA_FLAGS} -DENABLE_CHAI=On -Dchai_DIR=${travis_install_dir}/share/chai/cmake ../
+  or_die make -j $threads VERBOSE=2
 fi
 
 exit 0
