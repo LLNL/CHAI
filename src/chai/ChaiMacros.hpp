@@ -51,6 +51,14 @@
 #define CHAI_DEVICE __device__
 #define CHAI_HOST_DEVICE __device__ __host__
 
+#elif defined(CHAI_ENABLE_HIP) && defined(__HIPCC__)
+
+#include <hip/hip_runtime.h>
+
+#define CHAI_HOST __host__
+#define CHAI_DEVICE __device__
+#define CHAI_HOST_DEVICE __device__ __host__
+
 #else
 
 #define CHAI_HOST

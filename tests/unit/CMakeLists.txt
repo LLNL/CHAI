@@ -55,6 +55,14 @@ if (ENABLE_CUDA)
     ${array_manager_test_depends}
     cuda)
 endif ()
+if (ENABLE_HIP)
+  set (managed_array_test_depends
+    ${managed_array_test_depends}
+    hip)
+  set (array_manager_test_depends
+    ${array_manager_test_depends}
+    hip)
+endif ()
 
 blt_add_executable(
   NAME managed_array_unit_tests

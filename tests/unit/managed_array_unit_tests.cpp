@@ -42,10 +42,10 @@
 // ---------------------------------------------------------------------
 #include "gtest/gtest.h"
 
-#define CUDA_TEST(X, Y)              \
-  static void cuda_test_##X##Y();    \
-  TEST(X, Y) { cuda_test_##X##Y(); } \
-  static void cuda_test_##X##Y()
+#define GPU_TEST(X, Y)              \
+  static void gpu_test_##X##Y();    \
+  TEST(X, Y) { gpu_test_##X##Y(); } \
+  static void gpu_test_##X##Y()
 
 #include "chai/config.hpp"
 
@@ -71,7 +71,7 @@ TEST(ManagedArray, SpaceConstructorCPU)
   array.free();
 }
 
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 TEST(ManagedArray, SpaceConstructorGPU)
 {
   chai::ManagedArray<float> array(10, chai::GPU);

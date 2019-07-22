@@ -45,7 +45,8 @@ cmake_policy(SET CMP0057 NEW)
 
 project(Chai LANGUAGES CXX)
 
-set(ENABLE_CUDA On CACHE BOOL "Enable CUDA")
+set(ENABLE_CUDA Off CACHE BOOL "Enable CUDA")
+set(ENABLE_HIP Off CACHE BOOL "Enable HIP")
 set(ENABLE_OPENMP On CACHE BOOL "Enable OpenMP")
 set(ENABLE_BENCHMARKS On CACHE BOOL "Enable benchmarks")
 option(ENABLE_IMPLICIT_CONVERSIONS "Enable implicit conversions to-from raw pointers" On)
