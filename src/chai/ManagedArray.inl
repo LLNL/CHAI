@@ -396,6 +396,9 @@ CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const Idx i) const {
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
+  if (m_elems == 0)
+    return nullptr;
+
 #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   ExecutionSpace prev_space = m_resource_manager->getExecutionSpace();
   m_resource_manager->setExecutionSpace(CPU);
@@ -490,7 +493,10 @@ CHAI_INLINE
 CHAI_HOST_DEVICE
 bool
 ManagedArray<T>::operator== (ManagedArray<T>& rhs) {
-  return (m_active_pointer ==  rhs.m_active_pointer);
+  if (m_elems == 0)
+    return (m_elems == rhs.m_elems);
+  else
+    return (m_active_pointer ==  rhs.m_active_pointer);
 }
 
 template<typename T>

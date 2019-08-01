@@ -1377,6 +1377,16 @@ TEST(ManagedArray, SizeZero)
   ASSERT_EQ(array.size(), 0u);
 }
 
+TEST(ManagedArray, SizeZeroIsNull)
+{
+  chai::ManagedArray<double> array;
+  array.allocate(0);
+
+  ASSERT_TRUE(array == nullptr);
+  double* array_raw = (double*)array;
+  ASSERT_TRUE(array_raw == nullptr);
+}
+
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 GPU_TEST(ManagedArray, CopyZero)
 {
