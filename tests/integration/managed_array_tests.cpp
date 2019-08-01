@@ -1368,3 +1368,30 @@ GPU_TEST(ManagedArray, DeviceDeepCopy)
 }
 #endif
 #endif  // defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+
+TEST(ManagedArray, SizeZero)
+{
+  chai::ManagedArray<double> array;
+  ASSERT_EQ(array.size(), 0u);
+  array.allocate(0);
+  ASSERT_EQ(array.size(), 0u);
+}
+
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+GPU_TEST(ManagedArray, CopyZero)
+{
+  chai::ManagedArray<double> array;
+  array.allocate(0);
+  ASSERT_EQ(array.size(), 0u);
+
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
+    (void) array;
+  });
+
+  forall(sequential(), 0, 1, [=] (int i) { 
+    (void) array;
+  });
+
+  array.free();
+}
+#endif
