@@ -1,4 +1,4 @@
-# CHAI v1.1
+# CHAI v1.2
 
 [![Azure Build Status](https://dev.azure.com/davidbeckingsale/CHAI/_apis/build/status/LLNL.CHAI?branchName=develop)](https://dev.azure.com/davidbeckingsale/CHAI/_build/latest?definitionId=2&branchName=develop)
 [![Build Status](https://travis-ci.org/LLNL/CHAI.svg?branch=develop)](https://travis-ci.org/LLNL/CHAI)
