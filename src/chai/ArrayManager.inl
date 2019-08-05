@@ -1,32 +1,32 @@
 // ---------------------------------------------------------------------
 // Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 // rights reserved.
-// 
+//
 // Produced at the Lawrence Livermore National Laboratory.
-// 
+//
 // This file is part of CHAI.
-// 
+//
 // LLNL-CODE-705877
-// 
+//
 // For details, see https:://github.com/LLNL/CHAI
 // Please also see the NOTICE and LICENSE files.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
-// 
+//
 // - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
-// 
+//
 // - Redistributions in binary form must reproduce the above copyright
 //   notice, this list of conditions and the following disclaimer in the
 //   documentation and/or other materials provided with the
 //   distribution.
-// 
+//
 // - Neither the name of the LLNS/LLNL nor the names of its contributors
 //   may be used to endorse or promote products derived from this
 //   software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 // LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -76,7 +76,7 @@ void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* point
       return pointer_record->m_pointers[my_space];
     }
   }
-  
+
   // only copy however many bytes overlap
   size_t num_bytes_to_copy = std::min(sizeof(T)*elems, pointer_record->m_size);
 
@@ -95,10 +95,10 @@ void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* point
       pointer_record->m_pointers[space] = new_ptr;
 
       m_pointer_map.erase(old_ptr);
-      m_pointer_map[new_ptr] = pointer_record;
+      m_pointer_map.insert(new_ptr, pointer_record);
     }
   }
-    
+
   pointer_record->m_size = sizeof(T) * elems;
   return pointer_record->m_pointers[my_space];
 }

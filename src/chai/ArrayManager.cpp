@@ -49,21 +49,19 @@
 namespace chai
 {
 
-ArrayManager* ArrayManager::s_resource_manager_instance = nullptr;
 PointerRecord ArrayManager::s_null_record = PointerRecord();
 
+CHAI_HOST_DEVICE
 ArrayManager* ArrayManager::getInstance()
 {
-  if (!s_resource_manager_instance) {
-    s_resource_manager_instance = new ArrayManager();
-  }
-
-  return s_resource_manager_instance;
+  static ArrayManager s_resource_manager_instance;
+  return &s_resource_manager_instance;
 }
 
-ArrayManager::ArrayManager()
-    : m_pointer_map(),
-      m_resource_manager(umpire::ResourceManager::getInstance())
+ArrayManager::ArrayManager() :
+  m_pointer_map{},
+  m_allocators{},
+  m_resource_manager{umpire::ResourceManager::getInstance()}
 {
   m_pointer_map.clear();
   m_current_execution_space = NONE;
@@ -71,7 +69,7 @@ ArrayManager::ArrayManager()
 
   m_allocators[CPU] =
       new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
   m_allocators[GPU] =
       new umpire::Allocator(m_resource_manager.getAllocator("DEVICE"));
 #endif
@@ -88,13 +86,11 @@ void ArrayManager::registerPointer(
 {
   CHAI_LOG("ArrayManager", "Registering " << pointer << " in space " << space);
 
+  std::lock_guard<std::mutex> lock(m_mutex);
+
   auto pointer = record->m_pointers[space];
 
-  auto found_pointer_record = m_pointer_map.find(pointer);
-  if (found_pointer_record == m_pointer_map.end()) {
-    m_pointer_map[pointer] = record; 
-  }
-
+  m_pointer_map.insert(pointer, record);
   //record->m_last_space = space;
 
   for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
@@ -106,6 +102,7 @@ void ArrayManager::registerPointer(
 
 void ArrayManager::deregisterPointer(PointerRecord* record)
 {
+  std::lock_guard<std::mutex> lock(m_mutex);
   for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
     if (record->m_pointers[i]) m_pointer_map.erase(record->m_pointers[i]);
   }
@@ -116,6 +113,7 @@ void ArrayManager::deregisterPointer(PointerRecord* record)
 void ArrayManager::setExecutionSpace(ExecutionSpace space)
 {
   CHAI_LOG("ArrayManager", "Setting execution space to " << space);
+  std::lock_guard<std::mutex> lock(m_mutex);
 
   m_current_execution_space = space;
 }
@@ -145,24 +143,26 @@ ExecutionSpace ArrayManager::getExecutionSpace()
 
 void ArrayManager::registerTouch(PointerRecord* pointer_record)
 {
-  CHAI_LOG("ArrayManager",
-           pointer << " touched in space " << m_current_execution_space);
-
-  if (m_current_execution_space == NONE) return;
-
   registerTouch(pointer_record, m_current_execution_space);
 }
 
 void ArrayManager::registerTouch(PointerRecord* pointer_record,
                                  ExecutionSpace space)
 {
-  pointer_record->m_touched[space] = true;
-  pointer_record->m_last_space = space;
+  CHAI_LOG("ArrayManager",
+           pointer << " touched in space " << space);
+
+  if (space != NONE) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    pointer_record->m_touched[space] = true;
+    pointer_record->m_last_space = space;
+  }
 }
 
 
 void ArrayManager::resetTouch(PointerRecord* pointer_record)
 {
+  std::lock_guard<std::mutex> lock(m_mutex);
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     pointer_record->m_touched[space] = false;
   }
@@ -197,6 +197,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
     return;
   } else {
     record->m_user_callback(ACTION_MOVE, space, record->m_size);
+    std::lock_guard<std::mutex> lock(m_mutex);
     m_resource_manager.copy(dst_pointer, src_pointer);
   }
 
@@ -211,8 +212,8 @@ void ArrayManager::allocate(
   auto alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[space]);
 
   pointer_record->m_user_callback(ACTION_ALLOC, space, size);
-
   pointer_record->m_pointers[space] =  alloc.allocate(size);
+
   registerPointer(pointer_record, space);
 
   CHAI_LOG("ArrayManager", "Allocated array at: " << ret);
@@ -220,6 +221,8 @@ void ArrayManager::allocate(
 
 void ArrayManager::free(PointerRecord* pointer_record)
 {
+  if (!pointer_record) return;
+
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     if (pointer_record->m_pointers[space]) {
       if (pointer_record->m_owned[space]) {
@@ -229,7 +232,10 @@ void ArrayManager::free(PointerRecord* pointer_record)
           pointer_record->m_user_callback(ACTION_FREE,
                                           ExecutionSpace(UM),
                                           pointer_record->m_size);
-          m_pointer_map.erase(space_ptr);
+          {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_pointer_map.erase(space_ptr);
+          }
 
           auto alloc = m_resource_manager.getAllocator(
               pointer_record->m_allocators[space]);
@@ -244,7 +250,10 @@ void ArrayManager::free(PointerRecord* pointer_record)
           pointer_record->m_user_callback(ACTION_FREE,
                                           ExecutionSpace(space),
                                           pointer_record->m_size);
-          m_pointer_map.erase(space_ptr);
+          {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_pointer_map.erase(space_ptr);
+          }
 
           auto alloc = m_resource_manager.getAllocator(
               pointer_record->m_allocators[space]);
@@ -254,6 +263,10 @@ void ArrayManager::free(PointerRecord* pointer_record)
 #if defined(CHAI_ENABLE_UM)
         }
 #endif
+      }
+      else
+      {
+        m_resource_manager.deregisterAllocation(pointer_record->m_pointers[space]);
       }
     }
   }
@@ -289,12 +302,9 @@ void ArrayManager::setUserCallback(void* pointer, UserCallback const& f)
 
 PointerRecord* ArrayManager::getPointerRecord(void* pointer)
 {
+  std::lock_guard<std::mutex> lock(m_mutex);
   auto record = m_pointer_map.find(pointer);
-  if (record != m_pointer_map.end()) {
-    return record->second;
-  } else {
-    return &s_null_record;
-  }
+  return record->second ? *record->second : &s_null_record;
 }
 
 PointerRecord* ArrayManager::makeManaged(void* pointer,
@@ -304,8 +314,7 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
 {
   m_resource_manager.registerAllocation(
       pointer,
-      new umpire::util::AllocationRecord{
-          pointer, size, m_allocators[space]->getAllocationStrategy()});
+      {pointer, size, m_allocators[space]->getAllocationStrategy()});
 
   auto pointer_record = new PointerRecord{};
 
@@ -328,8 +337,8 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
 
 PointerRecord* ArrayManager::deepCopyRecord(PointerRecord const* record)
 {
-  PointerRecord* copy = new PointerRecord();
-  size_t const size = record->m_size;
+  PointerRecord* copy = new PointerRecord{};
+  const size_t size = record->m_size;
   copy->m_size = size;
   copy->m_user_callback = [](Action, ExecutionSpace, size_t) {};
 
@@ -353,13 +362,14 @@ PointerRecord* ArrayManager::deepCopyRecord(PointerRecord const* record)
   return copy;
 }
 
-std::unordered_map<void*, const PointerRecord*> ArrayManager::getPointerMap()
-    const
+std::unordered_map<void*, const PointerRecord*>
+ArrayManager::getPointerMap() const
 {
   std::unordered_map<void*, const PointerRecord*> mapCopy;
 
+  std::lock_guard<std::mutex> lock(m_mutex);
   for (auto entry : m_pointer_map) {
-    mapCopy[entry.first] = entry.second;
+    mapCopy[entry.first] = *entry.second;
   }
 
   return mapCopy;
@@ -373,8 +383,9 @@ size_t ArrayManager::getTotalSize() const
 {
   size_t total = 0;
 
+  std::lock_guard<std::mutex> lock(m_mutex);
   for (auto entry : m_pointer_map) {
-    total += entry.second->m_size;
+    total += (*entry.second)->m_size;
   }
 
   return total;

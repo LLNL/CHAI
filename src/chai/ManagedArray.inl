@@ -59,7 +59,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
   m_pointer_record(nullptr),
   m_is_slice(false)
 {
-#if !defined(__CUDA_ARCH__)
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   m_resource_manager = ArrayManager::getInstance();
 
   m_pointer_record = new PointerRecord{};
@@ -80,7 +80,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
     std::initializer_list<umpire::Allocator> allocators):
   ManagedArray()
 {
-#if !defined(__CUDA_ARCH__)
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   int i = 0;
   for (auto& space : spaces) {
     m_pointer_record->m_allocators[space] = allocators.begin()[i++].getId();
@@ -96,7 +96,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
     ExecutionSpace space) :
   ManagedArray()
 {
-#if !defined(__CUDA_ARCH__)
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   m_elems = elems;
   m_pointer_record->m_size = sizeof(T)*m_elems;
 
@@ -120,7 +120,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
     ExecutionSpace space):
   ManagedArray(spaces, allocators)
 {
-#if !defined(__CUDA_ARCH__)
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   m_elems = elems;
   m_pointer_record->m_size = sizeof(T)*elems;
 
@@ -173,22 +173,8 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
   m_pointer_record(other.m_pointer_record),
   m_is_slice(other.m_is_slice)
 {
-#if !defined(__CUDA_ARCH__)
-  CHAI_LOG("ManagedArray", "Moving " << m_active_pointer);
-  m_active_base_pointer = static_cast<T*>(m_resource_manager->move(const_cast<T_non_const*>(m_active_base_pointer), m_pointer_record));
-  m_active_pointer = m_active_base_pointer + m_offset;
-  CHAI_LOG("ManagedArray", "Moved to " << m_active_pointer);
-
-  /*
-   * Register touch
-   */
-  if (!std::is_const<T>::value) {
-    CHAI_LOG("ManagedArray", "T is non-const, registering touch of pointer" << m_active_pointer);
-    m_resource_manager->registerTouch(m_pointer_record);
-  }
-
-  /// Move nested ManagedArrays
-  moveInnerImpl();
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
+  move(m_resource_manager->getExecutionSpace());
 #endif
 }
 
@@ -208,7 +194,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
 template<typename T>
 CHAI_INLINE
 CHAI_HOST ManagedArray<T> ManagedArray<T>::slice(size_t offset, size_t elems) {
-  ManagedArray<T> slice;
+  ManagedArray<T> slice(nullptr);
   slice.m_resource_manager = m_resource_manager;
   if(offset + elems > size()) {
     CHAI_LOG("ManagedArray", "Invalid slice. No active pointer or index out of bounds");
@@ -232,18 +218,18 @@ CHAI_HOST void ManagedArray<T>::allocate(
   if(!m_is_slice) {
     CHAI_LOG("ManagedArray", "Allocating array of size " << elems << " in space " << space);
 
-      if (space == NONE) {
-        space = m_resource_manager->getDefaultAllocationSpace();
-      }
+    if (space == NONE) {
+      space = m_resource_manager->getDefaultAllocationSpace();
+    }
 
-  m_pointer_record->m_user_callback = cback;
-  m_elems = elems;
-  m_pointer_record->m_size = sizeof(T)*elems;
+    setUserCallback(cback);
+    m_elems = elems;
+    m_pointer_record->m_size = sizeof(T)*elems;
 
-  m_resource_manager->allocate(m_pointer_record, space);
+    m_resource_manager->allocate(m_pointer_record, space);
 
-  m_active_base_pointer = static_cast<T*>(m_pointer_record->m_pointers[space]);
-  m_active_pointer = m_active_base_pointer; // Cannot be a slice
+    m_active_base_pointer = static_cast<T*>(m_pointer_record->m_pointers[space]);
+    m_active_pointer = m_active_base_pointer; // Cannot be a slice
 
     CHAI_LOG("ManagedArray", "m_active_ptr allocated at address: " << m_active_pointer);
   }
@@ -272,6 +258,7 @@ CHAI_HOST void ManagedArray<T>::free()
 {
   if(!m_is_slice) {
     m_resource_manager->free(m_pointer_record);
+    m_pointer_record = nullptr;
   } else {
     CHAI_LOG("ManagedArray", "Cannot free a slice!");
   }
@@ -286,7 +273,7 @@ CHAI_HOST void ManagedArray<T>::reset()
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST size_t ManagedArray<T>::size() const {
+CHAI_HOST_DEVICE size_t ManagedArray<T>::size() const {
   return m_elems;
 }
 
@@ -302,7 +289,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE
 typename ManagedArray<T>::T_non_const ManagedArray<T>::pick(size_t i) const { 
-  #if !defined(__CUDA_ARCH__)
+  #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
     #if defined(CHAI_ENABLE_UM)
       if(m_pointer_record->m_pointers[UM] == m_active_base_pointer) {
         cudaDeviceSynchronize();
@@ -318,7 +305,7 @@ typename ManagedArray<T>::T_non_const ManagedArray<T>::pick(size_t i) const {
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T& val) const { 
-  #if !defined(__CUDA_ARCH__)
+  #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
     #if defined(CHAI_ENABLE_UM)
       if(m_pointer_record->m_pointers[UM] == m_active_pointer) {
         cudaDeviceSynchronize();
@@ -350,7 +337,7 @@ CHAI_HOST void ManagedArray<T>::modify(size_t i, const T& val) const {
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE void ManagedArray<T>::incr(size_t i) const { 
-  #if !defined(__CUDA_ARCH__)
+  #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
     modify(i, (T)1);
   #else
      ++m_active_pointer[i]; 
@@ -360,7 +347,7 @@ CHAI_HOST_DEVICE void ManagedArray<T>::incr(size_t i) const {
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE void ManagedArray<T>::decr(size_t i) const { 
-  #if !defined(__CUDA_ARCH__)
+  #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
     modify(i, (T)-1);
   #else
      --m_active_pointer[i]; 
@@ -373,13 +360,29 @@ CHAI_INLINE
 CHAI_HOST
 void ManagedArray<T>::move(ExecutionSpace space)
 {
-  m_active_base_pointer = static_cast<T*>(m_resource_manager->move(m_active_base_pointer, m_pointer_record, space));
+  ExecutionSpace prev_space = m_pointer_record->m_last_space;
+
+  /* When moving from CPU to GPU we need to move the inner arrays before the outer array. */
+  if (prev_space == CPU) {
+    moveInnerImpl(space);
+  }
+
+  m_active_base_pointer = static_cast<T*>(m_resource_manager->move(const_cast<T_non_const*>(m_active_base_pointer), m_pointer_record, space));
   m_active_pointer = m_active_base_pointer + m_offset;
 
   if (!std::is_const<T>::value) {
     CHAI_LOG("ManagedArray", "T is non-const, registering touch of pointer" << m_active_pointer);
-    m_resource_manager->registerTouch(m_pointer_record);
+    m_resource_manager->registerTouch(m_pointer_record, space);
   }
+
+  if (space != NONE) m_pointer_record->m_last_space = space;
+
+  /* When moving from GPU to CPU we need to move the inner arrays after the outer array. */
+#if defined(CHAI_ENABLE_CUDA)
+  if (prev_space == GPU) {
+    moveInnerImpl(space);
+  }
+#endif
 }
 
 template<typename T>
@@ -393,7 +396,7 @@ CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const Idx i) const {
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
-#if !defined(__CUDA_ARCH__)
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   ExecutionSpace prev_space = m_resource_manager->getExecutionSpace();
   m_resource_manager->setExecutionSpace(CPU);
   auto non_const_active_base_pointer = const_cast<T_non_const*>(static_cast<T*>(m_active_base_pointer));
@@ -419,7 +422,7 @@ CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool ) :
   m_active_pointer(data),
   m_active_base_pointer(data),
-#if !defined(__CUDA_ARCH__)
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   m_resource_manager(ArrayManager::getInstance()),
   m_elems(m_resource_manager->getSize(m_active_base_pointer)),
   m_pointer_record(m_resource_manager->getPointerRecord(data)),
@@ -462,11 +465,23 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE
 ManagedArray<T>&
-ManagedArray<T>::operator= (std::nullptr_t from) {
-  m_active_pointer = from;
-  m_active_base_pointer = from;
+ManagedArray<T>::operator= (ManagedArray && other) {
+  *this = other;
+  other = nullptr;
+  return *this;
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+ManagedArray<T>&
+ManagedArray<T>::operator= (std::nullptr_t) {
+  m_active_pointer = nullptr;
+  m_active_base_pointer = nullptr;
   m_elems = 0;
   m_offset = 0;
+  m_pointer_record = nullptr;
+  m_is_slice = false;
   return *this;
 }
 
@@ -474,30 +489,37 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE
 bool
-ManagedArray<T>::operator== (ManagedArray<T>& rhs)
-{
+ManagedArray<T>::operator== (ManagedArray<T>& rhs) {
   return (m_active_pointer ==  rhs.m_active_pointer);
 }
 
 template<typename T>
 template<bool B, typename std::enable_if<B, int>::type>
 CHAI_INLINE
-CHAI_HOST_DEVICE
+CHAI_HOST
 void
-ManagedArray<T>::moveInnerImpl()
-{
-  for (int i = 0; i < size(); ++i)
-  {
-    m_active_pointer[i] = T(m_active_pointer[i]);
+ManagedArray<T>::moveInnerImpl(ExecutionSpace space) {
+  if (space == NONE) {
+    return;
   }
+
+  ExecutionSpace const prev_space = m_resource_manager->getExecutionSpace();
+  m_resource_manager->setExecutionSpace(space);
+
+  T_non_const* non_const_active_base_pointer = const_cast<T_non_const*>(m_active_base_pointer);
+  for (int i = 0; i < size(); ++i) {
+    non_const_active_base_pointer[i] = T(m_active_base_pointer[i]);
+  }
+
+  m_resource_manager->setExecutionSpace(prev_space);
 }
 
 template<typename T>
 template<bool B, typename std::enable_if<!B, int>::type>
 CHAI_INLINE
-CHAI_HOST_DEVICE
+CHAI_HOST
 void
-ManagedArray<T>::moveInnerImpl()
+ManagedArray<T>::moveInnerImpl(ExecutionSpace CHAI_UNUSED_ARG(space))
 {
 }
 

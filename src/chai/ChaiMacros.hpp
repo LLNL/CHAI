@@ -45,7 +45,15 @@
 
 #include "chai/config.hpp"
 
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA) && defined(__CUDACC__)
+
+#define CHAI_HOST __host__
+#define CHAI_DEVICE __device__
+#define CHAI_HOST_DEVICE __device__ __host__
+
+#elif defined(CHAI_ENABLE_HIP) && defined(__HIPCC__)
+
+#include <hip/hip_runtime.h>
 
 #define CHAI_HOST __host__
 #define CHAI_DEVICE __device__
