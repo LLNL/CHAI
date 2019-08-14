@@ -111,7 +111,9 @@ if (ENABLE_BENCHMARKS)
   add_subdirectory(benchmarks)
 endif()
 
-add_subdirectory(examples)
+if (ENABLE_EXAMPLES)
+  add_subdirectory(examples)
+endif ()
 
 if (ENABLE_DOCUMENTATION)
   add_subdirectory(docs)
