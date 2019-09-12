@@ -48,11 +48,12 @@
 #if defined(CHAI_ENABLE_RAJA_PLUGIN)
 
 #include "chai/ManagedArray.hpp"
+
 #include "RAJA/util/View.hpp"
 
 namespace chai {
 
-template <typename ValueType, typename LayoutType>
+  template <typename ValueType, typename LayoutType>
 using ManagedArrayView =
     RAJA::View<ValueType, LayoutType, chai::ManagedArray<ValueType>>;
 

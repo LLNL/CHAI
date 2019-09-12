@@ -66,7 +66,6 @@ RajaExecutionSpacePlugin::preLaunch(RAJA::util::PluginContext p)
     default: 
       m_arraymanager->setExecutionSpace(chai::NONE);
   }
-
 }
 
 void 
