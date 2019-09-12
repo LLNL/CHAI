@@ -59,6 +59,7 @@ blt_register_library(
   LIBRARIES umpire)
 
 if (ENABLE_RAJA_PLUGIN)
+  find_package(camp REQUIRED)
   find_package(RAJA REQUIRED)
   
   blt_register_library(

@@ -24,3 +24,19 @@ target_include_directories(
 blt_add_test(
   NAME managed_array_test
   COMMAND managed_array_tests)
+
+set (raja_test_depends
+  chai umpire raja openmp gtest)
+
+blt_add_executable(
+  NAME raja-chai-tests 
+  SOURCES raja-chai-tests.cpp
+  DEPENDS_ON ${raja_test_depends})
+
+blt_add_test(
+  NAME raja-chai-tests
+  COMMAND raja-chai-tests)
+
+target_include_directories(
+  raja-chai-tests
+  PUBLIC ${PROJECT_BINARY_DIR}/include)
