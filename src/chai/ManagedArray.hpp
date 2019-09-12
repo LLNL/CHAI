@@ -1,32 +1,32 @@
 // ---------------------------------------------------------------------
-// Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
+// Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 // rights reserved.
-// 
+//
 // Produced at the Lawrence Livermore National Laboratory.
-// 
+//
 // This file is part of CHAI.
-// 
+//
 // LLNL-CODE-705877
-// 
+//
 // For details, see https:://github.com/LLNL/CHAI
 // Please also see the NOTICE and LICENSE files.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
-// 
+//
 // - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
-// 
+//
 // - Redistributions in binary form must reproduce the above copyright
 //   notice, this list of conditions and the following disclaimer in the
 //   documentation and/or other materials provided with the
 //   distribution.
-// 
+//
 // - Neither the name of the LLNS/LLNL nor the names of its contributors
 //   may be used to endorse or promote products derived from this
 //   software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 // LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -45,14 +45,31 @@
 
 #include "chai/config.hpp"
 
-#include "chai/ChaiMacros.hpp"
 #include "chai/ArrayManager.hpp"
+#include "chai/ChaiMacros.hpp"
 #include "chai/Types.hpp"
 
+#include "umpire/Allocator.hpp"
 
 #include <cstddef>
 
-namespace chai {
+namespace chai
+{
+
+
+struct InvalidConstCast;
+
+/*!
+ * \class CHAICopyable
+ *
+ * \brief Provides an interface for types that are copyable.
+ *
+ * If a class inherits from CHAICopyable, then the stored items of type T
+ * are moved when the copy constructor is called.
+ */
+class CHAICopyable
+{
+};
 
 /*!
  * \class ManagedArray
@@ -71,15 +88,19 @@ namespace chai {
  * \tparam T The type of elements stored in the ManagedArray.
  */
 template <typename T>
-class ManagedArray {
-  public:
-
+class ManagedArray : public CHAICopyable
+{
+public:
   using T_non_const = typename std::remove_const<T>::type;
+
+  CHAI_HOST_DEVICE ManagedArray();
 
   /*!
    * \brief Default constructor creates a ManagedArray with no allocations.
    */
-  CHAI_HOST_DEVICE ManagedArray();
+  CHAI_HOST_DEVICE ManagedArray(
+      std::initializer_list<chai::ExecutionSpace> spaces,
+      std::initializer_list<umpire::Allocator> allocators);
 
   /*!
    * \brief Constructor to create a ManagedArray with specified size, allocated
@@ -92,7 +113,15 @@ class ManagedArray {
    * \param elems Number of elements in the array.
    * \param space Execution space in which to allocate the array.
    */
-  CHAI_HOST_DEVICE ManagedArray(size_t elems, ExecutionSpace space=NONE);
+  CHAI_HOST_DEVICE ManagedArray(
+      size_t elems,
+      ExecutionSpace space = NONE);
+
+  CHAI_HOST_DEVICE ManagedArray(
+      size_t elems,
+      std::initializer_list<chai::ExecutionSpace> spaces,
+      std::initializer_list<umpire::Allocator> allocators,
+      ExecutionSpace space = NONE);
 
   /*!
    * \brief Copy constructor handles data movement.
@@ -109,6 +138,8 @@ class ManagedArray {
    */
   CHAI_HOST_DEVICE ManagedArray(std::nullptr_t other);
 
+  CHAI_HOST_DEVICE ManagedArray(PointerRecord* record, ExecutionSpace space);
+
   /*!
    * \brief Allocate data for the ManagedArray in the specified space.
    *
@@ -118,8 +149,10 @@ class ManagedArray {
    * \param space Execution space in which to allocate data.
    * \param cback User defined callback for memory events (alloc, free, move)
    */
-  CHAI_HOST void allocate(size_t elems, ExecutionSpace space=CPU, 
-    UserCallback const &cback=[](Action, ExecutionSpace, size_t){});
+  CHAI_HOST void allocate(size_t elems,
+                          ExecutionSpace space = CPU,
+                          UserCallback const& cback =
+                          [](Action, ExecutionSpace, size_t) {});
 
   /*!
    * \brief Reallocate data for the ManagedArray.
@@ -148,7 +181,7 @@ class ManagedArray {
    *
    * \return The number of elements in the array
    */
-  CHAI_HOST size_t size() const;
+  CHAI_HOST_DEVICE size_t size() const;
 
   /*!
    * \brief Register this ManagedArray object as 'touched' in the given space.
@@ -157,6 +190,9 @@ class ManagedArray {
    */
   CHAI_HOST void registerTouch(ExecutionSpace space);
 
+  CHAI_HOST void move(ExecutionSpace space);
+
+  CHAI_HOST ManagedArray<T> slice(size_t begin, size_t end);
   /*!
    * \brief Return reference to i-th element of the ManagedArray.
    *
@@ -164,14 +200,78 @@ class ManagedArray {
    *
    * \return Reference to i-th element.
    */
-	template<typename Idx>
+  template <typename Idx>
   CHAI_HOST_DEVICE T& operator[](const Idx i) const;
 
   /*!
-   * \brief Set val to the value of element i in the ManagedArray.
+   * \brief get access to m_active_pointer
+   * @return a copy of m_active_pointer
+   */
+  T* getActiveBasePointer() const;
+
+  /*!
+   * \brief
    *
    */
-  // CHAI_HOST_DEVICE void pick(size_t i, T_non_const& val);
+  //  operator ManagedArray<typename std::conditional<!std::is_const<T>::value,
+  //  const T, InvalidConstCast>::type> () const;
+  template <typename U = T>
+  operator typename std::enable_if<!std::is_const<U>::value,
+                                   ManagedArray<const U> >::type() const;
+
+
+  CHAI_HOST_DEVICE ManagedArray(T* data,
+                                ArrayManager* array_manager,
+                                size_t m_elems,
+                                PointerRecord* pointer_record);
+
+  ManagedArray<T>& operator=(ManagedArray const & other) = default;
+
+  CHAI_HOST_DEVICE ManagedArray<T>& operator=(ManagedArray && other);
+
+  CHAI_HOST_DEVICE ManagedArray<T>& operator=(std::nullptr_t);
+
+  CHAI_HOST_DEVICE bool operator==(ManagedArray<T>& rhs);
+
+
+#if defined(CHAI_ENABLE_PICK)
+  /*!
+   * \brief Return the value of element i in the ManagedArray.
+   * ExecutionSpace space to the current one
+   *
+   * \param index The index of the element to be fetched
+   * \param space The index of the element to be fetched
+   * \return The value of the i-th element in the ManagedArray.
+   * \tparam T_non_const The (non-const) type of data value in ManagedArray.
+   */
+  CHAI_HOST_DEVICE T_non_const pick(size_t i) const;
+
+  /*!
+   * \brief Set the value of element i in the ManagedArray to be val.
+   *
+   * \param index The index of the element to be set
+   * \param val Source location of the value
+   * \tparam T The type of data value in ManagedArray.
+   */
+  CHAI_HOST_DEVICE void set(size_t i, T& val) const;
+
+  /*!
+   * \brief Increment the value of element i in the ManagedArray.
+   *
+   * \param index The index of the element to be incremented
+   * \tparam T The type of data value in ManagedArray.
+   */
+  CHAI_HOST_DEVICE void incr(size_t i) const;
+
+  /*!
+   * \brief Decrement the value of element i in the ManagedArray.
+   *
+   * \param index The index of the element to be decremented
+   * \tparam T The type of data value in ManagedArray.
+   */
+  CHAI_HOST_DEVICE void decr(size_t i) const;
+#endif
+
 
 #if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
   /*!
@@ -189,47 +289,65 @@ class ManagedArray {
    * \param data Raw pointer to data.
    * \param enable Boolean argument (unused) added to differentiate constructor.
    */
-  template<bool Q=0>
-  CHAI_HOST_DEVICE ManagedArray(T* data, bool test=Q);
+  template <bool Q = 0>
+  CHAI_HOST_DEVICE ManagedArray(T* data, bool test = Q);
 #endif
 
+
+#ifndef CHAI_DISABLE_RM
   /*!
    * \brief Assign a user-defined callback triggerd upon memory migration.
-	 *
-	 * The callback is a function of the form
-	 * 
-	 *   void callback(chai::ExecutionSpace moved_to, size_t num_bytes)
-	 *
-	 * Where moved_to is the execution space that the data was moved to, and
-	 * num_bytes is the number of bytes moved.
-	 *
-   */
-#ifndef CHAI_DISABLE_RM
-  CHAI_HOST void setUserCallback(UserCallback const &cback);
-#endif
-
-  /*!
-   * \brief 
+   *
+   * The callback is a function of the form
+   *
+   *   void callback(chai::ExecutionSpace moved_to, size_t num_bytes)
+   *
+   * Where moved_to is the execution space that the data was moved to, and
+   * num_bytes is the number of bytes moved.
    *
    */
-  template<bool B = std::is_const<T>::value,typename std::enable_if<!B, int>::type = 0>
-  CHAI_HOST_DEVICE operator ManagedArray<const T> () const;
+  CHAI_HOST void setUserCallback(UserCallback const& cback)
+  {
+    m_pointer_record->m_user_callback = cback;
+  }
+#endif
 
-  CHAI_HOST_DEVICE ManagedArray(T* data, ArrayManager* array_manager, size_t m_elems);
 
+private:
+  CHAI_HOST void modify(size_t i, const T& val) const;
 
-  CHAI_HOST_DEVICE ManagedArray<T>& operator= (std::nullptr_t);
+  /*!
+   * \brief Moves the inner data of a ManagedArray.
+   *
+   * Called in the copy constructor of ManagedArray. In this implementation, the
+   * inner type inherits from CHAICopyable, so the inner data will be moved. For
+   * example, this version of the method is called when there are nested
+   * ManagedArrays.
+   */
+  template <bool B = std::is_base_of<CHAICopyable, T>::value,
+            typename std::enable_if<B, int>::type = 0>
+  CHAI_HOST void moveInnerImpl(ExecutionSpace space);
 
-  CHAI_HOST_DEVICE bool operator== (ManagedArray<T>& rhs);
+  /*!
+   * \brief Does nothing since the inner data type does not inherit from
+   * CHAICopyable.
+   *
+   * Called in the copy constructor of ManagedArray. In this implementation, the
+   * inner type does not inherit from CHAICopyable, so nothing will be done. For
+   * example, this version of the method is called when there are not nested
+   * ManagedArrays.
+   */
+  template <bool B = std::is_base_of<CHAICopyable, T>::value,
+            typename std::enable_if<!B, int>::type = 0>
+  CHAI_HOST void moveInnerImpl(ExecutionSpace space);
 
-  private:
-
-  /*! 
+  /*!
    * Currently active data pointer.
    */
   mutable T* m_active_pointer;
+  mutable T* m_active_base_pointer;
 
-  /*! 
+  /*!
    * Pointer to ArrayManager instance.
    */
   ArrayManager* m_resource_manager;
@@ -238,7 +356,15 @@ class ManagedArray {
    * Number of elements in the ManagedArray.
    */
   size_t m_elems;
-  
+  size_t m_offset = 0;
+
+  /*!
+   * Pointer to PointerRecord data.
+   */
+  PointerRecord* m_pointer_record;
+ 
+  bool m_is_slice = false;
+ 
 };
 
 /*!
@@ -258,25 +384,50 @@ class ManagedArray {
  * \return A new ManagedArray containing the raw data pointer.
  */
 template <typename T>
-ManagedArray<T> 
-makeManagedArray(
-    T* data, 
-    size_t elems,
-    ExecutionSpace space,
-    bool owned)
+ManagedArray<T> makeManagedArray(T* data,
+                                 size_t elems,
+                                 ExecutionSpace space,
+                                 bool owned)
 {
   ArrayManager* manager = ArrayManager::getInstance();
 
-  T* managed_data = static_cast<T*>(manager->makeManaged(data, sizeof(T)*elems, space, owned));
+  PointerRecord* record =
+      manager->makeManaged(data, sizeof(T) * elems, space, owned);
+
+  ManagedArray<T> array = ManagedArray<T>(record, space);
 
   if (!std::is_const<T>::value) {
-    manager->registerTouch(managed_data, space);
+    array.registerTouch(space);
   }
 
-  return ManagedArray<T>(managed_data);
+  return array;
 }
 
-} // end of namespace chai
+/*!
+ * \brief Create a copy of the given ManagedArray with a single allocation in
+ * the active space of the given array.
+ *
+ * \param array The ManagedArray to copy.
+ *
+ * \tparam T Type of the raw data.
+ *
+ * \return A copy of the given ManagedArray.
+ */
+template <typename T>
+ManagedArray<T> deepCopy(ManagedArray<T> const& array)
+{
+  T* data_ptr = array.getActiveBasePointer();
+  
+  ArrayManager* manager = ArrayManager::getInstance();
+
+  PointerRecord const* record = manager->getPointerRecord(data_ptr);
+
+  PointerRecord* copy_record = manager->deepCopyRecord(record);
+
+  return ManagedArray<T>(copy_record, copy_record->m_last_space);
+}
+
+}  // end of namespace chai
 
 #if defined(CHAI_DISABLE_RM)
 #include "chai/ManagedArray_thin.inl"
@@ -284,4 +435,4 @@ makeManagedArray(
 #include "chai/ManagedArray.inl"
 #endif
 
-#endif // CHAI_ManagedArray_HPP
+#endif  // CHAI_ManagedArray_HPP

@@ -1,5 +1,5 @@
 ######################################################################
-# Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
+# Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 # rights reserved.
 # 
 # Produced at the Lawrence Livermore National Laboratory
@@ -41,5 +41,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-set (CUDA_NVCC_FLAGS -std=c++11; --expt-extended-lambda; -G; -g)
-include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/SetupChaiThirdparty.cmake)
+set (CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-extended-lambda")
+
+if (ENABLE_HIP)
+  #bug in ROCm 2.4 is incorrectly warning about missing overrides
+  set(HIP_HIPCC_FLAGS "${HIP_HIPCC_FLAGS} -Wno-inconsistent-missing-override")
+endif()
+
+include(${PROJECT_SOURCE_DIR}/cmake/thirdparty/SetupChaiThirdparty.cmake)

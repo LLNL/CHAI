@@ -1,8 +1,9 @@
+#!/bin/bash
 #######################################################################
 # Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 # rights reserved.
 # 
-# Produced at the Lawrence Livermore National Laboratory
+# Produced at the Lawrence Livermore National Laboratory.
 # 
 # This file is part of CHAI.
 # 
@@ -41,30 +42,19 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-set(ENABLE_FORTRAN Off CACHE BOOL "Enable Fortran in Umpire")
-if (DEFINED umpire_DIR)
-  find_package(umpire REQUIRED)
+TAR_CMD=gtar
+VERSION=1.2.0
 
-  blt_register_library(
-    NAME umpire
-    INCLUDES ${UMPIRE_INCLUDE_DIRS}
-    LIBRARIES umpire)
-else ()
-  add_subdirectory(${PROJECT_SOURCE_DIR}/src/tpl/umpire)
-endif()
+git archive --prefix=chai-${VERSION}/ -o chai-${VERSION}.tar HEAD 2> /dev/null
 
-blt_register_library(
-  NAME umpire
-  INCLUDES ${UMPIRE_INCLUDE_DIRS}
-  LIBRARIES umpire)
+echo "Running git archive submodules..."
 
-if (ENABLE_RAJA_PLUGIN)
-  find_package(RAJA REQUIRED)
-  
-  blt_register_library(
-    NAME raja
-    INCLUDES ${RAJA_INCLUDE_DIR}
-    LIBRARIES RAJA)
+p=`pwd` && (echo .; git submodule foreach) | while read entering path; do
+    temp="${path%\'}";
+    temp="${temp#\'}";
+    path=$temp;
+    [ "$path" = "" ] && continue;
+    (cd $path && git archive --prefix=chai-${VERSION}/$path/ HEAD > $p/tmp.tar && ${TAR_CMD} --concatenate --file=$p/chai-${VERSION}.tar $p/tmp.tar && rm $p/tmp.tar);
+done
 
-  message(STATUS "RAJA: ${RAJA_INCLUDE_DIR}")
-endif ()
+gzip chai-${VERSION}.tar

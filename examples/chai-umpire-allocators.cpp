@@ -1,32 +1,32 @@
 // ---------------------------------------------------------------------
-// Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
+// Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 // rights reserved.
-// 
+//
 // Produced at the Lawrence Livermore National Laboratory.
-// 
+//
 // This file is part of CHAI.
-// 
+//
 // LLNL-CODE-705877
-// 
+//
 // For details, see https:://github.com/LLNL/CHAI
 // Please also see the NOTICE and LICENSE files.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
-// 
+//
 // - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
-// 
+//
 // - Redistributions in binary form must reproduce the above copyright
 //   notice, this list of conditions and the following disclaimer in the
 //   documentation and/or other materials provided with the
 //   distribution.
-// 
+//
 // - Neither the name of the LLNS/LLNL nor the names of its contributors
 //   may be used to endorse or promote products derived from this
 //   software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 // LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -40,73 +40,54 @@
 // WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 // ---------------------------------------------------------------------
+#include "umpire/ResourceManager.hpp"
+#include "umpire/strategy/DynamicPool.hpp"
+
 #include "chai/ManagedArray.hpp"
-#include "../util/forall.hpp"
+#include "../src/util/forall.hpp"
 
 #include <iostream>
 
-int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv)) {
+int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv))
+{
 
-  std::cout << "Creating new arrays..." << std::endl;
-  /*
-   * Allocate two arrays with 10 elements of type float.
-   */
-  chai::ManagedArray<float> v1(10);
-  chai::ManagedArray<float> v2(10);
+  auto& rm = umpire::ResourceManager::getInstance();
 
-  /*
-   * Allocate an array on the device only
-   */
-  chai::ManagedArray<int> device_array(10, chai::GPU);
+  auto cpu_pool =
+      rm.makeAllocator<umpire::strategy::DynamicPool>("cpu_pool",
+                                                      rm.getAllocator("HOST"));
 
-  std::cout << "Arrays created." << std::endl;
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+  auto gpu_pool =
+      rm.makeAllocator<umpire::strategy::DynamicPool>("gpu_pool",
+                                                      rm.getAllocator("DEVICE"));
+#endif
 
-  std::cout << "Setting v1 on host." << std::endl;
-  forall(sequential(), 0, 10, [=] (int i) {
-      v1[i] = static_cast<float>(i * 1.0f);
+  chai::ManagedArray<float> array(100, 
+      std::initializer_list<chai::ExecutionSpace>{chai::CPU
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+      , chai::GPU
+#endif
+      },
+      std::initializer_list<umpire::Allocator>{cpu_pool
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+      , gpu_pool
+#endif
+      });
+
+  forall(sequential(), 0, 100, [=](int i) { array[i] = 0.0f; });
+
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+  forall(gpu(), 0, 100, [=] __device__(int i) { array[i] = 1.0f * i; });
+#else
+  forall(sequential(), 0, 100, [=] (int i) { array[i] = 1.0f * i; });
+#endif
+
+  forall(sequential(), 0, 100, [=] (int i) {
+      if (array[i] != (1.0f * i)) {
+        std::cout << "ERROR!" << std::endl;
+      }
   });
 
-  std::cout << "v1 = [";
-  forall(sequential(), 0, 10, [=] (int i) {
-      std::cout << " " << v1[i];
-  });
-  std::cout << " ]" << std::endl;
-
-  std::cout << "Setting v2 and device_array on device." << std::endl;
-  forall(cuda(), 0, 10, [=] __device__ (int i) {
-      v2[i] = v1[i]*2.0f;
-      device_array[i] = i;
-  });
-
-  std::cout << "v2 = [";
-  forall(sequential(), 0, 10, [=] (int i) {
-      std::cout << " " << v2[i];
-  });
-  std::cout << " ]" << std::endl;
-
-  std::cout << "Doubling v2 on device." << std::endl;
-  forall(cuda(), 0, 10, [=] __device__ (int i) {
-      v2[i] *= 2.0f;
-  });
-
-  std::cout << "Casting v2 to a pointer." << std::endl;
-  float * raw_v2 = v2;
-
-  std::cout << "raw_v2 = [";
-  for (int i = 0; i < 10; i++ ) {
-      std::cout << " " << raw_v2[i];
-  }
-  std::cout << " ]" << std::endl;
-
-  std::cout << "Casting device_array to a pointer." << std::endl;
-  int* raw_device_array = device_array;
-  std::cout  << "device_array = [";
-  for (int i = 0; i < 10; i++ ) {
-      std::cout << " " << device_array[i];
-  }
-  std::cout << " ]" << std::endl;
-
-  v1.free();
-  v2.free();
-  device_array.free();
+  array.free();
 }

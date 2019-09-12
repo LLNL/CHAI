@@ -1,5 +1,5 @@
 #######################################################################
-# Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
+# Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 # rights reserved.
 # 
 # Produced at the Lawrence Livermore National Laboratory.
@@ -41,27 +41,35 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-set (managed_array_test_depends
-  chai umpire gtest)
+set (chai_umpire_example_depends
+  chai)
 
 if (ENABLE_CUDA)
-  set (managed_array_test_depends
-    ${managed_array_test_depends}
+  set (chai_umpire_example_depends
+    ${chai_umpire_example_depends}
     cuda)
-endif ()
+endif()
+if (ENABLE_HIP)
+  set (chai_umpire_example_depends
+    ${chai_umpire_example_depends}
+    hip)
+endif()
 
 blt_add_executable(
-  NAME managed_array_tests
-  SOURCES managed_array_tests.cpp
-  DEPENDS_ON ${managed_array_test_depends})
-
-target_include_directories(
-  managed_array_tests
-  PUBLIC ${PROJECT_BINARY_DIR}/include)
+  NAME chai-umpire-example.exe
+  SOURCES chai-umpire-allocators.cpp
+  DEPENDS_ON ${chai_umpire_example_depends})
 
 blt_add_test(
   NAME managed_array_test
   COMMAND managed_array_tests)
+
+if (ENABLE_CUDA OR ENABLE_HIP)
+  blt_add_executable(
+    NAME chai-example.exe
+    SOURCES example.cpp
+    DEPENDS_ON ${chai_umpire_example_depends})
+endif ()
 
 if (ENABLE_RAJA_PLUGIN)
   add_subdirectory(integration)

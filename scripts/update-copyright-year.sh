@@ -1,5 +1,6 @@
+#!/usr/bin/env zsh
 #######################################################################
-# Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
+# Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 # rights reserved.
 # 
 # Produced at the Lawrence Livermore National Laboratory.
@@ -41,9 +42,35 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-set (CHAI_INSTALL_PREFIX @CMAKE_INSTALL_PREFIX@)
-set (CHAI_INCLUDE_DIRS @CMAKE_INSTALL_PREFIX@/include)
-set (CHAI_LIB_DIR @CMAKE_INSTALL_PREFIX@/lib)
-set (CHAI_CMAKE_DIR @CMAKE_INSTALL_PREFIX@/share/chai/cmake)
+# This is used for the ~*tpl* line to ignore files in bundled tpls
+setopt extended_glob
 
-include(@CMAKE_INSTALL_PREFIX@/share/chai/cmake/chai-targets.cmake)
+autoload colors
+
+RED="\033[1;31m"
+GREEN="\033[1;32m"
+NOCOLOR="\033[0m"
+
+files_no_license=$(grep -l '2016,' \
+  benchmarks/**/*(^/) \
+  cmake/**/*(^/) \
+  docs/**/*~*rst(^/)\
+  examples/**/*(^/) \
+  scripts/**/*~*copyright*(^/) \
+  src/**/*~*tpl*(^/) \
+  tests/**/*(^/) \
+  CMakeLists.txt)
+
+if [ $files_no_license ]; then
+  print "${RED} [!] Some files need copyright year updating: ${NOCOLOR}"
+  echo "${files_no_license}"
+
+  echo ${files_no_license} | xargs sed -i '' 's/2016,/2016-2018,/'
+
+  print "${GREEN} [Ok] Copyright years updated."
+
+  exit 0
+else
+  print "${GREEN} [Ok] All files have required license info."
+  exit 0
+fi

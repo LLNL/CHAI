@@ -2,7 +2,7 @@
 # Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 # rights reserved.
 # 
-# Produced at the Lawrence Livermore National Laboratory
+# Produced at the Lawrence Livermore National Laboratory.
 # 
 # This file is part of CHAI.
 # 
@@ -41,30 +41,53 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-set(ENABLE_FORTRAN Off CACHE BOOL "Enable Fortran in Umpire")
-if (DEFINED umpire_DIR)
-  find_package(umpire REQUIRED)
+set (managed_array_test_depends
+  chai umpire gtest)
 
-  blt_register_library(
-    NAME umpire
-    INCLUDES ${UMPIRE_INCLUDE_DIRS}
-    LIBRARIES umpire)
-else ()
-  add_subdirectory(${PROJECT_SOURCE_DIR}/src/tpl/umpire)
-endif()
+set (array_manager_test_depends
+  chai umpire gtest)
 
-blt_register_library(
-  NAME umpire
-  INCLUDES ${UMPIRE_INCLUDE_DIRS}
-  LIBRARIES umpire)
-
-if (ENABLE_RAJA_PLUGIN)
-  find_package(RAJA REQUIRED)
-  
-  blt_register_library(
-    NAME raja
-    INCLUDES ${RAJA_INCLUDE_DIR}
-    LIBRARIES RAJA)
-
-  message(STATUS "RAJA: ${RAJA_INCLUDE_DIR}")
+if (ENABLE_CUDA)
+  set (managed_array_test_depends
+    ${managed_array_test_depends}
+    cuda)
+  set (array_manager_test_depends
+    ${array_manager_test_depends}
+    cuda)
 endif ()
+if (ENABLE_HIP)
+  set (managed_array_test_depends
+    ${managed_array_test_depends}
+    hip)
+  set (array_manager_test_depends
+    ${array_manager_test_depends}
+    hip)
+endif ()
+
+blt_add_executable(
+  NAME managed_array_unit_tests
+  SOURCES managed_array_unit_tests.cpp
+  DEPENDS_ON ${managed_array_test_depends})
+
+target_include_directories(
+  managed_array_unit_tests
+  PUBLIC ${PROJECT_BINARY_DIR}/include)
+
+blt_add_test(
+  NAME managed_array_unit_test
+  COMMAND managed_array_unit_tests)
+
+# ArrayManager tests
+blt_add_executable(
+  NAME array_manager_unit_tests
+  SOURCES array_manager_unit_tests.cpp
+  DEPENDS_ON ${array_manager_test_depends})
+
+target_include_directories(
+  array_manager_unit_tests
+  PUBLIC ${PROJECT_BINARY_DIR}/include)
+
+blt_add_test(
+  NAME array_manager_unit_test
+  COMMAND array_manager_unit_tests)
+

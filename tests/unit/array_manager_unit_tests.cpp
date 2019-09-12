@@ -40,86 +40,72 @@
 // WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 // ---------------------------------------------------------------------
-#ifndef CHAI_forall_HPP
-#define CHAI_forall_HPP
+#include "gtest/gtest.h"
 
 #include "chai/ArrayManager.hpp"
-#include "chai/ExecutionSpaces.hpp"
-#include "chai/config.hpp"
+#include "chai/ManagedArray.hpp"
+#include "chai/PointerRecord.hpp"
 
-#if defined(CHAI_ENABLE_UM)
-#include <cuda_runtime_api.h>
-#endif
-
-struct sequential {
-};
-#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-struct gpu {
-};
-#endif
-
-template <typename LOOP_BODY>
-void forall_kernel_cpu(int begin, int end, LOOP_BODY body)
+TEST(ArrayManager, Constructor)
 {
-  for (int i = 0; i < (end - begin); ++i) {
-    body(i);
-  }
+  chai::ArrayManager* rm = chai::ArrayManager::getInstance();
+  ASSERT_NE(rm, nullptr);
 }
 
-/*
- * \brief Run forall kernel on CPU.
- */
-template <typename LOOP_BODY>
-void forall(sequential, int begin, int end, LOOP_BODY body)
+#ifndef CHAI_DISABLE_RM
+TEST(ArrayManager, getPointerMap)
 {
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
 
-#if defined(CHAI_ENABLE_UM)
-  cudaDeviceSynchronize();
-#endif
+  // Allocate one array
+  size_t sizeOfArray1 = 5;
+  chai::ManagedArray<int> array1 =
+      chai::ManagedArray<int>(sizeOfArray1, chai::CPU);
 
-  rm->setExecutionSpace(chai::CPU);
+  // Check map of pointers
+  std::unordered_map<void*, const chai::PointerRecord*> map1 =
+      rm->getPointerMap();
+  ASSERT_EQ(map1.size(), 1);
 
-  forall_kernel_cpu(begin, end, body);
+  // Check some of the entries in the pointer record
+  ASSERT_TRUE(map1.find(array1) != map1.end());
+  const chai::PointerRecord* record1Temp = map1[array1];
+  ASSERT_EQ(record1Temp->m_size, sizeOfArray1 * sizeof(int));
+  ASSERT_EQ(record1Temp->m_last_space, chai::CPU);
 
-  rm->setExecutionSpace(chai::NONE);
+  // Check total num arrays and total allocated memory
+  ASSERT_EQ(rm->getTotalNumArrays(), 1);
+  ASSERT_EQ(rm->getTotalSize(), sizeOfArray1 * sizeof(int));
+
+  // Allocate another array
+  size_t sizeOfArray2 = 4;
+  chai::ManagedArray<double> array2 =
+      chai::ManagedArray<double>(sizeOfArray2, chai::CPU);
+
+  // Check map of pointers
+  std::unordered_map<void*, const chai::PointerRecord*> map2 =
+      rm->getPointerMap();
+  ASSERT_EQ(map2.size(), 2);
+
+  // Check that the entries in the first record are not changed
+  ASSERT_TRUE(map2.find(array1) != map2.end());
+  const chai::PointerRecord* record1 = map1[array1];
+  ASSERT_EQ(record1->m_size, sizeOfArray1 * sizeof(int));
+  ASSERT_EQ(record1->m_last_space, chai::CPU);
+
+  // Check some of the entries in the pointer record
+  ASSERT_TRUE(map2.find(array2) != map2.end());
+  const chai::PointerRecord* record2 = map2[array2];
+  ASSERT_EQ(record2->m_size, sizeOfArray2 * sizeof(double));
+  ASSERT_EQ(record2->m_last_space, chai::CPU);
+
+  // Check the equality of the records
+  ASSERT_EQ(record1, record1Temp);
+  ASSERT_NE(record1, record2);
+
+  // Check total num arrays and total allocated memory
+  ASSERT_EQ(rm->getTotalNumArrays(), 2);
+  ASSERT_EQ(rm->getTotalSize(),
+            (sizeOfArray1 * sizeof(int)) + (sizeOfArray2 * sizeof(double)));
 }
-
-#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-template <typename LOOP_BODY>
-__global__ void forall_kernel_gpu(int start, int length, LOOP_BODY body)
-{
-  int idx = blockDim.x * blockIdx.x + threadIdx.x;
-
-  if (idx < length) {
-    body(idx);
-  }
-}
-
-/*
- * \brief Run forall kernel on GPU.
- */
-template <typename LOOP_BODY>
-void forall(gpu, int begin, int end, LOOP_BODY&& body)
-{
-  chai::ArrayManager* rm = chai::ArrayManager::getInstance();
-
-  rm->setExecutionSpace(chai::GPU);
-
-  size_t blockSize = 32;
-  size_t gridSize = (end - begin + blockSize - 1) / blockSize;
-
-#if defined(CHAI_ENABLE_CUDA)
-  forall_kernel_gpu<<<gridSize, blockSize>>>(begin, end - begin, body);
-  cudaDeviceSynchronize();
-#elif defined(CHAI_ENABLE_HIP)
-  hipLaunchKernelGGL(forall_kernel_gpu, dim3(gridSize), dim3(blockSize), 0,0,
-                     begin, end - begin, body);
-  hipDeviceSynchronize();
 #endif
-  
-  rm->setExecutionSpace(chai::NONE);
-}
-#endif
-
-#endif  // CHAI_forall_HPP
