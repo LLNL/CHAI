@@ -49,28 +49,28 @@ CUDA_TEST(ChaiTest, Simple) {
 
 
 #if defined(CHAI_ENABLE_CUDA)
-  RAJA::forall<RAJA::cuda_exec<16> >(0, 10, [=] __device__ (int i) {
+  RAJA::forall<RAJA::cuda_exec<16> >(RAJA::RangeSegment(0, 10), [=] __device__ (int i) {
       v2[i] = v1[i]*2.0f;
   });
 #else
-  RAJA::forall<RAJA::omp_for_exec >(0, 10, [=] (int i) {
+  RAJA::forall<RAJA::omp_for_exec >(RAJA::RangeSegment(0, 10), [=] (int i) {
       v2[i] = v1[i]*2.0f;
   });
 #endif
 
   std::cout << "end of loop 2" << std::endl;
 
-  RAJA::forall<RAJA::seq_exec>(0, 10, [=] (int i) {
+  RAJA::forall<RAJA::seq_exec>(RAJA::RangeSegment(0, 10), [=] (int i) {
       ASSERT_FLOAT_EQ(v2[i], i*2.0f);
   });
 
 
 #if defined(CHAI_ENABLE_CUDA)
-  RAJA::forall<RAJA::cuda_exec<16> >(0, 10, [=] __device__ (int i) {
+  RAJA::forall<RAJA::cuda_exec<16> >(RAJA::RangeSegment(0, 10), [=] __device__ (int i) {
       v2[i] *= 2.0f;
   });
 #else
-  RAJA::forall<RAJA::omp_for_exec >(0, 10, [=] (int i) {
+  RAJA::forall<RAJA::omp_for_exec >(RAJA::RangeSegment(0, 10), [=] (int i) {
       v2[i] *= 2.0f;
   });
 #endif

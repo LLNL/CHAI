@@ -6,10 +6,17 @@ if (ENABLE_CUDA)
     ${managed_array_test_depends}
     cuda)
 endif ()
+
 if (ENABLE_HIP)
   set (managed_array_test_depends
     ${managed_array_test_depends}
     hip)
+endif ()
+
+if (ENABLE_OPENMP)
+  set (managed_array_test_depends
+    ${managed_array_test_depends}
+    openmp)
 endif ()
 
 blt_add_executable(
@@ -25,8 +32,9 @@ blt_add_test(
   NAME managed_array_test
   COMMAND managed_array_tests)
 
-set (raja_test_depends
-  chai umpire raja openmp gtest)
+set(raja_test_depends
+  ${managed_array_test_depends}
+  raja)
 
 blt_add_executable(
   NAME raja-chai-tests 
