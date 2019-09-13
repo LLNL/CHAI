@@ -110,6 +110,9 @@ TEST(ArrayManager, getPointerMap)
             (sizeOfArray1 * sizeof(int)) + (sizeOfArray2 * sizeof(double)));
 }
 
+/*!
+ * \brief Tests to see if callbacks can be turned on or off
+ */
 TEST(ArrayManager, controlCallbacks)
 {
   // First check that callbacks are turned on by default
