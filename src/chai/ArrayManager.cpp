@@ -61,7 +61,8 @@ ArrayManager* ArrayManager::getInstance()
 ArrayManager::ArrayManager() :
   m_pointer_map{},
   m_allocators{},
-  m_resource_manager{umpire::ResourceManager::getInstance()}
+  m_resource_manager{umpire::ResourceManager::getInstance()},
+  m_callbacks_active{true}
 {
   m_pointer_map.clear();
   m_current_execution_space = NONE;
@@ -196,7 +197,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   if (!record->m_touched[record->m_last_space]) {
     return;
   } else {
-    record->m_user_callback(ACTION_MOVE, space, record->m_size);
+    callback(record, ACTION_MOVE, space, record->m_size);
     std::lock_guard<std::mutex> lock(m_mutex);
     m_resource_manager.copy(dst_pointer, src_pointer);
   }
@@ -211,7 +212,7 @@ void ArrayManager::allocate(
   auto size = pointer_record->m_size;
   auto alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[space]);
 
-  pointer_record->m_user_callback(ACTION_ALLOC, space, size);
+  callback(pointer_record, ACTION_ALLOC, space, size);
   pointer_record->m_pointers[space] =  alloc.allocate(size);
 
   registerPointer(pointer_record, space);
@@ -229,9 +230,10 @@ void ArrayManager::free(PointerRecord* pointer_record)
         void* space_ptr = pointer_record->m_pointers[space];
 #if defined(CHAI_ENABLE_UM)
         if (space_ptr == pointer_record->m_pointers[UM]) {
-          pointer_record->m_user_callback(ACTION_FREE,
-                                          ExecutionSpace(UM),
-                                          pointer_record->m_size);
+          callback(pointer_record,
+                   ACTION_FREE,
+                   ExecutionSpace(UM),
+                   pointer_record->m_size);
           {
             std::lock_guard<std::mutex> lock(m_mutex);
             m_pointer_map.erase(space_ptr);
@@ -247,9 +249,10 @@ void ArrayManager::free(PointerRecord* pointer_record)
           }
         } else {
 #endif
-          pointer_record->m_user_callback(ACTION_FREE,
-                                          ExecutionSpace(space),
-                                          pointer_record->m_size);
+          callback(pointer_record,
+                   ACTION_FREE,
+                   ExecutionSpace(space),
+                   pointer_record->m_size);
           {
             std::lock_guard<std::mutex> lock(m_mutex);
             m_pointer_map.erase(space_ptr);
