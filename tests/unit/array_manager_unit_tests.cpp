@@ -53,6 +53,7 @@ TEST(ArrayManager, Constructor)
 }
 
 #ifndef CHAI_DISABLE_RM
+
 TEST(ArrayManager, getPointerMap)
 {
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
@@ -108,4 +109,60 @@ TEST(ArrayManager, getPointerMap)
   ASSERT_EQ(rm->getTotalSize(),
             (sizeOfArray1 * sizeof(int)) + (sizeOfArray2 * sizeof(double)));
 }
-#endif
+
+TEST(ArrayManager, controlCallbacks)
+{
+  // First check that callbacks are turned on by default
+  chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
+
+  // Variable for testing if callbacks are on or off
+  bool callbacksAreOn = false;
+
+  // Allocate one array and set a callback
+  size_t sizeOfArray = 5;
+  chai::ManagedArray<int> array1(sizeOfArray, chai::CPU);
+  array1.setUserCallback([&] (chai::Action, chai::ExecutionSpace, std::size_t) {
+                           callbacksAreOn = true;
+                         });
+
+  // Make sure the callback is called with ACTION_FREE
+  array1.free();
+  ASSERT_TRUE(callbacksAreOn);
+
+  // Now turn off callbacks
+  arrayManager->disableCallbacks();
+
+  // Reset the variable for testing if callbacks are on or off
+  callbacksAreOn = false;
+
+  // Allocate another array and set a callback
+  chai::ManagedArray<int> array2(sizeOfArray, chai::CPU);
+  array2.setUserCallback([&] (chai::Action, chai::ExecutionSpace, std::size_t) {
+                           callbacksAreOn = true;
+                         });
+
+  // Make sure the callback is called with ACTION_FREE
+  array2.free();
+  ASSERT_FALSE(callbacksAreOn);
+
+  // Now make sure the order doesn't matter for when the callback is set compared
+  // to when callbacks are enabled
+
+  // Reset the variable for testing if callbacks are on or off
+  callbacksAreOn = false;
+
+  // Allocate a third array and set a callback
+  chai::ManagedArray<int> array3(sizeOfArray, chai::CPU);
+  array3.setUserCallback([&] (chai::Action, chai::ExecutionSpace, std::size_t) {
+                           callbacksAreOn = true;
+                         });
+
+  // Turn on callbacks
+  arrayManager->enableCallbacks();
+
+  // Make sure the callback is called with ACTION_FREE
+  array3.free();
+  ASSERT_TRUE(callbacksAreOn);
+}
+
+#endif // !CHAI_DISABLE_RM
