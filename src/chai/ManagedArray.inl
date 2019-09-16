@@ -46,6 +46,8 @@
 #include "ManagedArray.hpp"
 #include "ArrayManager.hpp"
 
+#include <cassert>
+
 namespace chai {
 
 template<typename T>
@@ -389,6 +391,10 @@ template<typename T>
 template<typename Idx>
 CHAI_INLINE
 CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const Idx i) const {
+#if defined(CHAI_ENABLE_BOUNDS_CHECK)
+  assert(i >= 0 && static_cast<size_t>(i) < m_elems);
+#endif
+
   return m_active_pointer[i];
 }
 
