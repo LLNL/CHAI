@@ -1,5 +1,5 @@
 #######################################################################
-# Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
+# Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 # rights reserved.
 # 
 # Produced at the Lawrence Livermore National Laboratory
@@ -41,6 +41,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
+set(ENABLE_FORTRAN Off CACHE BOOL "Enable Fortran in Umpire")
 if (DEFINED umpire_DIR)
   find_package(umpire REQUIRED)
 
@@ -49,7 +50,5 @@ if (DEFINED umpire_DIR)
     INCLUDES ${UMPIRE_INCLUDE_DIRS}
     LIBRARIES umpire)
 else ()
-  add_subdirectory(src/tpl/umpire)
+  add_subdirectory(${PROJECT_SOURCE_DIR}/src/tpl/umpire)
 endif()
-
-

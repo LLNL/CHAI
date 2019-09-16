@@ -1,5 +1,5 @@
 #######################################################################
-# Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
+# Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 # rights reserved.
 # 
 # Produced at the Lawrence Livermore National Laboratory
@@ -41,4 +41,4 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-add_doxygen_target(chai_doxgen)
+blt_add_doxygen_target(chai_doxgen)

@@ -1,5 +1,5 @@
 #######################################################################
-# Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
+# Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 # rights reserved.
 # 
 # Produced at the Lawrence Livermore National Laboratory.
@@ -41,9 +41,28 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-set (CHAI_INSTALL_PREFIX @CMAKE_INSTALL_PREFIX@)
-set (CHAI_INCLUDE_DIRS @CMAKE_INSTALL_PREFIX@/include)
-set (CHAI_LIB_DIR @CMAKE_INSTALL_PREFIX@/lib)
-set (CHAI_CMAKE_DIR @CMAKE_INSTALL_PREFIX@/share/chai/cmake)
+set (chai_umpire_example_depends
+  chai)
 
-include(@CMAKE_INSTALL_PREFIX@/share/chai/cmake/chai-targets.cmake)
+if (ENABLE_CUDA)
+  set (chai_umpire_example_depends
+    ${chai_umpire_example_depends}
+    cuda)
+endif()
+if (ENABLE_HIP)
+  set (chai_umpire_example_depends
+    ${chai_umpire_example_depends}
+    hip)
+endif()
+
+blt_add_executable(
+  NAME chai-umpire-example.exe
+  SOURCES chai-umpire-allocators.cpp
+  DEPENDS_ON ${chai_umpire_example_depends})
+
+if (ENABLE_CUDA OR ENABLE_HIP)
+  blt_add_executable(
+    NAME chai-example.exe
+    SOURCES example.cpp
+    DEPENDS_ON ${chai_umpire_example_depends})
+endif ()

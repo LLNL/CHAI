@@ -1,32 +1,32 @@
 // ---------------------------------------------------------------------
-// Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
+// Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 // rights reserved.
-// 
+//
 // Produced at the Lawrence Livermore National Laboratory.
-// 
+//
 // This file is part of CHAI.
-// 
+//
 // LLNL-CODE-705877
-// 
+//
 // For details, see https:://github.com/LLNL/CHAI
 // Please also see the NOTICE and LICENSE files.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
-// 
+//
 // - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
-// 
+//
 // - Redistributions in binary form must reproduce the above copyright
 //   notice, this list of conditions and the following disclaimer in the
 //   documentation and/or other materials provided with the
 //   distribution.
-// 
+//
 // - Neither the name of the LLNS/LLNL nor the names of its contributors
 //   may be used to endorse or promote products derived from this
 //   software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 // LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -40,11 +40,59 @@
 // WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 // ---------------------------------------------------------------------
-#include "gtest/gtest.h"
+#ifndef CHAI_PointerRecord_HPP
+#define CHAI_PointerRecord_HPP
 
-#include "chai/ArrayManager.hpp"
+#include "chai/ExecutionSpaces.hpp"
+#include "chai/Types.hpp"
 
-TEST(ArrayManager, Constructor) {
-  chai::ArrayManager* rm = chai::ArrayManager::getInstance();
-  ASSERT_NEQ(rm, nullptr);
-}
+#include <cstddef>
+#include <functional>
+
+namespace chai
+{
+
+/*!
+ * \brief Struct holding details about each pointer.
+ */
+struct PointerRecord {
+  /*!
+   * Size of pointer allocation in bytes
+   */
+  std::size_t m_size;
+
+  /*!
+   * Array holding the pointer in each execution space.
+   */
+  void* m_pointers[NUM_EXECUTION_SPACES];
+
+  /*!
+   * Array holding touched state of pointer in each execution space.
+   */
+  bool m_touched[NUM_EXECUTION_SPACES];
+
+  /*!
+   * Execution space where this arary was last touched.
+   */
+  ExecutionSpace m_last_space;
+
+  /*!
+   * Array holding ownership status of each pointer.
+   */
+  bool m_owned[NUM_EXECUTION_SPACES];
+
+
+  /*!
+   * User defined callback triggered on memory operations.
+   *
+   * Function is passed the execution space that the memory is
+   * moved to, and the number of bytes moved.
+   */
+  UserCallback m_user_callback;
+
+  int m_allocators[NUM_EXECUTION_SPACES];
+};
+
+}  // end of namespace chai
+
+#endif  // CHAI_PointerRecord_HPP

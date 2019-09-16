@@ -1,5 +1,5 @@
 #######################################################################
-# Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
+# Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 # rights reserved.
 # 
 # Produced at the Lawrence Livermore National Laboratory.
@@ -41,9 +41,35 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
+set (chai_benchmark_depends
+  chai
+  gbenchmark)
+
 if (ENABLE_CUDA)
-  blt_add_executable(
-    NAME chai-example.exe
-    SOURCES example.cpp
-    DEPENDS_ON cuda chai)
+  set (chai_benchmark_depends
+    ${chai_benchmark_depends}
+    cuda)
 endif ()
+if (ENABLE_HIP)
+  set (chai_benchmark_depends
+    ${chai_benchmark_depends}
+    hip)
+endif ()
+
+blt_add_executable(
+  NAME arraymanager_benchmarks
+  SOURCES chai_arraymanager_benchmarks.cpp
+  DEPENDS_ON ${chai_benchmark_depends})
+
+blt_add_benchmark(
+  NAME arraymanager_benchmarks
+  COMMAND arraymanager_benchmarks)
+
+blt_add_executable(
+  NAME managedarray_benchmarks
+  SOURCES chai_managedarray_benchmarks.cpp
+  DEPENDS_ON ${chai_benchmark_depends})
+
+blt_add_benchmark(
+  NAME managedarray_benchmarks
+  COMMAND managedarray_benchmarks)

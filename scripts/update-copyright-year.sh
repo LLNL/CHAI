@@ -1,5 +1,6 @@
+#!/usr/bin/env zsh
 #######################################################################
-# Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
+# Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 # rights reserved.
 # 
 # Produced at the Lawrence Livermore National Laboratory.
@@ -41,24 +42,35 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-set (managed_array_test_depends
-  chai umpire gtest)
+# This is used for the ~*tpl* line to ignore files in bundled tpls
+setopt extended_glob
 
-if (ENABLE_CUDA)
-  set (managed_array_test_depends
-    ${managed_array_test_depends}
-    cuda)
-endif ()
+autoload colors
 
-blt_add_executable(
-  NAME managed_array_tests
-  SOURCES managed_array_tests.cpp
-  DEPENDS_ON ${managed_array_test_depends})
+RED="\033[1;31m"
+GREEN="\033[1;32m"
+NOCOLOR="\033[0m"
 
-target_include_directories(
-  managed_array_tests
-  PUBLIC ${PROJECT_BINARY_DIR}/include)
+files_no_license=$(grep -l '2016,' \
+  benchmarks/**/*(^/) \
+  cmake/**/*(^/) \
+  docs/**/*~*rst(^/)\
+  examples/**/*(^/) \
+  scripts/**/*~*copyright*(^/) \
+  src/**/*~*tpl*(^/) \
+  tests/**/*(^/) \
+  CMakeLists.txt)
 
-blt_add_test(
-  NAME managed_array_test
-  COMMAND managed_array_tests)
+if [ $files_no_license ]; then
+  print "${RED} [!] Some files need copyright year updating: ${NOCOLOR}"
+  echo "${files_no_license}"
+
+  echo ${files_no_license} | xargs sed -i '' 's/2016,/2016-2018,/'
+
+  print "${GREEN} [Ok] Copyright years updated."
+
+  exit 0
+else
+  print "${GREEN} [Ok] All files have required license info."
+  exit 0
+fi

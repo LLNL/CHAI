@@ -1,5 +1,6 @@
-# CHAI v1.0
+# CHAI v1.2
 
+[![Azure Build Status](https://dev.azure.com/davidbeckingsale/CHAI/_apis/build/status/LLNL.CHAI?branchName=develop)](https://dev.azure.com/davidbeckingsale/CHAI/_build/latest?definitionId=2&branchName=develop)
 [![Build Status](https://travis-ci.org/LLNL/CHAI.svg?branch=develop)](https://travis-ci.org/LLNL/CHAI)
 
 CHAI is a library that handles automatic data migration to different memory
@@ -10,6 +11,7 @@ used with other C++ abstractions, as well.
 CHAI uses CMake and BLT to handle builds. Make sure that you have a modern
 compiler loaded and the configuration is as simple as:
 
+    $ git submodule update --init --recursive
     $ mkdir build && cd build
     $ cmake -DCUDA_TOOLKIT_ROOT_DIR=/path/to/cuda ../
 

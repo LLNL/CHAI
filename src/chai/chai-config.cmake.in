@@ -2,7 +2,7 @@
 # Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 # rights reserved.
 # 
-# Produced at the Lawrence Livermore National Laboratory
+# Produced at the Lawrence Livermore National Laboratory.
 # 
 # This file is part of CHAI.
 # 
@@ -41,4 +41,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
-blt_add_sphinx_target(chai_docs)
+set (CHAI_INSTALL_PREFIX @CMAKE_INSTALL_PREFIX@)
+set (CHAI_INCLUDE_DIRS @CMAKE_INSTALL_PREFIX@/include)
+set (CHAI_LIB_DIR @CMAKE_INSTALL_PREFIX@/lib)
+set (CHAI_CMAKE_DIR @CMAKE_INSTALL_PREFIX@/share/chai/cmake)
+
+include(@CMAKE_INSTALL_PREFIX@/share/chai/cmake/chai-targets.cmake)
