@@ -46,7 +46,15 @@
 #include "ManagedArray.hpp"
 #include "ArrayManager.hpp"
 
+#if defined(CHAI_ENABLE_BOUNDS_CHECK)
+
+#if defined(NDEBUG)
+#undef NDEBUG // This makes sure assert is enabled even for release builds
+#endif // defined(NDEBUG)
+
 #include <cassert>
+
+#endif // defined(CHAI_ENABLE_BOUNDS_CHECK)
 
 namespace chai {
 
