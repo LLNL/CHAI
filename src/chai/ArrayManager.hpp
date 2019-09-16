@@ -258,6 +258,16 @@ public:
 
   int getAllocatorId(ExecutionSpace space) const;
 
+  /*!
+   * \brief Turn callbacks on.
+   */
+  void enableCallbacks() { m_callbacks_active = true; }
+
+  /*!
+   * \brief Turn callbacks off.
+   */
+  void disableCallbacks() { m_callbacks_active = false; }
+
 protected:
   /*!
    * \brief Construct a new ArrayManager.
@@ -294,6 +304,23 @@ private:
   void move(PointerRecord* record, ExecutionSpace space);
 
   /*!
+   * \brief Execute a user callback if callbacks are active
+   *
+   * \param record The pointer record containing the callback
+   * \param action The event that occurred
+   * \param space The space in which the event occurred
+   * \param size The number of bytes in the array associated with this pointer record
+   */
+  inline void callback(PointerRecord* record,
+                       Action action,
+                       ExecutionSpace space,
+                       size_t size) const {
+     if (m_callbacks_active && record) {
+        record->m_user_callback(action, space, size);
+     }
+  }
+
+  /*!
    * Current execution space.
    */
   ExecutionSpace m_current_execution_space;
@@ -317,6 +344,11 @@ private:
   umpire::ResourceManager& m_resource_manager;
 
   mutable std::mutex m_mutex;
+
+  /*!
+   * \brief Controls whether or not callbacks are called.
+   */
+  bool m_callbacks_active;
 };
 
 }  // end of namespace chai
