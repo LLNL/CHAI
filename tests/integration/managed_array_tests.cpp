@@ -1402,14 +1402,14 @@ TEST(ManagedArray, UpperOutOfRangeAccess)
 {
    chai::ManagedArray<float> array(20);
    array[19] = 0.0; // Should be fine
-   EXPECT_DEATH_IF_SUPPORTED( array[20] = 0.0, ".*" );
+   ASSERT_DEATH_IF_SUPPORTED( array[20] = 0.0, ".*" );
 }
 
 TEST(ManagedArray, LowerOutOfRangeAccess)
 {
    chai::ManagedArray<float> array(20);
    array[0] = 0.0; // Should be fine
-   EXPECT_DEATH_IF_SUPPORTED( array[-1] = 0.0, ".*" );
+   ASSERT_DEATH_IF_SUPPORTED( array[-1] = 0.0, ".*" );
 }
 
 #if defined(CHAI_ENABLE_CUDA)
@@ -1423,8 +1423,8 @@ GPU_TEST(ManagedArray, UpperOutOfRangeAccessGPU)
    });
 
    cudaError_t errorCode = cudaGetLastError();
-   EXPECT_EQ(errorCode, 59, "No device side assert was triggered!");
-   cudaDeviceReset();
+   ASSERT_EQ(cudaErrorAssert, errorCode, "No device side assert was triggered!");
+   ASSERT_EQ(cudaDeviceReset(), cudaSuccess);
 }
 
 GPU_TEST(ManagedArray, LowerOutOfRangeAccessGPU)
@@ -1436,8 +1436,8 @@ GPU_TEST(ManagedArray, LowerOutOfRangeAccessGPU)
    });
 
    cudaError_t errorCode = cudaGetLastError();
-   EXPECT_EQ(errorCode, 59, "No device side assert was triggered!");
-   cudaDeviceReset();
+   ASSERT_EQ(cudaErrorAssert, errorCode, "No device side assert was triggered!");
+   ASSERT_EQ(cudaDeviceReset(), cudaSuccess);
 }
 
 #endif // defined(CHAI_ENABLE_CUDA)
