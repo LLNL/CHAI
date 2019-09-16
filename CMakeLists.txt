@@ -77,10 +77,6 @@ else ()
   cmake_minimum_required(VERSION 3.8)
 endif()
 
-if( CMAKE_BUILD_TYPE STREQUAL "Debug" )
-  set( CHAI_ENABLE_BOUNDS_CHECK ON CACHE BOOL "Enable Bounds Checking for chai::ManagedArray<>::operator[]" FORCE )
-endif()
-
 ################################
 # BLT
 ################################
