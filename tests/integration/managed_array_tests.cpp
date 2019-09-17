@@ -1423,7 +1423,7 @@ GPU_TEST(ManagedArray, UpperOutOfRangeAccessGPU)
    });
 
    cudaError_t errorCode = cudaGetLastError();
-   ASSERT_EQ(cudaErrorAssert, errorCode, "No device side assert was triggered!");
+   ASSERT_EQ(cudaErrorAssert, errorCode);
    ASSERT_EQ(cudaDeviceReset(), cudaSuccess);
 }
 
@@ -1436,7 +1436,7 @@ GPU_TEST(ManagedArray, LowerOutOfRangeAccessGPU)
    });
 
    cudaError_t errorCode = cudaGetLastError();
-   ASSERT_EQ(cudaErrorAssert, errorCode, "No device side assert was triggered!");
+   ASSERT_EQ(cudaErrorAssert, errorCode);
    ASSERT_EQ(cudaDeviceReset(), cudaSuccess);
 }
 
