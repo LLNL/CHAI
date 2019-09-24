@@ -53,8 +53,9 @@ namespace chai {
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray() :
   m_active_pointer(nullptr),
+  m_active_base_pointer(nullptr),
   m_resource_manager(nullptr),
   m_elems(0),
   m_offset(0),
@@ -65,8 +66,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
-    size_t elems, ExecutionSpace space):
+    size_t elems, ExecutionSpace space) :
   m_active_pointer(nullptr),
+  m_active_base_pointer(nullptr),
   m_resource_manager(nullptr),
   m_elems(elems),
   m_offset(0),
@@ -79,6 +81,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t) :
   m_active_pointer(nullptr),
+  m_active_base_pointer(nullptr),
   m_resource_manager(nullptr),
   m_elems(0),
   m_offset(0),
@@ -89,8 +92,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t) :
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other) :
   m_active_pointer(other.m_active_pointer),
+  m_active_base_pointer(other.m_active_base_pointer),
   m_resource_manager(other.m_resource_manager),
   m_elems(other.m_elems),
   m_offset(other.m_offset),
@@ -102,6 +106,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_manager, size_t elems, PointerRecord* pointer_record) :
   m_active_pointer(data), 
+  m_active_base_pointer(data),
   m_resource_manager(array_manager),
   m_elems(elems),
   m_offset(0),
