@@ -51,6 +51,35 @@
 
 namespace chai {
 
+template <typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
+   std::initializer_list<chai::ExecutionSpace> spaces,
+   std::initializer_list<umpire::Allocator> allocators) :
+  ManagedArray()
+{
+  if (m_pointer_record) {
+     int i = 0;
+
+     for (auto& space : spaces) {
+       m_pointer_record->m_allocators[space] = allocators.begin()[i++].getId();
+     }
+  }
+}
+
+template <typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
+    size_t elems,
+    std::initializer_list<chai::ExecutionSpace> spaces,
+    std::initializer_list<umpire::Allocator> allocators,
+    ExecutionSpace space) :
+  ManagedArray(spaces, allocators)
+{
+  m_elems = elems;
+  this->allocate(elems, space);
+}
+
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray() :
