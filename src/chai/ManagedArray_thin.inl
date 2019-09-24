@@ -82,9 +82,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray()
-{
-}
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray() = default;
 
 template<typename T>
 CHAI_INLINE
@@ -100,19 +98,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t)
 {
 }
 
-
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other) :
-  m_active_pointer(other.m_active_pointer),
-  m_active_base_pointer(other.m_active_base_pointer),
-  m_resource_manager(other.m_resource_manager),
-  m_elems(other.m_elems),
-  m_offset(other.m_offset),
-  m_pointer_record(other.m_pointer_record),
-  m_is_slice(other.m_is_slice)
-{
-}
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other) = default;
 
 template<typename T>
 CHAI_INLINE
