@@ -57,6 +57,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
   m_active_pointer(nullptr),
   m_resource_manager(nullptr),
   m_elems(0),
+  m_offset(0),
   m_is_slice(false)
 {
 }
@@ -68,6 +69,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
   m_active_pointer(nullptr),
   m_resource_manager(nullptr),
   m_elems(elems),
+  m_offset(0),
   m_is_slice(false)
 {
   this->allocate(elems, space);
@@ -79,6 +81,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t) :
   m_active_pointer(nullptr),
   m_resource_manager(nullptr),
   m_elems(0),
+  m_offset(0),
   m_is_slice(false)
 {
 }
@@ -90,6 +93,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
   m_active_pointer(other.m_active_pointer),
   m_resource_manager(other.m_resource_manager),
   m_elems(other.m_elems),
+  m_offset(other.m_offset),
   m_is_slice(other.m_is_slice)
 {
 }
@@ -100,6 +104,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
   m_active_pointer(data), 
   m_resource_manager(array_manager),
   m_elems(elems),
+  m_offset(0),
   m_is_slice(false)
 {
 }
