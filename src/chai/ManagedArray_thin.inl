@@ -82,42 +82,21 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray() :
-  m_active_pointer(nullptr),
-  m_active_base_pointer(nullptr),
-  m_resource_manager(nullptr),
-  m_elems(0),
-  m_offset(0),
-  m_pointer_record(nullptr),
-  m_is_slice(false)
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray()
 {
 }
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
-    size_t elems, ExecutionSpace space) :
-  m_active_pointer(nullptr),
-  m_active_base_pointer(nullptr),
-  m_resource_manager(nullptr),
-  m_elems(elems),
-  m_offset(0),
-  m_pointer_record(nullptr),
-  m_is_slice(false)
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(size_t elems, ExecutionSpace space) :
+  m_elems(elems)
 {
   this->allocate(elems, space);
 }
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t) :
-  m_active_pointer(nullptr),
-  m_active_base_pointer(nullptr),
-  m_resource_manager(nullptr),
-  m_elems(0),
-  m_offset(0),
-  m_pointer_record(nullptr),
-  m_is_slice(false)
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t)
 {
 }
 
@@ -145,9 +124,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data,
   m_active_base_pointer(data),
   m_resource_manager(array_manager),
   m_elems(elems),
-  m_offset(0),
-  m_pointer_record(pointer_record),
-  m_is_slice(false)
+  m_pointer_record(pointer_record)
 {
 }
 
@@ -155,7 +132,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST ManagedArray<T> ManagedArray<T>::slice(size_t offset, size_t elems) {
   ManagedArray<T> slice;
-  if(offset + elems > size()) {
+  if (offset + elems > size()) {
     CHAI_LOG("ManagedArray", "Invalid slice. No active pointer or index out of bounds");
   } else {
     slice.m_active_pointer = m_active_pointer + offset;
