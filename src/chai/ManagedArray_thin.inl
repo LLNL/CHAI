@@ -57,9 +57,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray() :
   m_active_pointer(nullptr),
   m_active_base_pointer(nullptr),
   m_resource_manager(nullptr),
-  m_pointer_record(nullptr),
   m_elems(0),
   m_offset(0),
+  m_pointer_record(nullptr),
   m_is_slice(false)
 {
 }
@@ -71,9 +71,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
   m_active_pointer(nullptr),
   m_active_base_pointer(nullptr),
   m_resource_manager(nullptr),
-  m_pointer_record(nullptr),
   m_elems(elems),
   m_offset(0),
+  m_pointer_record(nullptr),
   m_is_slice(false)
 {
   this->allocate(elems, space);
@@ -85,9 +85,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t) :
   m_active_pointer(nullptr),
   m_active_base_pointer(nullptr),
   m_resource_manager(nullptr),
-  m_pointer_record(nullptr),
   m_elems(0),
   m_offset(0),
+  m_pointer_record(nullptr),
   m_is_slice(false)
 {
 }
@@ -99,9 +99,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other) :
   m_active_pointer(other.m_active_pointer),
   m_active_base_pointer(other.m_active_base_pointer),
   m_resource_manager(other.m_resource_manager),
-  m_pointer_record(other.m_pointer_record),
   m_elems(other.m_elems),
   m_offset(other.m_offset),
+  m_pointer_record(other.m_pointer_record),
   m_is_slice(other.m_is_slice)
 {
 }
@@ -112,9 +112,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
   m_active_pointer(data), 
   m_active_base_pointer(data),
   m_resource_manager(array_manager),
-  m_pointer_record(pointer_record),
   m_elems(elems),
   m_offset(0),
+  m_pointer_record(pointer_record),
   m_is_slice(false)
 {
 }
@@ -135,8 +135,9 @@ CHAI_HOST ManagedArray<T> ManagedArray<T>::slice(size_t offset, size_t elems) {
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST void ManagedArray<T>::allocate(size_t elems, ExecutionSpace space, UserCallback const &cback) {
+CHAI_HOST void ManagedArray<T>::allocate(size_t elems, ExecutionSpace space, UserCallback const &) {
   if(!m_is_slice) {
+    (void) space; // Quiet compiler warning when CHAI_LOG does nothing
     CHAI_LOG("ManagedArray", "Allocating array of size " << elems << " in space " << space);
 
     m_elems = elems;
