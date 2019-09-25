@@ -52,3 +52,14 @@ if (DEFINED umpire_DIR)
 else ()
   add_subdirectory(${PROJECT_SOURCE_DIR}/src/tpl/umpire)
 endif()
+
+if (DEFINED camp_DIR)
+  find_package(camp REQUIRED)
+
+  blt_register_library(
+    NAME camp
+    INCLUDES ${CAMP_INCLUDE_DIRS}
+    LIBRARIES camp)
+else ()
+  add_subdirectory(${PROJECT_SOURCE_DIR}/src/tpl/camp)
+endif()
