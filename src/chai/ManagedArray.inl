@@ -47,13 +47,25 @@
 #include "ArrayManager.hpp"
 
 #if defined(CHAI_ENABLE_BOUNDS_CHECK)
-
 #if defined(NDEBUG)
-#undef NDEBUG // This makes sure assert is enabled even for release builds
-#endif // defined(NDEBUG)
+
+#define HOST_ALWAYS_ASSERT(EXP) if (!(EXP)) { \
+   printf("Assert triggered at %s:%d\n", __FILE__, __LINE__); \
+   abort(); \
+}
+
+#define DEVICE_ALWAYS_ASSERT(EXP) if (!(EXP)) { \
+   asm("trap;") \
+}
+
+#else // defined(NDEBUG)
 
 #include <cassert>
 
+#define HOST_ALWAYS_ASSERT(EXP) assert(EXP)
+#define DEVICE_ALWAYS_ASSERT(EXP) assert(EXP)
+
+#endif // defined(NDEBUG)
 #endif // defined(CHAI_ENABLE_BOUNDS_CHECK)
 
 namespace chai {
@@ -400,8 +412,18 @@ template<typename Idx>
 CHAI_INLINE
 CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const Idx i) const {
 #if defined(CHAI_ENABLE_BOUNDS_CHECK)
-  assert(i >= 0 && static_cast<size_t>(i) < m_elems);
+#if defined(__CUDA_ARCH__)
+  DEVICE_ALWAYS_ASSERT(i >= 0 && static_cast<size_t>(i) < m_elems);
+#else
+  //std::cout << "m_elems = " << m_elems << std::endl;
+  //std::cout << "i = " << i << std::endl;
+  //std::cout << "(size_t) i = " << static_cast<size_t>(i) << std::endl;
+
+  //printf("m_elems = %d\n", m_elems);
+  //printf("i = %d\n", i);
+  HOST_ALWAYS_ASSERT(i >= 0 && static_cast<size_t>(i) < m_elems);
 #endif
+#endif // defined(CHAI_ENABLE_BOUNDS_CHECK)
 
   return m_active_pointer[i];
 }

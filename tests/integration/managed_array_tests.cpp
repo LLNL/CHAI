@@ -1402,42 +1402,50 @@ TEST(ManagedArray, UpperOutOfRangeAccess)
 {
    chai::ManagedArray<float> array(20);
    array[19] = 0.0; // Should be fine
-   ASSERT_DEATH_IF_SUPPORTED( array[20] = 0.0, ".*" );
+   ASSERT_DEATH_IF_SUPPORTED(array[20] = 0.0, ".*");
 }
 
 TEST(ManagedArray, LowerOutOfRangeAccess)
 {
    chai::ManagedArray<float> array(20);
    array[0] = 0.0; // Should be fine
-   ASSERT_DEATH_IF_SUPPORTED( array[-1] = 0.0, ".*" );
+   ASSERT_DEATH_IF_SUPPORTED(array[-1] = 0.0, ".*");
 }
 
 #if defined(CHAI_ENABLE_CUDA)
 
 GPU_TEST(ManagedArray, UpperOutOfRangeAccessGPU)
 {
+   ASSERT_EQ(cudaSuccess, cudaDeviceReset());
+   ASSERT_EQ(cudaSuccess, cudaDeviceSynchronize());
+
    chai::ManagedArray<float> array(20);
 
-   forall(gpu(), 0, 1, [=] __device__ (int) {
+   ASSERT_DEATH_IF_SUPPORTED(forall(gpu(), 0, 1, [=] __device__ (int) {
       array[20] = 0.0;
-   });
+   }), ".*");
 
-   cudaError_t errorCode = cudaGetLastError();
-   ASSERT_EQ(cudaErrorAssert, errorCode, "No device side assert was triggered!");
+   //cudaError_t errorCode = cudaGetLastError();
+   cudaError_t errorCode = cudaDeviceSynchronize();
+   ASSERT_EQ(cudaErrorAssert, errorCode);
    ASSERT_EQ(cudaDeviceReset(), cudaSuccess);
+   ASSERT_EQ(cudaSuccess, cudaDeviceSynchronize());
 }
 
 GPU_TEST(ManagedArray, LowerOutOfRangeAccessGPU)
 {
    chai::ManagedArray<float> array(20);
 
+#if 0
    forall(gpu(), 0, 1, [=] __device__ (int) {
       array[-1] = 0.0;
    });
 
-   cudaError_t errorCode = cudaGetLastError();
-   ASSERT_EQ(cudaErrorAssert, errorCode, "No device side assert was triggered!");
+   //cudaError_t errorCode = cudaGetLastError();
+   cudaError_t errorCode = cudaDeviceSynchronize();
+   ASSERT_EQ(cudaErrorAssert, errorCode);
    ASSERT_EQ(cudaDeviceReset(), cudaSuccess);
+#endif
 }
 
 #endif // defined(CHAI_ENABLE_CUDA)
