@@ -175,6 +175,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 {
 #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   move(m_resource_manager->getExecutionSpace());
+  std::cout<<"Copying ManagedArray"<<std::endl;
 #endif
 }
 

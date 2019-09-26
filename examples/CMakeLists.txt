@@ -56,6 +56,11 @@ if (ENABLE_HIP)
 endif()
 
 blt_add_executable(
+  NAME context-integration.exe
+  SOURCES context.cpp
+  DEPENDS_ON ${chai_umpire_example_depends})
+
+blt_add_executable(
   NAME chai-umpire-example.exe
   SOURCES chai-umpire-allocators.cpp
   DEPENDS_ON ${chai_umpire_example_depends})

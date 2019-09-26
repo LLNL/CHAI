@@ -72,7 +72,8 @@ set (chai_sources
   ArrayManager.cpp)
 
 set (chai_depends
-  umpire)
+  umpire
+  camp)
 
 if (ENABLE_CUDA)
   set (chai_depends
