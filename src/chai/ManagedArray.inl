@@ -174,7 +174,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
   m_is_slice(other.m_is_slice)
 {
 #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
-  move(m_resource_manager->getExecutionSpace());
+  move(m_resource_manager->getExecutionSpace(), m_resource_manager->getContext());
   std::cout<<"Copying ManagedArray"<<std::endl;
 #endif
 }
@@ -369,6 +369,35 @@ void ManagedArray<T>::move(ExecutionSpace space)
   }
 
   m_active_base_pointer = static_cast<T*>(m_resource_manager->move(const_cast<T_non_const*>(m_active_base_pointer), m_pointer_record, space));
+  m_active_pointer = m_active_base_pointer + m_offset;
+
+  if (!std::is_const<T>::value) {
+    CHAI_LOG("ManagedArray", "T is non-const, registering touch of pointer" << m_active_pointer);
+    m_resource_manager->registerTouch(m_pointer_record, space);
+  }
+
+  if (space != NONE) m_pointer_record->m_last_space = space;
+
+  /* When moving from GPU to CPU we need to move the inner arrays after the outer array. */
+#if defined(CHAI_ENABLE_CUDA)
+  if (prev_space == GPU) {
+    moveInnerImpl(space);
+  }
+#endif
+}
+template <typename T>
+CHAI_INLINE
+CHAI_HOST
+void ManagedArray<T>::move(ExecutionSpace space, camp::devices::Context* context)
+{
+  ExecutionSpace prev_space = m_pointer_record->m_last_space;
+
+  /* When moving from CPU to GPU we need to move the inner arrays before the outer array. */
+  if (prev_space == CPU) {
+    moveInnerImpl(space);
+  }
+
+  m_active_base_pointer = static_cast<T*>(m_resource_manager->move(const_cast<T_non_const*>(m_active_base_pointer), m_pointer_record, context, space));
   m_active_pointer = m_active_base_pointer + m_offset;
 
   if (!std::is_const<T>::value) {

@@ -191,6 +191,7 @@ public:
   CHAI_HOST void registerTouch(ExecutionSpace space);
 
   CHAI_HOST void move(ExecutionSpace space);
+  CHAI_HOST void move(ExecutionSpace space, camp::devices::Context* context);
 
   CHAI_HOST ManagedArray<T> slice(size_t begin, size_t end);
   /*!

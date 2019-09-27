@@ -96,7 +96,7 @@ camp::devices::Event forall_host(camp::devices::Context* dev, int begin, int end
   cudaDeviceSynchronize();
 #endif
 
-  rm->setExecutionSpace(chai::CPU);
+  rm->setExecutionSpace(chai::CPU, dev);
 
   auto host = dev->get<camp::devices::Host>();
   std::cout << "forall kernel cpu call\n";

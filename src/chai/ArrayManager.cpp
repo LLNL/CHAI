@@ -119,6 +119,15 @@ void ArrayManager::setExecutionSpace(ExecutionSpace space)
   m_current_execution_space = space;
 }
 
+void ArrayManager::setExecutionSpace(ExecutionSpace space, camp::devices::Context* context)
+{
+  CHAI_LOG("ArrayManager", "Setting execution space to " << space);
+  std::lock_guard<std::mutex> lock(m_mutex);
+
+  m_current_execution_space = space;
+  m_current_context = context;
+}
+
 void* ArrayManager::move(void* pointer,
                          PointerRecord* pointer_record,
                          ExecutionSpace space)
@@ -136,11 +145,36 @@ void* ArrayManager::move(void* pointer,
 
   return pointer_record->m_pointers[space];
 }
+void* ArrayManager::move(void* pointer,
+                         PointerRecord* pointer_record,
+                         camp::devices::Context* context,
+			 ExecutionSpace space)
+{
+  // Check for default arg (NONE)
+  if (space == NONE) {
+    space = m_current_execution_space;
+  }
+
+  if (space == NONE) {
+    return pointer;
+  }
+
+  move(pointer_record, space, context);
+
+  return pointer_record->m_pointers[space];
+}
+
 
 ExecutionSpace ArrayManager::getExecutionSpace()
 {
   return m_current_execution_space;
 }
+
+camp::devices::Context* ArrayManager::getContext()
+{
+  return m_current_context;
+}
+
 
 void ArrayManager::registerTouch(PointerRecord* pointer_record)
 {
@@ -204,6 +238,43 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 
   resetTouch(record);
 }
+void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::devices::Context* context)
+{
+  if (space == NONE) {
+    return;
+  }
+
+#if defined(CHAI_ENABLE_UM)
+  if (record->m_last_space == UM) {
+    return;
+  }
+#endif
+
+  if (space == record->m_last_space) {
+    return;
+  }
+
+
+  void* src_pointer = record->m_pointers[record->m_last_space];
+  void* dst_pointer = record->m_pointers[space];
+
+  if (!dst_pointer) {
+    allocate(record, space);
+    dst_pointer = record->m_pointers[space];
+  }
+
+  if (!record->m_touched[record->m_last_space]) {
+    auto dev = context->get<camp::devices::Host>();
+    return;
+  } else {
+    callback(record, ACTION_MOVE, space, record->m_size);
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_resource_manager.copy(dst_pointer, src_pointer);
+  }
+
+  resetTouch(record);
+}
+
 
 void ArrayManager::allocate(
     PointerRecord* pointer_record,
