@@ -344,24 +344,24 @@ private:
   /*!
    * Currently active data pointer.
    */
-  mutable T* m_active_pointer;
-  mutable T* m_active_base_pointer;
+  mutable T* m_active_pointer = nullptr;
+  mutable T* m_active_base_pointer = nullptr;
 
   /*!
    * Pointer to ArrayManager instance.
    */
-  ArrayManager* m_resource_manager;
+  ArrayManager* m_resource_manager = nullptr;
 
   /*!
    * Number of elements in the ManagedArray.
    */
-  size_t m_elems;
+  size_t m_elems = 0;
   size_t m_offset = 0;
 
   /*!
    * Pointer to PointerRecord data.
    */
-  PointerRecord* m_pointer_record;
+  PointerRecord* m_pointer_record = nullptr;
  
   bool m_is_slice = false;
  
