@@ -42,13 +42,16 @@
 #######################################################################
 
 set(ENABLE_FORTRAN Off CACHE BOOL "Enable Fortran in Umpire")
-if (DEFINED umpire_DIR)
-  find_package(umpire REQUIRED)
 
-  blt_register_library(
-    NAME umpire
-    INCLUDES ${UMPIRE_INCLUDE_DIRS}
-    LIBRARIES umpire)
-else ()
-  add_subdirectory(${PROJECT_SOURCE_DIR}/src/tpl/umpire)
+if (NOT TARGET umpire)
+  if (DEFINED umpire_DIR)
+    find_package(umpire REQUIRED)
+
+    blt_register_library(
+      NAME umpire
+      INCLUDES ${UMPIRE_INCLUDE_DIRS}
+      LIBRARIES umpire)
+  else ()
+    add_subdirectory(${PROJECT_SOURCE_DIR}/src/tpl/umpire)
+  endif()
 endif()
