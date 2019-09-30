@@ -59,6 +59,7 @@ set (chai_headers
   ExecutionSpaces.hpp
   ManagedArray.hpp
   ManagedArray.inl
+  managed_ptr.hpp
   PointerRecord.hpp
   Types.hpp)
 
