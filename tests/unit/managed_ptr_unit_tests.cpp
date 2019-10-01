@@ -693,8 +693,6 @@ GPU_TEST(managed_ptr, simple_cuda_cpu_and_gpu_pointer_constructor)
 
   array1.move(chai::CPU);
 
-  cudaDeviceSynchronize();
-
   EXPECT_EQ(array1[0], 3);
 
   array1.free();

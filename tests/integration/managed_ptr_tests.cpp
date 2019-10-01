@@ -320,12 +320,10 @@ GPU_TEST(managed_ptr, make_on_device)
   deviceNew<<<1, 1>>>(deviceArray);
 
   cudaMemcpy(hostArray, deviceArray, sizeof(int*), cudaMemcpyDeviceToHost);
-  cudaDeviceSynchronize();
   cudaMemcpy(deviceArray2, hostArray, sizeof(int*), cudaMemcpyHostToDevice);
   ASSERT_NE(hostArray[0], nullptr);
 
   deviceDelete<<<1, 1>>>(deviceArray2);
-  cudaDeviceSynchronize();
   free(hostArray);
   cudaFree(deviceArray);
   cudaFree(deviceArray2);
@@ -403,9 +401,7 @@ GPU_TEST(managed_ptr, pass_object_to_kernel)
   chai::ArrayManager* manager = chai::ArrayManager::getInstance();
   manager->setExecutionSpace(chai::GPU);
   passObjectToKernel<<<1, 1>>>(array);
-  cudaDeviceSynchronize();
   array.move(chai::CPU);
-  cudaDeviceSynchronize();
   ASSERT_EQ(array[0], -1);
 
   array.free();
@@ -592,7 +588,6 @@ GPU_TEST(managed_ptr, gpu_multiple_inheritance)
   });
 
   results.move(chai::CPU);
-  cudaDeviceSynchronize();
 
   ASSERT_EQ(results[0], true);
   ASSERT_EQ(results[1], true);
