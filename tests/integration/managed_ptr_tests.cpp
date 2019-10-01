@@ -42,10 +42,10 @@
 // ---------------------------------------------------------------------
 #include "gtest/gtest.h"
 
-#define CUDA_TEST(X, Y)              \
-  static void cuda_test_##X##Y();    \
-  TEST(X, Y) { cuda_test_##X##Y(); } \
-  static void cuda_test_##X##Y()
+#define GPU_TEST(X, Y)              \
+  static void gpu_test_##X##Y();    \
+  TEST(X, Y) { gpu_test_##X##Y(); } \
+  static void gpu_test_##X##Y()
 
 #include "chai/config.hpp"
 #include "chai/ManagedArray.hpp"
@@ -306,7 +306,7 @@ __global__ void passObjectToKernel(chai::ManagedArray<int> arr) {
    arr[0] = -1;
 }
 
-CUDA_TEST(managed_ptr, make_on_device)
+GPU_TEST(managed_ptr, make_on_device)
 {
   int** hostArray = (int**) malloc(sizeof(int*));
   hostArray[0] = nullptr;
@@ -331,7 +331,7 @@ CUDA_TEST(managed_ptr, make_on_device)
   cudaFree(deviceArray2);
 }
 
-CUDA_TEST(managed_ptr, cuda_new_and_delete_on_device)
+GPU_TEST(managed_ptr, gpu_new_and_delete_on_device)
 {
   // Initialize host side memory to hold a pointer
   RawArrayClass** cpuPointerHolder = (RawArrayClass**) malloc(sizeof(RawArrayClass*));
@@ -360,7 +360,7 @@ CUDA_TEST(managed_ptr, cuda_new_and_delete_on_device)
   chai::detail::destroy_on_device<<<1, 1>>>(gpuPointer);
 }
 
-CUDA_TEST(managed_ptr, cuda_build_managed_ptr)
+GPU_TEST(managed_ptr, gpu_build_managed_ptr)
 {
   // Initialize host side memory to hold a pointer
   RawArrayClass** cpuPointerHolder = (RawArrayClass**) malloc(sizeof(RawArrayClass*));
@@ -390,7 +390,7 @@ CUDA_TEST(managed_ptr, cuda_build_managed_ptr)
 }
 
 
-CUDA_TEST(managed_ptr, pass_object_to_kernel)
+GPU_TEST(managed_ptr, pass_object_to_kernel)
 {
   const int expectedValue = rand();
 
@@ -409,7 +409,7 @@ CUDA_TEST(managed_ptr, pass_object_to_kernel)
   ASSERT_EQ(array[0], -1);
 }
 
-CUDA_TEST(managed_ptr, cuda_class_with_raw_array)
+GPU_TEST(managed_ptr, gpu_class_with_raw_array)
 {
   const int expectedValue = rand();
 
@@ -422,7 +422,7 @@ CUDA_TEST(managed_ptr, cuda_class_with_raw_array)
   auto rawArrayClass = chai::make_managed<RawArrayClass>(array);
   chai::ManagedArray<int> results(1, chai::GPU);
 
-  forall(cuda(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
     results[i] = rawArrayClass->getValue(i);
   });
 
@@ -430,7 +430,7 @@ CUDA_TEST(managed_ptr, cuda_class_with_raw_array)
   ASSERT_EQ(results[0], expectedValue);
 }
 
-CUDA_TEST(managed_ptr, cuda_class_with_raw_array_and_callback)
+GPU_TEST(managed_ptr, gpu_class_with_raw_array_and_callback)
 {
   const int expectedValue = rand();
 
@@ -464,7 +464,7 @@ CUDA_TEST(managed_ptr, cuda_class_with_raw_array_and_callback)
 
   chai::ManagedArray<int> results(1, chai::GPU);
 
-  forall(cuda(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
     results[i] = managedPointer->getValue(i);
   });
 
@@ -472,7 +472,7 @@ CUDA_TEST(managed_ptr, cuda_class_with_raw_array_and_callback)
   ASSERT_EQ(results[0], expectedValue);
 }
 
-CUDA_TEST(managed_ptr, cuda_class_with_managed_array)
+GPU_TEST(managed_ptr, gpu_class_with_managed_array)
 {
   const int expectedValue = rand();
 
@@ -486,7 +486,7 @@ CUDA_TEST(managed_ptr, cuda_class_with_managed_array)
 
   chai::ManagedArray<int> results(1, chai::GPU);
   
-  forall(cuda(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
     results[i] = derived->getValue(i);
   });
 
@@ -495,7 +495,7 @@ CUDA_TEST(managed_ptr, cuda_class_with_managed_array)
   ASSERT_EQ(results[0], expectedValue);
 }
 
-CUDA_TEST(managed_ptr, cuda_class_with_raw_ptr)
+GPU_TEST(managed_ptr, gpu_class_with_raw_ptr)
 {
   const int expectedValue = rand();
 
@@ -510,7 +510,7 @@ CUDA_TEST(managed_ptr, cuda_class_with_raw_ptr)
 
   chai::ManagedArray<int> results(1, chai::GPU);
 
-  forall(cuda(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
     results[i] = (*rawPointerClass).getValue(i);
   });
 
@@ -518,7 +518,7 @@ CUDA_TEST(managed_ptr, cuda_class_with_raw_ptr)
   ASSERT_EQ(results[0], expectedValue);
 }
 
-CUDA_TEST(managed_ptr, cuda_class_with_managed_ptr)
+GPU_TEST(managed_ptr, gpu_class_with_managed_ptr)
 {
   const int expectedValue = rand();
 
@@ -527,7 +527,7 @@ CUDA_TEST(managed_ptr, cuda_class_with_managed_ptr)
 
   chai::ManagedArray<int> results(1, chai::GPU);
   
-  forall(cuda(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
     results[i] = container.getValue();
   });
 
@@ -535,7 +535,7 @@ CUDA_TEST(managed_ptr, cuda_class_with_managed_ptr)
   ASSERT_EQ(results[0], expectedValue);
 }
 
-CUDA_TEST(managed_ptr, cuda_nested_managed_ptr)
+GPU_TEST(managed_ptr, gpu_nested_managed_ptr)
 {
   const int expectedValue = rand();
 
@@ -544,7 +544,7 @@ CUDA_TEST(managed_ptr, cuda_nested_managed_ptr)
 
   chai::ManagedArray<int> results(1, chai::GPU);
 
-  forall(cuda(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
     results[i] = container->getValue();
   });
 
@@ -552,7 +552,7 @@ CUDA_TEST(managed_ptr, cuda_nested_managed_ptr)
   ASSERT_EQ(results[0], expectedValue);
 }
 
-CUDA_TEST(managed_ptr, cuda_multiple_inheritance)
+GPU_TEST(managed_ptr, gpu_multiple_inheritance)
 {
   auto derived = chai::make_managed<ClassWithMultipleInheritance>();
 
@@ -561,7 +561,7 @@ CUDA_TEST(managed_ptr, cuda_multiple_inheritance)
 
   chai::ManagedArray<bool> results(2, chai::GPU);
 
-  forall(cuda(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
     results[i] = base1->isBase1();
     results[1] = base2->isBase2();
   });
@@ -573,7 +573,7 @@ CUDA_TEST(managed_ptr, cuda_multiple_inheritance)
   ASSERT_EQ(results[1], true);
 }
 
-CUDA_TEST(managed_ptr, static_pointer_cast)
+GPU_TEST(managed_ptr, static_pointer_cast)
 {
   const int expectedValue = rand();
 
@@ -589,7 +589,7 @@ CUDA_TEST(managed_ptr, static_pointer_cast)
 
   chai::ManagedArray<int> results(3, chai::GPU);
 
-  forall(cuda(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
     results[i] = derived->getValue(i);
     results[1] = base->getValue(i);
     results[2] = derivedFromBase->getValue(i);
@@ -602,7 +602,7 @@ CUDA_TEST(managed_ptr, static_pointer_cast)
   ASSERT_EQ(results[2], expectedValue);
 }
 
-CUDA_TEST(managed_ptr, dynamic_pointer_cast)
+GPU_TEST(managed_ptr, dynamic_pointer_cast)
 {
   const int expectedValue = rand();
 
@@ -618,7 +618,7 @@ CUDA_TEST(managed_ptr, dynamic_pointer_cast)
 
   chai::ManagedArray<int> results(3, chai::GPU);
 
-  forall(cuda(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
     results[i] = derived->getValue(i);
     results[1] = base->getValue(i);
     results[2] = derivedFromBase->getValue(i);
@@ -631,7 +631,7 @@ CUDA_TEST(managed_ptr, dynamic_pointer_cast)
   ASSERT_EQ(results[2], expectedValue);
 }
 
-CUDA_TEST(managed_ptr, const_pointer_cast)
+GPU_TEST(managed_ptr, const_pointer_cast)
 {
   const int expectedValue = rand();
 
@@ -647,7 +647,7 @@ CUDA_TEST(managed_ptr, const_pointer_cast)
 
   chai::ManagedArray<int> results(3, chai::GPU);
 
-  forall(cuda(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
     results[i] = derived->getValue(i);
     results[1] = constDerived->getValue(i);
     results[2] = derivedFromConst->getValue(i);
@@ -660,7 +660,7 @@ CUDA_TEST(managed_ptr, const_pointer_cast)
   ASSERT_EQ(results[2], expectedValue);
 }
 
-CUDA_TEST(managed_ptr, reinterpret_pointer_cast)
+GPU_TEST(managed_ptr, reinterpret_pointer_cast)
 {
   const int expectedValue = rand();
 
@@ -676,7 +676,7 @@ CUDA_TEST(managed_ptr, reinterpret_pointer_cast)
 
   chai::ManagedArray<int> results(3, chai::GPU);
 
-  forall(cuda(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
     results[i] = derived->getValue(i);
     results[1] = base->getValue(i);
     results[2] = derivedFromBase->getValue(i);
