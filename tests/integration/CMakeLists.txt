@@ -1,21 +1,15 @@
-set (managed_array_test_depends
-  chai umpire gtest)
+# Integration test dependencies
+set (chai_integration_test_depends
+     chai umpire gtest)
 
-if (ENABLE_CUDA)
-  set (managed_array_test_depends
-    ${managed_array_test_depends}
-    cuda)
-endif ()
-if (ENABLE_HIP)
-  set (managed_array_test_depends
-    ${managed_array_test_depends}
-    hip)
-endif ()
+blt_list_append(TO chai_integration_test_depends ELEMENTS cuda IF ${ENABLE_CUDA})
+blt_list_append(TO chai_integration_test_depends ELEMENTS hip IF ${ENABLE_HIP})
 
+# ManagedArray tests
 blt_add_executable(
   NAME managed_array_tests
   SOURCES managed_array_tests.cpp
-  DEPENDS_ON ${managed_array_test_depends})
+  DEPENDS_ON ${chai_integration_test_depends})
 
 target_include_directories(
   managed_array_tests
@@ -24,3 +18,18 @@ target_include_directories(
 blt_add_test(
   NAME managed_array_test
   COMMAND managed_array_tests)
+
+# managed_ptr tests
+blt_add_executable(
+  NAME managed_ptr_tests
+  SOURCES managed_ptr_tests.cpp
+  DEPENDS_ON ${chai_integration_test_depends})
+
+target_include_directories(
+  managed_ptr_tests
+  PUBLIC ${PROJECT_BINARY_DIR}/include)
+
+blt_add_test(
+  NAME managed_ptr_test
+  COMMAND managed_ptr_tests)
+
