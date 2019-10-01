@@ -131,7 +131,6 @@ TEST(managed_ptr, default_constructor)
   chai::managed_ptr<TestDerived> otherDerived;
 
   EXPECT_EQ(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 0);
   EXPECT_FALSE(derived);
   EXPECT_TRUE(derived == nullptr);
   EXPECT_TRUE(nullptr == derived);
@@ -141,6 +140,10 @@ TEST(managed_ptr, default_constructor)
   EXPECT_TRUE(otherDerived == derived);
   EXPECT_FALSE(derived != otherDerived);
   EXPECT_FALSE(otherDerived != derived);
+
+  // Make sure free is a no-op
+  derived.free();
+  otherDerived.free();
 }
 
 TEST(managed_ptr, nullptr_constructor)
@@ -149,7 +152,6 @@ TEST(managed_ptr, nullptr_constructor)
   chai::managed_ptr<TestDerived> otherDerived = nullptr;
 
   EXPECT_EQ(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 0);
   EXPECT_FALSE(derived);
   EXPECT_TRUE(derived == nullptr);
   EXPECT_TRUE(nullptr == derived);
@@ -159,6 +161,10 @@ TEST(managed_ptr, nullptr_constructor)
   EXPECT_TRUE(otherDerived == derived);
   EXPECT_FALSE(derived != otherDerived);
   EXPECT_FALSE(otherDerived != derived);
+
+  // Make sure free is a no-op
+  derived.free();
+  otherDerived.free();
 }
 
 TEST(managed_ptr, cpu_pointer_constructor)
@@ -169,12 +175,13 @@ TEST(managed_ptr, cpu_pointer_constructor)
   EXPECT_EQ(derived->getValue(), 3);
 
   EXPECT_NE(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 1);
   EXPECT_TRUE(derived);
   EXPECT_FALSE(derived == nullptr);
   EXPECT_FALSE(nullptr == derived);
   EXPECT_TRUE(derived != nullptr);
   EXPECT_TRUE(nullptr != derived);
+
+  derived.free();
 }
 
 TEST(managed_ptr, make_managed)
@@ -185,12 +192,13 @@ TEST(managed_ptr, make_managed)
   EXPECT_EQ((*derived).getValue(), expectedValue);
 
   EXPECT_NE(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 1);
   EXPECT_TRUE(derived);
   EXPECT_FALSE(derived == nullptr);
   EXPECT_FALSE(nullptr == derived);
   EXPECT_TRUE(derived != nullptr);
   EXPECT_TRUE(nullptr != derived);
+
+  derived.free();
 }
 
 TEST(managed_ptr, copy_constructor)
@@ -203,7 +211,6 @@ TEST(managed_ptr, copy_constructor)
   EXPECT_EQ(otherDerived->getValue(), expectedValue);
 
   EXPECT_NE(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 2);
   EXPECT_TRUE(derived);
   EXPECT_FALSE(derived == nullptr);
   EXPECT_FALSE(nullptr == derived);
@@ -213,7 +220,6 @@ TEST(managed_ptr, copy_constructor)
   EXPECT_FALSE(derived != otherDerived);
 
   EXPECT_NE(otherDerived.get(), nullptr);
-  EXPECT_EQ(otherDerived.use_count(), 2);
   EXPECT_TRUE(otherDerived);
   EXPECT_FALSE(otherDerived == nullptr);
   EXPECT_FALSE(nullptr == otherDerived);
@@ -221,6 +227,8 @@ TEST(managed_ptr, copy_constructor)
   EXPECT_TRUE(nullptr != otherDerived);
   EXPECT_TRUE(otherDerived == derived);
   EXPECT_FALSE(otherDerived != derived);
+
+  derived.free();
 }
 
 TEST(managed_ptr, converting_constructor)
@@ -233,7 +241,6 @@ TEST(managed_ptr, converting_constructor)
   EXPECT_EQ(base->getValue(), expectedValue);
 
   EXPECT_NE(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 2);
   EXPECT_TRUE(derived);
   EXPECT_FALSE(derived == nullptr);
   EXPECT_FALSE(nullptr == derived);
@@ -243,7 +250,6 @@ TEST(managed_ptr, converting_constructor)
   EXPECT_FALSE(derived != base);
 
   EXPECT_NE(base.get(), nullptr);
-  EXPECT_EQ(base.use_count(), 2);
   EXPECT_TRUE(base);
   EXPECT_FALSE(base == nullptr);
   EXPECT_FALSE(nullptr == base);
@@ -251,6 +257,8 @@ TEST(managed_ptr, converting_constructor)
   EXPECT_TRUE(nullptr != base);
   EXPECT_TRUE(base == derived);
   EXPECT_FALSE(base != derived);
+
+  base.free();
 }
 
 TEST(managed_ptr, copy_assignment_operator)
@@ -264,7 +272,6 @@ TEST(managed_ptr, copy_assignment_operator)
   EXPECT_EQ(otherDerived->getValue(), expectedValue);
 
   EXPECT_NE(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 2);
   EXPECT_TRUE(derived);
   EXPECT_FALSE(derived == nullptr);
   EXPECT_FALSE(nullptr == derived);
@@ -274,7 +281,6 @@ TEST(managed_ptr, copy_assignment_operator)
   EXPECT_FALSE(derived != otherDerived);
 
   EXPECT_NE(otherDerived.get(), nullptr);
-  EXPECT_EQ(otherDerived.use_count(), 2);
   EXPECT_TRUE(otherDerived);
   EXPECT_FALSE(otherDerived == nullptr);
   EXPECT_FALSE(nullptr == otherDerived);
@@ -282,6 +288,8 @@ TEST(managed_ptr, copy_assignment_operator)
   EXPECT_TRUE(nullptr != otherDerived);
   EXPECT_TRUE(otherDerived == derived);
   EXPECT_FALSE(otherDerived != derived);
+
+  derived.free();
 }
 
 TEST(managed_ptr, copy_constructor_from_default_constructed)
@@ -290,13 +298,11 @@ TEST(managed_ptr, copy_constructor_from_default_constructed)
   chai::managed_ptr<TestDerived> otherDerived(derived);
 
   EXPECT_EQ(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 0);
   EXPECT_EQ(bool(derived), false);
   EXPECT_EQ(derived, nullptr);
   EXPECT_EQ(nullptr, derived);
 
   EXPECT_EQ(otherDerived.get(), nullptr);
-  EXPECT_EQ(otherDerived.use_count(), 0);
   EXPECT_EQ(bool(otherDerived), false);
   EXPECT_EQ(otherDerived, nullptr);
   EXPECT_EQ(nullptr, otherDerived);
@@ -309,13 +315,11 @@ TEST(managed_ptr, copy_assignment_operator_from_default_constructed)
   otherDerived = derived;
 
   EXPECT_EQ(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 0);
   EXPECT_EQ(bool(derived), false);
   EXPECT_EQ(derived, nullptr);
   EXPECT_EQ(nullptr, derived);
 
   EXPECT_EQ(otherDerived.get(), nullptr);
-  EXPECT_EQ(otherDerived.use_count(), 0);
   EXPECT_EQ(bool(otherDerived), false);
   EXPECT_EQ(otherDerived, nullptr);
   EXPECT_EQ(nullptr, otherDerived);
@@ -327,13 +331,11 @@ TEST(managed_ptr, conversion_copy_constructor_from_default_constructed)
   chai::managed_ptr<TestBase> otherDerived(derived);
 
   EXPECT_EQ(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 0);
   EXPECT_EQ(bool(derived), false);
   EXPECT_EQ(derived, nullptr);
   EXPECT_EQ(nullptr, derived);
 
   EXPECT_EQ(otherDerived.get(), nullptr);
-  EXPECT_EQ(otherDerived.use_count(), 0);
   EXPECT_EQ(bool(otherDerived), false);
   EXPECT_EQ(otherDerived, nullptr);
   EXPECT_EQ(nullptr, otherDerived);
@@ -346,13 +348,11 @@ TEST(managed_ptr, conversion_copy_assignment_operator_from_default_constructed)
   otherDerived = derived;
 
   EXPECT_EQ(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 0);
   EXPECT_EQ(bool(derived), false);
   EXPECT_EQ(derived, nullptr);
   EXPECT_EQ(nullptr, derived);
 
   EXPECT_EQ(otherDerived.get(), nullptr);
-  EXPECT_EQ(otherDerived.use_count(), 0);
   EXPECT_EQ(bool(otherDerived), false);
   EXPECT_EQ(otherDerived, nullptr);
   EXPECT_EQ(nullptr, otherDerived);
@@ -370,22 +370,22 @@ TEST(managed_ptr, copy_assignment_operator_from_host_ptr_constructed)
   thirdDerived = derived;
 
   EXPECT_NE(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 2);
   EXPECT_EQ(bool(derived), true);
   EXPECT_NE(derived, nullptr);
   EXPECT_NE(nullptr, derived);
 
   EXPECT_NE(otherDerived.get(), nullptr);
-  EXPECT_EQ(otherDerived.use_count(), 1);
   EXPECT_EQ(bool(otherDerived), true);
   EXPECT_NE(otherDerived, nullptr);
   EXPECT_NE(nullptr, otherDerived);
 
   EXPECT_NE(thirdDerived.get(), nullptr);
-  EXPECT_EQ(thirdDerived.use_count(), 2);
   EXPECT_EQ(bool(thirdDerived), true);
   EXPECT_NE(thirdDerived, nullptr);
   EXPECT_NE(nullptr, thirdDerived);
+
+  otherDerived.free();
+  thirdDerived.free();
 }
 
 TEST(managed_ptr, conversion_copy_assignment_operator_from_host_ptr_constructed)
@@ -400,22 +400,22 @@ TEST(managed_ptr, conversion_copy_assignment_operator_from_host_ptr_constructed)
   thirdDerived = derived;
 
   EXPECT_NE(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 2);
   EXPECT_EQ(bool(derived), true);
   EXPECT_NE(derived, nullptr);
   EXPECT_NE(nullptr, derived);
 
   EXPECT_NE(otherDerived.get(), nullptr);
-  EXPECT_EQ(otherDerived.use_count(), 1);
   EXPECT_EQ(bool(otherDerived), true);
   EXPECT_NE(otherDerived, nullptr);
   EXPECT_NE(nullptr, otherDerived);
 
   EXPECT_NE(thirdDerived.get(), nullptr);
-  EXPECT_EQ(thirdDerived.use_count(), 2);
   EXPECT_EQ(bool(thirdDerived), true);
   EXPECT_NE(thirdDerived, nullptr);
   EXPECT_NE(nullptr, thirdDerived);
+
+  otherDerived.free();
+  thirdDerived.free();
 }
 
 TEST(managed_ptr, static_pointer_cast)
@@ -428,12 +428,13 @@ TEST(managed_ptr, static_pointer_cast)
   EXPECT_EQ(base->getValue(), 3);
 
   EXPECT_NE(base.get(), nullptr);
-  EXPECT_EQ(base.use_count(), 2);
   EXPECT_TRUE(base);
   EXPECT_FALSE(base == nullptr);
   EXPECT_FALSE(nullptr == base);
   EXPECT_TRUE(base != nullptr);
   EXPECT_TRUE(nullptr != base);
+
+  derived.free();
 }
 
 TEST(managed_ptr, dynamic_pointer_cast)
@@ -446,12 +447,13 @@ TEST(managed_ptr, dynamic_pointer_cast)
   EXPECT_EQ(derived->getValue(), 3);
 
   EXPECT_NE(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 2);
   EXPECT_TRUE(derived);
   EXPECT_FALSE(derived == nullptr);
   EXPECT_FALSE(nullptr == derived);
   EXPECT_TRUE(derived != nullptr);
   EXPECT_TRUE(nullptr != derived);
+
+  derived.free();
 }
 
 TEST(managed_ptr, const_pointer_cast)
@@ -464,12 +466,13 @@ TEST(managed_ptr, const_pointer_cast)
   EXPECT_EQ(nonConstBase->getValue(), 3);
 
   EXPECT_NE(nonConstBase.get(), nullptr);
-  EXPECT_EQ(nonConstBase.use_count(), 2);
   EXPECT_TRUE(nonConstBase);
   EXPECT_FALSE(nonConstBase == nullptr);
   EXPECT_FALSE(nullptr == nonConstBase);
   EXPECT_TRUE(nonConstBase != nullptr);
   EXPECT_TRUE(nullptr != nonConstBase);
+
+  base.free();
 }
 
 TEST(managed_ptr, reinterpret_pointer_cast)
@@ -482,12 +485,13 @@ TEST(managed_ptr, reinterpret_pointer_cast)
   EXPECT_EQ(derived->getValue(), 3);
 
   EXPECT_NE(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 2);
   EXPECT_TRUE(derived);
   EXPECT_FALSE(derived == nullptr);
   EXPECT_FALSE(nullptr == derived);
   EXPECT_TRUE(derived != nullptr);
   EXPECT_TRUE(nullptr != derived);
+
+  derived.free();
 }
 
 #ifdef __CUDACC__
@@ -570,7 +574,6 @@ CUDA_TEST(managed_ptr, cuda_gpu_pointer_constructor)
   chai::managed_ptr<TestDerived> derived({chai::GPU}, {gpuPointer});
 
   EXPECT_EQ(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 1);
   EXPECT_FALSE(derived);
   EXPECT_TRUE(derived == nullptr);
   EXPECT_TRUE(nullptr == derived);
@@ -711,7 +714,6 @@ CUDA_TEST(managed_ptr, cuda_cpu_and_gpu_pointer_constructor)
 
   EXPECT_EQ(derived->getValue(), 4);
   EXPECT_NE(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 1);
   EXPECT_TRUE(derived);
   EXPECT_FALSE(derived == nullptr);
   EXPECT_FALSE(nullptr == derived);
@@ -771,7 +773,6 @@ CUDA_TEST(managed_ptr, cuda_make_managed)
   EXPECT_EQ(array[0], expectedValue);
 
   EXPECT_NE(array2[0], nullptr);
-  EXPECT_EQ(derived.use_count(), 1);
   EXPECT_TRUE(array3[0]);
   EXPECT_FALSE(array3[1]);
   EXPECT_FALSE(array3[2]);
@@ -792,7 +793,6 @@ CUDA_TEST(managed_ptr, make_managed_from_factory_function)
   EXPECT_EQ((*derived).getValue(), expectedValue);
 
   EXPECT_NE(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 1);
   EXPECT_TRUE(derived);
   EXPECT_FALSE(derived == nullptr);
   EXPECT_FALSE(nullptr == derived);
@@ -813,7 +813,6 @@ CUDA_TEST(managed_ptr, make_managed_from_factory_lambda)
   EXPECT_EQ((*derived).getValue(), expectedValue);
 
   EXPECT_NE(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 1);
   EXPECT_TRUE(derived);
   EXPECT_FALSE(derived == nullptr);
   EXPECT_FALSE(nullptr == derived);
@@ -834,7 +833,6 @@ CUDA_TEST(managed_ptr, make_managed_from_overloaded_factory_function)
   EXPECT_EQ((*derived).getValue(), expectedValue);
 
   EXPECT_NE(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 1);
   EXPECT_TRUE(derived);
   EXPECT_FALSE(derived == nullptr);
   EXPECT_FALSE(nullptr == derived);
@@ -855,7 +853,6 @@ CUDA_TEST(managed_ptr, make_managed_from_factory_static_member_function)
   EXPECT_EQ((*derived).getValue(), expectedValue);
 
   EXPECT_NE(derived.get(), nullptr);
-  EXPECT_EQ(derived.use_count(), 1);
   EXPECT_TRUE(derived);
   EXPECT_FALSE(derived == nullptr);
   EXPECT_FALSE(nullptr == derived);

@@ -95,27 +95,13 @@ namespace chai {
 
    struct managed_ptr_record {
       managed_ptr_record() :
-         m_num_references(1),
          m_callback()
       {
       }
 
       managed_ptr_record(std::function<bool(Action, ExecutionSpace, void*)> callback) :
-         m_num_references(1),
          m_callback(callback)
       {
-      }
-
-      size_t use_count() {
-         return m_num_references;
-      }
-
-      void addReference() {
-         m_num_references++;
-      }
-
-      void removeReference() {
-         m_num_references--;
       }
 
       ExecutionSpace getLastSpace() {
@@ -126,7 +112,6 @@ namespace chai {
          m_callback = callback;
       }
 
-      size_t m_num_references = 1; /// The reference counter
       ExecutionSpace m_last_space = NONE; /// The last space executed in
       std::function<bool(Action, ExecutionSpace, void*)> m_callback; /// Callback to handle events
    };
@@ -136,10 +121,7 @@ namespace chai {
    /// @author Alan Dayton
    ///
    /// This wrapper stores both host and device pointers so that polymorphism can be
-   ///    used in both contexts with a single API. It is modeled after std::shared_ptr,
-   ///    so it does reference counting and automatically cleans up when the last
-   ///    reference is destroyed. If we ever do multi-threading on the CPU, locking will
-   ///    need to be added to the reference counter.
+   ///    used in both contexts with a single API.
    /// The make_managed and make_managed_from_factory functions call new on both the
    ///    host and device so that polymorphism is valid in both contexts. Simply copying
    ///    an object to the device will not copy the vtable, so new must be called on
@@ -173,11 +155,10 @@ namespace chai {
    ///       be given the extracted host pointer, and likewise the device constructor
    ///       of T will be given the extracted device pointer. It is recommended that
    ///       a callback is defined that maintains a copy of the managed_ptr so that
-   ///       the raw pointers are not accidentally destroyed prematurely (since
-   ///       managed_ptr does reference counting). It is also recommended that the
-   ///       callback calls the copy constructor of the managed_ptr on the ACTION_MOVE
-   ///       event so that the ACTION_MOVE event is triggered also for the inner
-   ///       managed_ptr.
+   ///       the raw pointers are not accidentally destroyed prematurely. It is also
+   ///       recommended that the callback calls the copy constructor of the managed_ptr
+   ///       on the ACTION_MOVE event so that the ACTION_MOVE event is triggered also for
+   ///       the inner managed_ptr.
    ///    Again, if a raw pointer is passed to make_managed, accessing that member will
    ///       only be valid in the correct context. Take care when passing raw pointers
    ///       as arguments to member functions.
@@ -199,7 +180,6 @@ namespace chai {
          /// @author Alan Dayton
          ///
          /// Default constructor.
-         /// Initializes the reference count to 0.
          ///
          CHAI_HOST_DEVICE constexpr managed_ptr() noexcept {}
 
@@ -207,7 +187,6 @@ namespace chai {
          /// @author Alan Dayton
          ///
          /// Construct from nullptr.
-         /// Initializes the reference count to 0.
          ///
          CHAI_HOST_DEVICE constexpr managed_ptr(std::nullptr_t) noexcept {}
 
@@ -309,9 +288,9 @@ namespace chai {
          /// @author Alan Dayton
          ///
          /// Copy constructor.
-         /// Constructs a copy of the given managed_ptr, increases the reference count,
-         ///    and if the execution space is different, calls the user defined callback
-         ///    with ACTION_MOVE for each of the execution spaces.
+         /// Constructs a copy of the given managed_ptr and if the execution space is
+         ///    different, calls the user defined callback with ACTION_MOVE for each
+         ///    of the execution spaces.
          ///
          /// @param[in] other The managed_ptr to copy
          ///
@@ -321,7 +300,6 @@ namespace chai {
             m_pointer_record(other.m_pointer_record)
          {
 #ifndef __CUDA_ARCH__
-            addReference();
             move();
 #endif
          }
@@ -330,10 +308,9 @@ namespace chai {
          /// @author Alan Dayton
          ///
          /// Converting constructor.
-         /// Constructs a copy of the given managed_ptr, increases the reference count,
-         ///    and if the execution space is different, calls the user defined callback
-         ///    with ACTION_MOVE for each of the execution spaces. U* must be convertible
-         ///    to T*.
+         /// Constructs a copy of the given managed_ptr and if the execution space is
+         ///    different, calls the user defined callback with ACTION_MOVE for each
+         ///    of the execution spaces. U* must be convertible to T*.
          ///
          /// @param[in] other The managed_ptr to copy
          ///
@@ -347,7 +324,6 @@ namespace chai {
                           "U* must be convertible to T*.");
 
 #ifndef __CUDA_ARCH__
-            addReference();
             move();
 #endif
          }
@@ -394,57 +370,30 @@ namespace chai {
                }
             }
 
-            addReference();
             move();
          }
 
          ///
          /// @author Alan Dayton
          ///
-         /// Destructor. Decreases the reference count and if this is the last reference,
-         ///    clean up.
+         /// Destructor
          ///
-         CHAI_HOST_DEVICE ~managed_ptr() {
-#ifdef __CUDACC__
-            // This trick came from Max Katz at Nvidia.
-            // Taking the address of this kernel ensures that it gets instantiated
-            // by the compiler and can be used within __CUDA_ARCH__. Without this,
-            // calling destroy_on_device within the confines of __CUDA_ARCH__ will
-            // always fail with error code 0x8 (invalid device function).
-            // https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#restrictions
-            // From the CUDA Programming Guide Restrictions:
-            // "If a __global__ function template is instantiated and launched from
-            // the host, then the function template must be instantiated with the
-            // same template arguments irrespective of whether __CUDA_ARCH__ is
-            // defined and regardless of the value of __CUDA_ARCH__."
-            (void) &detail::destroy_on_device<T>;
-#endif
-
-#ifndef __CUDA_ARCH__
-            removeReference();
-#endif
-         }
+         CHAI_HOST_DEVICE ~managed_ptr() {}
 
          ///
          /// @author Alan Dayton
          ///
-         /// Copy assignment operator.
-         /// Copies the given managed_ptr and increases the reference count.
+         /// Copy assignment operator. Does a shallow copy.
          ///
          /// @param[in] other The managed_ptr to copy
          ///
          CHAI_HOST_DEVICE managed_ptr& operator=(const managed_ptr& other) noexcept {
             if (this != &other) {
-#ifndef __CUDA_ARCH__
-               removeReference();
-#endif
-
                m_cpu_pointer = other.m_cpu_pointer;
                m_gpu_pointer = other.m_gpu_pointer;
                m_pointer_record = other.m_pointer_record;
 
 #ifndef __CUDA_ARCH__
-               addReference();
                move();
 #endif
             }
@@ -456,8 +405,8 @@ namespace chai {
          /// @author Alan Dayton
          ///
          /// Conversion copy assignment operator.
-         /// Copies the given managed_ptr and increases the reference count.
-         ///    U* must be convertible to T*.
+         /// Copies the given managed_ptr. Does a shallow copy. U* must be convertible
+         ///    to T*.
          ///
          /// @param[in] other The managed_ptr to copy
          ///
@@ -466,16 +415,11 @@ namespace chai {
             static_assert(std::is_convertible<U*, T*>::value,
                           "U* must be convertible to T*.");
 
-#ifndef __CUDA_ARCH__
-            removeReference();
-#endif
-
             m_cpu_pointer = other.m_cpu_pointer;
             m_gpu_pointer = other.m_gpu_pointer;
             m_pointer_record = other.m_pointer_record;
 
 #ifndef __CUDA_ARCH__
-            addReference();
             move();
 #endif
 
@@ -550,20 +494,6 @@ namespace chai {
          ///
          /// @author Alan Dayton
          ///
-         /// Returns the number of managed_ptrs owning these pointers.
-         ///
-         CHAI_HOST std::size_t use_count() const {
-            if (m_pointer_record) {
-               return m_pointer_record->use_count();
-            }
-            else {
-               return 0;
-            }
-         }
-
-         ///
-         /// @author Alan Dayton
-         ///
          /// Returns true if the contained pointer is not nullptr, false otherwise.
          ///
          CHAI_HOST_DEVICE inline explicit operator bool() const noexcept {
@@ -587,6 +517,82 @@ namespace chai {
             }
             else {
                printf("[CHAI] WARNING: No callback is allowed for managed_ptr that does not contain a valid pointer (i.e. the default or nullptr constructor was used)!\n");
+            }
+         }
+
+         ///
+         /// @author Alan Dayton
+         ///
+         /// If a user callback is provided, calls the callback with the ACTION_FREE
+         ///    event. Otherwise calls delete on the CPU and GPU pointers.
+         ///
+         CHAI_HOST void free() {
+            if (m_pointer_record) {
+               if (m_pointer_record->m_callback) {
+                  // Destroy device pointer first to take advantage of asynchrony
+                  for (int space = NUM_EXECUTION_SPACES-1; space >= NONE; --space) {
+                     ExecutionSpace execSpace = static_cast<ExecutionSpace>(space);
+                     T* pointer = get(execSpace, false);
+
+                     using T_non_const = typename std::remove_const<T>::type;
+
+                     // We can use const_cast because can managed_ptr can only
+                     // be constructed with non const pointers.
+                     T_non_const* temp = const_cast<T_non_const*>(pointer);
+                     void* voidPointer = static_cast<void*>(temp);
+
+                     if (!m_pointer_record->m_callback(ACTION_FREE,
+                                                       execSpace,
+                                                       voidPointer)) {
+                        switch (execSpace) {
+                           case CPU:
+                              delete pointer;
+                              break;
+#ifdef __CUDACC__
+                           case GPU:
+                           {
+                              if (pointer) {
+                                 detail::destroy_on_device<<<1, 1>>>(temp);
+                                 debug_cudaDeviceSynchronize();
+                              }
+
+                              break;
+                           }
+#endif
+                           default:
+                              break;
+                        }
+                     }
+                  }
+               }
+               else {
+                  // Destroy device pointer first to take advantage of asynchrony
+                  for (int space = NUM_EXECUTION_SPACES-1; space >= NONE; --space) {
+                     ExecutionSpace execSpace = static_cast<ExecutionSpace>(space);
+                     T* pointer = get(execSpace, false);
+
+                     switch (execSpace) {
+                        case CPU:
+                           delete pointer;
+                           break;
+#ifdef __CUDACC__
+                        case GPU:
+                        {
+                           if (pointer) {
+                              detail::destroy_on_device<<<1, 1>>>(pointer);
+                              debug_cudaDeviceSynchronize();
+                           }
+
+                           break;
+                        }
+#endif
+                        default:
+                           break;
+                     }
+                  }
+               }
+
+               delete m_pointer_record;
             }
          }
 
@@ -639,99 +645,6 @@ namespace chai {
             }
 #endif
          }
-
-         ///
-         /// @author Alan Dayton
-         ///
-         /// Increments the reference count and calls the copy constructor to
-         ///    trigger data movement.
-         ///
-         CHAI_HOST void addReference() {
-            if (m_pointer_record) {
-               m_pointer_record->addReference();
-            }
-         }
-
-         ///
-         /// @author Alan Dayton
-         ///
-         /// Decrements the reference counter. If the resulting number of references
-         ///    is 0, clean up the object.
-         ///
-         CHAI_HOST void removeReference() {
-            if (m_pointer_record) {
-               m_pointer_record->removeReference();
-
-               if (m_pointer_record->use_count() == 0) {
-                  if (m_pointer_record->m_callback) {
-                     // Destroy device pointer first to take advantage of asynchrony
-                     for (int space = NUM_EXECUTION_SPACES-1; space >= NONE; --space) {
-                        ExecutionSpace execSpace = static_cast<ExecutionSpace>(space);
-                        T* pointer = get(execSpace, false);
-
-                        using T_non_const = typename std::remove_const<T>::type;
-
-                        // We can use const_cast because can managed_ptr can only
-                        // be constructed with non const pointers.
-                        T_non_const* temp = const_cast<T_non_const*>(pointer);
-                        void* voidPointer = static_cast<void*>(temp);
-
-                        if (!m_pointer_record->m_callback(ACTION_FREE,
-                                                          execSpace,
-                                                          voidPointer)) {
-                           switch (execSpace) {
-                              case CPU:
-                                 delete pointer;
-                                 break;
-#ifdef __CUDACC__
-                              case GPU:
-                              {
-                                 if (pointer) {
-                                    detail::destroy_on_device<<<1, 1>>>(temp);
-                                    debug_cudaDeviceSynchronize();
-                                 }
-
-                                 break;
-                              }
-#endif
-                              default:
-                                 break;
-                           }
-                        }
-                     }
-                  }
-                  else {
-                     // Destroy device pointer first to take advantage of asynchrony
-                     for (int space = NUM_EXECUTION_SPACES-1; space >= NONE; --space) {
-                        ExecutionSpace execSpace = static_cast<ExecutionSpace>(space);
-                        T* pointer = get(execSpace, false);
-
-                        switch (execSpace) {
-                           case CPU:
-                              delete pointer;
-                              break;
-#ifdef __CUDACC__
-                           case GPU:
-                           {
-                              if (pointer) {
-                                 detail::destroy_on_device<<<1, 1>>>(pointer);
-                                 debug_cudaDeviceSynchronize();
-                              }
-
-                              break;
-                           }
-#endif
-                           default:
-                              break;
-                        }
-                     }
-                  }
-
-                  delete m_pointer_record;
-               }
-            }
-         }
-
    };
 
    namespace detail {
