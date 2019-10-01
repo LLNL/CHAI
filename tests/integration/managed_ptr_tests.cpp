@@ -407,6 +407,8 @@ GPU_TEST(managed_ptr, pass_object_to_kernel)
   array.move(chai::CPU);
   cudaDeviceSynchronize();
   ASSERT_EQ(array[0], -1);
+
+  array.free();
 }
 
 GPU_TEST(managed_ptr, gpu_class_with_raw_array)
@@ -428,6 +430,10 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_array)
 
   results.move(chai::CPU);
   ASSERT_EQ(results[0], expectedValue);
+
+  array.free();
+  rawArrayClass.free();
+  results.free();
 }
 
 GPU_TEST(managed_ptr, gpu_class_with_raw_array_and_callback)
@@ -470,6 +476,9 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_array_and_callback)
 
   results.move(chai::CPU);
   ASSERT_EQ(results[0], expectedValue);
+
+  results.free();
+  managedPointer.free();
 }
 
 GPU_TEST(managed_ptr, gpu_class_with_managed_array)
@@ -493,6 +502,10 @@ GPU_TEST(managed_ptr, gpu_class_with_managed_array)
   results.move(chai::CPU);
 
   ASSERT_EQ(results[0], expectedValue);
+
+  array.free();
+  derived.free();
+  results.free();
 }
 
 GPU_TEST(managed_ptr, gpu_class_with_raw_ptr)
@@ -516,6 +529,11 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_ptr)
 
   results.move(chai::CPU);
   ASSERT_EQ(results[0], expectedValue);
+
+  array.free();
+  rawArrayClass.free();
+  rawPointerClass.free();
+  results.free();
 }
 
 GPU_TEST(managed_ptr, gpu_class_with_managed_ptr)
@@ -533,6 +551,9 @@ GPU_TEST(managed_ptr, gpu_class_with_managed_ptr)
 
   results.move(chai::CPU);
   ASSERT_EQ(results[0], expectedValue);
+
+  derived.free();
+  results.free();
 }
 
 GPU_TEST(managed_ptr, gpu_nested_managed_ptr)
@@ -550,6 +571,10 @@ GPU_TEST(managed_ptr, gpu_nested_managed_ptr)
 
   results.move(chai::CPU);
   ASSERT_EQ(results[0], expectedValue);
+
+  derived.free();
+  container.free();
+  results.free();
 }
 
 GPU_TEST(managed_ptr, gpu_multiple_inheritance)
@@ -571,6 +596,9 @@ GPU_TEST(managed_ptr, gpu_multiple_inheritance)
 
   ASSERT_EQ(results[0], true);
   ASSERT_EQ(results[1], true);
+
+  derived.free();
+  results.free();
 }
 
 GPU_TEST(managed_ptr, static_pointer_cast)
@@ -600,6 +628,10 @@ GPU_TEST(managed_ptr, static_pointer_cast)
   ASSERT_EQ(results[0], expectedValue);
   ASSERT_EQ(results[1], expectedValue);
   ASSERT_EQ(results[2], expectedValue);
+
+  array.free();
+  derived.free();
+  results.free();
 }
 
 GPU_TEST(managed_ptr, dynamic_pointer_cast)
@@ -629,6 +661,10 @@ GPU_TEST(managed_ptr, dynamic_pointer_cast)
   ASSERT_EQ(results[0], expectedValue);
   ASSERT_EQ(results[1], expectedValue);
   ASSERT_EQ(results[2], expectedValue);
+
+  array.free();
+  base.free();
+  results.free();
 }
 
 GPU_TEST(managed_ptr, const_pointer_cast)
@@ -658,6 +694,10 @@ GPU_TEST(managed_ptr, const_pointer_cast)
   ASSERT_EQ(results[0], expectedValue);
   ASSERT_EQ(results[1], expectedValue);
   ASSERT_EQ(results[2], expectedValue);
+
+  array.free();
+  derivedFromConst.free();
+  results.free();
 }
 
 GPU_TEST(managed_ptr, reinterpret_pointer_cast)
@@ -687,6 +727,10 @@ GPU_TEST(managed_ptr, reinterpret_pointer_cast)
   ASSERT_EQ(results[0], expectedValue);
   ASSERT_EQ(results[1], expectedValue);
   ASSERT_EQ(results[2], expectedValue);
+
+  array.free();
+  derived.free();
+  results.free();
 }
 
 #endif
