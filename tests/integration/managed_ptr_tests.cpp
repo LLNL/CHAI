@@ -201,6 +201,7 @@ TEST(managed_ptr, class_with_raw_array)
   ASSERT_EQ(rawArrayClass->getValue(0), expectedValue);
 
   array.free();
+  rawArrayClass.free();
 }
 
 TEST(managed_ptr, class_with_multiple_raw_arrays)
@@ -220,6 +221,10 @@ TEST(managed_ptr, class_with_multiple_raw_arrays)
 
   ASSERT_EQ(multipleRawArrayClass->getValue(0, 0), expectedValue1);
   ASSERT_EQ(multipleRawArrayClass->getValue(1, 0), expectedValue2);
+
+  array1.free();
+  array2.free();
+  multipleRawArrayClass.free();
 }
 
 TEST(managed_ptr, class_with_managed_array)
@@ -235,6 +240,9 @@ TEST(managed_ptr, class_with_managed_array)
   auto derived = chai::make_managed<TestDerived>(array);
 
   ASSERT_EQ(derived->getValue(0), expectedValue);
+
+  array.free();
+  derived.free();
 }
 
 TEST(managed_ptr, class_with_raw_ptr)
@@ -250,15 +258,11 @@ TEST(managed_ptr, class_with_raw_ptr)
   auto rawArrayClass = chai::make_managed<RawArrayClass>(array);
   auto rawPointerClass = chai::make_managed<RawPointerClass>(rawArrayClass);
 
-  // This prevents the pointers contained by rawArrayClass from being deleted
-  // out from under us. Otherwise, rawArrayClass is the last remaining reference
-  // and if it is destroyed before rawPointerClass is, then we are in trouble.
-  rawPointerClass.set_callback([=] (chai::Action, chai::ExecutionSpace, void*) {
-                                  (void) rawArrayClass; return false;
-                               });
-  rawArrayClass = nullptr;
-
   ASSERT_EQ((*rawPointerClass).getValue(0), expectedValue);
+
+  array.free();
+  rawArrayClass.free();
+  rawPointerClass.free();
 }
 
 TEST(managed_ptr, class_with_managed_ptr)
@@ -269,6 +273,8 @@ TEST(managed_ptr, class_with_managed_ptr)
   TestContainer container(derived);
 
   ASSERT_EQ(container.getValue(), expectedValue);
+
+  derived.free();
 }
 
 TEST(managed_ptr, nested_managed_ptr)
@@ -279,6 +285,9 @@ TEST(managed_ptr, nested_managed_ptr)
   auto container = chai::make_managed<TestContainer>(derived);
 
   ASSERT_EQ(container->getValue(), expectedValue);
+
+  derived.free();
+  container.free();
 }
 
 #ifdef __CUDACC__
