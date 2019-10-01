@@ -46,6 +46,7 @@ set (chai_unit_test_depends
      chai umpire gtest)
 
 blt_list_append(TO chai_unit_test_depends ELEMENTS cuda IF ${ENABLE_CUDA})
+blt_list_append(TO chai_unit_test_depends ELEMENTS hip IF ${ENABLE_HIP})
 
 # ManagedArray tests
 blt_add_executable(
