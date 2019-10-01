@@ -530,6 +530,9 @@ GPU_TEST(managed_ptr, gpu_default_constructor)
   EXPECT_TRUE(array2[6]);
   EXPECT_FALSE(array2[7]);
   EXPECT_FALSE(array2[8]);
+
+  array.free();
+  array2.free();
 }
 
 GPU_TEST(managed_ptr, gpu_nullptr_constructor)
@@ -566,9 +569,12 @@ GPU_TEST(managed_ptr, gpu_nullptr_constructor)
   EXPECT_TRUE(array2[6]);
   EXPECT_FALSE(array2[7]);
   EXPECT_FALSE(array2[8]);
+
+  array.free();
+  array2.free();
 }
 
-GPU_TEST(managed_ptr, gpu_gpu_pointer_constructor)
+GPU_TEST(managed_ptr, gpu_pointer_constructor)
 {
   TestDerived* gpuPointer = chai::detail::make_on_device<TestDerived>(3);
   chai::managed_ptr<TestDerived> derived({chai::GPU}, {gpuPointer});
@@ -605,6 +611,10 @@ GPU_TEST(managed_ptr, gpu_gpu_pointer_constructor)
   EXPECT_FALSE(array3[2]);
   EXPECT_TRUE(array3[3]);
   EXPECT_TRUE(array3[4]);
+
+  array1.free();
+  array2.free();
+  array3.free();
 }
 
 GPU_TEST(managed_ptr, gpu_new_and_delete_on_device)
@@ -633,25 +643,7 @@ GPU_TEST(managed_ptr, gpu_new_and_delete_on_device)
   // Free host side memory
   free(cpuPointerHolder);
 
-  // Initialize more host side memory
-  Simple** cpuPointerHolder2 = (Simple**) malloc(sizeof(Simple*));
-  cpuPointerHolder2[0] = gpuPointer;
-
-  // Initialize more device side memory
-  Simple** gpuPointerHolder2 = nullptr;
-  cudaMalloc(&gpuPointerHolder2, sizeof(Simple*));
-
-  // Copy pointer back to the device
-  cudaMemcpy(gpuPointerHolder2, cpuPointerHolder2, sizeof(Simple*),
-             cudaMemcpyHostToDevice);
-
-  chai::detail::destroy_on_device<<<1, 1>>>(gpuPointerHolder2);
-
-  // Free host memory
-  free(cpuPointerHolder2);
-
-  // Free device memory
-  cudaFree(gpuPointerHolder2);
+  chai::detail::destroy_on_device<<<1, 1>>>(gpuPointer);
 }
 
 GPU_TEST(managed_ptr, gpu_new_and_delete_on_device_2)
@@ -681,6 +673,7 @@ GPU_TEST(managed_ptr, gpu_new_and_delete_on_device_2)
   free(cpuPointerHolder);
 
   chai::managed_ptr<Simple> test({chai::GPU}, {gpuPointer});
+  test.free();
 }
 
 GPU_TEST(managed_ptr, simple_cuda_cpu_and_gpu_pointer_constructor)
@@ -703,6 +696,9 @@ GPU_TEST(managed_ptr, simple_cuda_cpu_and_gpu_pointer_constructor)
   cudaDeviceSynchronize();
 
   EXPECT_EQ(array1[0], 3);
+
+  array1.free();
+  simple.free();
 }
 
 GPU_TEST(managed_ptr, gpu_cpu_and_gpu_pointer_constructor)
@@ -745,6 +741,11 @@ GPU_TEST(managed_ptr, gpu_cpu_and_gpu_pointer_constructor)
   EXPECT_FALSE(array3[2]);
   EXPECT_TRUE(array3[3]);
   EXPECT_TRUE(array3[4]);
+
+  array1.free();
+  array2.free();
+  array3.free();
+  derived.free();
 }
 
 GPU_TEST(managed_ptr, gpu_make_managed)
@@ -778,6 +779,11 @@ GPU_TEST(managed_ptr, gpu_make_managed)
   EXPECT_FALSE(array3[2]);
   EXPECT_TRUE(array3[3]);
   EXPECT_TRUE(array3[4]);
+
+  array.free();
+  array2.free();
+  array3.free();
+  derived.free();
 }
 
 GPU_TEST(managed_ptr, make_managed_from_factory_function)
@@ -798,6 +804,8 @@ GPU_TEST(managed_ptr, make_managed_from_factory_function)
   EXPECT_FALSE(nullptr == derived);
   EXPECT_TRUE(derived != nullptr);
   EXPECT_TRUE(nullptr != derived);
+
+  derived.free();
 }
 
 GPU_TEST(managed_ptr, make_managed_from_factory_lambda)
@@ -818,6 +826,8 @@ GPU_TEST(managed_ptr, make_managed_from_factory_lambda)
   EXPECT_FALSE(nullptr == derived);
   EXPECT_TRUE(derived != nullptr);
   EXPECT_TRUE(nullptr != derived);
+
+  derived.free();
 }
 
 GPU_TEST(managed_ptr, make_managed_from_overloaded_factory_function)
@@ -838,6 +848,8 @@ GPU_TEST(managed_ptr, make_managed_from_overloaded_factory_function)
   EXPECT_FALSE(nullptr == derived);
   EXPECT_TRUE(derived != nullptr);
   EXPECT_TRUE(nullptr != derived);
+
+  derived.free();
 }
 
 GPU_TEST(managed_ptr, make_managed_from_factory_static_member_function)
@@ -858,6 +870,8 @@ GPU_TEST(managed_ptr, make_managed_from_factory_static_member_function)
   EXPECT_FALSE(nullptr == derived);
   EXPECT_TRUE(derived != nullptr);
   EXPECT_TRUE(nullptr != derived);
+
+  derived.free();
 }
 
 GPU_TEST(managed_ptr, gpu_copy_constructor)
@@ -916,6 +930,11 @@ GPU_TEST(managed_ptr, gpu_copy_constructor)
   EXPECT_TRUE(array3[11]);
   EXPECT_TRUE(array3[12]);
   EXPECT_FALSE(array3[13]);
+
+  array.free();
+  array2.free();
+  array3.free();
+  otherDerived.free();
 }
 
 GPU_TEST(managed_ptr, gpu_converting_constructor)
@@ -974,6 +993,11 @@ GPU_TEST(managed_ptr, gpu_converting_constructor)
   EXPECT_TRUE(array3[11]);
   EXPECT_TRUE(array3[12]);
   EXPECT_FALSE(array3[13]);
+
+  array.free();
+  array2.free();
+  array3.free();
+  derived.free();
 }
 
 GPU_TEST(managed_ptr, gpu_copy_assignment_operator)
@@ -1033,6 +1057,11 @@ GPU_TEST(managed_ptr, gpu_copy_assignment_operator)
   EXPECT_TRUE(array3[11]);
   EXPECT_TRUE(array3[12]);
   EXPECT_FALSE(array3[13]);
+
+  array.free();
+  array2.free();
+  array3.free();
+  otherDerived.free();
 }
 
 #endif
