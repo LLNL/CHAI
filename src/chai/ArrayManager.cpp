@@ -264,12 +264,12 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::devic
   }
 
   if (!record->m_touched[record->m_last_space]) {
-    auto dev = context->get<camp::devices::Host>();
+//    auto dev = context->get<camp::devices::Host>();
     return;
   } else {
     callback(record, ACTION_MOVE, space, record->m_size);
     std::lock_guard<std::mutex> lock(m_mutex);
-    m_resource_manager.copy(dst_pointer, src_pointer);
+    m_resource_manager.copy(dst_pointer, src_pointer, *context);
   }
 
   resetTouch(record);

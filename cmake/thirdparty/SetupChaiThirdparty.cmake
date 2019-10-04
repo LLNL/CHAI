@@ -53,13 +53,15 @@ else ()
   add_subdirectory(${PROJECT_SOURCE_DIR}/src/tpl/umpire)
 endif()
 
-if (DEFINED camp_DIR)
-  find_package(camp REQUIRED)
+if (NOT TARGET camp)
+  if (DEFINED camp_DIR)
+    find_package(camp REQUIRED)
 
-  blt_register_library(
-    NAME camp
-    INCLUDES ${CAMP_INCLUDE_DIRS}
-    LIBRARIES camp)
-else ()
-  add_subdirectory(${PROJECT_SOURCE_DIR}/src/tpl/camp)
+    blt_register_library(
+      NAME camp
+      INCLUDES ${CAMP_INCLUDE_DIRS}
+      LIBRARIES camp)
+  else ()
+    add_subdirectory(${PROJECT_SOURCE_DIR}/src/tpl/camp)
+  endif()
 endif()
