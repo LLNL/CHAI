@@ -146,9 +146,9 @@ void forall(gpu, int begin, int end, LOOP_BODY&& body)
 template <typename LOOP_BODY>
 camp::devices::Event forall_gpu(camp::devices::Context* dev, int begin, int end, LOOP_BODY&& body)
 {
-//  chai::ArrayManager* rm = chai::ArrayManager::getInstance();
+  chai::ArrayManager* rm = chai::ArrayManager::getInstance();
 
-//  rm->setExecutionSpace(chai::GPU);
+  rm->setExecutionSpace(chai::GPU, dev);
 
   size_t blockSize = 32;
   size_t gridSize = (end - begin + blockSize - 1) / blockSize;
@@ -162,7 +162,7 @@ camp::devices::Event forall_gpu(camp::devices::Context* dev, int begin, int end,
 //  hipDeviceSynchronize();
 //#endif
   
-//  rm->setExecutionSpace(chai::NONE);
+  rm->setExecutionSpace(chai::NONE);
   return dev->get_event();
 }
 #endif // if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
