@@ -41,6 +41,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #######################################################################
 
+set (execution_space_test_depends
+  chai umpire gtest)
+
 set (managed_array_test_depends
   chai umpire gtest)
 
@@ -48,6 +51,9 @@ set (array_manager_test_depends
   chai umpire gtest)
 
 if (ENABLE_CUDA)
+  set (execution_space_test_depends
+    ${execution_space_test_depends}
+    cuda)
   set (managed_array_test_depends
     ${managed_array_test_depends}
     cuda)
@@ -56,6 +62,9 @@ if (ENABLE_CUDA)
     cuda)
 endif ()
 if (ENABLE_HIP)
+  set (execution_space_test_depends
+    ${execution_space_test_depends}
+    hip)
   set (managed_array_test_depends
     ${managed_array_test_depends}
     hip)
@@ -64,6 +73,21 @@ if (ENABLE_HIP)
     hip)
 endif ()
 
+# ExecutionSpace tests
+blt_add_executable(
+  NAME execution_space_unit_test
+  SOURCES execution_space_unit_tests.cpp
+  DEPENDS_ON ${execution_space_test_depends})
+
+target_include_directories(
+  execution_space_unit_test
+  PUBLIC ${PROJECT_BINARY_DIR}/include)
+
+blt_add_test(
+  NAME execution_space_unit_test
+  COMMAND execution_space_unit_test)
+
+# ManagedArray tests
 blt_add_executable(
   NAME managed_array_unit_tests
   SOURCES managed_array_unit_tests.cpp

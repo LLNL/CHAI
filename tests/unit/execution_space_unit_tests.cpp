@@ -40,45 +40,41 @@
 // WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 // ---------------------------------------------------------------------
-#ifndef CHAI_ExecutionSpaces_HPP
-#define CHAI_ExecutionSpaces_HPP
+
+#include "gtest/gtest.h"
 
 #include "chai/config.hpp"
-#include "camp/device.hpp"
+#include "chai/ExecutionSpaces.hpp"
 
-namespace chai
+TEST(ExecutionSpace, Platforms)
 {
-
-/*!
- * \brief Enum listing possible execution spaces.
- */
-enum ExecutionSpace {
-  /*! Default, no execution space. */
-  NONE = 0,
-  /*! Executing in CPU space */
-  CPU,
+  ASSERT_TRUE(chai::CPU == camp::devices::Platform::host);
+  ASSERT_FALSE(chai::CPU == camp::devices::Platform::undefined);
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-  /*! Execution in GPU space */
-  GPU,
+  ASSERT_TRUE(chai::GPU == camp::devices::Platform::cuda);
+  ASSERT_TRUE(chai::GPU == camp::devices::Platform::hip);
+  ASSERT_FALSE(chai::GPU == camp::devices::Platform::undefined);
 #endif
-#if defined(CHAI_ENABLE_UM)
-  UM,
-#endif
-  // NUM_EXECUTION_SPACES should always be last!
-  /*! Used to count total number of spaces */
-  NUM_EXECUTION_SPACES
-};
-
-inline bool operator==(const ExecutionSpace& s, const camp::devices::Platform& p) {
-  if(s == chai::CPU && p == camp::devices::Platform::host) return true;
-#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-  /*! Execution in GPU space */
-  if (s == chai::GPU && (p == camp::devices::Platform::cuda ||
-	                 p == camp::devices::Platform::hip)) return true;
-#endif
-  return false;
 }
 
-}  // end of namespace chai
+TEST(ExecutionSpace, Host)
+{
+  camp::devices::Context ctx{camp::devices::Host()};
+  ASSERT_TRUE( chai::CPU == ctx.get<camp::devices::Host>().get_platform() );
+}
 
-#endif  // CHAI_ExecutionSpaces_HPP
+#if defined(CHAI_ENABLE_CUDA)
+TEST(ExecutionSpace, Cuda)
+{
+  camp::devices::Context ctx{camp::devices::Cuda()};
+  ASSERT_TRUE( chai::GPU == ctx.get<camp::devices::Cuda>().get_platform() );
+}
+#endif // #if defined(CHAI_ENABLE_CUDA)
+
+#if defined(CHAI_ENABLE_HIP)
+TEST(ExecutionSpace, Hip)
+{
+  camp::devices::Context ctx{camp::devices::Hip()};
+  ASSERT_TRUE( chai::GPU == ctx.get<camp::devices::Hip>().get_platform() );
+}
+#endif // #if defined(CHAI_ENABLE_CUDA)
