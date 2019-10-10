@@ -69,7 +69,8 @@ ArrayManager::ArrayManager() :
   m_default_allocation_space = CPU;
 
   m_allocators[CPU] =
-      new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
+      //new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
+      new umpire::Allocator(m_resource_manager.getAllocator("PINNED"));
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
   m_allocators[GPU] =
       new umpire::Allocator(m_resource_manager.getAllocator("DEVICE"));
@@ -271,7 +272,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::devic
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (space == chai::CPU && record->transfer_pending) {
-    //  record->m_last_context->wait_on(&record->m_event);
+      record->m_last_context->wait_on(&record->m_event);
       record->transfer_pending = false;
     }
     camp::devices::Context* ctx;

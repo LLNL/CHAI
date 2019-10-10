@@ -35,14 +35,16 @@ int main()
   std::vector< chai::ManagedArray<float> > arrays;
   std::vector< camp::devices::Context > cuda_ctx;
   for (int i = 0; i < NUM_ARRAYS; i++) {
-    arrays.push_back(chai::ManagedArray<float>(10));
+    arrays.push_back(chai::ManagedArray<float>(10, chai::GPU));
     cuda_ctx.push_back(camp::devices::Context{camp::devices::Cuda()});
   }
 
   std::cout << "calling forall with cuda context" << std::endl;
-  for (int i = 0; i < NUM_ARRAYS; i++) {
-    auto array = arrays[i]; auto ctx = &cuda_ctx[i];
+  for (auto array : arrays) {
+  //for (int i = 0; i < NUM_ARRAYS; i++) {
+  //  auto array = arrays[i]; auto ctx = &cuda_ctx[i];
 
+    camp::devices::Context ctx{camp::devices::Cuda()};
     auto clock_lambda_1 = [=] CHAI_HOST_DEVICE (int idx) {
       array[idx] = idx * 2;
       unsigned int start_clock = (unsigned int) clock();
@@ -54,15 +56,15 @@ int main()
       }
     };
 
-    auto e = forall(ctx, 0, ARRAY_SIZE, clock_lambda_1);
-    //array.move(chai::CPU, ctx); // asynchronous move
+    auto e = forall(&ctx, 0, ARRAY_SIZE, clock_lambda_1);
+    array.move(chai::CPU, &ctx); // asynchronous move
   }
 
 
-  for (int i = 0; i < NUM_ARRAYS; i++) {
-    auto array = arrays[i]; auto ctx = &cuda_ctx[i];
-    array.move(chai::CPU, ctx); // asynchronous move
-  }
+  //for (int i = 0; i < NUM_ARRAYS; i++) {
+  //  auto array = arrays[i]; auto ctx = &cuda_ctx[i];
+  //  array.move(chai::CPU, ctx); // asynchronous move
+  //}
 
   std::cout << "calling forall with host context" << std::endl;
   for (auto array : arrays) {
@@ -73,6 +75,7 @@ int main()
     auto e = forall(&ctx, 0, ARRAY_SIZE, clock_lambda_2);
   }
 
+  std::cout << "printing..." << std::endl;
   for (auto array : arrays) {
     for (int i = 0; i < ARRAY_SIZE; i++) {
       std::cout<< array[i] << " ";
