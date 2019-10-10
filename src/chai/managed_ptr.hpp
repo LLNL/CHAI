@@ -554,6 +554,7 @@ namespace chai {
                               if (pointer) {
                                  detail::destroy_on_device<<<1, 1>>>(temp);
                                  debug_cudaDeviceSynchronize();
+                                 GPU_ERROR_CHECK(cudaFree(temp));
                               }
 
                               break;
@@ -581,6 +582,7 @@ namespace chai {
                            if (pointer) {
                               detail::destroy_on_device<<<1, 1>>>(pointer);
                               debug_cudaDeviceSynchronize();
+                              GPU_ERROR_CHECK(cudaFree((void*) pointer));
                            }
 
                            break;
@@ -916,7 +918,7 @@ namespace chai {
          arrayManager->setExecutionSpace(GPU);
 #endif
 
-         // Allocate space on the GPU to hold the pointer to the new object
+         // Allocate space on the GPU to hold the new object
          T* gpuPointer;
          GPU_ERROR_CHECK(cudaMalloc(&gpuPointer, sizeof(T)));
 
