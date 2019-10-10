@@ -95,8 +95,8 @@ struct PointerRecord {
   int m_allocators[NUM_EXECUTION_SPACES];
 
 
-  //bool transfer_pending;
-  //camp::devices::Event m_event;
+  bool transfer_pending;
+  camp::devices::Event m_event;
   camp::devices::Context* m_last_context = nullptr;
 };
 
