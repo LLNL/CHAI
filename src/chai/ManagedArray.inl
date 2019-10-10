@@ -175,7 +175,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 {
 #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   move(m_resource_manager->getExecutionSpace(), m_resource_manager->getContext());
-  std::cout<<"Copying ManagedArray"<<std::endl;
 #endif
 }
 
@@ -406,6 +405,7 @@ void ManagedArray<T>::move(ExecutionSpace space, camp::devices::Context* context
   }
 
   if (space != NONE) m_pointer_record->m_last_space = space;
+  if (space != NONE) m_pointer_record->m_last_context = context;
 
   /* When moving from GPU to CPU we need to move the inner arrays after the outer array. */
 #if defined(CHAI_ENABLE_CUDA)

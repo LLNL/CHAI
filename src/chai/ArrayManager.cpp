@@ -269,7 +269,29 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::devic
   } else {
     callback(record, ACTION_MOVE, space, record->m_size);
     std::lock_guard<std::mutex> lock(m_mutex);
-    m_resource_manager.copy(dst_pointer, src_pointer, *context);
+    record->m_last_context->print_platform();
+    std::cout << (record->m_last_context == nullptr) << std::endl;
+
+    //if (space == chai::CPU && transfer_pending) {
+    //  context->wait_on(&m_event);
+    //  transfer_pending = false;
+    //}
+    camp::devices::Context* ctx;
+    if (space == chai::CPU){
+      ctx = record->m_last_context;
+    }else{
+      ctx = context; 
+    }
+    auto e = m_resource_manager.copy(dst_pointer, src_pointer, *ctx);
+    if (space == chai::CPU){
+      e.wait();
+    }
+    //if (space == chai::CPU && context->get_platform() == camp::devices::Platform::Cuda){
+    //  transfer_pending = true;
+    //  m_event = e;
+    //}
+    
+    //if (transfer_pending) context->wait_on(&e);
   }
 
   resetTouch(record);

@@ -6,33 +6,32 @@ int main()
 {
   std::cout << "Chai Context Implementation\n";
 
-  camp::devices::Context cuda_context{camp::devices::Cua()}; 
-  camp::devices::Context host_context{camp::devices::Host()}; 
+  //camp::devices::Context cuda_context{camp::devices::Cuda()};
+  //camp::devices::Context host_context{camp::devices::Host()};
 
-  std::vector< chai::ManagedArray<float> > arrays(5);
+  std::vector< chai::ManagedArray<float> > arrays(1);
 
-  for (auto array : arrays) {
-    camp::devices::Context ctx{camp::devices::Cua()}; 
-    auto e = forall(&ctx, 0, 10, 
-        [=] CHAI_HOST_DEVICE (int i) { array[i] = i; });
-    array.move(chai::CPU, ctx);
-  }
-
-  for (auto array : arrays) {
-    camp::devices::Context ctx{camp::devices::Host{}}; 
-    auto e = forall(&ctx, 0,10, [=] CHAI_HOST_DEVICE (int i) { array[i] = 123; });
-  }
-
-  std::cout << "defining lambda" << std::endl;
-  auto lambda_set = [=] CHAI_HOST_DEVICE (int i) { array[i] = i; };
-  auto lambda_check = [=] CHAI_HOST_DEVICE (int i) { array[i] = 123; };
 
   std::cout << "calling forall with cuda context" << std::endl;
- 
-  e.wait();
-  std::cout << "calling forall with host context" << std::endl;
-  forall(&host_context, 0, 10, lambda_check);
+  for (auto array : arrays) {
+    auto lambda_set = [=] CHAI_HOST_DEVICE (int i) { array[i] = i; };
+    camp::devices::Context ctx{camp::devices::Cuda()};
+    array.allocate(10);
+    auto e = forall(&ctx, 0, 10, lambda_set);
+    array.move(chai::CPU, &ctx);
+  }
 
-  array.free();
+  std::cout << "calling forall with host context" << std::endl;
+  for (auto array : arrays) {
+    auto lambda_check = [=] CHAI_HOST_DEVICE (int i) { array[i] = 123; };
+    camp::devices::Context ctx{camp::devices::Host{}}; 
+    auto e = forall(&ctx, 0, 10, lambda_check);
+  }
+
+  for (auto array : arrays) {
+    std::cout<< array[0] << std::endl;
+  }
+
+  for (auto a : arrays) a.free();
   return 0;
 }

@@ -46,6 +46,8 @@
 #include "chai/ExecutionSpaces.hpp"
 #include "chai/Types.hpp"
 
+#include "camp/device.hpp"
+
 #include <cstddef>
 #include <functional>
 
@@ -91,6 +93,11 @@ struct PointerRecord {
   UserCallback m_user_callback;
 
   int m_allocators[NUM_EXECUTION_SPACES];
+
+
+  //bool transfer_pending;
+  //camp::devices::Event m_event;
+  camp::devices::Context* m_last_context = nullptr;
 };
 
 }  // end of namespace chai
