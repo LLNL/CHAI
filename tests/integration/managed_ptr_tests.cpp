@@ -331,60 +331,37 @@ GPU_TEST(managed_ptr, make_on_device)
 
 GPU_TEST(managed_ptr, gpu_new_and_delete_on_device)
 {
-  // Initialize host side memory to hold a pointer
-  RawArrayClass** cpuPointerHolder = (RawArrayClass**) malloc(sizeof(RawArrayClass*));
-  cpuPointerHolder[0] = nullptr;
-
-  // Initialize device side memory to hold a pointer
-  RawArrayClass** gpuPointerHolder = nullptr;
-  cudaMalloc(&gpuPointerHolder, sizeof(RawArrayClass*));
+  // Initialize device side memory to hold the new object
+  RawArrayClass* gpuPointer = nullptr;
+  cudaMalloc(&gpuPointer, sizeof(RawArrayClass));
 
   // Create on the device
-  chai::detail::make_on_device<<<1, 1>>>(gpuPointerHolder);
+  chai::detail::make_on_device<<<1, 1>>>(gpuPointer);
 
-  // Copy to the host side memory
-  cudaMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(RawArrayClass*), cudaMemcpyDeviceToHost);
+  // Check the pointer
+  ASSERT_NE(gpuPointer, nullptr);
 
-  // Free device side memory
-  cudaFree(gpuPointerHolder);
-
-  // Save the pointer
-  ASSERT_NE(cpuPointerHolder[0], nullptr);
-  RawArrayClass* gpuPointer = cpuPointerHolder[0];
-
-  // Free host side memory
-  free(cpuPointerHolder);
-
+  // Clean up on the device
   chai::detail::destroy_on_device<<<1, 1>>>(gpuPointer);
 }
 
 GPU_TEST(managed_ptr, gpu_build_managed_ptr)
 {
-  // Initialize host side memory to hold a pointer
-  RawArrayClass** cpuPointerHolder = (RawArrayClass**) malloc(sizeof(RawArrayClass*));
-  cpuPointerHolder[0] = nullptr;
-
-  // Initialize device side memory to hold a pointer
-  RawArrayClass** gpuPointerHolder = nullptr;
-  cudaMalloc(&gpuPointerHolder, sizeof(RawArrayClass*));
+  // Initialize device side memory to hold the new object
+  RawArrayClass* gpuPointer = nullptr;
+  cudaMalloc(&gpuPointer, sizeof(RawArrayClass));
 
   // Create on the device
-  chai::detail::make_on_device<<<1, 1>>>(gpuPointerHolder);
+  chai::detail::make_on_device<<<1, 1>>>(gpuPointer);
 
-  // Copy to the host side memory
-  cudaMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(RawArrayClass*), cudaMemcpyDeviceToHost);
+  // Check the pointer
+  ASSERT_NE(gpuPointer, nullptr);
 
-  // Free device side memory
-  cudaFree(gpuPointerHolder);
-
-  // Save the pointer
-  ASSERT_NE(cpuPointerHolder[0], nullptr);
-  RawArrayClass* gpuPointer = cpuPointerHolder[0];
-
-  // Free host side memory
-  free(cpuPointerHolder);
-
+  // Make a managed_ptr
   chai::managed_ptr<RawArrayClass> managedPtr({chai::GPU}, {gpuPointer});
+
+  // Clean up the memory
+  managedPtr.free();
 }
 
 

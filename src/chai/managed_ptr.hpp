@@ -818,8 +818,8 @@ namespace chai {
       template <typename T,
                 typename... Args,
                 typename std::enable_if<std::is_constructible<T, Args...>::value, int>::type = 0>
-      CHAI_DEVICE void new_on_device(T** gpuPointer, Args&&... args) {
-         *gpuPointer = new T(args...);
+      CHAI_DEVICE void new_on_device(T* gpuPointer, Args&&... args) {
+         new(gpuPointer) T(args...);
       }
 
       ///
@@ -836,8 +836,8 @@ namespace chai {
       template <typename T,
                 typename... Args,
                 typename std::enable_if<!std::is_constructible<T, Args...>::value, int>::type = 0>
-      CHAI_DEVICE void new_on_device(T** gpuPointer, Args&&... args) {
-         *gpuPointer = new T(getRawPointers(args)...);
+      CHAI_DEVICE void new_on_device(T* gpuPointer, Args&&... args) {
+         new(gpuPointer) T(getRawPointers(args)...);
       }
 
       ///
@@ -853,7 +853,7 @@ namespace chai {
       ///
       template <typename T,
                 typename... Args>
-      __global__ void make_on_device(T** gpuPointer, Args... args)
+      __global__ void make_on_device(T* gpuPointer, Args... args)
       {
          new_on_device(gpuPointer, args...);
       }
@@ -890,7 +890,7 @@ namespace chai {
       __global__ void destroy_on_device(T* gpuPointer)
       {
          if (gpuPointer) {
-            delete gpuPointer;
+            gpuPointer->~T();
          }
       }
 
@@ -917,24 +917,12 @@ namespace chai {
 #endif
 
          // Allocate space on the GPU to hold the pointer to the new object
-         T** gpuBuffer;
-         GPU_ERROR_CHECK(cudaMalloc(&gpuBuffer, sizeof(T*)));
+         T* gpuPointer;
+         GPU_ERROR_CHECK(cudaMalloc(&gpuPointer, sizeof(T)));
 
          // Create the object on the device
-         make_on_device<<<1, 1>>>(gpuBuffer, args...);
+         make_on_device<<<1, 1>>>(gpuPointer, args...);
          debug_cudaDeviceSynchronize();
-
-         // Allocate space on the CPU for the pointer and copy the pointer to the CPU
-         T** cpuBuffer = (T**) malloc(sizeof(T*));
-         GPU_ERROR_CHECK(cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(T*),
-                                    cudaMemcpyDeviceToHost));
-
-         // Get the GPU pointer
-         T* gpuPointer = cpuBuffer[0];
-
-         // Free the host and device buffers
-         free(cpuBuffer);
-         GPU_ERROR_CHECK(cudaFree(gpuBuffer));
 
 #ifndef CHAI_DISABLE_RM
          // Set the execution space back to the previous value

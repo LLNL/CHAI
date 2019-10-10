@@ -619,60 +619,36 @@ GPU_TEST(managed_ptr, gpu_pointer_constructor)
 
 GPU_TEST(managed_ptr, gpu_new_and_delete_on_device)
 {
-  // Initialize host side memory to hold a pointer
-  Simple** cpuPointerHolder = (Simple**) malloc(sizeof(Simple*));
-  cpuPointerHolder[0] = nullptr;
-
-  // Initialize device side memory to hold a pointer
-  Simple** gpuPointerHolder = nullptr;
-  cudaMalloc(&gpuPointerHolder, sizeof(Simple*));
+  // Initialize device side memory to hold the new object
+  Simple* gpuPointer = nullptr;
+  cudaMalloc(&gpuPointer, sizeof(Simple));
 
   // Create on the device
-  chai::detail::make_on_device<<<1, 1>>>(gpuPointerHolder);
+  chai::detail::make_on_device<<<1, 1>>>(gpuPointer);
 
-  // Copy to the host side memory
-  cudaMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(Simple*), cudaMemcpyDeviceToHost);
+  // Check the pointer
+  ASSERT_NE(gpuPointer, nullptr);
 
-  // Free device side memory
-  cudaFree(gpuPointerHolder);
-
-  // Save the pointer
-  ASSERT_NE(cpuPointerHolder[0], nullptr);
-  Simple* gpuPointer = cpuPointerHolder[0];
-
-  // Free host side memory
-  free(cpuPointerHolder);
-
+  // Clean up on the device
   chai::detail::destroy_on_device<<<1, 1>>>(gpuPointer);
 }
 
 GPU_TEST(managed_ptr, gpu_new_and_delete_on_device_2)
 {
-  // Initialize host side memory to hold a pointer
-  Simple** cpuPointerHolder = (Simple**) malloc(sizeof(Simple*));
-  cpuPointerHolder[0] = nullptr;
-
-  // Initialize device side memory to hold a pointer
-  Simple** gpuPointerHolder = nullptr;
-  cudaMalloc(&gpuPointerHolder, sizeof(Simple*));
+  // Initialize device side memory to hold a the new object
+  Simple* gpuPointer = nullptr;
+  cudaMalloc(&gpuPointer, sizeof(Simple));
 
   // Create on the device
-  chai::detail::make_on_device<<<1, 1>>>(gpuPointerHolder);
+  chai::detail::make_on_device<<<1, 1>>>(gpuPointer);
 
-  // Copy to the host side memory
-  cudaMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(Simple*), cudaMemcpyDeviceToHost);
+  // Check the pointer
+  ASSERT_NE(gpuPointer, nullptr);
 
-  // Free device side memory
-  cudaFree(gpuPointerHolder);
-
-  // Save the pointer
-  ASSERT_NE(cpuPointerHolder[0], nullptr);
-  Simple* gpuPointer = cpuPointerHolder[0];
-
-  // Free host side memory
-  free(cpuPointerHolder);
-
+  // Create a managed_ptr
   chai::managed_ptr<Simple> test({chai::GPU}, {gpuPointer});
+
+  // Free the memory
   test.free();
 }
 
