@@ -64,6 +64,34 @@ class Derived : public Base {
       int m_value = -1;
 };
 
+template <typename T>
+class BaseCRTP {
+   public:
+      CHAI_HOST_DEVICE int getValue() const {
+         return static_cast<const T*>(this)->getValue();
+      }
+};
+
+class DerivedCRTP : public BaseCRTP<DerivedCRTP> {
+   public:
+      CHAI_HOST_DEVICE DerivedCRTP(int value) : BaseCRTP<DerivedCRTP>(), m_value(value) {}
+
+      CHAI_HOST_DEVICE int getValue() const { return m_value; }
+
+   private:
+      int m_value = -1;
+};
+
+class NoInheritance {
+   public:
+      CHAI_HOST_DEVICE NoInheritance(int value) : m_value(value) {}
+
+      CHAI_HOST_DEVICE int getValue() const { return m_value; }
+
+   private:
+      int m_value = -1;
+};
+
 void benchmark_managed_ptr_construction_and_destruction(benchmark::State& state)
 {
   while (state.KeepRunning()) {
@@ -90,6 +118,36 @@ void benchmark_managed_ptr_use_cpu(benchmark::State& state)
 
 BENCHMARK(benchmark_managed_ptr_use_cpu)->Range(1, 1);
 
+// Curiously recurring template pattern
+static BaseCRTP<DerivedCRTP>* derivedCRTP = new DerivedCRTP(3);
+
+void benchmark_curiously_recurring_template_pattern_cpu(benchmark::State& state)
+{
+  while (state.KeepRunning()) {
+    auto helper = derivedCRTP;
+    forall(sequential(), 0, 1, [=] (int i) { (void) helper->getValue(); });
+  }
+
+  state.SetItemsProcessed(state.iterations());
+}
+
+BENCHMARK(benchmark_curiously_recurring_template_pattern_cpu)->Range(1, 1);
+
+// Class without inheritance
+static NoInheritance* noInheritance = new NoInheritance(5);
+
+void benchmark_no_inheritance_cpu(benchmark::State& state)
+{
+  while (state.KeepRunning()) {
+    auto helper = noInheritance;
+    forall(sequential(), 0, 1, [=] (int i) { (void) helper->getValue(); });
+  }
+
+  state.SetItemsProcessed(state.iterations());
+}
+
+BENCHMARK(benchmark_no_inheritance_cpu)->Range(1, 1);
+
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 
 static chai::managed_ptr<Base> helper2 = chai::make_managed<Derived>(2);
@@ -105,6 +163,36 @@ void benchmark_managed_ptr_use_gpu(benchmark::State& state)
 }
 
 BENCHMARK(benchmark_managed_ptr_use_gpu)->Range(1, 1);
+
+// Curiously recurring template pattern
+static BaseCRTP<DerivedCRTP>* derivedCRTP2 = new DerivedCRTP(4);
+
+void benchmark_curiously_recurring_template_pattern_gpu(benchmark::State& state)
+{
+  while (state.KeepRunning()) {
+    auto helper = *derivedCRTP2;
+    forall(gpu(), 0, 1, [=] __device__ (int i) { (void) helper.getValue(); });
+  }
+
+  state.SetItemsProcessed(state.iterations());
+}
+
+BENCHMARK(benchmark_curiously_recurring_template_pattern_gpu)->Range(1, 1);
+
+// Class without inheritance
+static NoInheritance* noInheritance2 = new NoInheritance(5);
+
+void benchmark_no_inheritance_gpu(benchmark::State& state)
+{
+  while (state.KeepRunning()) {
+    auto helper = *noInheritance2;
+    forall(gpu(), 0, 1, [=] __device__ (int i) { (void) helper.getValue(); });
+  }
+
+  state.SetItemsProcessed(state.iterations());
+}
+
+BENCHMARK(benchmark_no_inheritance_gpu)->Range(1, 1);
 
 #endif
 
