@@ -51,14 +51,18 @@
 
 class Base {
    public:
-      CHAI_HOST_DEVICE virtual int getValue() const = 0;
+      CHAI_HOST_DEVICE virtual void scale(size_t numValues, int* values) = 0;
 };
 
 class Derived : public Base {
    public:
       CHAI_HOST_DEVICE Derived(int value) : Base(), m_value(value) {}
 
-      CHAI_HOST_DEVICE int getValue() const override { return m_value; }
+      CHAI_HOST_DEVICE virtual void scale(size_t numValues, int* values) override {
+         for (size_t i = 0; i < numValues; ++i) {
+            values[i] *= m_value;
+         }
+      }
 
    private:
       int m_value = -1;
@@ -67,8 +71,8 @@ class Derived : public Base {
 template <typename T>
 class BaseCRTP {
    public:
-      CHAI_HOST_DEVICE int getValue() const {
-         return static_cast<const T*>(this)->getValue();
+      CHAI_HOST_DEVICE void scale(size_t numValues, int* values) {
+         return static_cast<T*>(this)->scale(numValues, values);
       }
 };
 
@@ -76,7 +80,11 @@ class DerivedCRTP : public BaseCRTP<DerivedCRTP> {
    public:
       CHAI_HOST_DEVICE DerivedCRTP(int value) : BaseCRTP<DerivedCRTP>(), m_value(value) {}
 
-      CHAI_HOST_DEVICE int getValue() const { return m_value; }
+      CHAI_HOST_DEVICE void scale(size_t numValues, int* values) {
+         for (size_t i = 0; i < numValues; ++i) {
+            values[i] *= m_value;
+         }
+      }
 
    private:
       int m_value = -1;
@@ -86,7 +94,11 @@ class NoInheritance {
    public:
       CHAI_HOST_DEVICE NoInheritance(int value) : m_value(value) {}
 
-      CHAI_HOST_DEVICE int getValue() const { return m_value; }
+      CHAI_HOST_DEVICE void scale(size_t numValues, int* values) {
+         for (size_t i = 0; i < numValues; ++i) {
+            values[i] *= m_value;
+         }
+      }
 
    private:
       int m_value = -1;
@@ -109,29 +121,49 @@ static void benchmark_managed_ptr_construction_and_destruction(benchmark::State&
 BENCHMARK(benchmark_managed_ptr_construction_and_destruction);
 
 // managed_ptr
-static void benchmark_managed_ptr_use_cpu(benchmark::State& state)
+static void benchmark_use_managed_ptr_cpu(benchmark::State& state)
 {
-  chai::managed_ptr<Base> helper = chai::make_managed<Derived>(1);
+  chai::managed_ptr<Base> object = chai::make_managed<Derived>(2);
 
-  while (state.KeepRunning()) {
-    forall(sequential(), 0, 1, [=] (int i) { (void) helper->getValue(); });
+  size_t numValues = 100;
+  int* values = (int*) malloc(100 * sizeof(int));
+
+  for (size_t i = 0; i < numValues; ++i) {
+     values[i] = i * i;
   }
 
-  helper.free();
+#ifdef __CUDACC__
+  cudaDeviceSynchronize();
+#endif
+
+  while (state.KeepRunning()) {
+    object->scale(numValues, values);
+  }
+
+  object.free();
+  cudaDeviceSynchronize();
 }
 
-BENCHMARK(benchmark_managed_ptr_use_cpu);
+BENCHMARK(benchmark_use_managed_ptr_cpu);
 
 // Curiously recurring template pattern
 static void benchmark_curiously_recurring_template_pattern_cpu(benchmark::State& state)
 {
-  BaseCRTP<DerivedCRTP>* helper = new DerivedCRTP(3);
+  BaseCRTP<DerivedCRTP>* object = new DerivedCRTP(2);
 
-  while (state.KeepRunning()) {
-    forall(sequential(), 0, 1, [=] (int i) { (void) helper->getValue(); });
+  size_t numValues = 100;
+  int* values = (int*) malloc(100 * sizeof(int));
+
+  for (size_t i = 0; i < numValues; ++i) {
+     values[i] = i * i;
   }
 
-  delete helper;
+  while (state.KeepRunning()) {
+    object->scale(numValues, values);
+  }
+
+  free(values);
+  delete object;
 }
 
 BENCHMARK(benchmark_curiously_recurring_template_pattern_cpu);
@@ -139,13 +171,21 @@ BENCHMARK(benchmark_curiously_recurring_template_pattern_cpu);
 // Class without inheritance
 static void benchmark_no_inheritance_cpu(benchmark::State& state)
 {
-  NoInheritance* helper = new NoInheritance(5);
+  NoInheritance* object = new NoInheritance(2);
 
-  while (state.KeepRunning()) {
-    forall(sequential(), 0, 1, [=] (int i) { (void) helper->getValue(); });
+  size_t numValues = 100;
+  int* values = (int*) malloc(100 * sizeof(int));
+
+  for (size_t i = 0; i < numValues; ++i) {
+     values[i] = i * i;
   }
 
-  delete helper;
+  while (state.KeepRunning()) {
+    object->scale(numValues, values);
+  }
+
+  free(values);
+  delete object;
 }
 
 BENCHMARK(benchmark_no_inheritance_cpu);
@@ -314,45 +354,96 @@ BENCHMARK_TEMPLATE(benchmark_create_on_stack_on_gpu, 32768);
 BENCHMARK_TEMPLATE(benchmark_create_on_stack_on_gpu, 262144);
 BENCHMARK_TEMPLATE(benchmark_create_on_stack_on_gpu, 2097152);
 
-void benchmark_managed_ptr_use_gpu(benchmark::State& state)
-{
-  chai::managed_ptr<Base> helper = chai::make_managed<Derived>(2);
+// Use managed_ptr
+__global__ void fill(size_t numValues, int* values) {
+   size_t i = blockIdx.x * blockDim.x + threadIdx.x;
 
-  while (state.KeepRunning()) {
-    forall(gpu(), 0, 1, [=] __device__ (int i) { (void) helper->getValue(); });
-  }
-
-  helper.free();
+   if (i < numValues) {
+      values[i] = i * i;
+   }
 }
 
-BENCHMARK(benchmark_managed_ptr_use_gpu);
+__global__ void square(chai::managed_ptr<Base> object, size_t numValues, int* values) {
+   object->scale(numValues, values);
+}
 
-// Curiously recurring template pattern
-void benchmark_curiously_recurring_template_pattern_gpu(benchmark::State& state)
+void benchmark_use_managed_ptr_gpu(benchmark::State& state)
 {
-  BaseCRTP<DerivedCRTP>* derivedCRTP = new DerivedCRTP(4);
-  auto helper = *derivedCRTP;
+  chai::managed_ptr<Base> object = chai::make_managed<Derived>(2);
+
+  size_t numValues = 100;
+  int* values;
+  cudaMalloc(&values, numValues * sizeof(int));
+  fill<<<1, 100>>>(numValues, values);
+
+  cudaDeviceSynchronize();
 
   while (state.KeepRunning()) {
-    forall(gpu(), 0, 1, [=] __device__ (int i) { (void) helper.getValue(); });
+    square<<<1, 1>>>(object, numValues, values);
+    cudaDeviceSynchronize();
   }
 
+  cudaFree(values);
+  object.free();
+  cudaDeviceSynchronize();
+}
+
+BENCHMARK(benchmark_use_managed_ptr_gpu);
+
+// Curiously recurring template pattern
+__global__ void square(BaseCRTP<DerivedCRTP> object, size_t numValues, int* values) {
+   object.scale(numValues, values);
+}
+
+void benchmark_curiously_recurring_template_pattern_gpu(benchmark::State& state)
+{
+  BaseCRTP<DerivedCRTP>* derivedCRTP = new DerivedCRTP(2);
+  auto object = *derivedCRTP;
+
+  size_t numValues = 100;
+  int* values;
+  cudaMalloc(&values, numValues * sizeof(int));
+  fill<<<1, 100>>>(numValues, values);
+
+  cudaDeviceSynchronize();
+
+  while (state.KeepRunning()) {
+    square<<<1, 1>>>(object, numValues, values);
+    cudaDeviceSynchronize();
+  }
+
+  cudaFree(values);
   delete derivedCRTP;
+  cudaDeviceSynchronize();
 }
 
 BENCHMARK(benchmark_curiously_recurring_template_pattern_gpu);
 
 // Class without inheritance
+__global__ void square(NoInheritance object, size_t numValues, int* values) {
+   object.scale(numValues, values);
+}
+
 void benchmark_no_inheritance_gpu(benchmark::State& state)
 {
-  NoInheritance* noInheritance = new NoInheritance(5);
-  auto helper = *noInheritance;
+  NoInheritance* noInheritance = new NoInheritance(2);
+  auto object = *noInheritance;
+
+  size_t numValues = 100;
+  int* values;
+  cudaMalloc(&values, numValues * sizeof(int));
+  fill<<<1, 100>>>(numValues, values);
+
+  cudaDeviceSynchronize();
 
   while (state.KeepRunning()) {
-    forall(gpu(), 0, 1, [=] __device__ (int i) { (void) helper.getValue(); });
+    square<<<1, 1>>>(object, numValues, values);
+    cudaDeviceSynchronize();
   }
 
+  cudaFree(values);
   delete noInheritance;
+  cudaDeviceSynchronize();
 }
 
 BENCHMARK(benchmark_no_inheritance_gpu);
