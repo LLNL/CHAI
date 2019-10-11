@@ -181,14 +181,8 @@ static void benchmark_copy_to_gpu(benchmark::State& state)
     ClassWithSize<N>* gpuPointer;
     cudaMalloc(&gpuPointer, sizeof(ClassWithSize<N>));
     cudaMemcpy(gpuPointer, cpuPointer, sizeof(ClassWithSize<N>), cudaMemcpyHostToDevice);
-    cudaDeviceSynchronize();
-
-    state.PauseTiming();
-
     cudaFree(gpuPointer);
     cudaDeviceSynchronize();
-
-    state.ResumeTiming();
   }
 
   delete cpuPointer;
@@ -220,15 +214,9 @@ static void benchmark_placement_new_on_gpu(benchmark::State& state)
     ClassWithSize<N>* address;
     cudaMalloc(&address, sizeof(ClassWithSize<N>));
     placement_new_kernel<<<1, 1>>>(address);
-    cudaDeviceSynchronize();
-
-    state.PauseTiming();
-
     placement_delete_kernel<<<1, 1>>>(address);
     cudaFree(address);
     cudaDeviceSynchronize();
-
-    state.ResumeTiming();
   }
 }
 
@@ -258,15 +246,9 @@ static void benchmark_new_on_gpu(benchmark::State& state)
     ClassWithSize<N>** buffer;
     cudaMalloc(&buffer, sizeof(ClassWithSize<N>*));
     create_kernel<<<1, 1>>>(buffer);
-    cudaDeviceSynchronize();
-
-    state.PauseTiming();
-
     delete_kernel<<<1, 1>>>(buffer);
     cudaFree(buffer);
     cudaDeviceSynchronize();
-
-    state.ResumeTiming();
   }
 }
 
@@ -296,13 +278,8 @@ static void benchmark_new_on_gpu_and_copy_to_host(benchmark::State& state)
     cudaFree(gpuBuffer);
     ClassWithSize<N>* gpuPointer = cpuBuffer[0];
     free(cpuBuffer);
-
-    state.PauseTiming();
-
     delete_kernel_2<<<1, 1>>>(gpuPointer);
     cudaDeviceSynchronize();
-
-    state.ResumeTiming();
   }
 }
 
