@@ -156,9 +156,10 @@ template <size_t N>
 __global__ void copy_kernel(ClassWithSize<N>) {}
 
 // Benchmark how long it takes to copy a class to the GPU
-void benchmark_pass_copy_to_gpu_8(benchmark::State& state)
+template <size_t N>
+static void benchmark_pass_copy_to_gpu(benchmark::State& state)
 {
-  ClassWithSize<8> helper;
+  ClassWithSize<N> helper;
 
   while (state.KeepRunning()) {
     copy_kernel<<<1, 1>>>(helper);
@@ -166,54 +167,10 @@ void benchmark_pass_copy_to_gpu_8(benchmark::State& state)
   }
 }
 
-BENCHMARK(benchmark_pass_copy_to_gpu_8);
-
-void benchmark_pass_copy_to_gpu_64(benchmark::State& state)
-{
-  ClassWithSize<64> helper;
-
-  while (state.KeepRunning()) {
-    copy_kernel<<<1, 1>>>(helper);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_pass_copy_to_gpu_64);
-
-void benchmark_pass_copy_to_gpu_512(benchmark::State& state)
-{
-  ClassWithSize<512> helper;
-
-  while (state.KeepRunning()) {
-    copy_kernel<<<1, 1>>>(helper);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_pass_copy_to_gpu_512);
-
-void benchmark_pass_copy_to_gpu_4096(benchmark::State& state)
-{
-  ClassWithSize<4096> helper;
-
-  while (state.KeepRunning()) {
-    copy_kernel<<<1, 1>>>(helper);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_pass_copy_to_gpu_4096);
-
-void benchmark_managed_ptr_use_gpu(benchmark::State& state)
-{
-  chai::managed_ptr<Base> helper = chai::make_managed<Derived>(2);
-
-  while (state.KeepRunning()) {
-    forall(gpu(), 0, 1, [=] __device__ (int i) { (void) helper->getValue(); });
-  }
-
-  helper.free();
-}
+BENCHMARK_TEMPLATE(benchmark_pass_copy_to_gpu, 8);
+BENCHMARK_TEMPLATE(benchmark_pass_copy_to_gpu, 64);
+BENCHMARK_TEMPLATE(benchmark_pass_copy_to_gpu, 512);
+BENCHMARK_TEMPLATE(benchmark_pass_copy_to_gpu, 4096);
 
 // Benchmark how long it takes to call placement new on the GPU
 template <size_t N>
@@ -226,103 +183,32 @@ __global__ void placement_delete_kernel(ClassWithSize<N>* address) {
    address->~ClassWithSize<N>();
 }
 
-void benchmark_placement_new_on_gpu_8(benchmark::State& state)
+template <size_t N>
+static void benchmark_placement_new_on_gpu(benchmark::State& state)
 {
   while (state.KeepRunning()) {
-    ClassWithSize<8>* address;
-    cudaMalloc(&address, sizeof(ClassWithSize<8>));
+    ClassWithSize<N>* address;
+    cudaMalloc(&address, sizeof(ClassWithSize<N>));
     placement_new_kernel<<<1, 1>>>(address);
+    cudaDeviceSynchronize();
+
+    state.PauseTiming();
+
     placement_delete_kernel<<<1, 1>>>(address);
     cudaFree(address);
     cudaDeviceSynchronize();
+
+    state.ResumeTiming();
   }
 }
 
-BENCHMARK(benchmark_placement_new_on_gpu_8);
-
-void benchmark_placement_new_on_gpu_64(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    ClassWithSize<64>* address;
-    cudaMalloc(&address, sizeof(ClassWithSize<64>));
-    placement_new_kernel<<<1, 1>>>(address);
-    placement_delete_kernel<<<1, 1>>>(address);
-    cudaFree(address);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_placement_new_on_gpu_64);
-
-void benchmark_placement_new_on_gpu_512(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    ClassWithSize<512>* address;
-    cudaMalloc(&address, sizeof(ClassWithSize<512>));
-    placement_new_kernel<<<1, 1>>>(address);
-    placement_delete_kernel<<<1, 1>>>(address);
-    cudaFree(address);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_placement_new_on_gpu_512);
-
-void benchmark_placement_new_on_gpu_4096(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    ClassWithSize<4096>* address;
-    cudaMalloc(&address, sizeof(ClassWithSize<4096>));
-    placement_new_kernel<<<1, 1>>>(address);
-    placement_delete_kernel<<<1, 1>>>(address);
-    cudaFree(address);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_placement_new_on_gpu_4096);
-
-void benchmark_placement_new_on_gpu_32768(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    ClassWithSize<32768>* address;
-    cudaMalloc(&address, sizeof(ClassWithSize<32768>));
-    placement_new_kernel<<<1, 1>>>(address);
-    placement_delete_kernel<<<1, 1>>>(address);
-    cudaFree(address);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_placement_new_on_gpu_32768);
-
-void benchmark_placement_new_on_gpu_262144(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    ClassWithSize<262144>* address;
-    cudaMalloc(&address, sizeof(ClassWithSize<262144>));
-    placement_new_kernel<<<1, 1>>>(address);
-    placement_delete_kernel<<<1, 1>>>(address);
-    cudaFree(address);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_placement_new_on_gpu_262144);
-
-void benchmark_placement_new_on_gpu_2097152(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    ClassWithSize<2097152>* address;
-    cudaMalloc(&address, sizeof(ClassWithSize<2097152>));
-    placement_new_kernel<<<1, 1>>>(address);
-    placement_delete_kernel<<<1, 1>>>(address);
-    cudaFree(address);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_placement_new_on_gpu_2097152);
+BENCHMARK_TEMPLATE(benchmark_placement_new_on_gpu, 8);
+BENCHMARK_TEMPLATE(benchmark_placement_new_on_gpu, 64);
+BENCHMARK_TEMPLATE(benchmark_placement_new_on_gpu, 512);
+BENCHMARK_TEMPLATE(benchmark_placement_new_on_gpu, 4096);
+BENCHMARK_TEMPLATE(benchmark_placement_new_on_gpu, 32768);
+BENCHMARK_TEMPLATE(benchmark_placement_new_on_gpu, 262144);
+BENCHMARK_TEMPLATE(benchmark_placement_new_on_gpu, 2097152);
 
 // Benchmark how long it takes to call new on the GPU
 template <size_t N>
@@ -335,103 +221,32 @@ __global__ void delete_kernel(ClassWithSize<N>** address) {
    delete *address;
 }
 
-void benchmark_new_on_gpu_8(benchmark::State& state)
+template <size_t N>
+static void benchmark_new_on_gpu(benchmark::State& state)
 {
   while (state.KeepRunning()) {
-    ClassWithSize<8>** buffer;
-    cudaMalloc(&buffer, sizeof(ClassWithSize<8>*));
+    ClassWithSize<N>** buffer;
+    cudaMalloc(&buffer, sizeof(ClassWithSize<N>*));
     create_kernel<<<1, 1>>>(buffer);
+    cudaDeviceSynchronize();
+
+    state.PauseTiming();
+
     delete_kernel<<<1, 1>>>(buffer);
     cudaFree(buffer);
     cudaDeviceSynchronize();
+
+    state.ResumeTiming();
   }
 }
 
-BENCHMARK(benchmark_new_on_gpu_8);
-
-void benchmark_new_on_gpu_64(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    ClassWithSize<64>** buffer;
-    cudaMalloc(&buffer, sizeof(ClassWithSize<64>*));
-    create_kernel<<<1, 1>>>(buffer);
-    delete_kernel<<<1, 1>>>(buffer);
-    cudaFree(buffer);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_new_on_gpu_64);
-
-void benchmark_new_on_gpu_512(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    ClassWithSize<512>** buffer;
-    cudaMalloc(&buffer, sizeof(ClassWithSize<512>*));
-    create_kernel<<<1, 1>>>(buffer);
-    delete_kernel<<<1, 1>>>(buffer);
-    cudaFree(buffer);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_new_on_gpu_512);
-
-void benchmark_new_on_gpu_4096(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    ClassWithSize<4096>** buffer;
-    cudaMalloc(&buffer, sizeof(ClassWithSize<4096>*));
-    create_kernel<<<1, 1>>>(buffer);
-    delete_kernel<<<1, 1>>>(buffer);
-    cudaFree(buffer);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_new_on_gpu_4096);
-
-void benchmark_new_on_gpu_32768(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    ClassWithSize<32768>** buffer;
-    cudaMalloc(&buffer, sizeof(ClassWithSize<32768>*));
-    create_kernel<<<1, 1>>>(buffer);
-    delete_kernel<<<1, 1>>>(buffer);
-    cudaFree(buffer);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_new_on_gpu_32768);
-
-void benchmark_new_on_gpu_262144(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    ClassWithSize<262144>** buffer;
-    cudaMalloc(&buffer, sizeof(ClassWithSize<262144>*));
-    create_kernel<<<1, 1>>>(buffer);
-    delete_kernel<<<1, 1>>>(buffer);
-    cudaFree(buffer);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_new_on_gpu_262144);
-
-void benchmark_new_on_gpu_2097152(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    ClassWithSize<2097152>** buffer;
-    cudaMalloc(&buffer, sizeof(ClassWithSize<2097152>*));
-    create_kernel<<<1, 1>>>(buffer);
-    delete_kernel<<<1, 1>>>(buffer);
-    cudaFree(buffer);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_new_on_gpu_2097152);
+BENCHMARK_TEMPLATE(benchmark_new_on_gpu, 8);
+BENCHMARK_TEMPLATE(benchmark_new_on_gpu, 64);
+BENCHMARK_TEMPLATE(benchmark_new_on_gpu, 512);
+BENCHMARK_TEMPLATE(benchmark_new_on_gpu, 4096);
+BENCHMARK_TEMPLATE(benchmark_new_on_gpu, 32768);
+BENCHMARK_TEMPLATE(benchmark_new_on_gpu, 262144);
+BENCHMARK_TEMPLATE(benchmark_new_on_gpu, 2097152);
 
 // Benchmark current approach
 template <size_t N>
@@ -439,131 +254,35 @@ __global__ void delete_kernel_2(ClassWithSize<N>* address) {
    delete address;
 }
 
-void benchmark_new_on_gpu_and_copy_to_host_8(benchmark::State& state)
+template <size_t N>
+static void benchmark_new_on_gpu_and_copy_to_host(benchmark::State& state)
 {
   while (state.KeepRunning()) {
-    ClassWithSize<8>** gpuBuffer;
-    cudaMalloc(&gpuBuffer, sizeof(ClassWithSize<8>*));
+    ClassWithSize<N>** gpuBuffer;
+    cudaMalloc(&gpuBuffer, sizeof(ClassWithSize<N>*));
     create_kernel<<<1, 1>>>(gpuBuffer);
-    ClassWithSize<8>** cpuBuffer = (ClassWithSize<8>**) malloc(sizeof(ClassWithSize<8>*));
-    cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(ClassWithSize<8>*), cudaMemcpyDeviceToHost);
+    ClassWithSize<N>** cpuBuffer = (ClassWithSize<N>**) malloc(sizeof(ClassWithSize<N>*));
+    cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(ClassWithSize<N>*), cudaMemcpyDeviceToHost);
     cudaFree(gpuBuffer);
-    ClassWithSize<8>* gpuPointer = cpuBuffer[0];
-    delete_kernel_2<<<1, 1>>>(gpuPointer);
+    ClassWithSize<N>* gpuPointer = cpuBuffer[0];
     free(cpuBuffer);
+
+    state.PauseTiming();
+
+    delete_kernel_2<<<1, 1>>>(gpuPointer);
     cudaDeviceSynchronize();
+
+    state.ResumeTiming();
   }
 }
 
-BENCHMARK(benchmark_new_on_gpu_and_copy_to_host_8);
-
-void benchmark_new_on_gpu_and_copy_to_host_64(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    ClassWithSize<64>** gpuBuffer;
-    cudaMalloc(&gpuBuffer, sizeof(ClassWithSize<64>*));
-    create_kernel<<<1, 1>>>(gpuBuffer);
-    ClassWithSize<64>** cpuBuffer = (ClassWithSize<64>**) malloc(sizeof(ClassWithSize<64>*));
-    cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(ClassWithSize<64>*), cudaMemcpyDeviceToHost);
-    cudaFree(gpuBuffer);
-    ClassWithSize<64>* gpuPointer = cpuBuffer[0];
-    delete_kernel_2<<<1, 1>>>(gpuPointer);
-    free(cpuBuffer);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_new_on_gpu_and_copy_to_host_64);
-
-void benchmark_new_on_gpu_and_copy_to_host_512(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    ClassWithSize<512>** gpuBuffer;
-    cudaMalloc(&gpuBuffer, sizeof(ClassWithSize<512>*));
-    create_kernel<<<1, 1>>>(gpuBuffer);
-    ClassWithSize<512>** cpuBuffer = (ClassWithSize<512>**) malloc(sizeof(ClassWithSize<512>*));
-    cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(ClassWithSize<512>*), cudaMemcpyDeviceToHost);
-    cudaFree(gpuBuffer);
-    ClassWithSize<512>* gpuPointer = cpuBuffer[0];
-    delete_kernel_2<<<1, 1>>>(gpuPointer);
-    free(cpuBuffer);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_new_on_gpu_and_copy_to_host_512);
-
-void benchmark_new_on_gpu_and_copy_to_host_4096(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    ClassWithSize<4096>** gpuBuffer;
-    cudaMalloc(&gpuBuffer, sizeof(ClassWithSize<4096>*));
-    create_kernel<<<1, 1>>>(gpuBuffer);
-    ClassWithSize<4096>** cpuBuffer = (ClassWithSize<4096>**) malloc(sizeof(ClassWithSize<4096>*));
-    cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(ClassWithSize<4096>*), cudaMemcpyDeviceToHost);
-    cudaFree(gpuBuffer);
-    ClassWithSize<4096>* gpuPointer = cpuBuffer[0];
-    delete_kernel_2<<<1, 1>>>(gpuPointer);
-    free(cpuBuffer);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_new_on_gpu_and_copy_to_host_4096);
-
-void benchmark_new_on_gpu_and_copy_to_host_32768(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    ClassWithSize<32768>** gpuBuffer;
-    cudaMalloc(&gpuBuffer, sizeof(ClassWithSize<32768>*));
-    create_kernel<<<1, 1>>>(gpuBuffer);
-    ClassWithSize<32768>** cpuBuffer = (ClassWithSize<32768>**) malloc(sizeof(ClassWithSize<32768>*));
-    cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(ClassWithSize<32768>*), cudaMemcpyDeviceToHost);
-    cudaFree(gpuBuffer);
-    ClassWithSize<32768>* gpuPointer = cpuBuffer[0];
-    delete_kernel_2<<<1, 1>>>(gpuPointer);
-    free(cpuBuffer);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_new_on_gpu_and_copy_to_host_32768);
-
-void benchmark_new_on_gpu_and_copy_to_host_262144(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    ClassWithSize<262144>** gpuBuffer;
-    cudaMalloc(&gpuBuffer, sizeof(ClassWithSize<262144>*));
-    create_kernel<<<1, 1>>>(gpuBuffer);
-    ClassWithSize<262144>** cpuBuffer = (ClassWithSize<262144>**) malloc(sizeof(ClassWithSize<262144>*));
-    cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(ClassWithSize<262144>*), cudaMemcpyDeviceToHost);
-    cudaFree(gpuBuffer);
-    ClassWithSize<262144>* gpuPointer = cpuBuffer[0];
-    delete_kernel_2<<<1, 1>>>(gpuPointer);
-    free(cpuBuffer);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_new_on_gpu_and_copy_to_host_262144);
-
-void benchmark_new_on_gpu_and_copy_to_host_2097152(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    ClassWithSize<2097152>** gpuBuffer;
-    cudaMalloc(&gpuBuffer, sizeof(ClassWithSize<2097152>*));
-    create_kernel<<<1, 1>>>(gpuBuffer);
-    ClassWithSize<2097152>** cpuBuffer = (ClassWithSize<2097152>**) malloc(sizeof(ClassWithSize<2097152>*));
-    cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(ClassWithSize<2097152>*), cudaMemcpyDeviceToHost);
-    cudaFree(gpuBuffer);
-    ClassWithSize<2097152>* gpuPointer = cpuBuffer[0];
-    delete_kernel_2<<<1, 1>>>(gpuPointer);
-    free(cpuBuffer);
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_new_on_gpu_and_copy_to_host_2097152);
+BENCHMARK_TEMPLATE(benchmark_new_on_gpu_and_copy_to_host, 8);
+BENCHMARK_TEMPLATE(benchmark_new_on_gpu_and_copy_to_host, 64);
+BENCHMARK_TEMPLATE(benchmark_new_on_gpu_and_copy_to_host, 512);
+BENCHMARK_TEMPLATE(benchmark_new_on_gpu_and_copy_to_host, 4096);
+BENCHMARK_TEMPLATE(benchmark_new_on_gpu_and_copy_to_host, 32768);
+BENCHMARK_TEMPLATE(benchmark_new_on_gpu_and_copy_to_host, 262144);
+BENCHMARK_TEMPLATE(benchmark_new_on_gpu_and_copy_to_host, 2097152);
 
 // Benchmark how long it takes to create a stack object on the GPU
 template <size_t N>
@@ -571,75 +290,33 @@ __global__ void create_on_stack_kernel() {
    (void) ClassWithSize<N>();
 }
 
-void benchmark_create_on_stack_on_gpu_8(benchmark::State& state)
+template <size_t N>
+static void benchmark_create_on_stack_on_gpu(benchmark::State& state)
 {
   while (state.KeepRunning()) {
-    create_on_stack_kernel<8><<<1, 1>>>();
+    create_on_stack_kernel<N><<<1, 1>>>();
     cudaDeviceSynchronize();
   }
 }
 
-BENCHMARK(benchmark_create_on_stack_on_gpu_8);
+BENCHMARK_TEMPLATE(benchmark_create_on_stack_on_gpu, 8);
+BENCHMARK_TEMPLATE(benchmark_create_on_stack_on_gpu, 64);
+BENCHMARK_TEMPLATE(benchmark_create_on_stack_on_gpu, 512);
+BENCHMARK_TEMPLATE(benchmark_create_on_stack_on_gpu, 4096);
+BENCHMARK_TEMPLATE(benchmark_create_on_stack_on_gpu, 32768);
+BENCHMARK_TEMPLATE(benchmark_create_on_stack_on_gpu, 262144);
+BENCHMARK_TEMPLATE(benchmark_create_on_stack_on_gpu, 2097152);
 
-void benchmark_create_on_stack_on_gpu_64(benchmark::State& state)
+void benchmark_managed_ptr_use_gpu(benchmark::State& state)
 {
+  chai::managed_ptr<Base> helper = chai::make_managed<Derived>(2);
+
   while (state.KeepRunning()) {
-    create_on_stack_kernel<64><<<1, 1>>>();
-    cudaDeviceSynchronize();
+    forall(gpu(), 0, 1, [=] __device__ (int i) { (void) helper->getValue(); });
   }
+
+  helper.free();
 }
-
-BENCHMARK(benchmark_create_on_stack_on_gpu_64);
-
-void benchmark_create_on_stack_on_gpu_512(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    create_on_stack_kernel<512><<<1, 1>>>();
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_create_on_stack_on_gpu_512);
-
-void benchmark_create_on_stack_on_gpu_4096(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    create_on_stack_kernel<4096><<<1, 1>>>();
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_create_on_stack_on_gpu_4096);
-
-void benchmark_create_on_stack_on_gpu_32768(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    create_on_stack_kernel<32768><<<1, 1>>>();
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_create_on_stack_on_gpu_32768);
-
-void benchmark_create_on_stack_on_gpu_262144(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    create_on_stack_kernel<262144><<<1, 1>>>();
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_create_on_stack_on_gpu_262144);
-
-void benchmark_create_on_stack_on_gpu_2097152(benchmark::State& state)
-{
-  while (state.KeepRunning()) {
-    create_on_stack_kernel<2097152><<<1, 1>>>();
-    cudaDeviceSynchronize();
-  }
-}
-
-BENCHMARK(benchmark_create_on_stack_on_gpu_2097152);
 
 BENCHMARK(benchmark_managed_ptr_use_gpu);
 
