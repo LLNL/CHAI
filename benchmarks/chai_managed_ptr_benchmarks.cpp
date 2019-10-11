@@ -172,6 +172,36 @@ BENCHMARK_TEMPLATE(benchmark_pass_copy_to_gpu, 64);
 BENCHMARK_TEMPLATE(benchmark_pass_copy_to_gpu, 512);
 BENCHMARK_TEMPLATE(benchmark_pass_copy_to_gpu, 4096);
 
+template <size_t N>
+static void benchmark_copy_to_gpu(benchmark::State& state)
+{
+  ClassWithSize<N>* cpuPointer = new ClassWithSize<N>();
+
+  while (state.KeepRunning()) {
+    ClassWithSize<N>* gpuPointer;
+    cudaMalloc(&gpuPointer, sizeof(ClassWithSize<N>));
+    cudaMemcpy(gpuPointer, cpuPointer, sizeof(ClassWithSize<N>), cudaMemcpyHostToDevice);
+    cudaDeviceSynchronize();
+
+    state.PauseTiming();
+
+    cudaFree(gpuPointer);
+    cudaDeviceSynchronize();
+
+    state.ResumeTiming();
+  }
+
+  delete cpuPointer;
+}
+
+BENCHMARK_TEMPLATE(benchmark_copy_to_gpu, 8);
+BENCHMARK_TEMPLATE(benchmark_copy_to_gpu, 64);
+BENCHMARK_TEMPLATE(benchmark_copy_to_gpu, 512);
+BENCHMARK_TEMPLATE(benchmark_copy_to_gpu, 4096);
+BENCHMARK_TEMPLATE(benchmark_copy_to_gpu, 32768);
+BENCHMARK_TEMPLATE(benchmark_copy_to_gpu, 262144);
+BENCHMARK_TEMPLATE(benchmark_copy_to_gpu, 2097152);
+
 // Benchmark how long it takes to call placement new on the GPU
 template <size_t N>
 __global__ void placement_new_kernel(ClassWithSize<N>* address) {
