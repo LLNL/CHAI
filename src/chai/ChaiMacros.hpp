@@ -50,6 +50,7 @@
 #define CHAI_HOST __host__
 #define CHAI_DEVICE __device__
 #define CHAI_HOST_DEVICE __device__ __host__
+#define CHAI_DEVICE_CODE defined(__CUDA_ARCH__)
 
 #elif defined(CHAI_ENABLE_HIP) && defined(__HIPCC__)
 
@@ -58,12 +59,14 @@
 #define CHAI_HOST __host__
 #define CHAI_DEVICE __device__
 #define CHAI_HOST_DEVICE __device__ __host__
+#define CHAI_DEVICE_CODE defined(__HIP_DEVICE_COMPILE__)
 
 #else
 
 #define CHAI_HOST
 #define CHAI_DEVICE
 #define CHAI_HOST_DEVICE
+#define CHAI_DEVICE_CODE
 
 #endif
 
