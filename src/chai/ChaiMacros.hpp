@@ -9,6 +9,8 @@
 
 #include "chai/config.hpp"
 
+#include "umpire/util/Macros.hpp"
+
 #if defined(CHAI_ENABLE_CUDA) && defined(__CUDACC__)
 
 #define CHAI_HOST __host__
@@ -35,11 +37,23 @@
 
 #define CHAI_UNUSED_ARG(X)
 
-#ifdef DEBUG
-#define CHAI_LOG(file, msg) \
-  std::cerr << "[" << file << "] " << msg << std::endl;
+#if !defined(CHAI_DISABLE_RM)
+
+#define CHAI_LOG(level, msg) \
+  UMPIRE_LOG(level, msg);
+
 #else
-#define CHAI_LOG(file, msg)
+
+#if defined(DEBUG)
+
+#define CHAI_LOG(level, msg) \
+  std::cerr << "[" << __FILE__ << "] " << msg << std::endl;
+
+#else
+
+#define CHAI_LOG(level, msg)
+
+#endif
 #endif
 
 #endif  // CHAI_ChaiMacros_HPP
