@@ -85,11 +85,10 @@ void ArrayManager::registerPointer(
    ExecutionSpace space,
    bool owned)
 {
-  CHAI_LOG(Debug, "Registering " << pointer << " in space " << space);
-
   std::lock_guard<std::mutex> lock(m_mutex);
-
   auto pointer = record->m_pointers[space];
+
+  CHAI_LOG(Debug, "Registering " << pointer << " in space " << space);
 
   m_pointer_map.insert(pointer, record);
   //record->m_last_space = space;
@@ -150,7 +149,7 @@ void ArrayManager::registerTouch(PointerRecord* pointer_record)
 void ArrayManager::registerTouch(PointerRecord* pointer_record,
                                  ExecutionSpace space)
 {
-  CHAI_LOG(Debug, pointer << " touched in space " << space);
+  CHAI_LOG(Debug, pointer_record->m_pointers[space] << " touched in space " << space);
 
   if (space != NONE) {
     std::lock_guard<std::mutex> lock(m_mutex);
@@ -216,7 +215,7 @@ void ArrayManager::allocate(
 
   registerPointer(pointer_record, space);
 
-  CHAI_LOG(Debug, "Allocated array at: " << ret);
+  CHAI_LOG(Debug, "Allocated array at: " << pointer_record->m_pointers[space]);
 }
 
 void ArrayManager::free(PointerRecord* pointer_record)
