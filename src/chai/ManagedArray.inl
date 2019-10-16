@@ -197,7 +197,7 @@ CHAI_HOST ManagedArray<T> ManagedArray<T>::slice(size_t offset, size_t elems) {
   ManagedArray<T> slice(nullptr);
   slice.m_resource_manager = m_resource_manager;
   if(offset + elems > size()) {
-    CHAI_LOG("ManagedArray", "Invalid slice. No active pointer or index out of bounds");
+    CHAI_LOG(Debug, "Invalid slice. No active pointer or index out of bounds");
   } else {
     slice.m_pointer_record = m_pointer_record;
     slice.m_active_base_pointer = m_active_base_pointer;
@@ -216,7 +216,7 @@ CHAI_HOST void ManagedArray<T>::allocate(
     const UserCallback& cback) 
 {
   if(!m_is_slice) {
-    CHAI_LOG("ManagedArray", "Allocating array of size " << elems << " in space " << space);
+    CHAI_LOG(Debug, "Allocating array of size " << elems << " in space " << space);
 
     if (space == NONE) {
       space = m_resource_manager->getDefaultAllocationSpace();
@@ -231,7 +231,7 @@ CHAI_HOST void ManagedArray<T>::allocate(
     m_active_base_pointer = static_cast<T*>(m_pointer_record->m_pointers[space]);
     m_active_pointer = m_active_base_pointer; // Cannot be a slice
 
-    CHAI_LOG("ManagedArray", "m_active_ptr allocated at address: " << m_active_pointer);
+    CHAI_LOG(Debug, "m_active_ptr allocated at address: " << m_active_pointer);
   }
 }
 
@@ -240,7 +240,7 @@ CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::reallocate(size_t elems)
 {
   if(!m_is_slice) {
-    CHAI_LOG("ManagedArray", "Reallocating array of size " << m_elems << " with new size" << elems);
+    CHAI_LOG(Debug, "Reallocating array of size " << m_elems << " with new size" << elems);
 
     m_elems = elems;
     m_active_base_pointer =
@@ -248,7 +248,7 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t elems)
                                                       m_pointer_record));
     m_active_pointer = m_active_base_pointer; // Cannot be a slice
 
-    CHAI_LOG("ManagedArray", "m_active_ptr reallocated at address: " << m_active_pointer);
+    CHAI_LOG(Debug, "m_active_ptr reallocated at address: " << m_active_pointer);
   }
 }
 
@@ -260,7 +260,7 @@ CHAI_HOST void ManagedArray<T>::free()
     m_resource_manager->free(m_pointer_record);
     m_pointer_record = nullptr;
   } else {
-    CHAI_LOG("ManagedArray", "Cannot free a slice!");
+    CHAI_LOG(Debug, "Cannot free a slice!");
   }
 }
 
@@ -371,7 +371,7 @@ void ManagedArray<T>::move(ExecutionSpace space)
   m_active_pointer = m_active_base_pointer + m_offset;
 
   if (!std::is_const<T>::value) {
-    CHAI_LOG("ManagedArray", "T is non-const, registering touch of pointer" << m_active_pointer);
+    CHAI_LOG(Debug, "T is non-const, registering touch of pointer" << m_active_pointer);
     m_resource_manager->registerTouch(m_pointer_record, space);
   }
 
