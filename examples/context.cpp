@@ -70,20 +70,28 @@ int main()
   for (auto array : arrays) {
     auto clock_lambda_2 = [=] CHAI_HOST_DEVICE (int idx) {
       array[idx] *= array[idx];
+      printf("%i ", array[idx]);
     };
     camp::devices::Context ctx{camp::devices::Host{}}; 
     auto e = forall(&ctx, 0, ARRAY_SIZE, clock_lambda_2);
   }
 
+  for(auto array : arrays) {
+    auto p = array.getActiveBasePointer();
+    auto a = chai::ArrayManager::getPointerRecord((void *)p); 
+    std::cout << a << std::endl;
+  }
+
   //std::cout << "printing..." << std::endl;
   for (auto array : arrays) {
-    auto print = [=] (int idx) {
-      int val = array[idx];
-      std::cout<< val << " ";
-      //printf("%i ", array[idx]);
+    auto print = [=] CHAI_HOST_DEVICE (int idx) {
+      float val = array[idx];
+      //std::cout<< val << " ";
+      printf("%i ", array[idx]);
     };
-    //camp::devices::Context ctx{camp::devices::Host{}}; 
-    forall(sequential(), 0, ARRAY_SIZE, print);
+    camp::devices::Context ctx{camp::devices::Host{}}; 
+    forall(&ctx, 0, ARRAY_SIZE, print);
+    //forall(sequential(), 0, ARRAY_SIZE, print);
     std::cout << std::endl;
   }
 
