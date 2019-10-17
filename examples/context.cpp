@@ -30,7 +30,7 @@ int main()
 
 
 
-  const int NUM_ARRAYS = 2;
+  const int NUM_ARRAYS = 1;
   const int ARRAY_SIZE = 10;
   std::vector< chai::ManagedArray<float> > arrays;
   std::vector< camp::devices::Context > cuda_ctx;
@@ -75,11 +75,15 @@ int main()
     auto e = forall(&ctx, 0, ARRAY_SIZE, clock_lambda_2);
   }
 
-  std::cout << "printing..." << std::endl;
+  //std::cout << "printing..." << std::endl;
   for (auto array : arrays) {
-    for (int i = 0; i < ARRAY_SIZE; i++) {
-      std::cout<< array[i] << " ";
-    }
+    auto print = [=] (int idx) {
+      int val = array[idx];
+      std::cout<< val << " ";
+      //printf("%i ", array[idx]);
+    };
+    //camp::devices::Context ctx{camp::devices::Host{}}; 
+    forall(sequential(), 0, ARRAY_SIZE, print);
     std::cout << std::endl;
   }
 
