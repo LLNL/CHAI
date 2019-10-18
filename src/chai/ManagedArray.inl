@@ -364,7 +364,7 @@ void ManagedArray<T>::move(ExecutionSpace space, camp::devices::Context* context
   m_active_pointer = m_active_base_pointer + m_offset;
 
   if (!std::is_const<T>::value) {
-    CHAI_LOG("ManagedArray", "T is non-const, registering touch of pointer" << m_active_pointer);
+    CHAI_LOG(Debug, "T is non-const, registering touch of pointer" << m_active_pointer);
     m_resource_manager->registerTouch(m_pointer_record, space);
   }
 
