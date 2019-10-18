@@ -41,57 +41,36 @@ int main()
 
   std::cout << "calling forall with cuda context" << std::endl;
   for (auto array : arrays) {
-  //for (int i = 0; i < NUM_ARRAYS; i++) {
-  //  auto array = arrays[i]; auto ctx = &cuda_ctx[i];
-
     camp::devices::Context ctx{camp::devices::Cuda()};
-    auto clock_lambda_1 = [=] CHAI_HOST_DEVICE (int idx) {
+    auto e = forall(&ctx, 0, ARRAY_SIZE, [=] CHAI_HOST_DEVICE (int idx) {
       array[idx] = idx * 2;
       unsigned int start_clock = (unsigned int) clock();
       clock_t clock_offset = 0;
-      while (clock_offset < time_clocks)
-      {
-	unsigned int end_clock = (unsigned int) clock();
-	clock_offset = (clock_t)(end_clock - start_clock);
+      while (clock_offset < time_clocks) {
+        unsigned int end_clock = (unsigned int) clock();
+        clock_offset = (clock_t)(end_clock - start_clock);
       }
-    };
-
-    auto e = forall(&ctx, 0, ARRAY_SIZE, clock_lambda_1);
+    });
     array.move(chai::CPU, &ctx); // asynchronous move
   }
 
-
-  //for (int i = 0; i < NUM_ARRAYS; i++) {
-  //  auto array = arrays[i]; auto ctx = &cuda_ctx[i];
-  //  array.move(chai::CPU, ctx); // asynchronous move
-  //}
-
   std::cout << "calling forall with host context" << std::endl;
+
   for (auto array : arrays) {
-    auto clock_lambda_2 = [=] CHAI_HOST_DEVICE (int idx) {
+    camp::devices::Context ctx{camp::devices::Host{}}; 
+    auto e = forall(&ctx, 0, ARRAY_SIZE, [=] CHAI_HOST_DEVICE (int idx) {
       array[idx] *= array[idx];
       printf("%i ", array[idx]);
-    };
-    camp::devices::Context ctx{camp::devices::Host{}}; 
-    auto e = forall(&ctx, 0, ARRAY_SIZE, clock_lambda_2);
+    });
   }
 
-  for(auto array : arrays) {
-    auto p = array.getActiveBasePointer();
-    auto a = chai::ArrayManager::getPointerRecord((void *)p); 
-    std::cout << a << std::endl;
-  }
-
-  //std::cout << "printing..." << std::endl;
+  std::cout << "printing..." << std::endl;
   for (auto array : arrays) {
-    auto print = [=] CHAI_HOST_DEVICE (int idx) {
-      float val = array[idx];
-      //std::cout<< val << " ";
-      printf("%i ", array[idx]);
-    };
     camp::devices::Context ctx{camp::devices::Host{}}; 
-    forall(&ctx, 0, ARRAY_SIZE, print);
-    //forall(sequential(), 0, ARRAY_SIZE, print);
+    forall(&ctx, 0, ARRAY_SIZE, [=] CHAI_HOST_DEVICE (int idx) {
+      float val = array[idx];
+      printf("%i ", array[idx]);
+    });
     std::cout << std::endl;
   }
 
