@@ -213,7 +213,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::devic
   }
 #endif
 
-  if (space == record->m_last_space) {
+  if (space == record->m_last_space && !record->transfer_pending) {
     return;
   }
 
@@ -237,7 +237,10 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::devic
       // record->m_last_context->wait_on(&record->m_event);
       record->m_event.wait();
       record->transfer_pending = false;
+
+      return;
     }
+
     camp::devices::Context* ctx;
     if (space == chai::CPU){
       ctx = record->m_last_context;
