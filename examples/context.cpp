@@ -29,7 +29,6 @@ int main()
 #endif
 
 
-
   const int NUM_ARRAYS = 1;
   const int ARRAY_SIZE = 10;
   std::vector< chai::ManagedArray<float> > arrays;
@@ -37,6 +36,37 @@ int main()
   for (int i = 0; i < NUM_ARRAYS; i++) {
     arrays.push_back(chai::ManagedArray<float>(10, chai::GPU));
     cuda_ctx.push_back(camp::devices::Context{camp::devices::Cuda()});
+  }
+
+  std::cout << "Setting all = 10 w/ Context\n";
+  for (auto array : arrays) {
+    auto clock_lambda_2 = [=] CHAI_HOST_DEVICE (int idx) {
+      array[idx] = 10;
+    };
+    camp::devices::Context ctx{camp::devices::Host{}}; 
+    auto e = forall(&ctx, 0, ARRAY_SIZE, clock_lambda_2);
+  }
+
+  std::cout << "std cout WITHOUT Context : ";
+  for (auto array : arrays) {
+    auto print = [=] (int idx) {
+      float val = array[idx];
+      std::cout<< val << " ";
+    };
+    camp::devices::Context ctx{camp::devices::Host{}}; 
+    forall(sequential(), 0, ARRAY_SIZE, print);
+    std::cout << std::endl;
+  }
+
+  std::cout << "printf w/ Context        : ";
+  for (auto array : arrays) {
+    auto print = [=] CHAI_HOST_DEVICE (int idx) {
+      float val = array[idx];
+      printf("%i ", array[idx]);
+    };
+    camp::devices::Context ctx{camp::devices::Host{}}; 
+    forall(&ctx, 0, ARRAY_SIZE, print);
+    printf("\n");
   }
 
   std::cout << "calling forall with cuda context" << std::endl;
@@ -60,41 +90,35 @@ int main()
     array.move(chai::CPU, &ctx); // asynchronous move
   }
 
-
-  //for (int i = 0; i < NUM_ARRAYS; i++) {
-  //  auto array = arrays[i]; auto ctx = &cuda_ctx[i];
-  //  array.move(chai::CPU, ctx); // asynchronous move
-  //}
-
   std::cout << "calling forall with host context" << std::endl;
   for (auto array : arrays) {
     auto clock_lambda_2 = [=] CHAI_HOST_DEVICE (int idx) {
       array[idx] *= array[idx];
-      printf("%i ", array[idx]);
     };
     camp::devices::Context ctx{camp::devices::Host{}}; 
     auto e = forall(&ctx, 0, ARRAY_SIZE, clock_lambda_2);
   }
 
-  for(auto array : arrays) {
-    auto p = array.getActiveBasePointer();
-    auto a = chai::ArrayManager::getPointerRecord((void *)p); 
-    std::cout << a << std::endl;
-  }
-
-  //std::cout << "printing..." << std::endl;
+  std::cout << "printf w/ Context        : ";
   for (auto array : arrays) {
     auto print = [=] CHAI_HOST_DEVICE (int idx) {
       float val = array[idx];
-      //std::cout<< val << " ";
       printf("%i ", array[idx]);
     };
     camp::devices::Context ctx{camp::devices::Host{}}; 
     forall(&ctx, 0, ARRAY_SIZE, print);
-    //forall(sequential(), 0, ARRAY_SIZE, print);
+    printf("\n");
+  }
+  std::cout << "std cout WITHOUT Context : ";
+  for (auto array : arrays) {
+    auto print = [=] (int idx) {
+      float val = array[idx];
+      std::cout<< val << " ";
+    };
+    camp::devices::Context ctx{camp::devices::Host{}}; 
+    forall(sequential(), 0, ARRAY_SIZE, print);
     std::cout << std::endl;
   }
-
   for (auto a : arrays) a.free();
   return 0;
 }
