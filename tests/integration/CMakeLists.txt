@@ -30,3 +30,18 @@ target_include_directories(
 blt_add_test(
   NAME managed_array_test
   COMMAND managed_array_tests)
+
+if (ENABLE_CUDA)
+blt_add_executable(
+  NAME managed_array_context_tests
+  SOURCES managed_array_context_tests.cpp
+  DEPENDS_ON ${managed_array_test_depends})
+
+target_include_directories(
+  managed_array_context_tests
+  PUBLIC ${PROJECT_BINARY_DIR}/include)
+
+blt_add_test(
+  NAME managed_array_context_test
+  COMMAND managed_array_context_tests)
+endif ()

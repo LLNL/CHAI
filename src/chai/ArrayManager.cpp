@@ -252,6 +252,9 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::devic
     if (space == chai::CPU && chai::GPU == context->get_platform()){
       record->transfer_pending = true;
       record->m_event = e;
+    } else if ( (space == chai::CPU)
+        && (chai::CPU == context->get_platform())) {
+      e.wait();
     }
     
     //if (transfer_pending) context->wait_on(&e);
