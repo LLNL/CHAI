@@ -244,9 +244,9 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::devic
       ctx = context; 
     }
     auto e = m_resource_manager.copy(dst_pointer, src_pointer, *ctx);
-    //if (space == chai::CPU){
-    //  e.wait();
-    //}
+    if (space == chai::CPU){
+      e.wait();
+    }
     if (space == chai::CPU && chai::GPU == context->get_platform()){
       record->transfer_pending = true;
       record->m_event = e;

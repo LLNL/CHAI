@@ -27,7 +27,6 @@ struct gpu {
 template <typename LOOP_BODY>
 void forall_kernel_cpu(int begin, int end, LOOP_BODY body)
 {
-  std::cout<<"for all loop"<<std::endl;
   for (int i = 0; i < (end - begin); ++i) {
     body(i);
   }
@@ -63,7 +62,6 @@ camp::devices::Event forall_host(camp::devices::Context* dev, int begin, int end
   rm->setExecutionSpace(chai::CPU, dev);
 
   auto host = dev->get<camp::devices::Host>();
-  std::cout << "forall kernel cpu call\n";
   forall_kernel_cpu(begin, end, body);
 
   rm->setExecutionSpace(chai::NONE);
@@ -140,7 +138,6 @@ camp::devices::Event forall(camp::devices::Context *con, int begin, int end, LOO
     case camp::devices::Platform::hip:
 	return forall_gpu(con, begin, end, body);
     default:
-	std::cout << "forall  host\n";
 	return forall_host(con, begin, end, body);
   }
 }
