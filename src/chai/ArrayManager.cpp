@@ -234,7 +234,8 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::devic
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (space == chai::CPU && record->transfer_pending) {
-      record->m_last_context->wait_on(&record->m_event);
+      // record->m_last_context->wait_on(&record->m_event);
+      record->m_event.wait();
       record->transfer_pending = false;
     }
     camp::devices::Context* ctx;
@@ -244,9 +245,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::devic
       ctx = context; 
     }
     auto e = m_resource_manager.copy(dst_pointer, src_pointer, *ctx);
-    if (space == chai::CPU){
-      e.wait();
-    }
+
     if (space == chai::CPU && chai::GPU == context->get_platform()){
       record->transfer_pending = true;
       record->m_event = e;
