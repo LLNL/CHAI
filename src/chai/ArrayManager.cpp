@@ -252,6 +252,12 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
     }else{
       ctx = context; 
     }
+
+    if (ctx == nullptr){
+      m_resource_manager.copy(dst_pointer, src_pointer);
+      return;
+    }
+
     auto e = m_resource_manager.copy(dst_pointer, src_pointer, *ctx);
 
     if (space == chai::CPU && context->is_async()){
