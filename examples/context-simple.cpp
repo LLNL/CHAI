@@ -2,41 +2,78 @@
 #include "../src/util/forall.hpp"
 #include "chai/ManagedArray.hpp"
 
+#include <vector>
+#include <utility>
+
+inline __host__ __device__ void
+wait_for(float time, float clockrate) {
+  clock_t time_in_clocks = time*clockrate;
+
+  unsigned int start_clock = (unsigned int) clock();
+  clock_t clock_offset = 0;
+  while (clock_offset < time_in_clocks)
+  {
+    unsigned int end_clock = (unsigned int) clock();
+    clock_offset = (clock_t)(end_clock - start_clock);
+  }
+}
+
+int get_clockrate()
+{
+  int cuda_device = 0;
+  cudaDeviceProp deviceProp;
+  cudaGetDevice(&cuda_device);
+  cudaGetDeviceProperties(&deviceProp, cuda_device);
+  if ((deviceProp.concurrentKernels == 0))
+  {
+    printf("> GPU does not support concurrent kernel execution\n");
+    printf("  CUDA kernel runs will be serialized\n");
+  }
+  printf("> Detected Compute SM %d.%d hardware with %d multi-processors\n",
+      deviceProp.major, deviceProp.minor, deviceProp.multiProcessorCount);
+
+#if defined(__arm__) || defined(__aarch64__)
+  return deviceProp.clockRate/1000;
+#else
+  return deviceProp.clockRate;
+#endif
+}
+
 int main()
 {
+  constexpr std::size_t ARRAY_SIZE{1000000};
+  std::vector<chai::ManagedArray<double>> arrays;
   camp::devices::Context host{camp::devices::Host{}}; 
 
-  camp::devices::Context device_one{camp::devices::Cuda{}}; 
-  camp::devices::Context device_two{camp::devices::Cuda{}}; 
+  int clockrate{get_clockrate()};
 
-  constexpr std::size_t ARRAY_SIZE{1024};
+  for (std::size_t i = 0; i < 8; ++i) {
+    arrays.push_back(chai::ManagedArray<double>(ARRAY_SIZE));
+  }
 
-  chai::ManagedArray<double> array_one(ARRAY_SIZE);
-  chai::ManagedArray<double> array_two(ARRAY_SIZE);
+  for (auto array : arrays) {
+    // set on host
+    forall(&host, 0, ARRAY_SIZE, [=] __host__ __device__ (int i) {
+        array[i] = i;
+    }); 
+  }
 
-  // set on host
-  forall(&host, 0, ARRAY_SIZE, [=] __host__ __device__ (int i) {
-      array_one[i] = i;
-      array_two[i] = i;
-  }); 
+  for (auto array : arrays) {
+    camp::devices::Context context{camp::devices::Cuda{}}; 
 
+    forall(&context, 0, ARRAY_SIZE, [=] __host__ __device__ (int i) {
+        array[i] = array[i] * 2.0;
+        wait_for(1000, clockrate);
+    });
 
-  // double on device
-  forall(&device_one, 0, ARRAY_SIZE, [=] __host__ __device__ (int i) {
-      array_one[i] = array_one[i] * 2.0;
-  });
-  forall(&device_two, 0, ARRAY_SIZE, [=] __host__ __device__ (int i) {
-      array_two[i] = array_two[i] / 2.0;
-  });
+    array.move(chai::CPU, &context);
+  }
 
-  array_one.move(chai::CPU, &device_one);
-  array_two.move(chai::CPU, &device_two);
-
-  // print on host
-  forall(&host, 0, ARRAY_SIZE, [=] __host__ __device__ (int i) {
-      if (i == 256) {
-        printf("array_one[%d] = %f \n", i, array_one[i]);
-        printf("array_two[%d] = %f \n", i, array_two[i]);
-      }
-  }); 
+  for (auto array : arrays) {
+    forall(&host, 255, 257, [=] __host__ __device__ (int i) {
+        if (i == 256) {
+          printf("array[%d] = %f \n", i, array[i]);
+        }
+    }); 
+  }
 }
