@@ -41,7 +41,7 @@ int get_clockrate()
 
 int main()
 {
-  constexpr std::size_t ARRAY_SIZE{1000000};
+  constexpr std::size_t ARRAY_SIZE{1000};
   std::vector<chai::ManagedArray<double>> arrays;
   camp::resources::Context host{camp::resources::Host{}}; 
 
@@ -63,7 +63,7 @@ int main()
 
     forall(&context, 0, ARRAY_SIZE, [=] __host__ __device__ (int i) {
         array[i] = array[i] * 2.0;
-        wait_for(1000, clockrate);
+        wait_for(20, clockrate);
     });
 
     array.move(chai::CPU, &context);
