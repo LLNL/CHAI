@@ -11,7 +11,7 @@
 #include "chai/ExecutionSpaces.hpp"
 #include "chai/config.hpp"
 //#include "camp/device.hpp"
-#include "camp/device.hpp"
+#include "camp/resources.hpp"
 
 #if defined(CHAI_ENABLE_UM)
 #include <cuda_runtime_api.h>
@@ -51,7 +51,7 @@ void forall(sequential, int begin, int end, LOOP_BODY body)
   rm->setExecutionSpace(chai::NONE);
 }
 template <typename LOOP_BODY>
-camp::devices::Event forall_host(camp::devices::Context* dev, int begin, int end, LOOP_BODY body)
+camp::resources::Event forall_host(camp::resources::Context* dev, int begin, int end, LOOP_BODY body)
 {
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
 
@@ -61,7 +61,7 @@ camp::devices::Event forall_host(camp::devices::Context* dev, int begin, int end
 
   rm->setExecutionSpace(chai::CPU, dev);
 
-  auto host = dev->get<camp::devices::Host>();
+  auto host = dev->get<camp::resources::Host>();
   forall_kernel_cpu(begin, end, body);
 
   rm->setExecutionSpace(chai::NONE);
@@ -106,7 +106,7 @@ void forall(gpu, int begin, int end, LOOP_BODY&& body)
   rm->setExecutionSpace(chai::NONE);
 }
 template <typename LOOP_BODY>
-camp::devices::Event forall_gpu(camp::devices::Context* dev, int begin, int end, LOOP_BODY&& body)
+camp::resources::Event forall_gpu(camp::resources::Context* dev, int begin, int end, LOOP_BODY&& body)
 {
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
 
@@ -116,7 +116,7 @@ camp::devices::Event forall_gpu(camp::devices::Context* dev, int begin, int end,
   size_t gridSize = (end - begin + blockSize - 1) / blockSize;
 
 //#if defined(CHAI_ENABLE_CUDA)
-  auto cuda = dev->get<camp::devices::Cuda>();
+  auto cuda = dev->get<camp::resources::Cuda>();
   forall_kernel_gpu<<<gridSize, blockSize, 0, cuda.get_stream()>>>(begin, end - begin, body);
 //#elif defined(CHAI_ENABLE_HIP)
 //  hipLaunchKernelGGL(forall_kernel_gpu, dim3(gridSize), dim3(blockSize), 0,0,
@@ -130,12 +130,12 @@ camp::devices::Event forall_gpu(camp::devices::Context* dev, int begin, int end,
 #endif // if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 
 template <typename LOOP_BODY>
-camp::devices::Event forall(camp::devices::Context *con, int begin, int end, LOOP_BODY&& body)
+camp::resources::Event forall(camp::resources::Context *con, int begin, int end, LOOP_BODY&& body)
 {
   auto platform = con->get_platform();
   switch(platform) {
-    case camp::devices::Platform::cuda:
-    case camp::devices::Platform::hip:
+    case camp::resources::Platform::cuda:
+    case camp::resources::Platform::hip:
 	return forall_gpu(con, begin, end, body);
     default:
 	return forall_host(con, begin, end, body);

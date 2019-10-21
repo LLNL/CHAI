@@ -1,4 +1,4 @@
-#include "camp/device.hpp"
+#include "camp/resources.hpp"
 #include "../src/util/forall.hpp"
 #include "chai/ManagedArray.hpp"
 #include <cuda_profiler_api.h>
@@ -36,7 +36,7 @@ int main()
   std::cout << "calling forall with cuda context" << std::endl;
   for (auto array : arrays) {
 
-    camp::devices::Context ctx{camp::devices::Cuda()};
+    camp::resources::Context ctx{camp::resources::Cuda()};
     auto clock_lambda_1 = [=] CHAI_HOST_DEVICE (int idx) {
       array[idx] = idx * 2;
       unsigned int start_clock = (unsigned int) clock();
@@ -57,7 +57,7 @@ int main()
     auto clock_lambda_2 = [=] CHAI_HOST_DEVICE (int idx) {
       array[idx] *= array[idx];
     };
-    camp::devices::Context ctx{camp::devices::Host{}}; 
+    camp::resources::Context ctx{camp::resources::Host{}}; 
     auto e = forall(&ctx, 0, ARRAY_SIZE, clock_lambda_2);
   }
 
@@ -66,7 +66,7 @@ int main()
       float val = array[idx];
       std::cout<< val << " ";
     };
-    camp::devices::Context ctx{camp::devices::Host{}}; 
+    camp::resources::Context ctx{camp::resources::Host{}}; 
     forall(sequential(), 0, ARRAY_SIZE, print);
     std::cout << std::endl;
   }

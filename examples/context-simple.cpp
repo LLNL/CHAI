@@ -1,4 +1,4 @@
-#include "camp/device.hpp"
+#include "camp/resources.hpp"
 #include "../src/util/forall.hpp"
 #include "chai/ManagedArray.hpp"
 
@@ -43,7 +43,7 @@ int main()
 {
   constexpr std::size_t ARRAY_SIZE{1000000};
   std::vector<chai::ManagedArray<double>> arrays;
-  camp::devices::Context host{camp::devices::Host{}}; 
+  camp::resources::Context host{camp::resources::Host{}}; 
 
   int clockrate{get_clockrate()};
 
@@ -59,7 +59,7 @@ int main()
   }
 
   for (auto array : arrays) {
-    camp::devices::Context context{camp::devices::Cuda{}}; 
+    camp::resources::Context context{camp::resources::Cuda{}}; 
 
     forall(&context, 0, ARRAY_SIZE, [=] __host__ __device__ (int i) {
         array[i] = array[i] * 2.0;

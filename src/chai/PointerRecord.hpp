@@ -10,7 +10,7 @@
 #include "chai/ExecutionSpaces.hpp"
 #include "chai/Types.hpp"
 
-#include "camp/device.hpp"
+#include "camp/resources.hpp"
 
 #include <cstddef>
 #include <functional>
@@ -60,8 +60,8 @@ struct PointerRecord {
 
 
   bool transfer_pending;
-  camp::devices::Event m_event;
-  camp::devices::Context* m_last_context = nullptr;
+  camp::resources::Event m_event;
+  camp::resources::Context* m_last_context = nullptr;
 };
 
 }  // end of namespace chai
