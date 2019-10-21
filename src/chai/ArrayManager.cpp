@@ -83,7 +83,7 @@ void ArrayManager::setExecutionSpace(ExecutionSpace space)
   m_current_execution_space = space;
 }
 
-void ArrayManager::setExecutionSpace(ExecutionSpace space, camp::devices::Context* context)
+void ArrayManager::setExecutionSpace(ExecutionSpace space, camp::resources::Context* context)
 {
   CHAI_LOG(Debug, "Setting execution space to " << space);
   std::lock_guard<std::mutex> lock(m_mutex);
@@ -111,7 +111,7 @@ void* ArrayManager::move(void* pointer,
 }
 void* ArrayManager::move(void* pointer,
                          PointerRecord* pointer_record,
-                         camp::devices::Context* context,
+                         camp::resources::Context* context,
 			 ExecutionSpace space)
 {
   // Check for default arg (NONE)
@@ -134,7 +134,7 @@ ExecutionSpace ArrayManager::getExecutionSpace()
   return m_current_execution_space;
 }
 
-camp::devices::Context* ArrayManager::getContext()
+camp::resources::Context* ArrayManager::getContext()
 {
   return m_current_context;
 }
@@ -201,7 +201,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 
   resetTouch(record);
 }
-void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::devices::Context* context)
+void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resources::Context* context)
 {
   if (space == NONE) {
     return;
@@ -227,7 +227,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::devic
   }
 
   if (!record->m_touched[record->m_last_space]) {
-//    auto dev = context->get<camp::devices::Host>();
+//    auto dev = context->get<camp::resources::Host>();
     return;
   } else {
     callback(record, ACTION_MOVE, space, record->m_size);
@@ -241,7 +241,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::devic
       return;
     }
 
-    camp::devices::Context* ctx;
+    camp::resources::Context* ctx;
     if (space == chai::CPU){
       ctx = record->m_last_context;
     }else{
@@ -249,7 +249,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::devic
     }
     auto e = m_resource_manager.copy(dst_pointer, src_pointer, *ctx);
 
-    if (space == chai::CPU && chai::GPU == context->get_platform()){
+    if (space == chai::CPU && context->is_async()){
       record->transfer_pending = true;
       record->m_event = e;
     }

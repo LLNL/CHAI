@@ -351,7 +351,7 @@ void ManagedArray<T>::move(ExecutionSpace space)
 template <typename T>
 CHAI_INLINE
 CHAI_HOST
-void ManagedArray<T>::move(ExecutionSpace space, camp::devices::Context* context)
+void ManagedArray<T>::move(ExecutionSpace space, camp::resources::Context* context)
 {
   ExecutionSpace prev_space = m_pointer_record->m_last_space;
 

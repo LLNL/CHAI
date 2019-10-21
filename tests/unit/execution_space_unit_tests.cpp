@@ -48,33 +48,33 @@
 
 TEST(ExecutionSpace, Platforms)
 {
-  ASSERT_TRUE(chai::CPU == camp::devices::Platform::host);
-  ASSERT_FALSE(chai::CPU == camp::devices::Platform::undefined);
+  ASSERT_TRUE(chai::CPU == camp::resources::Platform::host);
+  ASSERT_FALSE(chai::CPU == camp::resources::Platform::undefined);
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-  ASSERT_TRUE(chai::GPU == camp::devices::Platform::cuda);
-  ASSERT_TRUE(chai::GPU == camp::devices::Platform::hip);
-  ASSERT_FALSE(chai::GPU == camp::devices::Platform::undefined);
+  ASSERT_TRUE(chai::GPU == camp::resources::Platform::cuda);
+  ASSERT_TRUE(chai::GPU == camp::resources::Platform::hip);
+  ASSERT_FALSE(chai::GPU == camp::resources::Platform::undefined);
 #endif
 }
 
 TEST(ExecutionSpace, Host)
 {
-  camp::devices::Context ctx{camp::devices::Host()};
-  ASSERT_TRUE( chai::CPU == ctx.get<camp::devices::Host>().get_platform() );
+  camp::resources::Context ctx{camp::resources::Host()};
+  ASSERT_TRUE( chai::CPU == ctx.get<camp::resources::Host>().get_platform() );
 }
 
 #if defined(CHAI_ENABLE_CUDA)
 TEST(ExecutionSpace, Cuda)
 {
-  camp::devices::Context ctx{camp::devices::Cuda()};
-  ASSERT_TRUE( chai::GPU == ctx.get<camp::devices::Cuda>().get_platform() );
+  camp::resources::Context ctx{camp::resources::Cuda()};
+  ASSERT_TRUE( chai::GPU == ctx.get<camp::resources::Cuda>().get_platform() );
 }
 #endif // #if defined(CHAI_ENABLE_CUDA)
 
 #if defined(CHAI_ENABLE_HIP)
 TEST(ExecutionSpace, Hip)
 {
-  camp::devices::Context ctx{camp::devices::Hip()};
-  ASSERT_TRUE( chai::GPU == ctx.get<camp::devices::Hip>().get_platform() );
+  camp::resources::Context ctx{camp::resources::Hip()};
+  ASSERT_TRUE( chai::GPU == ctx.get<camp::resources::Hip>().get_platform() );
 }
 #endif // #if defined(CHAI_ENABLE_CUDA)

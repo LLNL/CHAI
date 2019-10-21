@@ -1,13 +1,13 @@
-#include "camp/device.hpp"
+#include "camp/resources.hpp"
 #include "../src/util/forall.hpp"
 #include "chai/ManagedArray.hpp"
 
 int main()
 {
-  camp::devices::Context host{camp::devices::Host{}}; 
+  camp::resources::Context host{camp::resources::Host{}}; 
 
-  camp::devices::Context device_one{camp::devices::Cuda{}}; 
-  camp::devices::Context device_two{camp::devices::Cuda{}}; 
+  camp::resources::Context device_one{camp::resources::Cuda{}}; 
+  camp::resources::Context device_two{camp::resources::Cuda{}}; 
 
   constexpr std::size_t ARRAY_SIZE{1024};
 
