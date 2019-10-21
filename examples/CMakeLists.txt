@@ -32,7 +32,10 @@ if (ENABLE_CUDA OR ENABLE_HIP)
     NAME context-integration.exe
     SOURCES context.cpp
     DEPENDS_ON ${chai_umpire_example_depends})
-
+  blt_add_executable(
+    NAME context-depends.exe
+    SOURCES context-depends.cpp
+    DEPENDS_ON ${chai_umpire_example_depends})
   blt_add_executable(
     NAME context-simple.exe
     SOURCES context-simple.cpp
