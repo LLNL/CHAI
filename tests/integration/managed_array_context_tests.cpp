@@ -16,6 +16,7 @@
 #include "chai/ManagedArray.hpp"
 #include "chai/config.hpp"
 
+#ifdef CHAI_ENABLE_CUDA
 GPU_TEST(ManagedArray, Simple)
 {
   constexpr std::size_t ARRAY_SIZE{1024};
@@ -88,3 +89,4 @@ GPU_TEST(ManagedArray, SimpleWithAsyncMoveTo)
       EXPECT_DOUBLE_EQ(array[i], i*2.0);
   });
 }
+#endif //#ifdef CHAI_ENABLE_CUDA
