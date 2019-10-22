@@ -238,35 +238,39 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
     callback(record, ACTION_MOVE, space, record->m_size);
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    if (space == chai::CPU && record->transfer_pending) {
-      // record->m_last_context->wait_on(&record->m_event);
-      record->m_event.wait();
+    //if (space == chai::CPU && record->transfer_pending) {
+    if (record->transfer_pending) {
+      context->wait_on(&record->m_event);
+      //record->m_last_context->wait_on(&record->m_event);
+      //record->m_event.wait();
       record->transfer_pending = false;
 
       return;
     }
 
-    camp::resources::Context* ctx;
-    if (space == chai::CPU){
-      ctx = record->m_last_context;
-    }else{
-      ctx = context; 
-    }
+    //camp::resources::Context* ctx;
+    //if (space == chai::CPU){
+    //  ctx = record->m_last_context;
+    //}else{
+    //  ctx = context; 
+    //}
 
-    if (ctx == nullptr){
+    //if (ctx == nullptr){
+    if (context == nullptr){
       m_resource_manager.copy(dst_pointer, src_pointer);
       return;
     }
 
-    auto e = m_resource_manager.copy(dst_pointer, src_pointer, *ctx);
+    //auto e = m_resource_manager.copy(dst_pointer, src_pointer, *ctx);
+    auto e = m_resource_manager.copy(dst_pointer, src_pointer, *context);
 
-    if (space == chai::CPU && context->is_async()){
+    //if (space == chai::CPU && context->is_async()){
       record->transfer_pending = true;
       record->m_event = e;
-    } else if ( (space == chai::CPU)
-        && (chai::CPU == context->get_platform())) {
-      e.wait();
-    }
+    //} else if ( (space == chai::CPU)
+    //    && (chai::CPU == context->get_platform())) {
+    //  e.wait();
+    //}
     
     //if (transfer_pending) context->wait_on(&e);
   }

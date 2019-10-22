@@ -25,7 +25,7 @@ int main()
   clock_t time_clocks = (clock_t)(kernel_time * deviceProp.clockRate);
 #endif
 
-  const int NUM_ARRAYS = 8;
+  const int NUM_ARRAYS = 16;
   const int ARRAY_SIZE = 10;
   std::vector< chai::ManagedArray<float> > arrays;
 
@@ -43,8 +43,8 @@ int main()
       clock_t clock_offset = 0;
       while (clock_offset < time_clocks)
       {
-	unsigned int end_clock = (unsigned int) clock();
-	clock_offset = (clock_t)(end_clock - start_clock);
+        unsigned int end_clock = (unsigned int) clock();
+        clock_offset = (clock_t)(end_clock - start_clock);
       }
     };
 
@@ -64,7 +64,7 @@ int main()
   camp::resources::Context host{camp::resources::Host{}};
   for (auto array : arrays) {
     forall(&host, 0, 10, [=] CHAI_HOST_DEVICE (int i) {
-	printf("%i ", int(array[i]) );
+      printf("%i ", int(array[i]) );
     });
     printf("\n");
   }

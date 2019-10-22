@@ -47,7 +47,7 @@ int main()
 
   int clockrate{get_clockrate()};
 
-  for (std::size_t i = 0; i < 8; ++i) {
+  for (std::size_t i = 0; i < 10; ++i) {
     arrays.push_back(chai::ManagedArray<double>(ARRAY_SIZE));
   }
 
