@@ -69,10 +69,11 @@ int main()
   });
 
   array1.move(chai::CPU, &dev1);
+
   camp::resources::Context host{camp::resources::Host{}};
 
-  forall(sequential(), 0, 10, [=] (int i) {
-      std::cout << array1[i] << " ";
+  forall(&host, 0, 10, [=] __host__ __device__ (int i) {
+      printf("%f \n", array1[i]);
   });
-  std::cout << std::endl;
+  printf("\n");
 }
