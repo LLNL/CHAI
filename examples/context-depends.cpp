@@ -72,8 +72,8 @@ int main()
 
   camp::resources::Context host{camp::resources::Host{}};
 
-  forall(&host, 0, 10, [=] __host__ __device__ (int i) {
-      printf("%f \n", array1[i]);
+  forall(&host, 0, 10, [=] CHAI_HOST_DEVICE (int i) {
+      printf("%f ", array1[i]);
   });
   printf("\n");
 }

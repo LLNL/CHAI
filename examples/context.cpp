@@ -61,14 +61,12 @@ int main()
     auto e = forall(&ctx, 0, ARRAY_SIZE, clock_lambda_2);
   }
 
+  camp::resources::Context host{camp::resources::Host{}};
   for (auto array : arrays) {
-    auto print = [=] (int idx) {
-      float val = array[idx];
-      std::cout<< val << " ";
-    };
-    camp::resources::Context ctx{camp::resources::Host{}}; 
-    forall(sequential(), 0, ARRAY_SIZE, print);
-    std::cout << std::endl;
+    forall(&host, 0, 10, [=] CHAI_HOST_DEVICE (int i) {
+	printf("%i ", int(array[i]) );
+    });
+    printf("\n");
   }
 
   for (auto a : arrays) a.free();
