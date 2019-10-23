@@ -41,7 +41,7 @@ int get_clockrate()
 
 int main()
 {
-  constexpr std::size_t ARRAY_SIZE{1000};
+  constexpr std::size_t ARRAY_SIZE{100};
   std::vector<chai::ManagedArray<double>> arrays;
   camp::resources::Context host{camp::resources::Host{}}; 
 
