@@ -71,7 +71,7 @@ int main()
 
   for (auto array : arrays) {
     forall(&host, 0, ARRAY_SIZE, [=] __host__ __device__ (int i) {
-        if (i == 256) {
+        if (i == 25) {
           printf("array[%d] = %f \n", i, array[i]);
         }
     }); 
