@@ -1,45 +1,9 @@
-// ---------------------------------------------------------------------
-// Copyright (c) 2017, Lawrence Livermore National Security, LLC. All
-// rights reserved.
+//////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2016-19, Lawrence Livermore National Security, LLC and CHAI
+// project contributors. See the COPYRIGHT file for details.
 //
-// Produced at the Lawrence Livermore National Laboratory.
-//
-// This file is part of CHAI.
-//
-// LLNL-CODE-705877
-//
-// For details, see https:://github.com/LLNL/CHAI
-// Please also see the NOTICE and LICENSE files.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-//
-// - Redistributions of source code must retain the above copyright
-//   notice, this list of conditions and the following disclaimer.
-//
-// - Redistributions in binary form must reproduce the above copyright
-//   notice, this list of conditions and the following disclaimer in the
-//   documentation and/or other materials provided with the
-//   distribution.
-//
-// - Neither the name of the LLNS/LLNL nor the names of its contributors
-//   may be used to endorse or promote products derived from this
-//   software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-// OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-// AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
-// WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-// ---------------------------------------------------------------------
+// SPDX-License-Identifier: BSD-3-Clause
+//////////////////////////////////////////////////////////////////////////////
 #include "chai/ArrayManager.hpp"
 
 #include "chai/config.hpp"
@@ -61,7 +25,8 @@ ArrayManager* ArrayManager::getInstance()
 ArrayManager::ArrayManager() :
   m_pointer_map{},
   m_allocators{},
-  m_resource_manager{umpire::ResourceManager::getInstance()}
+  m_resource_manager{umpire::ResourceManager::getInstance()},
+  m_callbacks_active{true}
 {
   m_pointer_map.clear();
   m_current_execution_space = NONE;
@@ -84,11 +49,10 @@ void ArrayManager::registerPointer(
    ExecutionSpace space,
    bool owned)
 {
-  CHAI_LOG("ArrayManager", "Registering " << pointer << " in space " << space);
-
   std::lock_guard<std::mutex> lock(m_mutex);
-
   auto pointer = record->m_pointers[space];
+
+  CHAI_LOG(Debug, "Registering " << pointer << " in space " << space);
 
   m_pointer_map.insert(pointer, record);
   //record->m_last_space = space;
@@ -112,7 +76,7 @@ void ArrayManager::deregisterPointer(PointerRecord* record)
 
 void ArrayManager::setExecutionSpace(ExecutionSpace space)
 {
-  CHAI_LOG("ArrayManager", "Setting execution space to " << space);
+  CHAI_LOG(Debug, "Setting execution space to " << space);
   std::lock_guard<std::mutex> lock(m_mutex);
 
   m_current_execution_space = space;
@@ -149,8 +113,7 @@ void ArrayManager::registerTouch(PointerRecord* pointer_record)
 void ArrayManager::registerTouch(PointerRecord* pointer_record,
                                  ExecutionSpace space)
 {
-  CHAI_LOG("ArrayManager",
-           pointer << " touched in space " << space);
+  CHAI_LOG(Debug, pointer_record->m_pointers[space] << " touched in space " << space);
 
   if (space != NONE) {
     std::lock_guard<std::mutex> lock(m_mutex);
@@ -196,7 +159,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   if (!record->m_touched[record->m_last_space]) {
     return;
   } else {
-    record->m_user_callback(ACTION_MOVE, space, record->m_size);
+    callback(record, ACTION_MOVE, space, record->m_size);
     std::lock_guard<std::mutex> lock(m_mutex);
     m_resource_manager.copy(dst_pointer, src_pointer);
   }
@@ -211,12 +174,12 @@ void ArrayManager::allocate(
   auto size = pointer_record->m_size;
   auto alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[space]);
 
-  pointer_record->m_user_callback(ACTION_ALLOC, space, size);
+  callback(pointer_record, ACTION_ALLOC, space, size);
   pointer_record->m_pointers[space] =  alloc.allocate(size);
 
   registerPointer(pointer_record, space);
 
-  CHAI_LOG("ArrayManager", "Allocated array at: " << ret);
+  CHAI_LOG(Debug, "Allocated array at: " << pointer_record->m_pointers[space]);
 }
 
 void ArrayManager::free(PointerRecord* pointer_record)
@@ -229,9 +192,10 @@ void ArrayManager::free(PointerRecord* pointer_record)
         void* space_ptr = pointer_record->m_pointers[space];
 #if defined(CHAI_ENABLE_UM)
         if (space_ptr == pointer_record->m_pointers[UM]) {
-          pointer_record->m_user_callback(ACTION_FREE,
-                                          ExecutionSpace(UM),
-                                          pointer_record->m_size);
+          callback(pointer_record,
+                   ACTION_FREE,
+                   ExecutionSpace(UM),
+                   pointer_record->m_size);
           {
             std::lock_guard<std::mutex> lock(m_mutex);
             m_pointer_map.erase(space_ptr);
@@ -247,9 +211,10 @@ void ArrayManager::free(PointerRecord* pointer_record)
           }
         } else {
 #endif
-          pointer_record->m_user_callback(ACTION_FREE,
-                                          ExecutionSpace(space),
-                                          pointer_record->m_size);
+          callback(pointer_record,
+                   ACTION_FREE,
+                   ExecutionSpace(space),
+                   pointer_record->m_size);
           {
             std::lock_guard<std::mutex> lock(m_mutex);
             m_pointer_map.erase(space_ptr);

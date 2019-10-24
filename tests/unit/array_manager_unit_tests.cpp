@@ -1,45 +1,9 @@
-// ---------------------------------------------------------------------
-// Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
-// rights reserved.
+//////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2016-19, Lawrence Livermore National Security, LLC and CHAI
+// project contributors. See the COPYRIGHT file for details.
 //
-// Produced at the Lawrence Livermore National Laboratory.
-//
-// This file is part of CHAI.
-//
-// LLNL-CODE-705877
-//
-// For details, see https:://github.com/LLNL/CHAI
-// Please also see the NOTICE and LICENSE files.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-//
-// - Redistributions of source code must retain the above copyright
-//   notice, this list of conditions and the following disclaimer.
-//
-// - Redistributions in binary form must reproduce the above copyright
-//   notice, this list of conditions and the following disclaimer in the
-//   documentation and/or other materials provided with the
-//   distribution.
-//
-// - Neither the name of the LLNS/LLNL nor the names of its contributors
-//   may be used to endorse or promote products derived from this
-//   software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-// OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-// AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
-// WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-// ---------------------------------------------------------------------
+// SPDX-License-Identifier: BSD-3-Clause
+//////////////////////////////////////////////////////////////////////////////
 #include "gtest/gtest.h"
 
 #include "chai/ArrayManager.hpp"
@@ -53,6 +17,7 @@ TEST(ArrayManager, Constructor)
 }
 
 #ifndef CHAI_DISABLE_RM
+
 TEST(ArrayManager, getPointerMap)
 {
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
@@ -108,4 +73,63 @@ TEST(ArrayManager, getPointerMap)
   ASSERT_EQ(rm->getTotalSize(),
             (sizeOfArray1 * sizeof(int)) + (sizeOfArray2 * sizeof(double)));
 }
-#endif
+
+/*!
+ * \brief Tests to see if callbacks can be turned on or off
+ */
+TEST(ArrayManager, controlCallbacks)
+{
+  // First check that callbacks are turned on by default
+  chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
+
+  // Variable for testing if callbacks are on or off
+  bool callbacksAreOn = false;
+
+  // Allocate one array and set a callback
+  size_t sizeOfArray = 5;
+  chai::ManagedArray<int> array1(sizeOfArray, chai::CPU);
+  array1.setUserCallback([&] (chai::Action, chai::ExecutionSpace, std::size_t) {
+                           callbacksAreOn = true;
+                         });
+
+  // Make sure the callback is called with ACTION_FREE
+  array1.free();
+  ASSERT_TRUE(callbacksAreOn);
+
+  // Now turn off callbacks
+  arrayManager->disableCallbacks();
+
+  // Reset the variable for testing if callbacks are on or off
+  callbacksAreOn = false;
+
+  // Allocate another array and set a callback
+  chai::ManagedArray<int> array2(sizeOfArray, chai::CPU);
+  array2.setUserCallback([&] (chai::Action, chai::ExecutionSpace, std::size_t) {
+                           callbacksAreOn = true;
+                         });
+
+  // Make sure the callback is called with ACTION_FREE
+  array2.free();
+  ASSERT_FALSE(callbacksAreOn);
+
+  // Now make sure the order doesn't matter for when the callback is set compared
+  // to when callbacks are enabled
+
+  // Reset the variable for testing if callbacks are on or off
+  callbacksAreOn = false;
+
+  // Allocate a third array and set a callback
+  chai::ManagedArray<int> array3(sizeOfArray, chai::CPU);
+  array3.setUserCallback([&] (chai::Action, chai::ExecutionSpace, std::size_t) {
+                           callbacksAreOn = true;
+                         });
+
+  // Turn on callbacks
+  arrayManager->enableCallbacks();
+
+  // Make sure the callback is called with ACTION_FREE
+  array3.free();
+  ASSERT_TRUE(callbacksAreOn);
+}
+
+#endif // !CHAI_DISABLE_RM
