@@ -8,7 +8,7 @@
 #define CHAI_ExecutionSpaces_HPP
 
 #include "chai/config.hpp"
-#include "camp/resources.hpp"
+#include "camp/contexts.hpp"
 
 namespace chai
 {

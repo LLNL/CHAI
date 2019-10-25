@@ -17,7 +17,7 @@
 #include "umpire/Allocator.hpp"
 #include "umpire/util/MemoryMap.hpp"
 
-#include "camp/resources.hpp"
+#include "camp/contexts.hpp"
 
 namespace chai
 {

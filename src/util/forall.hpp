@@ -11,7 +11,7 @@
 #include "chai/ExecutionSpaces.hpp"
 #include "chai/config.hpp"
 //#include "camp/device.hpp"
-#include "camp/resources.hpp"
+#include "camp/contexts.hpp"
 
 #if defined(CHAI_ENABLE_UM)
 #include <cuda_runtime_api.h>

@@ -1,4 +1,4 @@
-#include "camp/resources.hpp"
+#include "camp/contexts.hpp"
 #include "../src/util/forall.hpp"
 #include "chai/ManagedArray.hpp"
 #include <cuda_profiler_api.h>

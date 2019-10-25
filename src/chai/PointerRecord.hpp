@@ -10,7 +10,7 @@
 #include "chai/ExecutionSpaces.hpp"
 #include "chai/Types.hpp"
 
-#include "camp/resources.hpp"
+#include "camp/contexts.hpp"
 
 #include <cstddef>
 #include <functional>
