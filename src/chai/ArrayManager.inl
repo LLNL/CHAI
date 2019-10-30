@@ -47,20 +47,26 @@ void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* point
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     void* old_ptr = pointer_record->m_pointers[space];
 
+    pointer_record->m_user_callback(ACTION_ALLOC, ExecutionSpace(space), sizeof(T) * elems);
+    void* new_ptr = m_allocators[space]->allocate(sizeof(T)*elems);
+
     if (old_ptr) {
-      pointer_record->m_user_callback(ACTION_ALLOC, ExecutionSpace(space), sizeof(T) * elems);
-      void* new_ptr = m_allocators[space]->allocate(sizeof(T)*elems);
-
       m_resource_manager.copy(new_ptr, old_ptr, num_bytes_to_copy);
-
-      pointer_record->m_user_callback(ACTION_FREE, ExecutionSpace(space), sizeof(T) * elems);
-      m_allocators[space]->deallocate(old_ptr);
-
-      pointer_record->m_pointers[space] = new_ptr;
-
-      m_pointer_map.erase(old_ptr);
-      m_pointer_map.insert(new_ptr, pointer_record);
     }
+
+    pointer_record->m_user_callback(ACTION_FREE, ExecutionSpace(space), sizeof(T) * elems);
+
+    if (old_ptr) {
+      m_allocators[space]->deallocate(old_ptr);
+    }
+
+    pointer_record->m_pointers[space] = new_ptr;
+
+    if (old_ptr) {
+      m_pointer_map.erase(old_ptr);
+    }
+
+    m_pointer_map.insert(new_ptr, pointer_record);
   }
 
   pointer_record->m_size = sizeof(T) * elems;
