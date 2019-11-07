@@ -20,7 +20,6 @@ set (chai_headers
   ArrayManager.hpp
   ArrayManager.inl
   ChaiMacros.hpp
-  pluginLinker.hpp
   ExecutionSpaces.hpp
   ManagedArray.hpp
   ManagedArray.inl
@@ -53,6 +52,7 @@ endif ()
 if (ENABLE_RAJA_PLUGIN)
   set (chai_headers
     ${chai_headers}
+    pluginLinker.hpp
     ManagedArrayView.hpp
     RajaExecutionSpacePlugin.hpp)
 
@@ -62,7 +62,7 @@ if (ENABLE_RAJA_PLUGIN)
 
   set (chai_depends
     ${chai_depends}
-    raja)
+    RAJA)
 endif ()
 
 blt_add_library(

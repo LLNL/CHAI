@@ -20,7 +20,7 @@ option(ENABLE_RAJA_PLUGIN "Build plugin to set RAJA execution spaces" Off)
 
 set(ENABLE_TESTS On CACHE BOOL "")
 set(ENABLE_EXAMPLES On CACHE BOOL "")
-set(ENABLE_DOCUMENTATION On CACHE BOOL "")
+set(ENABLE_DOCS Off CACHE BOOL "")
 
 # options for Umpire as TPL
 set(ENABLE_GMOCK On CACHE BOOL "")

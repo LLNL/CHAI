@@ -41,7 +41,7 @@ blt_add_test(
 if (ENABLE_RAJA_PLUGIN)
   set(raja_test_depends
     ${managed_array_test_depends}
-    raja)
+    RAJA)
 
   blt_add_executable(
     NAME raja-chai-tests 
