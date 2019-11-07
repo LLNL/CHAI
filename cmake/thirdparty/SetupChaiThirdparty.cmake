@@ -22,7 +22,7 @@ endif()
 
 if (ENABLE_RAJA_PLUGIN)
   if (NOT TARGET RAJA)
-    if (DEFINED raja_DIR)
+    if (DEFINED RAJA_DIR)
       message(STATUS "CHAI: using external RAJA via find_package")
       find_package(RAJA REQUIRED)
     else()
