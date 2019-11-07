@@ -12,10 +12,17 @@ if (ENABLE_CUDA)
     ${managed_array_test_depends}
     cuda)
 endif ()
+
 if (ENABLE_HIP)
   set (managed_array_test_depends
     ${managed_array_test_depends}
     hip)
+endif ()
+
+if (ENABLE_OPENMP)
+  set (managed_array_test_depends
+    ${managed_array_test_depends}
+    openmp)
 endif ()
 
 blt_add_executable(
@@ -30,3 +37,35 @@ target_include_directories(
 blt_add_test(
   NAME managed_array_test
   COMMAND managed_array_tests)
+
+if (ENABLE_RAJA_PLUGIN)
+  set(raja_test_depends
+    ${managed_array_test_depends}
+    RAJA)
+
+  blt_add_executable(
+    NAME raja-chai-tests 
+    SOURCES raja-chai-tests.cpp
+    DEPENDS_ON ${raja_test_depends})
+
+  blt_add_test(
+    NAME raja-chai-tests
+    COMMAND raja-chai-tests)
+
+  target_include_directories(
+    raja-chai-tests
+    PUBLIC ${PROJECT_BINARY_DIR}/include)
+
+  blt_add_executable(
+    NAME raja-chai-nested-tests 
+    SOURCES raja-chai-nested.cpp
+    DEPENDS_ON ${raja_test_depends})
+
+  blt_add_test(
+    NAME raja-chai-nested-tests
+    COMMAND raja-chai-nested-tests)
+
+  target_include_directories(
+    raja-chai-nested-tests
+    PUBLIC ${PROJECT_BINARY_DIR}/include)
+endif ()
