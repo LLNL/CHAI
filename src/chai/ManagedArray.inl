@@ -144,6 +144,20 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 
 template<typename T>
 CHAI_INLINE
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray && other):
+  m_active_pointer(other.m_active_pointer),
+  m_active_base_pointer(other.m_active_base_pointer),
+  m_resource_manager(other.m_resource_manager),
+  m_elems(other.m_elems),
+  m_offset(other.m_offset),
+  m_pointer_record(other.m_pointer_record),
+  m_is_slice(other.m_is_slice)
+{
+  other = nullptr;
+}
+
+template<typename T>
+CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_manager, size_t elems, PointerRecord* pointer_record) :
   m_active_pointer(data), 
   m_active_base_pointer(data),

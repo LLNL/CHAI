@@ -64,6 +64,11 @@ public:
   static ArrayManager* getInstance();
 
   /*!
+   * \brief Destructor.
+   */
+  ~ArrayManager();
+
+  /*!
    * \brief Set the current execution space.
    *
    * \param space The space to set as current.

@@ -19,6 +19,7 @@ TEST(ManagedArray, DefaultConstructor)
 {
   chai::ManagedArray<float> array;
   ASSERT_EQ(array.size(), 0u);
+  array.free();
 }
 
 TEST(ManagedArray, SizeConstructor)

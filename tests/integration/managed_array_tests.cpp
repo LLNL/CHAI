@@ -650,6 +650,7 @@ TEST(ManagedArray, NullpointerConversions)
 TEST(ManagedArray, ImplicitConversions)
 {
   chai::ManagedArray<float> a(10);
+  a[0] = 0;
 
   chai::ManagedArray<float> a2 = a;
   
@@ -1339,6 +1340,7 @@ TEST(ManagedArray, SizeZero)
   ASSERT_EQ(array.size(), 0u);
   array.allocate(0);
   ASSERT_EQ(array.size(), 0u);
+  array.free();
 }
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)

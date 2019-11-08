@@ -44,6 +44,17 @@ ArrayManager::ArrayManager() :
 #endif
 }
 
+ArrayManager::~ArrayManager()
+{
+  delete m_allocators[CPU];
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+  delete m_allocators[GPU];
+#endif
+#if defined(CHAI_ENABLE_UM)
+  delete m_allocators[UM];
+#endif
+}
+
 void ArrayManager::registerPointer(
    PointerRecord* record,
    ExecutionSpace space,

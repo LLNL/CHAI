@@ -72,6 +72,9 @@ TEST(ArrayManager, getPointerMap)
   ASSERT_EQ(rm->getTotalNumArrays(), 2);
   ASSERT_EQ(rm->getTotalSize(),
             (sizeOfArray1 * sizeof(int)) + (sizeOfArray2 * sizeof(double)));
+
+  array1.free();
+  array2.free();
 }
 
 /*!

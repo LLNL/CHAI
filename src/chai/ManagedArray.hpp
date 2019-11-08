@@ -98,6 +98,13 @@ public:
   CHAI_HOST_DEVICE ManagedArray(ManagedArray const& other);
 
   /*!
+   * \brief Move constructor, does not trigger data movement.
+   *
+   * \param other ManagedArray being moved from.
+   */
+  CHAI_HOST_DEVICE ManagedArray(ManagedArray && other);
+
+  /*!
    * \brief Construct a ManagedArray from a nullptr.
    */
   CHAI_HOST_DEVICE ManagedArray(std::nullptr_t other);
