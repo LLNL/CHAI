@@ -181,6 +181,12 @@ public:
   T* getActiveBasePointer() const;
 
   /*!
+   * \brief get access to m_pointer_record
+   * @return a copy of m_pointer_record
+   */
+  PointerRecord const * getPointerRecord() const;
+
+  /*!
    * \brief
    *
    */

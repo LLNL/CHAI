@@ -422,6 +422,13 @@ ManagedArray<T>::getActiveBasePointer() const
   return m_active_base_pointer;
 }
 
+template<typename T>
+PointerRecord const * 
+ManagedArray<T>::getPointerRecord() const
+{
+  return m_pointer_record;
+}
+
 
 //template<typename T>
 //ManagedArray<T>::operator ManagedArray<
