@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
 cmake_policy(SET CMP0057 NEW)
+cmake_policy(SET CMP0048 NEW)
 
 project(Chai LANGUAGES CXX VERSION 2.0.0)
 
