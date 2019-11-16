@@ -1,3 +1,9 @@
+##############################################################################
+# Copyright (c) 2016-19, Lawrence Livermore National Security, LLC and CHAI
+# project contributors. See the COPYRIGHT file for details.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+##############################################################################
 #######################################################################
 # Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
 # rights reserved.

@@ -4,3 +4,6 @@
 [submodule "src/tpl/umpire"]
 	path = src/tpl/umpire
 	url = https://github.com/LLNL/Umpire.git
+[submodule "src/tpl/raja"]
+	path = src/tpl/raja
+	url = https://github.com/LLNL/RAJA.git

@@ -5,35 +5,31 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
-# This is used for the ~*tpl* line to ignore files in bundled tpls
-setopt extended_glob
 
-autoload colors
+setopt extended_glob
 
 RED="\033[1;31m"
 GREEN="\033[1;32m"
 NOCOLOR="\033[0m"
 
-files_no_license=$(grep -l '2016,' \
+LIC_CMD=$(which lic)
+if [ ! $LIC_CMD ]; then
+  echo "${RED} [!] This script requires the lic command."
+  exit 255
+fi
+
+echo "Applying licenses to files"
+
+files_no_license=$(grep -L 'This file is part of Umpire.' \
   benchmarks/**/*(^/) \
   cmake/**/*(^/) \
   docs/**/*~*rst(^/)\
   examples/**/*(^/) \
-  scripts/**/*~*copyright*(^/) \
+  scripts/**/*(^/) \
   src/**/*~*tpl*(^/) \
   tests/**/*(^/) \
   CMakeLists.txt)
 
-if [ $files_no_license ]; then
-  print "${RED} [!] Some files need copyright year updating: ${NOCOLOR}"
-  echo "${files_no_license}"
+echo $files_no_license | xargs $LIC_CMD -f scripts/license.txt 
 
-  echo ${files_no_license} | xargs sed -i '' 's/2016,/2016-2018,/'
-
-  print "${GREEN} [Ok] Copyright years updated."
-
-  exit 0
-else
-  print "${GREEN} [Ok] All files have required license info."
-  exit 0
-fi
+echo "${GREEN} [Ok] License text applied. ${NOCOLOR}"
