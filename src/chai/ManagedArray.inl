@@ -110,6 +110,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t) :
   m_pointer_record(nullptr),
   m_is_slice(false)
 {
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
+  m_resource_manager = ArrayManager::getInstance();
+#endif
 }
 
 template<typename T>
@@ -338,6 +341,11 @@ CHAI_INLINE
 CHAI_HOST
 void ManagedArray<T>::move(ExecutionSpace space)
 {
+  /* If this ManagedArray isn't associated with an allocation return immediately. */
+  if (m_pointer_record == nullptr) {
+    return;
+  }
+
   ExecutionSpace prev_space = m_pointer_record->m_last_space;
 
   /* When moving from CPU to GPU we need to move the inner arrays before the outer array. */
