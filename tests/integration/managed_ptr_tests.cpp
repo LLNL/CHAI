@@ -200,8 +200,8 @@ TEST(managed_ptr, class_with_raw_array)
 
   ASSERT_EQ(rawArrayClass->getValue(0), expectedValue);
 
-  array.free();
   rawArrayClass.free();
+  array.free();
 }
 
 TEST(managed_ptr, class_with_multiple_raw_arrays)
@@ -222,9 +222,9 @@ TEST(managed_ptr, class_with_multiple_raw_arrays)
   ASSERT_EQ(multipleRawArrayClass->getValue(0, 0), expectedValue1);
   ASSERT_EQ(multipleRawArrayClass->getValue(1, 0), expectedValue2);
 
-  array1.free();
-  array2.free();
   multipleRawArrayClass.free();
+  array2.free();
+  array1.free();
 }
 
 TEST(managed_ptr, class_with_managed_array)
@@ -241,8 +241,8 @@ TEST(managed_ptr, class_with_managed_array)
 
   ASSERT_EQ(derived->getValue(0), expectedValue);
 
-  array.free();
   derived.free();
+  array.free();
 }
 
 TEST(managed_ptr, class_with_raw_ptr)
@@ -260,9 +260,9 @@ TEST(managed_ptr, class_with_raw_ptr)
 
   ASSERT_EQ((*rawPointerClass).getValue(0), expectedValue);
 
-  array.free();
-  rawArrayClass.free();
   rawPointerClass.free();
+  rawArrayClass.free();
+  array.free();
 }
 
 TEST(managed_ptr, class_with_managed_ptr)
@@ -286,8 +286,77 @@ TEST(managed_ptr, nested_managed_ptr)
 
   ASSERT_EQ(container->getValue(), expectedValue);
 
-  derived.free();
   container.free();
+  derived.free();
+}
+
+TEST(managed_ptr, array_of_managed_ptr)
+{
+  int numManagedPointers = 10;
+
+  int* expectedValues = new int[numManagedPointers];
+
+  chai::managed_ptr<TestInner>* managedPointers = new chai::managed_ptr<TestInner>[numManagedPointers];
+
+  for (int i = 0; i < numManagedPointers; ++i) {
+     const int expectedValue = rand();
+     expectedValues[i] = expectedValue;
+     managedPointers[i] = chai::make_managed<TestInner>(expectedValue);
+  }
+
+  for (int i = 0; i < numManagedPointers; ++i) {
+     ASSERT_EQ(managedPointers[i]->getValue(), expectedValues[i]);
+     managedPointers[i].free();
+  }
+
+  delete[] managedPointers;
+  delete[] expectedValues;
+}
+
+TEST(managed_ptr, c_array_of_managed_ptr)
+{
+  int numManagedPointers = 10;
+
+  int* expectedValues = new int[numManagedPointers];
+
+  chai::managed_ptr<TestInner>* managedPointers = (chai::managed_ptr<TestInner>*) malloc(numManagedPointers*sizeof(chai::managed_ptr<TestInner>));
+
+  for (int i = 0; i < numManagedPointers; ++i) {
+     const int expectedValue = rand();
+     expectedValues[i] = expectedValue;
+     managedPointers[i] = chai::make_managed<TestInner>(expectedValue);
+  }
+
+  for (int i = 0; i < numManagedPointers; ++i) {
+     ASSERT_EQ(managedPointers[i]->getValue(), expectedValues[i]);
+     managedPointers[i].free();
+  }
+
+  free(managedPointers);
+  delete[] expectedValues;
+}
+
+TEST(managed_ptr, managed_array_of_managed_ptr)
+{
+  int numManagedPointers = 10;
+
+  int* expectedValues = new int[numManagedPointers];
+
+  chai::ManagedArray<chai::managed_ptr<TestInner>> managedPointers(numManagedPointers, chai::CPU);
+
+  forall(sequential(), 0, numManagedPointers, [=] (int i) {
+     const int expectedValue = rand();
+     expectedValues[i] = expectedValue;
+     managedPointers[i] = chai::make_managed<TestInner>(expectedValue);
+  });
+
+  forall(sequential(), 0, numManagedPointers, [=] (int i) {
+     ASSERT_EQ(managedPointers[i]->getValue(), expectedValues[i]);
+     managedPointers[i].free();
+  });
+
+  managedPointers.free();
+  delete[] expectedValues;
 }
 
 #ifdef __CUDACC__
@@ -331,36 +400,61 @@ GPU_TEST(managed_ptr, make_on_device)
 
 GPU_TEST(managed_ptr, gpu_new_and_delete_on_device)
 {
-  // Initialize device side memory to hold the new object
-  RawArrayClass* gpuPointer = nullptr;
-  cudaMalloc(&gpuPointer, sizeof(RawArrayClass));
+  // Initialize host side memory to hold a pointer
+  RawArrayClass** cpuPointerHolder = (RawArrayClass**) malloc(sizeof(RawArrayClass*));
+  cpuPointerHolder[0] = nullptr;
+
+  // Initialize device side memory to hold a pointer
+  RawArrayClass** gpuPointerHolder = nullptr;
+  cudaMalloc(&gpuPointerHolder, sizeof(RawArrayClass*));
 
   // Create on the device
-  chai::detail::make_on_device<<<1, 1>>>(gpuPointer);
+  chai::detail::make_on_device<<<1, 1>>>(gpuPointerHolder);
 
-  // Check the pointer
-  ASSERT_NE(gpuPointer, nullptr);
+  // Copy to the host side memory
+  cudaMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(RawArrayClass*), cudaMemcpyDeviceToHost);
 
-  // Clean up on the device
+  // Free device side memory
+  cudaFree(gpuPointerHolder);
+
+  // Save the pointer
+  ASSERT_NE(cpuPointerHolder[0], nullptr);
+  RawArrayClass* gpuPointer = cpuPointerHolder[0];
+
+  // Free host side memory
+  free(cpuPointerHolder);
+
   chai::detail::destroy_on_device<<<1, 1>>>(gpuPointer);
 }
 
 GPU_TEST(managed_ptr, gpu_build_managed_ptr)
 {
-  // Initialize device side memory to hold the new object
-  RawArrayClass* gpuPointer = nullptr;
-  cudaMalloc(&gpuPointer, sizeof(RawArrayClass));
+  // Initialize host side memory to hold a pointer
+  RawArrayClass** cpuPointerHolder = (RawArrayClass**) malloc(sizeof(RawArrayClass*));
+  cpuPointerHolder[0] = nullptr;
+
+  // Initialize device side memory to hold a pointer
+  RawArrayClass** gpuPointerHolder = nullptr;
+  cudaMalloc(&gpuPointerHolder, sizeof(RawArrayClass*));
 
   // Create on the device
-  chai::detail::make_on_device<<<1, 1>>>(gpuPointer);
+  chai::detail::make_on_device<<<1, 1>>>(gpuPointerHolder);
 
-  // Check the pointer
-  ASSERT_NE(gpuPointer, nullptr);
+  // Copy to the host side memory
+  cudaMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(RawArrayClass*), cudaMemcpyDeviceToHost);
 
-  // Make a managed_ptr
+  // Free device side memory
+  cudaFree(gpuPointerHolder);
+
+  // Save the pointer
+  ASSERT_NE(cpuPointerHolder[0], nullptr);
+  RawArrayClass* gpuPointer = cpuPointerHolder[0];
+
+  // Free host side memory
+  free(cpuPointerHolder);
+
   chai::managed_ptr<RawArrayClass> managedPtr({chai::GPU}, {gpuPointer});
 
-  // Clean up the memory
   managedPtr.free();
 }
 
@@ -404,9 +498,9 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_array)
   results.move(chai::CPU);
   ASSERT_EQ(results[0], expectedValue);
 
-  array.free();
-  rawArrayClass.free();
   results.free();
+  rawArrayClass.free();
+  array.free();
 }
 
 GPU_TEST(managed_ptr, gpu_class_with_raw_array_and_callback)
@@ -476,9 +570,9 @@ GPU_TEST(managed_ptr, gpu_class_with_managed_array)
 
   ASSERT_EQ(results[0], expectedValue);
 
-  array.free();
-  derived.free();
   results.free();
+  derived.free();
+  array.free();
 }
 
 GPU_TEST(managed_ptr, gpu_class_with_raw_ptr)
@@ -503,10 +597,10 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_ptr)
   results.move(chai::CPU);
   ASSERT_EQ(results[0], expectedValue);
 
-  array.free();
-  rawArrayClass.free();
-  rawPointerClass.free();
   results.free();
+  rawPointerClass.free();
+  rawArrayClass.free();
+  array.free();
 }
 
 GPU_TEST(managed_ptr, gpu_class_with_managed_ptr)
@@ -525,8 +619,8 @@ GPU_TEST(managed_ptr, gpu_class_with_managed_ptr)
   results.move(chai::CPU);
   ASSERT_EQ(results[0], expectedValue);
 
-  derived.free();
   results.free();
+  derived.free();
 }
 
 GPU_TEST(managed_ptr, gpu_nested_managed_ptr)
@@ -545,9 +639,9 @@ GPU_TEST(managed_ptr, gpu_nested_managed_ptr)
   results.move(chai::CPU);
   ASSERT_EQ(results[0], expectedValue);
 
-  derived.free();
-  container.free();
   results.free();
+  container.free();
+  derived.free();
 }
 
 GPU_TEST(managed_ptr, gpu_multiple_inheritance)
@@ -569,8 +663,8 @@ GPU_TEST(managed_ptr, gpu_multiple_inheritance)
   ASSERT_EQ(results[0], true);
   ASSERT_EQ(results[1], true);
 
-  derived.free();
   results.free();
+  base2.free();
 }
 
 GPU_TEST(managed_ptr, static_pointer_cast)
@@ -601,9 +695,9 @@ GPU_TEST(managed_ptr, static_pointer_cast)
   ASSERT_EQ(results[1], expectedValue);
   ASSERT_EQ(results[2], expectedValue);
 
-  array.free();
-  derived.free();
   results.free();
+  derivedFromBase.free();
+  array.free();
 }
 
 GPU_TEST(managed_ptr, dynamic_pointer_cast)
@@ -634,9 +728,9 @@ GPU_TEST(managed_ptr, dynamic_pointer_cast)
   ASSERT_EQ(results[1], expectedValue);
   ASSERT_EQ(results[2], expectedValue);
 
-  array.free();
-  base.free();
   results.free();
+  derivedFromBase.free();
+  array.free();
 }
 
 GPU_TEST(managed_ptr, const_pointer_cast)
@@ -667,9 +761,9 @@ GPU_TEST(managed_ptr, const_pointer_cast)
   ASSERT_EQ(results[1], expectedValue);
   ASSERT_EQ(results[2], expectedValue);
 
-  array.free();
-  derivedFromConst.free();
   results.free();
+  constDerived.free();
+  array.free();
 }
 
 GPU_TEST(managed_ptr, reinterpret_pointer_cast)
@@ -700,9 +794,9 @@ GPU_TEST(managed_ptr, reinterpret_pointer_cast)
   ASSERT_EQ(results[1], expectedValue);
   ASSERT_EQ(results[2], expectedValue);
 
-  array.free();
-  derived.free();
   results.free();
+  derivedFromBase.free();
+  array.free();
 }
 
 #endif

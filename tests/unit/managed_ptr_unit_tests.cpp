@@ -141,7 +141,6 @@ TEST(managed_ptr, default_constructor)
   EXPECT_FALSE(derived != otherDerived);
   EXPECT_FALSE(otherDerived != derived);
 
-  // Make sure free is a no-op
   derived.free();
   otherDerived.free();
 }
@@ -162,9 +161,8 @@ TEST(managed_ptr, nullptr_constructor)
   EXPECT_FALSE(derived != otherDerived);
   EXPECT_FALSE(otherDerived != derived);
 
-  // Make sure free is a no-op
-  derived.free();
   otherDerived.free();
+  derived.free();
 }
 
 TEST(managed_ptr, cpu_pointer_constructor)
@@ -289,7 +287,7 @@ TEST(managed_ptr, copy_assignment_operator)
   EXPECT_TRUE(otherDerived == derived);
   EXPECT_FALSE(otherDerived != derived);
 
-  derived.free();
+  otherDerived.free();
 }
 
 TEST(managed_ptr, copy_constructor_from_default_constructed)
@@ -306,6 +304,8 @@ TEST(managed_ptr, copy_constructor_from_default_constructed)
   EXPECT_EQ(bool(otherDerived), false);
   EXPECT_EQ(otherDerived, nullptr);
   EXPECT_EQ(nullptr, otherDerived);
+
+  derived.free();
 }
 
 TEST(managed_ptr, copy_assignment_operator_from_default_constructed)
@@ -323,6 +323,8 @@ TEST(managed_ptr, copy_assignment_operator_from_default_constructed)
   EXPECT_EQ(bool(otherDerived), false);
   EXPECT_EQ(otherDerived, nullptr);
   EXPECT_EQ(nullptr, otherDerived);
+
+  otherDerived.free();
 }
 
 TEST(managed_ptr, conversion_copy_constructor_from_default_constructed)
@@ -339,6 +341,8 @@ TEST(managed_ptr, conversion_copy_constructor_from_default_constructed)
   EXPECT_EQ(bool(otherDerived), false);
   EXPECT_EQ(otherDerived, nullptr);
   EXPECT_EQ(nullptr, otherDerived);
+
+  otherDerived.free();
 }
 
 TEST(managed_ptr, conversion_copy_assignment_operator_from_default_constructed)
@@ -356,6 +360,8 @@ TEST(managed_ptr, conversion_copy_assignment_operator_from_default_constructed)
   EXPECT_EQ(bool(otherDerived), false);
   EXPECT_EQ(otherDerived, nullptr);
   EXPECT_EQ(nullptr, otherDerived);
+
+  derived.free();
 }
 
 TEST(managed_ptr, copy_assignment_operator_from_host_ptr_constructed)
@@ -384,8 +390,8 @@ TEST(managed_ptr, copy_assignment_operator_from_host_ptr_constructed)
   EXPECT_NE(thirdDerived, nullptr);
   EXPECT_NE(nullptr, thirdDerived);
 
+  derived.free();
   otherDerived.free();
-  thirdDerived.free();
 }
 
 TEST(managed_ptr, conversion_copy_assignment_operator_from_host_ptr_constructed)
@@ -434,7 +440,7 @@ TEST(managed_ptr, static_pointer_cast)
   EXPECT_TRUE(base != nullptr);
   EXPECT_TRUE(nullptr != base);
 
-  derived.free();
+  base.free();
 }
 
 TEST(managed_ptr, dynamic_pointer_cast)
@@ -531,8 +537,11 @@ GPU_TEST(managed_ptr, gpu_default_constructor)
   EXPECT_FALSE(array2[7]);
   EXPECT_FALSE(array2[8]);
 
-  array.free();
   array2.free();
+  array.free();
+
+  derived.free();
+  otherDerived.free();
 }
 
 GPU_TEST(managed_ptr, gpu_nullptr_constructor)
@@ -570,11 +579,14 @@ GPU_TEST(managed_ptr, gpu_nullptr_constructor)
   EXPECT_FALSE(array2[7]);
   EXPECT_FALSE(array2[8]);
 
-  array.free();
   array2.free();
+  array.free();
+
+  derived.free();
+  otherDerived.free();
 }
 
-GPU_TEST(managed_ptr, gpu_pointer_constructor)
+GPU_TEST(managed_ptr, gpu_gpu_pointer_constructor)
 {
   TestDerived* gpuPointer = chai::detail::make_on_device<TestDerived>(3);
   chai::managed_ptr<TestDerived> derived({chai::GPU}, {gpuPointer});
@@ -612,47 +624,73 @@ GPU_TEST(managed_ptr, gpu_pointer_constructor)
   EXPECT_TRUE(array3[3]);
   EXPECT_TRUE(array3[4]);
 
-  array1.free();
-  array2.free();
   array3.free();
+  array2.free();
+  array1.free();
+
+  derived.free();
 }
 
 GPU_TEST(managed_ptr, gpu_new_and_delete_on_device)
 {
-  // Initialize device side memory to hold the new object
-  Simple* gpuPointer = nullptr;
-  cudaMalloc(&gpuPointer, sizeof(Simple));
+  // Initialize host side memory to hold a pointer
+  Simple** cpuPointerHolder = (Simple**) malloc(sizeof(Simple*));
+  cpuPointerHolder[0] = nullptr;
+
+  // Initialize device side memory to hold a pointer
+  Simple** gpuPointerHolder = nullptr;
+  cudaMalloc(&gpuPointerHolder, sizeof(Simple*));
 
   // Create on the device
-  chai::detail::make_on_device<<<1, 1>>>(gpuPointer);
+  chai::detail::make_on_device<<<1, 1>>>(gpuPointerHolder);
 
-  // Check the pointer
-  ASSERT_NE(gpuPointer, nullptr);
+  // Copy to the host side memory
+  cudaMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(Simple*), cudaMemcpyDeviceToHost);
 
-  // Clean up on the device
+  // Free device side memory
+  cudaFree(gpuPointerHolder);
+
+  // Save the pointer
+  ASSERT_NE(cpuPointerHolder[0], nullptr);
+  Simple* gpuPointer = cpuPointerHolder[0];
+
+  // Free host side memory
+  free(cpuPointerHolder);
+
   chai::detail::destroy_on_device<<<1, 1>>>(gpuPointer);
 }
 
 GPU_TEST(managed_ptr, gpu_new_and_delete_on_device_2)
 {
-  // Initialize device side memory to hold a the new object
-  Simple* gpuPointer = nullptr;
-  cudaMalloc(&gpuPointer, sizeof(Simple));
+  // Initialize host side memory to hold a pointer
+  Simple** cpuPointerHolder = (Simple**) malloc(sizeof(Simple*));
+  cpuPointerHolder[0] = nullptr;
+
+  // Initialize device side memory to hold a pointer
+  Simple** gpuPointerHolder = nullptr;
+  cudaMalloc(&gpuPointerHolder, sizeof(Simple*));
 
   // Create on the device
-  chai::detail::make_on_device<<<1, 1>>>(gpuPointer);
+  chai::detail::make_on_device<<<1, 1>>>(gpuPointerHolder);
 
-  // Check the pointer
-  ASSERT_NE(gpuPointer, nullptr);
+  // Copy to the host side memory
+  cudaMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(Simple*), cudaMemcpyDeviceToHost);
 
-  // Create a managed_ptr
+  // Free device side memory
+  cudaFree(gpuPointerHolder);
+
+  // Save the pointer
+  ASSERT_NE(cpuPointerHolder[0], nullptr);
+  Simple* gpuPointer = cpuPointerHolder[0];
+
+  // Free host side memory
+  free(cpuPointerHolder);
+
   chai::managed_ptr<Simple> test({chai::GPU}, {gpuPointer});
-
-  // Free the memory
   test.free();
 }
 
-GPU_TEST(managed_ptr, simple_cuda_cpu_and_gpu_pointer_constructor)
+GPU_TEST(managed_ptr, simple_gpu_cpu_and_gpu_pointer_constructor)
 {
   Simple* gpuPointer = chai::detail::make_on_device<Simple>(3);
   Simple* cpuPointer = new Simple(4);
@@ -672,6 +710,7 @@ GPU_TEST(managed_ptr, simple_cuda_cpu_and_gpu_pointer_constructor)
   EXPECT_EQ(array1[0], 3);
 
   array1.free();
+
   simple.free();
 }
 
@@ -716,9 +755,10 @@ GPU_TEST(managed_ptr, gpu_cpu_and_gpu_pointer_constructor)
   EXPECT_TRUE(array3[3]);
   EXPECT_TRUE(array3[4]);
 
-  array1.free();
-  array2.free();
   array3.free();
+  array2.free();
+  array1.free();
+
   derived.free();
 }
 
@@ -754,9 +794,98 @@ GPU_TEST(managed_ptr, gpu_make_managed)
   EXPECT_TRUE(array3[3]);
   EXPECT_TRUE(array3[4]);
 
-  array.free();
-  array2.free();
   array3.free();
+  array2.free();
+  array.free();
+
+  derived.free();
+}
+
+GPU_TEST(managed_ptr, make_managed_from_factory_function)
+{
+  const int expectedValue = rand();
+
+  auto factory = [] CHAI_HOST_DEVICE (const int value) {
+    return Factory(value);
+  };
+
+  auto derived = chai::make_managed_from_factory<TestBase>(factory, expectedValue);
+
+  EXPECT_EQ((*derived).getValue(), expectedValue);
+
+  EXPECT_NE(derived.get(), nullptr);
+  EXPECT_TRUE(derived);
+  EXPECT_FALSE(derived == nullptr);
+  EXPECT_FALSE(nullptr == derived);
+  EXPECT_TRUE(derived != nullptr);
+  EXPECT_TRUE(nullptr != derived);
+
+  derived.free();
+}
+
+GPU_TEST(managed_ptr, make_managed_from_factory_lambda)
+{
+  const int expectedValue = rand();
+
+  auto factory = [] CHAI_HOST_DEVICE (const int value) {
+    return new TestDerived(value);
+  };
+
+  auto derived = chai::make_managed_from_factory<TestBase>(factory, expectedValue);
+
+  EXPECT_EQ((*derived).getValue(), expectedValue);
+
+  EXPECT_NE(derived.get(), nullptr);
+  EXPECT_TRUE(derived);
+  EXPECT_FALSE(derived == nullptr);
+  EXPECT_FALSE(nullptr == derived);
+  EXPECT_TRUE(derived != nullptr);
+  EXPECT_TRUE(nullptr != derived);
+
+  derived.free();
+}
+
+GPU_TEST(managed_ptr, make_managed_from_overloaded_factory_function)
+{
+  const int expectedValue = rand();
+
+  auto factory = [] CHAI_HOST_DEVICE (const int value) {
+    return OverloadedFactory(value);
+  };
+
+  auto derived = chai::make_managed_from_factory<TestBase>(factory, expectedValue);
+
+  EXPECT_EQ((*derived).getValue(), expectedValue);
+
+  EXPECT_NE(derived.get(), nullptr);
+  EXPECT_TRUE(derived);
+  EXPECT_FALSE(derived == nullptr);
+  EXPECT_FALSE(nullptr == derived);
+  EXPECT_TRUE(derived != nullptr);
+  EXPECT_TRUE(nullptr != derived);
+
+  derived.free();
+}
+
+GPU_TEST(managed_ptr, make_managed_from_factory_static_member_function)
+{
+  const int expectedValue = rand();
+
+  auto factory = [] CHAI_HOST_DEVICE (const int value) {
+    return TestBase::Factory(value);
+  };
+
+  auto derived = chai::make_managed_from_factory<TestBase>(factory, expectedValue);
+
+  EXPECT_EQ((*derived).getValue(), expectedValue);
+
+  EXPECT_NE(derived.get(), nullptr);
+  EXPECT_TRUE(derived);
+  EXPECT_FALSE(derived == nullptr);
+  EXPECT_FALSE(nullptr == derived);
+  EXPECT_TRUE(derived != nullptr);
+  EXPECT_TRUE(nullptr != derived);
+
   derived.free();
 }
 
@@ -817,10 +946,11 @@ GPU_TEST(managed_ptr, gpu_copy_constructor)
   EXPECT_TRUE(array3[12]);
   EXPECT_FALSE(array3[13]);
 
-  array.free();
-  array2.free();
   array3.free();
-  otherDerived.free();
+  array2.free();
+  array.free();
+
+  derived.free();
 }
 
 GPU_TEST(managed_ptr, gpu_converting_constructor)
@@ -880,10 +1010,11 @@ GPU_TEST(managed_ptr, gpu_converting_constructor)
   EXPECT_TRUE(array3[12]);
   EXPECT_FALSE(array3[13]);
 
-  array.free();
-  array2.free();
   array3.free();
-  derived.free();
+  array2.free();
+  array.free();
+
+  base.free();
 }
 
 GPU_TEST(managed_ptr, gpu_copy_assignment_operator)
@@ -944,10 +1075,55 @@ GPU_TEST(managed_ptr, gpu_copy_assignment_operator)
   EXPECT_TRUE(array3[12]);
   EXPECT_FALSE(array3[13]);
 
-  array.free();
-  array2.free();
   array3.free();
-  otherDerived.free();
+  array2.free();
+  array.free();
+
+  derived.free();
+}
+
+#endif
+
+// Enable the following tests to ensure that proper compiler errors are given
+// for bad arguments since otherwise it is difficult to make sure the template
+// metaprogramming is correct.
+
+#if 0
+
+// Should give something like the following:
+// error: static assertion failed: F is not invocable with the given arguments.
+
+TEST(managed_ptr, bad_function_to_make_managed_from_factory_function)
+{
+  const int expectedValue = rand();
+
+  auto factory = [] CHAI_HOST (const int value) {
+    return new TestDerived(value);
+  };
+
+  auto derived = chai::make_managed_from_factory<TestBase>(expectedValue, factory);
+
+  EXPECT_EQ((*derived).getValue(), expectedValue);
+}
+
+#endif
+
+#if 0
+
+// Should give something like the following:
+// error: static assertion failed: F is not invocable with the given arguments.
+
+TEST(managed_ptr, bad_arguments_to_make_managed_from_factory_function)
+{
+  const int expectedValue = rand();
+
+  auto factory = [] CHAI_HOST (const int value) {
+    return new TestDerived(value);
+  };
+
+  auto derived = chai::make_managed_from_factory<TestBase>(factory, expectedValue, 3);
+
+  EXPECT_EQ((*derived).getValue(), expectedValue);
 }
 
 #endif
