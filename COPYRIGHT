@@ -1,0 +1,15 @@
+Intellectual Property Notice
+------------------------------
+
+CHAI is licensed under the BSD 3 Clause license (LICENSE or
+https://opensource.org/licenses/BSD-3-Clause).
+
+Copyrights and patents in the CHAI project are retained by contributors.  No
+copyright assignment is required to contribute to CHAI.
+
+SPDX usage
+------------
+
+Individual files contain SPDX tags instead of the full license text.
+This enables machine processing of license information based on the SPDX
+License Identifiers that are available here: https://spdx.org/licenses/
