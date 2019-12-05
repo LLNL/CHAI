@@ -52,6 +52,8 @@
 class Base {
    public:
       CHAI_HOST_DEVICE virtual void scale(size_t numValues, int* values) = 0;
+
+      CHAI_HOST_DEVICE virtual void sumAndScale(size_t numValues, int* values, int& value) = 0;
 };
 
 class Derived : public Base {
@@ -64,6 +66,16 @@ class Derived : public Base {
          }
       }
 
+      CHAI_HOST_DEVICE virtual void sumAndScale(size_t numValues, int* values, int& value) override {
+         int result = 0;
+
+         for (size_t i = 0; i < numValues; ++i) {
+            result += values[i];
+         }
+
+         value *= m_value * result;
+      }
+
    private:
       int m_value = -1;
 };
@@ -73,6 +85,10 @@ class BaseCRTP {
    public:
       CHAI_HOST_DEVICE void scale(size_t numValues, int* values) {
          return static_cast<T*>(this)->scale(numValues, values);
+      }
+
+      CHAI_HOST_DEVICE void sumAndScale(size_t numValues, int* values, int& value) {
+         return static_cast<T*>(this)->sumAndScale(numValues, values, value);
       }
 };
 
@@ -84,6 +100,16 @@ class DerivedCRTP : public BaseCRTP<DerivedCRTP> {
          for (size_t i = 0; i < numValues; ++i) {
             values[i] *= m_value;
          }
+      }
+
+      CHAI_HOST_DEVICE void sumAndScale(size_t numValues, int* values, int& value) {
+         int result = 0;
+
+         for (size_t i = 0; i < numValues; ++i) {
+            result += values[i];
+         }
+
+         value *= m_value * result;
       }
 
    private:
@@ -98,6 +124,16 @@ class NoInheritance {
          for (size_t i = 0; i < numValues; ++i) {
             values[i] *= m_value;
          }
+      }
+
+      CHAI_HOST_DEVICE void sumAndScale(size_t numValues, int* values, int& value) {
+         int result = 0;
+
+         for (size_t i = 0; i < numValues; ++i) {
+            result += values[i];
+         }
+
+         value *= m_value * result;
       }
 
    private:
@@ -390,6 +426,7 @@ void benchmark_use_managed_ptr_gpu(benchmark::State& state)
 
 BENCHMARK(benchmark_use_managed_ptr_gpu);
 
+
 // Curiously recurring template pattern
 __global__ void square(BaseCRTP<DerivedCRTP> object, size_t numValues, int* values) {
    object.scale(numValues, values);
@@ -448,6 +485,316 @@ void benchmark_no_inheritance_gpu(benchmark::State& state)
 
 BENCHMARK(benchmark_no_inheritance_gpu);
 
+__global__ void square(size_t numValues, int* values, chai::managed_ptr<Base> object) {
+   int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+   if (i < numValues) {
+      int temp[4] = {i, i+1, i+2, i+3};
+      object->sumAndScale(4, temp, values[i]);
+   }
+}
+
+// managed_ptr (bulk)
+template <size_t N>
+void benchmark_bulk_use_managed_ptr_gpu(benchmark::State& state)
+{
+  chai::managed_ptr<Base> object = chai::make_managed<Derived>(2);
+
+  int* values;
+  cudaMalloc(&values, N * sizeof(int));
+  fill<<<(N+255)/256, 256>>>(N, values);
+
+  cudaDeviceSynchronize();
+
+  while (state.KeepRunning()) {
+    square<<<(N+255)/256, 256>>>(N, values, object);
+    cudaDeviceSynchronize();
+  }
+
+  cudaFree(values);
+  object.free();
+  cudaDeviceSynchronize();
+}
+
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_gpu, 1);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_gpu, 256);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_gpu, 512);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_gpu, 1024);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_gpu, 2048);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_gpu, 4096);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_gpu, 8192);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_gpu, 16384);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_gpu, 32768);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_gpu, 65536);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_gpu, 131072);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_gpu, 262144);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_gpu, 524288);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_gpu, 1048576);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_gpu, 2097152);
+
+// Curiously recurring template pattern
+__global__ void square(size_t numValues, int* values, BaseCRTP<DerivedCRTP> object) {
+   int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+   if (i < numValues) {
+      int temp[4] = {i, i+1, i+2, i+3};
+      object.sumAndScale(4, temp, values[i]);
+   }
+}
+
+template <size_t N>
+void benchmark_bulk_curiously_recurring_template_pattern_gpu(benchmark::State& state)
+{
+  BaseCRTP<DerivedCRTP>* derivedCRTP = new DerivedCRTP(2);
+  auto object = *derivedCRTP;
+
+  int* values;
+  cudaMalloc(&values, N * sizeof(int));
+  fill<<<(N+255)/256, 256>>>(N, values);
+
+  cudaDeviceSynchronize();
+
+  while (state.KeepRunning()) {
+    square<<<(N+255)/256, 256>>>(N, values, object);
+    cudaDeviceSynchronize();
+  }
+
+  cudaFree(values);
+  delete derivedCRTP;
+  cudaDeviceSynchronize();
+}
+
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_gpu, 1);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_gpu, 256);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_gpu, 512);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_gpu, 1024);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_gpu, 2048);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_gpu, 4096);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_gpu, 8192);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_gpu, 16384);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_gpu, 32768);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_gpu, 65536);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_gpu, 131072);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_gpu, 262144);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_gpu, 524288);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_gpu, 1048576);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_gpu, 2097152);
+
+// Class without inheritance
+__global__ void square(size_t numValues, int* values, NoInheritance object) {
+   int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+   if (i < numValues) {
+      int temp[4] = {i, i+1, i+2, i+3};
+      object.sumAndScale(4, temp, values[i]);
+   }
+}
+
+template <size_t N>
+void benchmark_bulk_no_inheritance_gpu(benchmark::State& state)
+{
+  NoInheritance* noInheritance = new NoInheritance(2);
+  auto object = *noInheritance;
+
+  int* values;
+  cudaMalloc(&values, N * sizeof(int));
+  fill<<<(N+255)/256, 256>>>(N, values);
+
+  cudaDeviceSynchronize();
+
+  while (state.KeepRunning()) {
+    square<<<(N+255)/256, 256>>>(N, values, object);
+    cudaDeviceSynchronize();
+  }
+
+  cudaFree(values);
+  delete noInheritance;
+  cudaDeviceSynchronize();
+}
+
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_gpu, 1);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_gpu, 256);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_gpu, 512);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_gpu, 1024);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_gpu, 2048);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_gpu, 4096);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_gpu, 8192);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_gpu, 16384);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_gpu, 32768);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_gpu, 65536);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_gpu, 131072);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_gpu, 262144);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_gpu, 524288);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_gpu, 1048576);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_gpu, 2097152);
+
 #endif
 
+// managed_ptr
+template <size_t N>
+static void benchmark_bulk_polymorphism_cpu(benchmark::State& state)
+{
+  Base* object = new Derived(2);
+
+  int* values = (int*) malloc(N * sizeof(int));
+
+  for (size_t i = 0; i < N; ++i) {
+     values[i] = i * i;
+  }
+
+#ifdef __CUDACC__
+  cudaDeviceSynchronize();
+#endif
+
+  while (state.KeepRunning()) {
+    for (int i = 0; i < N; ++i) {
+       int temp[4] = {i, i+1, i+2, i+3};
+       object->sumAndScale(4, temp, values[i]);
+    }
+  }
+
+  delete object;
+#ifdef __CUDACC__
+  cudaDeviceSynchronize();
+#endif
+}
+
+BENCHMARK_TEMPLATE(benchmark_bulk_polymorphism_cpu, 1);
+BENCHMARK_TEMPLATE(benchmark_bulk_polymorphism_cpu, 256);
+BENCHMARK_TEMPLATE(benchmark_bulk_polymorphism_cpu, 512);
+BENCHMARK_TEMPLATE(benchmark_bulk_polymorphism_cpu, 1024);
+BENCHMARK_TEMPLATE(benchmark_bulk_polymorphism_cpu, 2048);
+BENCHMARK_TEMPLATE(benchmark_bulk_polymorphism_cpu, 4096);
+BENCHMARK_TEMPLATE(benchmark_bulk_polymorphism_cpu, 8192);
+BENCHMARK_TEMPLATE(benchmark_bulk_polymorphism_cpu, 16384);
+BENCHMARK_TEMPLATE(benchmark_bulk_polymorphism_cpu, 32768);
+BENCHMARK_TEMPLATE(benchmark_bulk_polymorphism_cpu, 65536);
+BENCHMARK_TEMPLATE(benchmark_bulk_polymorphism_cpu, 131072);
+BENCHMARK_TEMPLATE(benchmark_bulk_polymorphism_cpu, 262144);
+BENCHMARK_TEMPLATE(benchmark_bulk_polymorphism_cpu, 524288);
+BENCHMARK_TEMPLATE(benchmark_bulk_polymorphism_cpu, 1048576);
+BENCHMARK_TEMPLATE(benchmark_bulk_polymorphism_cpu, 2097152);
+
+// managed_ptr
+template <size_t N>
+static void benchmark_bulk_use_managed_ptr_cpu(benchmark::State& state)
+{
+  chai::managed_ptr<Base> object = chai::make_managed<Derived>(2);
+
+  int* values = (int*) malloc(N * sizeof(int));
+
+  for (size_t i = 0; i < N; ++i) {
+     values[i] = i * i;
+  }
+
+#ifdef __CUDACC__
+  cudaDeviceSynchronize();
+#endif
+
+  while (state.KeepRunning()) {
+    for (int i = 0; i < N; ++i) {
+       int temp[4] = {i, i+1, i+2, i+3};
+       object->sumAndScale(4, temp, values[i]);
+    }
+  }
+
+  object.free();
+  cudaDeviceSynchronize();
+}
+
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_cpu, 1);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_cpu, 256);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_cpu, 512);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_cpu, 1024);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_cpu, 2048);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_cpu, 4096);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_cpu, 8192);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_cpu, 16384);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_cpu, 32768);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_cpu, 65536);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_cpu, 131072);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_cpu, 262144);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_cpu, 524288);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_cpu, 1048576);
+BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_cpu, 2097152);
+
+// Curiously recurring template pattern
+template <size_t N>
+static void benchmark_bulk_curiously_recurring_template_pattern_cpu(benchmark::State& state)
+{
+  BaseCRTP<DerivedCRTP>* object = new DerivedCRTP(2);
+
+  int* values = (int*) malloc(N * sizeof(int));
+
+  for (size_t i = 0; i < N; ++i) {
+     values[i] = i * i;
+  }
+
+  while (state.KeepRunning()) {
+    for (int i = 0; i < N; ++i) {
+       int temp[4] = {i, i+1, i+2, i+3};
+       object->sumAndScale(4, temp, values[i]);
+    }
+  }
+
+  free(values);
+  delete object;
+}
+
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_cpu, 1);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_cpu, 256);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_cpu, 512);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_cpu, 1024);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_cpu, 2048);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_cpu, 4096);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_cpu, 8192);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_cpu, 16384);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_cpu, 32768);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_cpu, 65536);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_cpu, 131072);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_cpu, 262144);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_cpu, 524288);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_cpu, 1048576);
+BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_cpu, 2097152);
+
+// Class without inheritance
+template <size_t N>
+static void benchmark_bulk_no_inheritance_cpu(benchmark::State& state)
+{
+  NoInheritance* object = new NoInheritance(2);
+
+  int* values = (int*) malloc(N * sizeof(int));
+
+  for (size_t i = 0; i < N; ++i) {
+     values[i] = i * i;
+  }
+
+  while (state.KeepRunning()) {
+    for (int i = 0; i < N; ++i) {
+       int temp[4] = {i, i+1, i+2, i+3};
+       object->sumAndScale(4, temp, values[i]);
+    }
+  }
+
+  free(values);
+  delete object;
+}
+
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_cpu, 1);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_cpu, 256);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_cpu, 512);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_cpu, 1024);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_cpu, 2048);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_cpu, 4096);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_cpu, 8192);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_cpu, 16384);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_cpu, 32768);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_cpu, 65536);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_cpu, 131072);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_cpu, 262144);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_cpu, 524288);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_cpu, 1048576);
+BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_cpu, 2097152);
+
 BENCHMARK_MAIN();
+
