@@ -51,25 +51,27 @@
 
 class Base {
    public:
-      CHAI_HOST_DEVICE virtual void scale(size_t numValues, int* values) = 0;
+      CHAI_HOST_DEVICE virtual void scale(int numValues, int* values) = 0;
 
-      CHAI_HOST_DEVICE virtual void sumAndScale(size_t numValues, int* values, int& value) = 0;
+      CHAI_HOST_DEVICE virtual void sumAndScale(int numValues, int* values, int& value) = 0;
+
+      CHAI_HOST_DEVICE virtual ~Base() = default;
 };
 
 class Derived : public Base {
    public:
       CHAI_HOST_DEVICE Derived(int value) : Base(), m_value(value) {}
 
-      CHAI_HOST_DEVICE virtual void scale(size_t numValues, int* values) override {
-         for (size_t i = 0; i < numValues; ++i) {
+      CHAI_HOST_DEVICE virtual void scale(int numValues, int* values) override {
+         for (int i = 0; i < numValues; ++i) {
             values[i] *= m_value;
          }
       }
 
-      CHAI_HOST_DEVICE virtual void sumAndScale(size_t numValues, int* values, int& value) override {
+      CHAI_HOST_DEVICE virtual void sumAndScale(int numValues, int* values, int& value) override {
          int result = 0;
 
-         for (size_t i = 0; i < numValues; ++i) {
+         for (int i = 0; i < numValues; ++i) {
             result += values[i];
          }
 
@@ -83,11 +85,11 @@ class Derived : public Base {
 template <typename T>
 class BaseCRTP {
    public:
-      CHAI_HOST_DEVICE void scale(size_t numValues, int* values) {
+      CHAI_HOST_DEVICE void scale(int numValues, int* values) {
          return static_cast<T*>(this)->scale(numValues, values);
       }
 
-      CHAI_HOST_DEVICE void sumAndScale(size_t numValues, int* values, int& value) {
+      CHAI_HOST_DEVICE void sumAndScale(int numValues, int* values, int& value) {
          return static_cast<T*>(this)->sumAndScale(numValues, values, value);
       }
 };
@@ -96,16 +98,16 @@ class DerivedCRTP : public BaseCRTP<DerivedCRTP> {
    public:
       CHAI_HOST_DEVICE DerivedCRTP(int value) : BaseCRTP<DerivedCRTP>(), m_value(value) {}
 
-      CHAI_HOST_DEVICE void scale(size_t numValues, int* values) {
-         for (size_t i = 0; i < numValues; ++i) {
+      CHAI_HOST_DEVICE void scale(int numValues, int* values) {
+         for (int i = 0; i < numValues; ++i) {
             values[i] *= m_value;
          }
       }
 
-      CHAI_HOST_DEVICE void sumAndScale(size_t numValues, int* values, int& value) {
+      CHAI_HOST_DEVICE void sumAndScale(int numValues, int* values, int& value) {
          int result = 0;
 
-         for (size_t i = 0; i < numValues; ++i) {
+         for (int i = 0; i < numValues; ++i) {
             result += values[i];
          }
 
@@ -120,16 +122,16 @@ class NoInheritance {
    public:
       CHAI_HOST_DEVICE NoInheritance(int value) : m_value(value) {}
 
-      CHAI_HOST_DEVICE void scale(size_t numValues, int* values) {
-         for (size_t i = 0; i < numValues; ++i) {
+      CHAI_HOST_DEVICE void scale(int numValues, int* values) {
+         for (int i = 0; i < numValues; ++i) {
             values[i] *= m_value;
          }
       }
 
-      CHAI_HOST_DEVICE void sumAndScale(size_t numValues, int* values, int& value) {
+      CHAI_HOST_DEVICE void sumAndScale(int numValues, int* values, int& value) {
          int result = 0;
 
-         for (size_t i = 0; i < numValues; ++i) {
+         for (int i = 0; i < numValues; ++i) {
             result += values[i];
          }
 
@@ -140,7 +142,7 @@ class NoInheritance {
       int m_value = -1;
 };
 
-template <size_t N>
+template <int N>
 class ClassWithSize {
    private:
       char m_values[N];
@@ -161,10 +163,10 @@ static void benchmark_use_managed_ptr_cpu(benchmark::State& state)
 {
   chai::managed_ptr<Base> object = chai::make_managed<Derived>(2);
 
-  size_t numValues = 100;
+  int numValues = 100;
   int* values = (int*) malloc(100 * sizeof(int));
 
-  for (size_t i = 0; i < numValues; ++i) {
+  for (int i = 0; i < numValues; ++i) {
      values[i] = i * i;
   }
 
@@ -177,7 +179,9 @@ static void benchmark_use_managed_ptr_cpu(benchmark::State& state)
   }
 
   object.free();
+#ifdef __CUDACC__
   cudaDeviceSynchronize();
+#endif
 }
 
 BENCHMARK(benchmark_use_managed_ptr_cpu);
@@ -187,10 +191,10 @@ static void benchmark_curiously_recurring_template_pattern_cpu(benchmark::State&
 {
   BaseCRTP<DerivedCRTP>* object = new DerivedCRTP(2);
 
-  size_t numValues = 100;
+  int numValues = 100;
   int* values = (int*) malloc(100 * sizeof(int));
 
-  for (size_t i = 0; i < numValues; ++i) {
+  for (int i = 0; i < numValues; ++i) {
      values[i] = i * i;
   }
 
@@ -209,10 +213,10 @@ static void benchmark_no_inheritance_cpu(benchmark::State& state)
 {
   NoInheritance* object = new NoInheritance(2);
 
-  size_t numValues = 100;
+  int numValues = 100;
   int* values = (int*) malloc(100 * sizeof(int));
 
-  for (size_t i = 0; i < numValues; ++i) {
+  for (int i = 0; i < numValues; ++i) {
      values[i] = i * i;
   }
 
@@ -228,11 +232,11 @@ BENCHMARK(benchmark_no_inheritance_cpu);
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 
-template <size_t N>
+template <int N>
 __global__ void copy_kernel(ClassWithSize<N>) {}
 
 // Benchmark how long it takes to copy a class to the GPU
-template <size_t N>
+template <int N>
 static void benchmark_pass_copy_to_gpu(benchmark::State& state)
 {
   ClassWithSize<N> helper;
@@ -248,7 +252,7 @@ BENCHMARK_TEMPLATE(benchmark_pass_copy_to_gpu, 64);
 BENCHMARK_TEMPLATE(benchmark_pass_copy_to_gpu, 512);
 BENCHMARK_TEMPLATE(benchmark_pass_copy_to_gpu, 4096);
 
-template <size_t N>
+template <int N>
 static void benchmark_copy_to_gpu(benchmark::State& state)
 {
   ClassWithSize<N>* cpuPointer = new ClassWithSize<N>();
@@ -273,17 +277,17 @@ BENCHMARK_TEMPLATE(benchmark_copy_to_gpu, 262144);
 BENCHMARK_TEMPLATE(benchmark_copy_to_gpu, 2097152);
 
 // Benchmark how long it takes to call placement new on the GPU
-template <size_t N>
+template <int N>
 __global__ void placement_new_kernel(ClassWithSize<N>* address) {
    (void) new(address) ClassWithSize<N>();
 }
 
-template <size_t N>
+template <int N>
 __global__ void placement_delete_kernel(ClassWithSize<N>* address) {
    address->~ClassWithSize<N>();
 }
 
-template <size_t N>
+template <int N>
 static void benchmark_placement_new_on_gpu(benchmark::State& state)
 {
   while (state.KeepRunning()) {
@@ -305,17 +309,17 @@ BENCHMARK_TEMPLATE(benchmark_placement_new_on_gpu, 262144);
 BENCHMARK_TEMPLATE(benchmark_placement_new_on_gpu, 2097152);
 
 // Benchmark how long it takes to call new on the GPU
-template <size_t N>
+template <int N>
 __global__ void create_kernel(ClassWithSize<N>** address) {
    *address = new ClassWithSize<N>();
 }
 
-template <size_t N>
+template <int N>
 __global__ void delete_kernel(ClassWithSize<N>** address) {
    delete *address;
 }
 
-template <size_t N>
+template <int N>
 static void benchmark_new_on_gpu(benchmark::State& state)
 {
   while (state.KeepRunning()) {
@@ -337,12 +341,12 @@ BENCHMARK_TEMPLATE(benchmark_new_on_gpu, 262144);
 BENCHMARK_TEMPLATE(benchmark_new_on_gpu, 2097152);
 
 // Benchmark current approach
-template <size_t N>
+template <int N>
 __global__ void delete_kernel_2(ClassWithSize<N>* address) {
    delete address;
 }
 
-template <size_t N>
+template <int N>
 static void benchmark_new_on_gpu_and_copy_to_host(benchmark::State& state)
 {
   while (state.KeepRunning()) {
@@ -368,12 +372,12 @@ BENCHMARK_TEMPLATE(benchmark_new_on_gpu_and_copy_to_host, 262144);
 BENCHMARK_TEMPLATE(benchmark_new_on_gpu_and_copy_to_host, 2097152);
 
 // Benchmark how long it takes to create a stack object on the GPU
-template <size_t N>
+template <int N>
 __global__ void create_on_stack_kernel() {
    (void) ClassWithSize<N>();
 }
 
-template <size_t N>
+template <int N>
 static void benchmark_create_on_stack_on_gpu(benchmark::State& state)
 {
   while (state.KeepRunning()) {
@@ -391,15 +395,15 @@ BENCHMARK_TEMPLATE(benchmark_create_on_stack_on_gpu, 262144);
 BENCHMARK_TEMPLATE(benchmark_create_on_stack_on_gpu, 2097152);
 
 // Use managed_ptr
-__global__ void fill(size_t numValues, int* values) {
-   size_t i = blockIdx.x * blockDim.x + threadIdx.x;
+__global__ void fill(int numValues, int* values) {
+   int i = blockIdx.x * blockDim.x + threadIdx.x;
 
    if (i < numValues) {
       values[i] = i * i;
    }
 }
 
-__global__ void square(chai::managed_ptr<Base> object, size_t numValues, int* values) {
+__global__ void square(chai::managed_ptr<Base> object, int numValues, int* values) {
    object->scale(numValues, values);
 }
 
@@ -407,7 +411,7 @@ void benchmark_use_managed_ptr_gpu(benchmark::State& state)
 {
   chai::managed_ptr<Base> object = chai::make_managed<Derived>(2);
 
-  size_t numValues = 100;
+  int numValues = 100;
   int* values;
   cudaMalloc(&values, numValues * sizeof(int));
   fill<<<1, 100>>>(numValues, values);
@@ -428,7 +432,7 @@ BENCHMARK(benchmark_use_managed_ptr_gpu);
 
 
 // Curiously recurring template pattern
-__global__ void square(BaseCRTP<DerivedCRTP> object, size_t numValues, int* values) {
+__global__ void square(BaseCRTP<DerivedCRTP> object, int numValues, int* values) {
    object.scale(numValues, values);
 }
 
@@ -437,7 +441,7 @@ void benchmark_curiously_recurring_template_pattern_gpu(benchmark::State& state)
   BaseCRTP<DerivedCRTP>* derivedCRTP = new DerivedCRTP(2);
   auto object = *derivedCRTP;
 
-  size_t numValues = 100;
+  int numValues = 100;
   int* values;
   cudaMalloc(&values, numValues * sizeof(int));
   fill<<<1, 100>>>(numValues, values);
@@ -457,7 +461,7 @@ void benchmark_curiously_recurring_template_pattern_gpu(benchmark::State& state)
 BENCHMARK(benchmark_curiously_recurring_template_pattern_gpu);
 
 // Class without inheritance
-__global__ void square(NoInheritance object, size_t numValues, int* values) {
+__global__ void square(NoInheritance object, int numValues, int* values) {
    object.scale(numValues, values);
 }
 
@@ -466,7 +470,7 @@ void benchmark_no_inheritance_gpu(benchmark::State& state)
   NoInheritance* noInheritance = new NoInheritance(2);
   auto object = *noInheritance;
 
-  size_t numValues = 100;
+  int numValues = 100;
   int* values;
   cudaMalloc(&values, numValues * sizeof(int));
   fill<<<1, 100>>>(numValues, values);
@@ -485,7 +489,7 @@ void benchmark_no_inheritance_gpu(benchmark::State& state)
 
 BENCHMARK(benchmark_no_inheritance_gpu);
 
-__global__ void square(size_t numValues, int* values, chai::managed_ptr<Base> object) {
+__global__ void square(int numValues, int* values, chai::managed_ptr<Base> object) {
    int i = blockIdx.x * blockDim.x + threadIdx.x;
 
    if (i < numValues) {
@@ -495,7 +499,7 @@ __global__ void square(size_t numValues, int* values, chai::managed_ptr<Base> ob
 }
 
 // managed_ptr (bulk)
-template <size_t N>
+template <int N>
 void benchmark_bulk_use_managed_ptr_gpu(benchmark::State& state)
 {
   chai::managed_ptr<Base> object = chai::make_managed<Derived>(2);
@@ -533,7 +537,7 @@ BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_gpu, 1048576);
 BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_gpu, 2097152);
 
 // Curiously recurring template pattern
-__global__ void square(size_t numValues, int* values, BaseCRTP<DerivedCRTP> object) {
+__global__ void square(int numValues, int* values, BaseCRTP<DerivedCRTP> object) {
    int i = blockIdx.x * blockDim.x + threadIdx.x;
 
    if (i < numValues) {
@@ -542,7 +546,7 @@ __global__ void square(size_t numValues, int* values, BaseCRTP<DerivedCRTP> obje
    }
 }
 
-template <size_t N>
+template <int N>
 void benchmark_bulk_curiously_recurring_template_pattern_gpu(benchmark::State& state)
 {
   BaseCRTP<DerivedCRTP>* derivedCRTP = new DerivedCRTP(2);
@@ -581,7 +585,7 @@ BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_gpu, 1048
 BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_gpu, 2097152);
 
 // Class without inheritance
-__global__ void square(size_t numValues, int* values, NoInheritance object) {
+__global__ void square(int numValues, int* values, NoInheritance object) {
    int i = blockIdx.x * blockDim.x + threadIdx.x;
 
    if (i < numValues) {
@@ -590,7 +594,7 @@ __global__ void square(size_t numValues, int* values, NoInheritance object) {
    }
 }
 
-template <size_t N>
+template <int N>
 void benchmark_bulk_no_inheritance_gpu(benchmark::State& state)
 {
   NoInheritance* noInheritance = new NoInheritance(2);
@@ -631,14 +635,14 @@ BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_gpu, 2097152);
 #endif
 
 // managed_ptr
-template <size_t N>
+template <int N>
 static void benchmark_bulk_polymorphism_cpu(benchmark::State& state)
 {
   Base* object = new Derived(2);
 
   int* values = (int*) malloc(N * sizeof(int));
 
-  for (size_t i = 0; i < N; ++i) {
+  for (int i = 0; i < N; ++i) {
      values[i] = i * i;
   }
 
@@ -676,14 +680,14 @@ BENCHMARK_TEMPLATE(benchmark_bulk_polymorphism_cpu, 1048576);
 BENCHMARK_TEMPLATE(benchmark_bulk_polymorphism_cpu, 2097152);
 
 // managed_ptr
-template <size_t N>
+template <int N>
 static void benchmark_bulk_use_managed_ptr_cpu(benchmark::State& state)
 {
   chai::managed_ptr<Base> object = chai::make_managed<Derived>(2);
 
   int* values = (int*) malloc(N * sizeof(int));
 
-  for (size_t i = 0; i < N; ++i) {
+  for (int i = 0; i < N; ++i) {
      values[i] = i * i;
   }
 
@@ -699,7 +703,9 @@ static void benchmark_bulk_use_managed_ptr_cpu(benchmark::State& state)
   }
 
   object.free();
+#ifdef __CUDACC__
   cudaDeviceSynchronize();
+#endif
 }
 
 BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_cpu, 1);
@@ -719,14 +725,14 @@ BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_cpu, 1048576);
 BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_cpu, 2097152);
 
 // Curiously recurring template pattern
-template <size_t N>
+template <int N>
 static void benchmark_bulk_curiously_recurring_template_pattern_cpu(benchmark::State& state)
 {
   BaseCRTP<DerivedCRTP>* object = new DerivedCRTP(2);
 
   int* values = (int*) malloc(N * sizeof(int));
 
-  for (size_t i = 0; i < N; ++i) {
+  for (int i = 0; i < N; ++i) {
      values[i] = i * i;
   }
 
@@ -758,14 +764,14 @@ BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_cpu, 1048
 BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_cpu, 2097152);
 
 // Class without inheritance
-template <size_t N>
+template <int N>
 static void benchmark_bulk_no_inheritance_cpu(benchmark::State& state)
 {
   NoInheritance* object = new NoInheritance(2);
 
   int* values = (int*) malloc(N * sizeof(int));
 
-  for (size_t i = 0; i < N; ++i) {
+  for (int i = 0; i < N; ++i) {
      values[i] = i * i;
   }
 
