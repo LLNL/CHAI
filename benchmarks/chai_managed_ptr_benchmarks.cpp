@@ -55,7 +55,7 @@ class Base {
 
       CHAI_HOST_DEVICE virtual void sumAndScale(int numValues, int* values, int& value) = 0;
 
-      CHAI_HOST_DEVICE virtual ~Base() = default;
+      virtual ~Base() = default;
 };
 
 class Derived : public Base {
