@@ -178,7 +178,9 @@ static void benchmark_use_managed_ptr_cpu(benchmark::State& state)
     object->scale(numValues, values);
   }
 
+  free(values);
   object.free();
+
 #ifdef __CUDACC__
   cudaDeviceSynchronize();
 #endif
@@ -657,7 +659,9 @@ static void benchmark_bulk_polymorphism_cpu(benchmark::State& state)
     }
   }
 
+  free(values);
   delete object;
+
 #ifdef __CUDACC__
   cudaDeviceSynchronize();
 #endif
@@ -702,7 +706,9 @@ static void benchmark_bulk_use_managed_ptr_cpu(benchmark::State& state)
     }
   }
 
+  free(values);
   object.free();
+
 #ifdef __CUDACC__
   cudaDeviceSynchronize();
 #endif
