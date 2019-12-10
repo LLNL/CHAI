@@ -1,3 +1,9 @@
+##############################################################################
+# Copyright (c) 2016-19, Lawrence Livermore National Security, LLC and CHAI
+# project contributors. See the COPYRIGHT file for details.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+##############################################################################
 # /bin/bash
 
 export LLVM_PATH=${HOME}/llvm/clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-14.04

@@ -1,7 +1,9 @@
-# CHAI v1.2
+# CHAI v2.0
 
 [![Azure Build Status](https://dev.azure.com/davidbeckingsale/CHAI/_apis/build/status/LLNL.CHAI?branchName=develop)](https://dev.azure.com/davidbeckingsale/CHAI/_build/latest?definitionId=2&branchName=develop)
 [![Build Status](https://travis-ci.org/LLNL/CHAI.svg?branch=develop)](https://travis-ci.org/LLNL/CHAI)
+[![Documentation Status](https://readthedocs.org/projects/chai/badge/?version=develop)](https://chai.readthedocs.io/en/develop/?badge=develop)
+
 
 CHAI is a library that handles automatic data migration to different memory
 spaces behind an array-style interface. It was designed to work with
@@ -22,7 +24,7 @@ of CUDA was detected. Once CMake has completed, CHAI can be built with Make:
 
 For more advanced configuration you can use standard CMake variables.
 
-More information is available in the CHAI documentation.
+More information is available in the [CHAI documentation](https://chai.readthedocs.io/en/develop/).
 
 ## Authors
 
