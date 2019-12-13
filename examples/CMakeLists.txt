@@ -34,6 +34,9 @@ if (ENABLE_CUDA OR ENABLE_HIP)
     DEPENDS_ON ${chai_umpire_example_depends})
 endif ()
 
-# if (ENABLE_RAJA_PLUGIN)
-#   add_subdirectory(integration)
-# endif ()
+if (ENABLE_RAJA_PLUGIN)
+  blt_add_executable(
+    NAME jacobi.exe
+    SOURCES jacobi.cpp
+    DEPENDS_ON chai raja)
+endif ()
