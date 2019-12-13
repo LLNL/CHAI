@@ -45,6 +45,14 @@ int main(int, char **)
   gridx.h = 1.0 / (N + 1.0);
   gridx.n = N + 2;
 
+  std::cout << "   _____ _    _          _____  " << std::endl;
+  std::cout << "  / ____| |  | |   /\\   |_   _| " << std::endl;
+  std::cout << "  | |    | |__| |  /  \\    | |  " << std::endl;
+  std::cout << "  | |    |  __  | / /\\ \\   | |  " << std::endl;
+  std::cout << "  | |____| |  | |/ ____ \\ _| |_ " << std::endl;
+  std::cout << "  \\_____|_|  |_/_/    \\_\\_____| " << std::endl;
+  std::cout << "\n\n" << std::endl;
+
   auto I_array = chai::ManagedArray<double>(NN);
   auto Iold_array = chai::ManagedArray<double>(NN);
 
@@ -82,7 +90,7 @@ int main(int, char **)
                      * (2 * x * (y - 1) * (y - 2 * x + x * y + 2) * exp(x - y));
 
           I(m,n) = 0.25 * (-f + Iold(m,n-1) + Iold(m,n+1) 
-              + Iold(m-1,n) + Iold(m+1,n);
+              + Iold(m-1,n) + Iold(m+1,n));
     });
 
     RAJA::ReduceSum<RAJA::seq_reduce, double> RAJA_resI2(0.0);
@@ -102,11 +110,8 @@ int main(int, char **)
     iteration++;
   }
 
-  computeErr(I, gridx);
+  computeErr(I_array, gridx);
   printf("No of iterations: %d \n \n", iteration);
-  
-  memoryManager::deallocate(I);
-  memoryManager::deallocate(Iold);
   
   return 0;
 }
