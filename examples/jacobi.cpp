@@ -13,6 +13,8 @@
 #include <cmath>
 
 #include "RAJA/RAJA.hpp"
+#include "chai/ManagedArray.hpp"
+#include "chai/ManagedArrayView.hpp"
 
 //
 //  Struct to hold grid info
@@ -28,10 +30,9 @@ struct grid_s {
 double solution(double x, double y);
 void computeErr(double *I, grid_s grid);
 
-int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
+int main(int, char **)
 {
   double tol = 1e-10;
-
   int N = 50;
   int NN = (N + 2) * (N + 2);
   int maxIter = 100000;
@@ -44,15 +45,18 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
   gridx.h = 1.0 / (N + 1.0);
   gridx.n = N + 2;
 
-  auto I = chai::ManagedArray<double>(NN);
-  auto Iold = chai::ManagedArray<double>(NN);
+  auto I_array = chai::ManagedArray<double>(NN);
+  auto Iold_array = chai::ManagedArray<double>(NN);
+
+  chai::ManagedArrayView<double, RAJA::Layout<2>> I(I_array, N+2, N+2);
+  chai::ManagedArrayView<double, RAJA::Layout<2>> Iold(Iold_array, N+2, N+2);
 
   RAJA::RangeSegment gridRange(0, NN);
   RAJA::RangeSegment jacobiRange(1, (N + 1));
 
   RAJA::forall<RAJA::seq_exec>(gridRange, [=] (int i) {
-      I[i] = 0.0;
-      Iold[i] = 0.0;
+      I_array[i] = 0.0;
+      Iold_array[i] = 0.0;
   });
 
   using jacobiSeqNestedPolicy = 
@@ -77,17 +81,15 @@ int main(int RAJA_UNUSED_ARG(argc), char **RAJA_UNUSED_ARG(argv[]))
           double f = gridx.h * gridx.h
                      * (2 * x * (y - 1) * (y - 2 * x + x * y + 2) * exp(x - y));
 
-          int id = n * (N + 2) + m;
-          I[id] =
-               0.25 * (-f + Iold[id - N - 2] + Iold[id + N + 2] + Iold[id - 1]
-                          + Iold[id + 1]);
+          I(m,n) = 0.25 * (-f + Iold(m,n-1) + Iold(m,n+1) 
+              + Iold(m-1,n) + Iold(m+1,n);
     });
 
     RAJA::ReduceSum<RAJA::seq_reduce, double> RAJA_resI2(0.0);
     RAJA::forall<RAJA::seq_exec>(
       gridRange, [=](RAJA::Index_type k) {
-        RAJA_resI2 += (I[k] - Iold[k]) * (I[k] - Iold[k]);          
-        Iold[k] = I[k];
+        RAJA_resI2 += (I_array[k] - Iold_array[k]) * (I_array[k] - Iold_array[k]);
+        Iold_array[k] = I_array[k];
       });
     
     resI2 = RAJA_resI2;

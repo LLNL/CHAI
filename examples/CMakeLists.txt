@@ -38,5 +38,5 @@ if (ENABLE_RAJA_PLUGIN)
   blt_add_executable(
     NAME jacobi.exe
     SOURCES jacobi.cpp
-    DEPENDS_ON chai raja)
+    DEPENDS_ON ${chai_umpire_example_depends})
 endif ()
