@@ -239,6 +239,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
 
     if (record->transfer_pending) {
       context->wait_on(&record->m_event);
+      record->m_active_contexts.clear();
       record->transfer_pending = false;
       return;
     }
