@@ -63,8 +63,6 @@ int main()
       }
   });
 
-  e1.wait();
-  e2.wait();
   array1.move(chai::CPU, &dev1);
 
   camp::resources::Context host{camp::resources::Host{}};

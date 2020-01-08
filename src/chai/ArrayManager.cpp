@@ -255,6 +255,12 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
       return;
     }
 
+    if (record->m_active_contexts.size() > 1) {
+      for (auto c : record->m_active_contexts) {
+        c->get_event().wait();
+      }
+    }
+
     auto e = m_resource_manager.copy(dst_pointer, src_pointer, *ctx);
     record->transfer_pending = true;
     record->m_event = e;
