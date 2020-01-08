@@ -258,7 +258,8 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
 
     if (record->m_active_contexts.size() > 1) {
       for (auto c : record->m_active_contexts) {
-        c->get_event().wait();
+        auto c_event = c->get_event();
+        ctx->wait_on(&c_event);
       }
     }
 
