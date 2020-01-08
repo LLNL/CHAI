@@ -117,7 +117,7 @@ void* ArrayManager::move(void* pointer,
 void* ArrayManager::move(void* pointer,
                          PointerRecord* pointer_record,
                          camp::resources::Context* context,
-			 ExecutionSpace space)
+                         ExecutionSpace space)
 {
   // Check for default arg (NONE)
   if (space == NONE) {
@@ -238,11 +238,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (record->transfer_pending) {
-    //if (!record->m_active_context_events.empty()) {
-      for (auto e : record->m_active_context_events){
-        context->wait_on(&e);
-      }
-      record->m_active_context_events.clear();
+      context->wait_on(&record->m_event);
       record->transfer_pending = false;
       return;
     }
@@ -261,8 +257,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
 
     auto e = m_resource_manager.copy(dst_pointer, src_pointer, *ctx);
     record->transfer_pending = true;
-    //record->m_event = e;
-    record->m_active_context_events.push_back(e);
+    record->m_event = e;
   }
 
   resetTouch(record);

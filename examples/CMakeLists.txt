@@ -44,5 +44,9 @@ if (ENABLE_CUDA OR ENABLE_HIP)
     NAME context-not-managed.exe
     SOURCES context-not-managed.cpp
     DEPENDS_ON ${chai_umpire_example_depends})
+  blt_add_executable(
+    NAME context-multi-array.exe
+    SOURCES context-multi-array.cpp
+    DEPENDS_ON ${chai_umpire_example_depends})
 
 endif ()

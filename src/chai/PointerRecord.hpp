@@ -14,7 +14,6 @@
 
 #include <cstddef>
 #include <functional>
-#include <list>
 
 namespace chai
 {
@@ -61,9 +60,8 @@ struct PointerRecord {
 
 
   bool transfer_pending;
-  //camp::resources::Event m_event;
+  camp::resources::Event m_event;
   camp::resources::Context* m_last_context = nullptr;
-  std::list<camp::resources::Event> m_active_context_events;
 };
 
 }  // end of namespace chai
