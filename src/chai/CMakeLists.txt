@@ -10,6 +10,7 @@ set(CHAI_ENABLE_HIP ${ENABLE_HIP})
 set(CHAI_ENABLE_IMPLICIT_CONVERSIONS ${ENABLE_IMPLICIT_CONVERSIONS})
 set(CHAI_DISABLE_RM ${DISABLE_RM})
 set(CHAI_ENABLE_UM ${ENABLE_UM})
+set(CHAI_ENABLE_RAJA_PLUGIN ${ENABLE_RAJA_PLUGIN})
 
 configure_file(
   ${PROJECT_SOURCE_DIR}/src/chai/config.hpp.in
@@ -49,6 +50,21 @@ if (ENABLE_HIP)
     hip_runtime)
 endif ()
 
+if (ENABLE_RAJA_PLUGIN)
+  set (chai_headers
+    ${chai_headers}
+    pluginLinker.hpp
+    ManagedArrayView.hpp
+    RajaExecutionSpacePlugin.hpp)
+
+  set (chai_sources
+    ${chai_sources}
+    RajaExecutionSpacePlugin.cpp)
+
+  set (chai_depends
+    ${chai_depends}
+    RAJA)
+endif ()
 
 blt_add_library(
   NAME chai
