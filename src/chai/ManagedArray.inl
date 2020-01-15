@@ -361,7 +361,8 @@ void ManagedArray<T>::move(ExecutionSpace space, camp::resources::Context* conte
   }
 
   if (space == GPU && m_pointer_record->m_last_context != context ){
-    m_pointer_record->m_active_contexts.push_back(context);
+    m_pointer_record->m_active_contexts[m_pointer_record->m_active_count] = context;
+    m_pointer_record->m_active_count++;
   }
 
   m_active_base_pointer = static_cast<T*>(m_resource_manager->move(const_cast<T_non_const*>(m_active_base_pointer), m_pointer_record, context, space));

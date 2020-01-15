@@ -239,7 +239,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
 
     if (record->transfer_pending) {
       context->wait_on(&record->m_event);
-      record->m_active_contexts.clear();
+      record->m_active_count = 0;
       record->transfer_pending = false;
       return;
     }
@@ -256,9 +256,9 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
       return;
     }
 
-    if (record->m_active_contexts.size() > 1) {
-      for (auto c : record->m_active_contexts) {
-        auto c_event = c->get_event();
+    if (record->m_active_count > 1) {
+      for (int i = 0; i < record->m_active_count; i++) {
+        auto c_event = record->m_active_contexts[i]->get_event();
         ctx->wait_on(&c_event);
       }
     }

@@ -14,7 +14,7 @@
 
 #include <cstddef>
 #include <functional>
-#include <list>
+#include <array>
 
 namespace chai
 {
@@ -63,7 +63,8 @@ struct PointerRecord {
   bool transfer_pending;
   camp::resources::Event m_event;
   camp::resources::Context* m_last_context = nullptr;
-  std::list<camp::resources::Context*> m_active_contexts;
+  std::array<camp::resources::Context*, 32> m_active_contexts;
+  int m_active_count = 0;
 };
 
 }  // end of namespace chai
