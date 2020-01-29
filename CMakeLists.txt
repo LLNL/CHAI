@@ -5,8 +5,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
 cmake_policy(SET CMP0057 NEW)
+cmake_policy(SET CMP0048 NEW)
 
-project(Chai LANGUAGES CXX)
+project(Chai LANGUAGES CXX VERSION 2.0.0)
 
 set(ENABLE_CUDA Off CACHE BOOL "Enable CUDA")
 set(ENABLE_HIP Off CACHE BOOL "Enable HIP")
@@ -16,10 +17,12 @@ option(ENABLE_IMPLICIT_CONVERSIONS "Enable implicit conversions to-from raw poin
 option(DISABLE_RM "Make ManagedArray a thin wrapper" Off)
 mark_as_advanced(DISABLE_RM)
 option(ENABLE_UM "Use CUDA unified (managed) memory" Off)
+option(ENABLE_RAJA_PLUGIN "Build plugin to set RAJA execution spaces" Off)
+option(CHAI_ENABLE_GPU_ERROR_CHECKING "Enable GPU error checking" On)
 
 set(ENABLE_TESTS On CACHE BOOL "")
 set(ENABLE_EXAMPLES On CACHE BOOL "")
-set(ENABLE_DOCUMENTATION On CACHE BOOL "")
+set(ENABLE_DOCS Off CACHE BOOL "")
 
 # options for Umpire as TPL
 set(ENABLE_GMOCK On CACHE BOOL "")

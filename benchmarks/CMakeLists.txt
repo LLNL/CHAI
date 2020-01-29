@@ -36,3 +36,13 @@ blt_add_executable(
 blt_add_benchmark(
   NAME managedarray_benchmarks
   COMMAND managedarray_benchmarks)
+
+blt_add_executable(
+  NAME managed_ptr_benchmarks
+  SOURCES chai_managed_ptr_benchmarks.cpp
+  DEPENDS_ON ${chai_benchmark_depends})
+
+blt_add_benchmark(
+  NAME managed_ptr_benchmarks
+  COMMAND managed_ptr_benchmarks)
+
