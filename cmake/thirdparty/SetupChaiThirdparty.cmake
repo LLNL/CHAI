@@ -20,18 +20,6 @@ if (NOT TARGET umpire)
   endif()
 endif()
 
-#if (NOT TARGET camp)
-#  if (DEFINED camp_DIR)
-#    find_package(camp REQUIRED)
-#
-#    blt_register_library(
-#      NAME camp
-#      INCLUDES ${CAMP_INCLUDE_DIRS}
-#      LIBRARIES camp)
-#  else ()
-#    add_subdirectory(${PROJECT_SOURCE_DIR}/src/tpl/camp)
-#  endif()
-#endif()
 if (ENABLE_RAJA_PLUGIN)
   if (NOT TARGET RAJA)
     if (DEFINED RAJA_DIR)
