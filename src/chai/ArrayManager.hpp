@@ -253,6 +253,21 @@ public:
    */
   void disableCallbacks() { m_callbacks_active = false; }
 
+  /*!
+   * \brief Turn on device synchronization after every kernel.
+   */
+  void enableDeviceSynchronize() { m_device_synchronize = true; }
+
+  /*!
+   * \brief Turn off device synchronization after every kernel.
+   */
+  void disableDeviceSynchronize() { m_device_synchronize = false; }
+
+  /*!
+   * \brief Turn on device synchronization after every kernel.
+   */
+  bool deviceSynchronize() { return m_device_synchronize; }
+
 protected:
   /*!
    * \brief Construct a new ArrayManager.
@@ -341,6 +356,11 @@ private:
    * \brief Controls whether or not callbacks are called.
    */
   bool m_callbacks_active;
+
+  /*!
+   * Whether or not to synchronize on device after every CHAI kernel.
+   */
+  bool m_device_synchronize = false;
 };
 
 }  // end of namespace chai

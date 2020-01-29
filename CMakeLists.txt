@@ -5,8 +5,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
 cmake_policy(SET CMP0057 NEW)
+cmake_policy(SET CMP0048 NEW)
 
-project(Chai LANGUAGES CXX)
+project(Chai LANGUAGES CXX VERSION 2.0.0)
 
 set(ENABLE_CUDA Off CACHE BOOL "Enable CUDA")
 set(ENABLE_HIP Off CACHE BOOL "Enable HIP")
@@ -17,6 +18,7 @@ option(DISABLE_RM "Make ManagedArray a thin wrapper" Off)
 mark_as_advanced(DISABLE_RM)
 option(ENABLE_UM "Use CUDA unified (managed) memory" Off)
 option(ENABLE_RAJA_PLUGIN "Build plugin to set RAJA execution spaces" Off)
+option(CHAI_ENABLE_GPU_ERROR_CHECKING "Enable GPU error checking" On)
 
 set(ENABLE_TESTS On CACHE BOOL "")
 set(ENABLE_EXAMPLES On CACHE BOOL "")
