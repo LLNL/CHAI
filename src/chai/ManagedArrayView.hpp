@@ -49,6 +49,8 @@
 
 #include "chai/ManagedArray.hpp"
 
+#include "chai/ArrayConfig.hpp"
+
 #include "RAJA/util/View.hpp"
 
 namespace chai {

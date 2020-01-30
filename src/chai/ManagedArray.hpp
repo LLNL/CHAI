@@ -13,6 +13,8 @@
 #include "chai/ChaiMacros.hpp"
 #include "chai/Types.hpp"
 
+#include "chai/ArrayConfig.hpp"
+
 #include "umpire/Allocator.hpp"
 
 #include <cstddef>
@@ -51,11 +53,23 @@ class CHAICopyable
  *
  * \tparam T The type of elements stored in the ManagedArray.
  */
-template <typename T>
+template <typename ArrCfgT>
 class ManagedArray : public CHAICopyable
 {
 public:
-  using T_non_const = typename std::remove_const<T>::type;
+  using TypesCfg = chai::config::Types<ArrCfgT>;
+
+  using ValueType         = typename TypesCfg::value_type;
+  using ConstValueType    = typename TypesCfg::value_type_const;
+  using NonConstValueType = typename TypesCfg::value_type_non_const;
+
+  using PointerType         = typename TypesCfg::pointer_type;
+  using ConstPointerType    = typename TypesCfg::pointer_type_const;
+  using NonConstPointerType = typename TypesCfg::pointer_type_non_const;
+
+  using ReferenceType         = typename TypesCfg::reference_type;
+  using ConstReferenceType    = typename TypesCfg::reference_type_const;
+  using NonConstReferenceType = typename TypesCfg::reference_type_non_const; // Not used
 
   CHAI_HOST_DEVICE ManagedArray();
 
@@ -156,7 +170,8 @@ public:
 
   CHAI_HOST void move(ExecutionSpace space);
 
-  CHAI_HOST ManagedArray<T> slice(size_t begin, size_t end);
+  // [TV] might need to "slice" ArrCfgT
+  CHAI_HOST ManagedArray<ArrCfgT> slice(size_t begin, size_t end);
   /*!
    * \brief Return reference to i-th element of the ManagedArray.
    *
@@ -165,13 +180,13 @@ public:
    * \return Reference to i-th element.
    */
   template <typename Idx>
-  CHAI_HOST_DEVICE T& operator[](const Idx i) const;
+  CHAI_HOST_DEVICE ReferenceType operator[](const Idx i) const;
 
   /*!
    * \brief get access to m_active_pointer
    * @return a copy of m_active_pointer
    */
-  T* getActiveBasePointer() const;
+  PointerType getActiveBasePointer() const;
 
   /*!
    * \brief
@@ -179,23 +194,23 @@ public:
    */
   //  operator ManagedArray<typename std::conditional<!std::is_const<T>::value,
   //  const T, InvalidConstCast>::type> () const;
-  template <typename U = T>
-  operator typename std::enable_if<!std::is_const<U>::value,
-                                   ManagedArray<const U> >::type() const;
+  template <typename ArrCfgU = ArrCfgT, typename ValueU = typename chai::config::Types<ArrCfgU>::value_type>
+  operator typename std::enable_if<!std::is_const<ValueU>::value,
+                                   ManagedArray<chai::config::ConstArrayDesc<ArrCfgU> > >::type() const;
 
 
-  CHAI_HOST_DEVICE ManagedArray(T* data,
+  CHAI_HOST_DEVICE ManagedArray(PointerType data,
                                 ArrayManager* array_manager,
                                 size_t m_elems,
                                 PointerRecord* pointer_record);
 
-  ManagedArray<T>& operator=(ManagedArray const & other) = default;
+  ManagedArray<ArrCfgT>& operator=(ManagedArray const & other) = default;
 
-  CHAI_HOST_DEVICE ManagedArray<T>& operator=(ManagedArray && other);
+  CHAI_HOST_DEVICE ManagedArray<ArrCfgT>& operator=(ManagedArray && other);
 
-  CHAI_HOST_DEVICE ManagedArray<T>& operator=(std::nullptr_t);
+  CHAI_HOST_DEVICE ManagedArray<ArrCfgT>& operator=(std::nullptr_t);
 
-  CHAI_HOST_DEVICE bool operator==(ManagedArray<T>& rhs);
+  CHAI_HOST_DEVICE bool operator==(ManagedArray<ArrCfgT>& rhs);
 
 
 #if defined(CHAI_ENABLE_PICK)
@@ -217,7 +232,7 @@ public:
    * \param val Source location of the value
    * \tparam T The type of data value in ManagedArray.
    */
-  CHAI_HOST_DEVICE void set(size_t i, T& val) const;
+  CHAI_HOST_DEVICE void set(size_t i, ReferenceType val) const;
 
   /*!
    * \brief Increment the value of element i in the ManagedArray.
@@ -243,7 +258,7 @@ public:
    *
    * \return Raw pointer to data.
    */
-  CHAI_HOST_DEVICE operator T*() const;
+  CHAI_HOST_DEVICE operator PointerType() const;
 
   /*!
    * \brief Construct a ManagedArray from a raw pointer.
@@ -254,7 +269,7 @@ public:
    * \param enable Boolean argument (unused) added to differentiate constructor.
    */
   template <bool Q = 0>
-  CHAI_HOST_DEVICE ManagedArray(T* data, bool test = Q);
+  CHAI_HOST_DEVICE ManagedArray(PointerType data, bool test = Q);
 #endif
 
 
@@ -278,7 +293,7 @@ public:
 
 
 private:
-  CHAI_HOST void modify(size_t i, const T& val) const;
+  CHAI_HOST void modify(size_t i, ConstReferenceType val) const;
 
   /*!
    * \brief Moves the inner data of a ManagedArray.
@@ -288,7 +303,7 @@ private:
    * example, this version of the method is called when there are nested
    * ManagedArrays.
    */
-  template <bool B = std::is_base_of<CHAICopyable, T>::value,
+  template <bool B = std::is_base_of<CHAICopyable, ValueType>::value,
             typename std::enable_if<B, int>::type = 0>
   CHAI_HOST void moveInnerImpl(ExecutionSpace space);
 
@@ -301,15 +316,15 @@ private:
    * example, this version of the method is called when there are not nested
    * ManagedArrays.
    */
-  template <bool B = std::is_base_of<CHAICopyable, T>::value,
+  template <bool B = std::is_base_of<CHAICopyable, ValueType>::value,
             typename std::enable_if<!B, int>::type = 0>
   CHAI_HOST void moveInnerImpl(ExecutionSpace space);
 
   /*!
    * Currently active data pointer.
    */
-  mutable T* m_active_pointer = nullptr;
-  mutable T* m_active_base_pointer = nullptr;
+  mutable PointerType m_active_pointer = nullptr;
+  mutable PointerType m_active_base_pointer = nullptr;
 
   /*!
    * Pointer to ArrayManager instance.
@@ -347,20 +362,22 @@ private:
  *
  * \return A new ManagedArray containing the raw data pointer.
  */
-template <typename T>
-ManagedArray<T> makeManagedArray(T* data,
+template <typename ArrCfgT>
+ManagedArray<ArrCfgT> makeManagedArray(typename chai::config::Types<ArrCfgT>::pointer_type data,
                                  size_t elems,
                                  ExecutionSpace space,
                                  bool owned)
 {
+  using ValueType = typename chai::config::Types<ArrCfgT>::pointer_type;
+
   ArrayManager* manager = ArrayManager::getInstance();
 
   PointerRecord* record =
-      manager->makeManaged(data, sizeof(T) * elems, space, owned);
+      manager->makeManaged(data, sizeof(ValueType) * elems, space, owned);
 
-  ManagedArray<T> array = ManagedArray<T>(record, space);
+  ManagedArray<ArrCfgT> array = ManagedArray<ArrCfgT>(record, space);
 
-  if (!std::is_const<T>::value) {
+  if (!std::is_const<ValueType>::value) {
     array.registerTouch(space);
   }
 
@@ -377,10 +394,10 @@ ManagedArray<T> makeManagedArray(T* data,
  *
  * \return A copy of the given ManagedArray.
  */
-template <typename T>
-ManagedArray<T> deepCopy(ManagedArray<T> const& array)
+template <typename ArrCfgT>
+ManagedArray<ArrCfgT> deepCopy(ManagedArray<ArrCfgT> const& array)
 {
-  T* data_ptr = array.getActiveBasePointer();
+  typename chai::config::Types<ArrCfgT>::pointer_type data_ptr = array.getActiveBasePointer();
   
   ArrayManager* manager = ArrayManager::getInstance();
 
@@ -388,7 +405,7 @@ ManagedArray<T> deepCopy(ManagedArray<T> const& array)
 
   PointerRecord* copy_record = manager->deepCopyRecord(record);
 
-  return ManagedArray<T>(copy_record, copy_record->m_last_space);
+  return ManagedArray<ArrCfgT>(copy_record, copy_record->m_last_space);
 }
 
 }  // end of namespace chai

@@ -30,6 +30,22 @@ struct grid_s {
 double solution(double x, double y);
 void computeErr(double *I, grid_s grid);
 
+#if USE_ARRAY_CONFIG_NO_CODEC
+struct array_tpl_param : public chai::config::ArrayDesc {
+  using value_type = double;
+  static constexpr chai::config::Codec codec = chai::config::Codec::none;
+};
+#elif USE_ARRAY_CONFIG_ZFP_CODEC
+struct array_tpl_param : public chai::config::ArrayDesc {
+  using value_type = double;
+  static constexpr chai::config::Codec codec = chai::config::Codec::zfp;
+  static constexpr size_t codec_dims[] = { 0 , 1 };
+  static constexpr size_t extra_dims[] = { };
+};
+#else
+typedef double array_tpl_param;
+#endif
+
 int main(int, char **)
 {
   double tol = 1e-10;
@@ -45,19 +61,19 @@ int main(int, char **)
   gridx.h = 1.0 / (N + 1.0);
   gridx.n = N + 2;
 
-  std::cout << "   _____ _    _          _____  " << std::endl;
-  std::cout << "  / ____| |  | |   /\\   |_   _| " << std::endl;
+  std::cout << "   _____  _    _          _____  " << std::endl;
+  std::cout << "  / ____ | |  | |   /\\   |_   _| " << std::endl;
   std::cout << "  | |    | |__| |  /  \\    | |  " << std::endl;
   std::cout << "  | |    |  __  | / /\\ \\   | |  " << std::endl;
   std::cout << "  | |____| |  | |/ ____ \\ _| |_ " << std::endl;
-  std::cout << "  \\_____|_|  |_/_/    \\_\\_____| " << std::endl;
+  std::cout << "  \\_____ |_|  |_/_/    \\_\\_____| " << std::endl;
   std::cout << "\n\n" << std::endl;
 
-  auto I_array = chai::ManagedArray<double>(NN);
-  auto Iold_array = chai::ManagedArray<double>(NN);
+  auto I_array = chai::ManagedArray<array_tpl_param>(NN);
+  auto Iold_array = chai::ManagedArray<array_tpl_param>(NN);
 
-  chai::ManagedArrayView<double, RAJA::Layout<2>> I(I_array, N+2, N+2);
-  chai::ManagedArrayView<double, RAJA::Layout<2>> Iold(Iold_array, N+2, N+2);
+  chai::ManagedArrayView<array_tpl_param> I(I_array, N+2, N+2);
+  chai::ManagedArrayView<array_tpl_param> Iold(Iold_array, N+2, N+2);
 
   RAJA::RangeSegment gridRange(0, NN);
   RAJA::RangeSegment jacobiRange(1, (N + 1));
