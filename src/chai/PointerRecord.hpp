@@ -7,6 +7,7 @@
 #ifndef CHAI_PointerRecord_HPP
 #define CHAI_PointerRecord_HPP
 
+#include "chai/ActiveResourceManager.hpp"
 #include "chai/ExecutionSpaces.hpp"
 #include "chai/Types.hpp"
 
@@ -63,8 +64,7 @@ struct PointerRecord {
   bool transfer_pending;
   camp::resources::Event m_event;
   camp::resources::Context* m_last_context = nullptr;
-  std::array<camp::resources::Context*, 32> m_active_contexts;
-  int m_active_count = 0;
+  ActiveResourceManager m_res_manager;
 };
 
 }  // end of namespace chai

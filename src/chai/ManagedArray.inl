@@ -362,8 +362,7 @@ void ManagedArray<T>::move(ExecutionSpace space, camp::resources::Context* conte
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
   if (space == GPU && m_pointer_record->m_last_context != context ){
-    m_pointer_record->m_active_contexts[m_pointer_record->m_active_count] = context;
-    m_pointer_record->m_active_count++;
+    m_pointer_record->m_res_manager.push_back(context);
   }
 #endif
 
