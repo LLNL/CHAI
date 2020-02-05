@@ -22,7 +22,7 @@
 #include "umpire/Allocator.hpp"
 #include "umpire/util/MemoryMap.hpp"
 
-#include "camp/contexts.hpp"
+#include "camp/resource.hpp"
 
 namespace chai
 {
@@ -76,7 +76,7 @@ public:
    *
    * \param space The space to set as current.
    */
-  void setExecutionSpace(ExecutionSpace space, camp::resources::Context *context);
+  void setExecutionSpace(ExecutionSpace space, camp::resources::Resource *resource);
 
   /*!
    * \brief Get the current execution space.
@@ -86,7 +86,7 @@ public:
   ExecutionSpace getExecutionSpace();
 
   
-  camp::resources::Context* getContext();
+  camp::resources::Resource* getResource();
 
   /*!
    * \brief Move data in pointer to the current execution space.
@@ -99,7 +99,7 @@ public:
              ExecutionSpace = NONE);
   void* move(void* pointer,
              PointerRecord* pointer_record,
-	     camp::resources::Context* context,
+	     camp::resources::Resource* resource,
              ExecutionSpace = NONE);
 
 
@@ -302,7 +302,7 @@ private:
    * \param space
    */
   void move(PointerRecord* record, ExecutionSpace space);
-  void move(PointerRecord* record, ExecutionSpace space, camp::resources::Context* context);
+  void move(PointerRecord* record, ExecutionSpace space, camp::resources::Resource* resource);
 
   /*!
    * \brief Execute a user callback if callbacks are active
@@ -327,9 +327,9 @@ private:
   ExecutionSpace m_current_execution_space;
 
   /*!
-   * current context.
+   * current resource.
    */
-  camp::resources::Context* m_current_context;
+  camp::resources::Resource* m_current_resource;
 
 
   /**

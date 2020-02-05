@@ -1,4 +1,4 @@
-#include "camp/contexts.hpp"
+#include "camp/resource.hpp"
 #include "../src/util/forall.hpp"
 #include "chai/ManagedArray.hpp"
 
@@ -46,8 +46,8 @@ int main()
 
   chai::ManagedArray<double> array1(ARRAY_SIZE);
 
-  camp::resources::Context dev1{camp::resources::Cuda{}};
-  camp::resources::Context dev2{camp::resources::Cuda{}};
+  camp::resources::Resource dev1{camp::resources::Cuda{}};
+  camp::resources::Resource dev2{camp::resources::Cuda{}};
 
   auto e2 = forall(&dev2, 0, ARRAY_SIZE, [=] CHAI_HOST_DEVICE (int i) {
       if (i % 2 == 1) {
@@ -67,7 +67,7 @@ int main()
   e2.wait();
   array1.move(chai::CPU, &dev1);
 
-  camp::resources::Context host{camp::resources::Host{}};
+  camp::resources::Resource host{camp::resources::Host{}};
 
   forall(&host, 0, 10, [=] CHAI_HOST_DEVICE (int i) {
       printf("%f ", array1[i]);

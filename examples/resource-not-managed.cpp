@@ -1,4 +1,4 @@
-#include "camp/contexts.hpp"
+#include "camp/resource.hpp"
 #include "../src/util/forall.hpp"
 
 #include <vector>
@@ -43,9 +43,9 @@ int main()
   constexpr std::size_t ARRAY_SIZE{1000};
   int clockrate{get_clockrate()};
 
-  camp::resources::Context dev1{camp::resources::Cuda{}};
-  camp::resources::Context dev2{camp::resources::Cuda{}};
-  camp::resources::Context host{camp::resources::Host{}};
+  camp::resources::Resource dev1{camp::resources::Cuda{}};
+  camp::resources::Resource dev2{camp::resources::Cuda{}};
+  camp::resources::Resource host{camp::resources::Host{}};
 
   float * d_array1 = dev1.allocate<float>(1000);
   float * d_array2 = dev2.allocate<float>(1000);

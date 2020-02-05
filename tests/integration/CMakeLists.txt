@@ -26,17 +26,17 @@ blt_add_test(
 
 if (ENABLE_CUDA)
   blt_add_executable(
-    NAME managed_array_context_tests
-    SOURCES managed_array_context_tests.cpp
+    NAME managed_array_resource_tests
+    SOURCES managed_array_resource_tests.cpp
     DEPENDS_ON ${chai_integration_test_depends})
 
   target_include_directories(
-    managed_array_context_tests
+    managed_array_resource_tests
     PUBLIC ${PROJECT_BINARY_DIR}/include)
 
   blt_add_test(
-    NAME managed_array_context_test
-    COMMAND managed_array_context_tests)
+    NAME managed_array_resource_test
+    COMMAND managed_array_resource_tests)
 endif()
 
 blt_add_executable(
