@@ -1,4 +1,4 @@
-#include "camp/contexts.hpp"
+#include "camp/resource.hpp"
 #include "../src/util/forall.hpp"
 #include "chai/ManagedArray.hpp"
 #include <cuda_profiler_api.h>
@@ -36,7 +36,7 @@ int main()
   std::cout << "calling forall with cuda context" << std::endl;
   for (auto array : arrays) {
 
-    camp::resources::Context ctx{camp::resources::Cuda()};
+    camp::resources::Resource res{camp::resources::Cuda()};
     auto clock_lambda_1 = [=] CHAI_HOST_DEVICE (int idx) {
       array[idx] = idx * 2;
       unsigned int start_clock = (unsigned int) clock();
@@ -48,8 +48,8 @@ int main()
       }
     };
 
-    auto e = forall(&ctx, 0, ARRAY_SIZE, clock_lambda_1);
-    array.move(chai::CPU, &ctx); // asynchronous move
+    auto e = forall(&res, 0, ARRAY_SIZE, clock_lambda_1);
+    array.move(chai::CPU, &res); // asynchronous move
   }
 
   std::cout << "calling forall with host context" << std::endl;
@@ -57,11 +57,11 @@ int main()
     auto clock_lambda_2 = [=] CHAI_HOST_DEVICE (int idx) {
       array[idx] *= array[idx];
     };
-    camp::resources::Context ctx{camp::resources::Host{}}; 
-    auto e = forall(&ctx, 0, ARRAY_SIZE, clock_lambda_2);
+    camp::resources::Resource res{camp::resources::Host{}}; 
+    auto e = forall(&res, 0, ARRAY_SIZE, clock_lambda_2);
   }
 
-  camp::resources::Context host{camp::resources::Host{}};
+  camp::resources::Resource host{camp::resources::Host{}};
   for (auto array : arrays) {
     forall(&host, 0, 10, [=] CHAI_HOST_DEVICE (int i) {
       printf("%i ", int(array[i]) );

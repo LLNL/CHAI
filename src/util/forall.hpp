@@ -10,8 +10,7 @@
 #include "chai/ArrayManager.hpp"
 #include "chai/ExecutionSpaces.hpp"
 #include "chai/config.hpp"
-//#include "camp/device.hpp"
-#include "camp/contexts.hpp"
+#include "camp/resource.hpp"
 
 #if defined(CHAI_ENABLE_UM)
 #include <cuda_runtime_api.h>
@@ -51,7 +50,7 @@ void forall(sequential, int begin, int end, LOOP_BODY body)
   rm->setExecutionSpace(chai::NONE);
 }
 template <typename LOOP_BODY>
-camp::resources::Event forall_host(camp::resources::Context* dev, int begin, int end, LOOP_BODY body)
+camp::resources::Event forall_host(camp::resources::Resource* dev, int begin, int end, LOOP_BODY body)
 {
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
 
@@ -106,7 +105,7 @@ void forall(gpu, int begin, int end, LOOP_BODY&& body)
   rm->setExecutionSpace(chai::NONE);
 }
 template <typename LOOP_BODY>
-camp::resources::Event forall_gpu(camp::resources::Context* dev, int begin, int end, LOOP_BODY&& body)
+camp::resources::Event forall_gpu(camp::resources::Resource* dev, int begin, int end, LOOP_BODY&& body)
 {
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
 
@@ -130,15 +129,15 @@ forall_kernel_gpu<<<gridSize, blockSize, 0, cuda.get_stream()>>>(begin, end - be
 #endif // if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 
 template <typename LOOP_BODY>
-camp::resources::Event forall(camp::resources::Context *con, int begin, int end, LOOP_BODY&& body)
+camp::resources::Event forall(camp::resources::Resource *res, int begin, int end, LOOP_BODY&& body)
 {
-  auto platform = con->get_platform();
+  auto platform = res->get_platform();
   switch(platform) {
     case camp::resources::Platform::cuda:
     case camp::resources::Platform::hip:
-	return forall_gpu(con, begin, end, body);
+      return forall_gpu(res, begin, end, body);
     default:
-	return forall_host(con, begin, end, body);
+      return forall_host(res, begin, end, body);
   }
 }
 

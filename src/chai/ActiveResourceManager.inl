@@ -26,7 +26,7 @@ int ActiveResourceManager::size() {
 
 
 CHAI_INLINE
-void ActiveResourceManager::push_back(camp::resources::Context * res) {
+void ActiveResourceManager::push_back(camp::resources::Resource * res) {
   if (m_size < BASE_SIZE)  
     m_res_base[m_size] = res;
   else
@@ -49,7 +49,7 @@ bool ActiveResourceManager::is_empty() const {
 
 
 CHAI_INLINE
-camp::resources::Context* ActiveResourceManager::operator [](int i) const {
+camp::resources::Resource* ActiveResourceManager::operator [](int i) const {
   if (i >= m_size) return nullptr;
   return i < BASE_SIZE ? m_res_base[i] : m_res_overflow[i - BASE_SIZE];
 }

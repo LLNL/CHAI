@@ -11,7 +11,7 @@
 #include "chai/ExecutionSpaces.hpp"
 #include "chai/Types.hpp"
 
-#include "camp/contexts.hpp"
+#include "camp/resource.hpp"
 
 #include <cstddef>
 #include <functional>
@@ -63,7 +63,7 @@ struct PointerRecord {
 
   bool transfer_pending;
   camp::resources::Event m_event;
-  camp::resources::Context* m_last_context = nullptr;
+  camp::resources::Resource* m_last_resource = nullptr;
   ActiveResourceManager m_res_manager;
 };
 

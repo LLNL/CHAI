@@ -33,24 +33,24 @@ if (ENABLE_CUDA OR ENABLE_HIP)
     SOURCES example.cpp
     DEPENDS_ON ${chai_umpire_example_depends})
   blt_add_executable(
-    NAME context-integration.exe
-    SOURCES context.cpp
+    NAME resource-integration.exe
+    SOURCES resource.cpp
     DEPENDS_ON ${chai_umpire_example_depends})
   blt_add_executable(
-    NAME context-depends.exe
-    SOURCES context-depends.cpp
+    NAME resource-depends.exe
+    SOURCES resource-depends.cpp
     DEPENDS_ON ${chai_umpire_example_depends})
   blt_add_executable(
-    NAME context-simple.exe
-    SOURCES context-simple.cpp
+    NAME resource-simple.exe
+    SOURCES resource-simple.cpp
     DEPENDS_ON ${chai_umpire_example_depends})
   blt_add_executable(
-    NAME context-not-managed.exe
-    SOURCES context-not-managed.cpp
+    NAME resource-not-managed.exe
+    SOURCES resource-not-managed.cpp
     DEPENDS_ON ${chai_umpire_example_depends})
   blt_add_executable(
-    NAME context-multi-array.exe
-    SOURCES context-multi-array.cpp
+    NAME resource-multi-array.exe
+    SOURCES resource-multi-array.cpp
     DEPENDS_ON ${chai_umpire_example_depends})
 
 endif ()

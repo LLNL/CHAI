@@ -88,13 +88,13 @@ void ArrayManager::setExecutionSpace(ExecutionSpace space)
   m_current_execution_space = space;
 }
 
-void ArrayManager::setExecutionSpace(ExecutionSpace space, camp::resources::Context* context)
+void ArrayManager::setExecutionSpace(ExecutionSpace space, camp::resources::Resource* resource)
 {
   CHAI_LOG(Debug, "Setting execution space to " << space);
   std::lock_guard<std::mutex> lock(m_mutex);
 
   m_current_execution_space = space;
-  m_current_context = context;
+  m_current_resource = resource;
 }
 
 void* ArrayManager::move(void* pointer,
@@ -116,7 +116,7 @@ void* ArrayManager::move(void* pointer,
 }
 void* ArrayManager::move(void* pointer,
                          PointerRecord* pointer_record,
-                         camp::resources::Context* context,
+                         camp::resources::Resource* resource,
                          ExecutionSpace space)
 {
   // Check for default arg (NONE)
@@ -128,7 +128,7 @@ void* ArrayManager::move(void* pointer,
     return pointer;
   }
 
-  move(pointer_record, space, context);
+  move(pointer_record, space, resource);
 
   return pointer_record->m_pointers[space];
 }
@@ -139,9 +139,9 @@ ExecutionSpace ArrayManager::getExecutionSpace()
   return m_current_execution_space;
 }
 
-camp::resources::Context* ArrayManager::getContext()
+camp::resources::Resource* ArrayManager::getResource()
 {
-  return m_current_context;
+  return m_current_resource;
 }
 
 
@@ -206,7 +206,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 
   resetTouch(record);
 }
-void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resources::Context* context)
+void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resources::Resource* resource)
 {
   if (space == NONE) {
     return;
@@ -238,20 +238,20 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
     std::lock_guard<std::mutex> lock(m_mutex);
 
     if (record->transfer_pending) {
-      context->wait_on(&record->m_event);
+      resource->wait_for(&record->m_event);
       record->m_res_manager.clear();
       record->transfer_pending = false;
       return;
     }
 
-    camp::resources::Context* ctx;
+    camp::resources::Resource* res;
     if (space == chai::CPU){
-      ctx = record->m_last_context;
+      res = record->m_last_resource;
     }else{
-      ctx = context;
+      res = resource;
     }
 
-    if (ctx == nullptr){
+    if (res == nullptr){
       m_resource_manager.copy(dst_pointer, src_pointer);
       return;
     }
@@ -259,11 +259,11 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
     if (!record->m_res_manager.is_empty()) {
       for (int i = 0; i < record->m_res_manager.size(); i++) {
         auto c_event = record->m_res_manager[i]->get_event();
-        ctx->wait_on(&c_event);
+        res->wait_for(&c_event);
       }
     }
 
-    auto e = m_resource_manager.copy(dst_pointer, src_pointer, *ctx);
+    auto e = m_resource_manager.copy(dst_pointer, src_pointer, *res);
     record->transfer_pending = true;
     record->m_event = e;
   }

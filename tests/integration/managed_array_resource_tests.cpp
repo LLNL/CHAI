@@ -21,8 +21,8 @@ GPU_TEST(ManagedArray, Simple)
 {
   constexpr std::size_t ARRAY_SIZE{1024};
 
-  camp::resources::Context host{camp::resources::Host{}};
-  camp::resources::Context device{camp::resources::Cuda{}};
+  camp::resources::Resource host{camp::resources::Host{}};
+  camp::resources::Resource device{camp::resources::Cuda{}};
 
   chai::ManagedArray<double> array(ARRAY_SIZE);
 
@@ -44,8 +44,8 @@ GPU_TEST(ManagedArray, SimpleWithAsyncMoveFrom)
 {
   constexpr std::size_t ARRAY_SIZE{1024};
 
-  camp::resources::Context host{camp::resources::Host{}};
-  camp::resources::Context device{camp::resources::Cuda{}};
+  camp::resources::Resource host{camp::resources::Host{}};
+  camp::resources::Resource device{camp::resources::Cuda{}};
 
   chai::ManagedArray<double> array(ARRAY_SIZE);
 
@@ -69,8 +69,8 @@ GPU_TEST(ManagedArray, SimpleWithAsyncMoveTo)
 {
   constexpr std::size_t ARRAY_SIZE{1024};
 
-  camp::resources::Context host{camp::resources::Host{}};
-  camp::resources::Context device{camp::resources::Cuda{}};
+  camp::resources::Resource host{camp::resources::Host{}};
+  camp::resources::Resource device{camp::resources::Cuda{}};
 
   chai::ManagedArray<double> array(ARRAY_SIZE);
 

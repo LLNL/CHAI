@@ -7,7 +7,7 @@
 #ifndef CHAI_ActiveResourceManager_HPP
 #define CHAI_ActiveResourceManager_HPP
 
-#include "camp/contexts.hpp"
+#include "camp/resource.hpp"
 
 #include <array>
 #include <vector>
@@ -29,12 +29,12 @@ class ActiveResourceManager {
   /*!
    * Base array on the stack.
    */
-  std::array<camp::resources::Context*, BASE_SIZE> m_res_base;
+  std::array<camp::resources::Resource*, BASE_SIZE> m_res_base;
 
   /*!
    * Heap containter for extra resources if more than BASE_SIZE pushed.
    */
-  std::vector<camp::resources::Context*> m_res_overflow;
+  std::vector<camp::resources::Resource*> m_res_overflow;
 
   /*!
    * Current number of active resources in the list.
@@ -52,7 +52,7 @@ public:
   /*!
    * Push a new resource onto the list. 
    */
-  void push_back(camp::resources::Context* res);
+  void push_back(camp::resources::Resource* res);
 
   /*!
    * Clear all values on the heap and set m_size to 0. 
@@ -67,7 +67,7 @@ public:
   /*!
    * Get resource at given index. 
    */
-  camp::resources::Context* operator [](int i) const;
+  camp::resources::Resource* operator [](int i) const;
 };
 
 }  // end of namespace chai

@@ -1,4 +1,4 @@
-#include "camp/contexts.hpp"
+#include "camp/resource.hpp"
 #include "../src/util/forall.hpp"
 #include "chai/ManagedArray.hpp"
 
@@ -41,34 +41,39 @@ int get_clockrate()
 
 int main()
 {
-  constexpr std::size_t ARRAY_SIZE{1000};
-  int clockrate{get_clockrate()}; 
+  constexpr std::size_t ARRAY_SIZE{100};
+  std::vector<chai::ManagedArray<double>> arrays;
+  camp::resources::Resource host{camp::resources::Host{}}; 
 
-  chai::ManagedArray<double> array1(ARRAY_SIZE);
+  int clockrate{get_clockrate()};
 
-  camp::resources::Context dev1{camp::resources::Cuda{}};
-  camp::resources::Context dev2{camp::resources::Cuda{}};
+  for (std::size_t i = 0; i < 10; ++i) {
+    arrays.push_back(chai::ManagedArray<double>(ARRAY_SIZE));
+  }
 
-  auto e2 = forall(&dev2, 0, ARRAY_SIZE, [=] CHAI_HOST_DEVICE (int i) {
-      if (i % 2 == 1) {
+  for (auto array : arrays) {
+    // set on host
+    forall(&host, 0, ARRAY_SIZE, [=] __host__ __device__ (int i) {
+        array[i] = i;
+    }); 
+  }
+
+  for (auto array : arrays) {
+    camp::resources::Resource resource{camp::resources::Cuda{}}; 
+
+    forall(&resource, 0, ARRAY_SIZE, [=] __host__ __device__ (int i) {
+        array[i] = array[i] * 2.0;
         wait_for(20, clockrate);
-        array1[i] = i;
-      }
-  });
+    });
 
-  auto e1 = forall(&dev1, 0, ARRAY_SIZE, [=] CHAI_HOST_DEVICE (int i) {
-      if (i % 2 == 0) {
-        array1[i] = i;
-        wait_for(10, clockrate);
-      }
-  });
+    array.move(chai::CPU, &resource);
+  }
 
-  array1.move(chai::CPU, &dev1);
-
-  camp::resources::Context host{camp::resources::Host{}};
-
-  forall(&host, 0, 10, [=] CHAI_HOST_DEVICE (int i) {
-      printf("%f ", array1[i]);
-  });
-  printf("\n");
+  for (auto array : arrays) {
+    forall(&host, 0, ARRAY_SIZE, [=] __host__ __device__ (int i) {
+        if (i == 25) {
+          printf("array[%d] = %f \n", i, array[i]);
+        }
+    }); 
+  }
 }
