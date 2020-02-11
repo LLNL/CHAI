@@ -58,7 +58,7 @@ void ArrayManager::registerPointer(
   //record->m_last_space = space;
 
   for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
-    record->m_owned[i] = true;
+    if (!record->m_pointers[i]) record->m_owned[i] = true;
   }
   record->m_owned[space] = owned;
 }
