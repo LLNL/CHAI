@@ -358,6 +358,11 @@ ManagedArray<T> makeManagedArray(T* data,
   PointerRecord* record =
       manager->makeManaged(data, sizeof(T) * elems, space, owned);
 
+  for (int space = CPU; space < NUM_EXECUTION_SPACES; space++) {
+    record->m_allocators[space] = 
+      manager->getAllocatorId(ExecutionSpace(space));
+  }
+
   ManagedArray<T> array = ManagedArray<T>(record, space);
 
   if (!std::is_const<T>::value) {
