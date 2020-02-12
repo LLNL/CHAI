@@ -734,6 +734,24 @@ TEST(ManagedArray, ExternalConstructorOwned)
 
   array.free();
 }
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+GPU_TEST(ManagedArray, ExternalUnownedMoveToGPU)
+{
+  float data[20];
+  for (int i = 0; i < 20; i++) {
+    data[i] = 0.;
+  }
+
+  chai::ManagedArray<float> array =
+      chai::makeManagedArray<float>(data, 20, chai::CPU, false);
+
+  forall(gpu(), 0, 20, [=] __device__ (int i) { array[i] = 1.0f * i; });
+
+  forall(sequential(), 0, 20, [=] (int i) { ASSERT_EQ(array[i], 1.0f * i); });
+
+  array.free();
+}
+#endif
 #endif
 
 TEST(ManagedArray, Reset)
@@ -1281,6 +1299,72 @@ GPU_TEST(ManagedArray, MoveInnerToDevice2)
   outerArray.free();
 }
 
+GPU_TEST(ManagedArray, MoveInnerToDeviceAgain)
+{
+  const int N = 5;
+
+  /* Create the outer array. */
+  chai::ManagedArray<chai::ManagedArray<int>> outerArray(N);
+
+  /* Loop over the outer array and populate it with arrays on the CPU. */
+  forall(sequential(), 0, N,
+    [=](int i)
+    {
+      chai::ManagedArray<int> temp(N);
+
+      forall(sequential(), 0, N,
+        [=](int j)
+        {
+          temp[j] = N * i + j;
+        }
+      );
+
+      outerArray[i] = temp;
+    }
+  );
+
+  /* Capture the outer array on the GPU and update the values of the inner
+   * arrays. */
+  forall(gpu(), 0, N,
+    [=] __device__(int i)
+    {
+      for( int j = 0; j < N; ++j)
+      {
+        outerArray[i][j] *= 2;
+      }
+    }
+  );
+
+  /* Capture the outer array on the GPU and update the values of the inner
+   * arrays. This time, the array should already be resident on the GPU. */
+  forall(gpu(), 0, N,
+    [=] __device__(int i)
+    {
+      for( int j = 0; j < N; ++j)
+      {
+        outerArray[i][j] *= 2;
+      }
+    }
+  );
+
+  /* Capture the outer array on the CPU and check the values of the inner
+   * arrays. */
+  forall(sequential(), 0, N,
+    [=](int i)
+    {
+      for (int j = 0; j < N; ++j)
+      {
+        ASSERT_EQ(outerArray[i][j], 4 * (N * i + j));
+      }
+    }
+  );
+
+  for (int i = 0; i < N; ++i) {
+    outerArray[i].free();
+  }
+
+  outerArray.free();
+}
 #endif  // CHAI_DISABLE_RM
 #endif  // defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 
