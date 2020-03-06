@@ -8,6 +8,10 @@
 
 #include "chai/config.hpp"
 
+#if defined(CHAI_ENABLE_CUDA)
+#include "cuda_runtime_api.h"
+#endif
+
 #include "umpire/ResourceManager.hpp"
 
 namespace chai
@@ -141,6 +145,10 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
     return;
   }
 
+  if (space == record->m_last_space) {
+    return;
+  }
+
 #if defined(CHAI_ENABLE_UM)
   if (record->m_last_space == UM) {
     return;
@@ -155,10 +163,6 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
     return;
   }
 #endif
-
-  if (space == record->m_last_space) {
-    return;
-  }
 
   void* src_pointer = record->m_pointers[record->m_last_space];
   void* dst_pointer = record->m_pointers[space];
