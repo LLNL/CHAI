@@ -42,6 +42,10 @@ ArrayManager::ArrayManager() :
   m_allocators[UM] =
       new umpire::Allocator(m_resource_manager.getAllocator("UM"));
 #endif
+#if defined(CHAI_ENABLE_PINNED)
+  m_allocators[PINNED] = 
+      new umpire::Allocator(m_resource_manager.getAllocator("PINNED"));
+#endif
 }
 
 void ArrayManager::registerPointer(
@@ -143,10 +147,18 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   }
 #endif
 
+#if defined(CHAI_ENABLE_PINNED)
+  if (record->m_last_space == PINNED) {
+    if (space == CPU) {
+      cudaDeviceSynchronize();
+    }
+    return;
+  }
+#endif
+
   if (space == record->m_last_space) {
     return;
   }
-
 
   void* src_pointer = record->m_pointers[record->m_last_space];
   void* dst_pointer = record->m_pointers[space];
