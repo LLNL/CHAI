@@ -338,6 +338,8 @@ private:
    * Whether or not to synchronize on device after every CHAI kernel.
    */
   bool m_device_synchronize = false;
+
+  bool m_need_sync_for_pinned = false;
 };
 
 }  // end of namespace chai

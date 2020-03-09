@@ -87,6 +87,10 @@ void ArrayManager::setExecutionSpace(ExecutionSpace space)
   CHAI_LOG(Debug, "Setting execution space to " << space);
   std::lock_guard<std::mutex> lock(m_mutex);
 
+  if (chai::GPU == space) {
+    m_need_sync_for_pinned = true;
+  }
+
   m_current_execution_space = space;
 }
 
@@ -157,7 +161,8 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 
 #if defined(CHAI_ENABLE_PINNED)
   if (record->m_last_space == PINNED) {
-    if (space == CPU) {
+    if (space == CPU && m_need_sync_for_pinned) {
+      m_need_sync_for_pinned = false;
       cudaDeviceSynchronize();
     }
     return;
