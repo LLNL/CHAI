@@ -339,7 +339,9 @@ private:
    */
   bool m_device_synchronize = false;
 
+#if defined(CHAI_ENABLE_PINNED)
   bool m_need_sync_for_pinned = false;
+#endif
 };
 
 }  // end of namespace chai
