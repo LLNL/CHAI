@@ -66,12 +66,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
 
   this->allocate(elems, space);
 
-#if defined(CHAI_ENABLE_UM)
-  if(space == UM) {
-    m_pointer_record->m_pointers[CPU] = m_active_pointer;
-    m_pointer_record->m_pointers[GPU] = m_active_pointer;
-  }
-#endif
 #endif
 }
 
@@ -89,13 +83,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
   m_pointer_record->m_size = sizeof(T)*elems;
 
   this->allocate(elems, space);
-
-  #if defined(CHAI_ENABLE_UM)
-  if(space == UM) {
-    m_pointer_record->m_pointers[CPU] = m_active_base_pointer;
-    m_pointer_record->m_pointers[GPU] = m_active_base_pointer;
-  }
-  #endif
 #endif
 }
 
@@ -195,6 +182,20 @@ CHAI_HOST void ManagedArray<T>::allocate(
     m_active_base_pointer = static_cast<T*>(m_pointer_record->m_pointers[space]);
     m_active_pointer = m_active_base_pointer; // Cannot be a slice
 
+#if defined(CHAI_ENABLE_UM)
+  if(space == UM) {
+    m_pointer_record->m_last_space = UM;
+    m_pointer_record->m_pointers[CPU] = m_active_pointer;
+    m_pointer_record->m_pointers[GPU] = m_active_pointer;
+  }
+#endif
+#if defined(CHAI_ENABLE_PINNED)
+  if (space == PINNED) {
+    m_pointer_record->m_last_space = PINNED;
+    m_pointer_record->m_pointers[CPU] = m_active_pointer;
+    m_pointer_record->m_pointers[GPU] = m_active_pointer;
+  }
+#endif
     CHAI_LOG(Debug, "m_active_ptr allocated at address: " << m_active_pointer);
   }
 }
@@ -334,12 +335,20 @@ void ManagedArray<T>::move(ExecutionSpace space)
   m_active_base_pointer = static_cast<T*>(m_resource_manager->move(const_cast<T_non_const*>(m_active_base_pointer), m_pointer_record, space));
   m_active_pointer = m_active_base_pointer + m_offset;
 
+#if defined(CHAI_ENABLE_UM)
+  if (m_pointer_record->m_last_space == UM) {
+  } else
+#endif
+#if defined(CHAI_ENABLE_PINNED)
+  if (m_pointer_record->m_last_space == PINNED) {
+  } else 
+#endif
   if (!std::is_const<T>::value) {
     CHAI_LOG(Debug, "T is non-const, registering touch of pointer" << m_active_pointer);
     m_resource_manager->registerTouch(m_pointer_record, space);
+  } else if (space != NONE) {
+    m_pointer_record->m_last_space = space;
   }
-
-  if (space != NONE) m_pointer_record->m_last_space = space;
 
   /* When moving from GPU to CPU we need to move the inner arrays after the outer array. */
 #if defined(CHAI_ENABLE_CUDA)

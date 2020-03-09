@@ -222,8 +222,27 @@ void ArrayManager::free(PointerRecord* pointer_record)
             m_pointer_map.erase(space_ptr);
           }
 
+          auto alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[UM]);
+          alloc.deallocate(space_ptr);
+
+          for (int space_t = CPU; space_t < NUM_EXECUTION_SPACES; ++space_t) {
+            if (space_ptr == pointer_record->m_pointers[space_t])
+              pointer_record->m_pointers[space_t] = nullptr;
+          }
+        } else {
+#elif defined(CHAI_ENABLE_PINNED)
+        if (space_ptr == pointer_record->m_pointers[PINNED]) {
+          callback(pointer_record,
+                   ACTION_FREE,
+                   ExecutionSpace(PINNED),
+                   pointer_record->m_size);
+          {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_pointer_map.erase(space_ptr);
+          }
+
           auto alloc = m_resource_manager.getAllocator(
-              pointer_record->m_allocators[space]);
+              pointer_record->m_allocators[PINNED]);
           alloc.deallocate(space_ptr);
 
           for (int space_t = CPU; space_t < NUM_EXECUTION_SPACES; ++space_t) {
@@ -246,7 +265,7 @@ void ArrayManager::free(PointerRecord* pointer_record)
           alloc.deallocate(space_ptr);
 
           pointer_record->m_pointers[space] = nullptr;
-#if defined(CHAI_ENABLE_UM)
+#if defined(CHAI_ENABLE_UM) || defined(CHAI_ENABLE_PINNED)
         }
 #endif
       }
