@@ -34,4 +34,43 @@ int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv))
   std::cout << " ]" << std::endl;
 
   array.free();
+
+  chai::ManagedArray<float> array_one(4096, chai::PINNED);
+  chai::ManagedArray<float> array_two(4096, chai::PINNED);
+  chai::ManagedArray<float> array_three(4096, chai::PINNED);
+  chai::ManagedArray<float> array_four(4096, chai::PINNED);
+  chai::ManagedArray<float> array_five(4096, chai::PINNED);
+
+  std::cout << "Setting arrays on host." << std::endl;
+  forall(sequential(), 0, 4096, [=](int i) {
+    array_one[i] = static_cast<float>(i * 1.0f);
+    array_two[i] = static_cast<float>(i * 2.0f);
+    array_three[i] = static_cast<float>(i * 3.0f);
+    array_four[i] = static_cast<float>(i * 4.0f);
+    array_five[i] = static_cast<float>(i * 5.0f);
+  });
+
+  std::cout << "Doubling on device." << std::endl;
+  forall(gpu_async(), 0, 4096, [=] __device__(int i) { 
+    array_one[i] *= 2.0f;
+    array_two[i] *= 2.0f;
+    array_three[i] *= 2.0f;
+    array_four[i] *= 2.0f;
+    array_five[i] *= 2.0f;
+  });
+
+  forall(sequential(), 0, 1, [=](int i) {
+    std::cout << array_one[i] << " "; 
+    std::cout << array_two[i] << " ";
+    std::cout << array_three[i] << " ";
+    std::cout << array_four[i] << " ";
+    std::cout << array_five[i] << " ";
+  });
+  std::cout << std::endl;
+
+  array_one.free();
+  array_two.free();
+  array_three.free();
+  array_four.free();
+  array_five.free();
 }
