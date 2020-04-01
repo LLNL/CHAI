@@ -7,11 +7,16 @@
 if (NOT TARGET umpire)
   if (DEFINED umpire_DIR)
     find_package(umpire REQUIRED)
-
+    if (ENABLE_MPI)
+      set(UMPIRE_DEPENDS mpi)
+    else()
+      set(UMPIRE_DEPENDS)
+    endif()
     blt_register_library(
       NAME umpire
       INCLUDES ${UMPIRE_INCLUDE_DIRS}
-      LIBRARIES umpire)
+      LIBRARIES ${UMPIRE_LIBNAME}
+      DEPENDS_ON ${UMPIRE_DEPENDS})
   else ()
     set(OLD_ENABLE_FORTRAN ${ENABLE_FORTRAN})
     set(ENABLE_FORTRAN Off CACHE BOOL "Enable Fortran in Umpire")
@@ -25,6 +30,10 @@ if (ENABLE_RAJA_PLUGIN)
     if (DEFINED RAJA_DIR)
       message(STATUS "CHAI: using external RAJA via find_package")
       find_package(RAJA REQUIRED)
+       blt_register_library(
+         NAME RAJA
+         INCLUDES ${RAJA_INCLUDE_DIRS}
+         LIBRARIES ${RAJA_LIBRARY})
     else()
       message(STATUS "CHAI: using builtin RAJA submodule")
       add_subdirectory(${PROJECT_SOURCE_DIR}/src/tpl/raja)
