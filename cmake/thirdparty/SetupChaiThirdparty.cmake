@@ -6,6 +6,9 @@
 ##############################################################################
 if (NOT TARGET umpire)
   if (DEFINED umpire_DIR)
+    # this allows umpire_DIR to be the install prefix if we are relying on umpire's
+    # installed umpire-config.cmake
+    list(APPEND CMAKE_PREFIX_PATH ${umpire_DIR})
     find_package(umpire REQUIRED)
     if (ENABLE_MPI)
       set(UMPIRE_DEPENDS mpi)
@@ -15,7 +18,7 @@ if (NOT TARGET umpire)
     blt_register_library(
       NAME umpire
       INCLUDES ${UMPIRE_INCLUDE_DIRS}
-      LIBRARIES ${UMPIRE_LIBNAME}
+      LIBRARIES umpire
       DEPENDS_ON ${UMPIRE_DEPENDS})
   else ()
     set(OLD_ENABLE_FORTRAN ${ENABLE_FORTRAN})
@@ -28,12 +31,15 @@ endif()
 if (ENABLE_RAJA_PLUGIN)
   if (NOT TARGET RAJA)
     if (DEFINED RAJA_DIR)
-      message(STATUS "CHAI: using external RAJA via find_package")
+      # this allows RAJA_DIR to be the install prefix if we are relying on RAJA's
+      # installed RAJA-config.cmake
+      list(APPEND CMAKE_PREFIX_PATH ${RAJA_DIR})
+      message(STATUS "CHAI: using external RAJA via find_package ${RAJA_DIR}")
       find_package(RAJA REQUIRED)
        blt_register_library(
          NAME RAJA
          INCLUDES ${RAJA_INCLUDE_DIRS}
-         LIBRARIES ${RAJA_LIBRARY})
+         LIBRARIES RAJA)
     else()
       message(STATUS "CHAI: using builtin RAJA submodule")
       add_subdirectory(${PROJECT_SOURCE_DIR}/src/tpl/raja)
