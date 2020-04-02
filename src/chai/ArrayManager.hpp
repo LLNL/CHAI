@@ -147,9 +147,11 @@ public:
   ExecutionSpace getDefaultAllocationSpace();
 
   /*!
-   * \brief Free all allocations associated with the given PointerRecord.
+   * \brief Free allocation(s) associated with the given PointerRecord.
+   *        Default (space == NONE) will free all allocations and delete
+   *        the pointer record.
    */
-  void free(PointerRecord* pointer);
+  void free(PointerRecord* pointer, ExecutionSpace space = NONE);
 
 #if defined(CHAI_ENABLE_PICK)
   template <typename T>
@@ -251,6 +253,15 @@ public:
    * \brief Turn on device synchronization after every kernel.
    */
   bool deviceSynchronize() { return m_device_synchronize; }
+
+  /*!
+   * \brief Evicts the data in the given space.
+   *
+   * \param space Execution space to evict.
+   * \param destinationSpace The execution space to move the data to.
+   *                            Must not equal space or NONE.
+   */
+  void evict(ExecutionSpace space, ExecutionSpace destinationSpace);
 
 protected:
   /*!
