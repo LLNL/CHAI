@@ -11,6 +11,7 @@ project(Chai LANGUAGES CXX VERSION 2.0.0)
 
 set(ENABLE_CUDA Off CACHE BOOL "Enable CUDA")
 set(ENABLE_HIP Off CACHE BOOL "Enable HIP")
+set(ENABLE_GPU_SIMULATION_MODE Off CACHE BOOL "Enable GPU Simulation Mode")
 set(ENABLE_OPENMP On CACHE BOOL "Enable OpenMP")
 set(ENABLE_MPI Off CACHE BOOL "Enable MPI (for umpire replay only)")
 set(ENABLE_BENCHMARKS On CACHE BOOL "Enable benchmarks")
