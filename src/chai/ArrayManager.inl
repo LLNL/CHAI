@@ -89,6 +89,10 @@ void ArrayManager::set(T* dst_ptr, size_t index, const T& val)
 }
 #endif
 
+CHAI_INLINE
+void ArrayManager::setAllocator(ExecutionSpace space, umpire::Allocator &allocator) {
+   *m_allocators[space] = allocator;
+}
 } // end of namespace chai
 
 #endif // CHAI_ArrayManager_INL

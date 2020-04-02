@@ -34,10 +34,17 @@ ArrayManager::ArrayManager() :
 
   m_allocators[CPU] =
       new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
-#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+  m_allocators[GPU] =
+      new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
+#else
   m_allocators[GPU] =
       new umpire::Allocator(m_resource_manager.getAllocator("DEVICE"));
 #endif
+#endif
+
 #if defined(CHAI_ENABLE_UM)
   m_allocators[UM] =
       new umpire::Allocator(m_resource_manager.getAllocator("UM"));
