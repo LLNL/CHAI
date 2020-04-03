@@ -645,6 +645,7 @@ TEST(ManagedArray, NullpointerConversions)
   ASSERT_EQ(a.size(), 0u);
   ASSERT_EQ(b.size(), 0u);
 
+  printf("c from nullptr\n");
   chai::ManagedArray<float> c(nullptr);
 
   ASSERT_EQ(c.size(), 0u);
