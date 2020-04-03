@@ -245,7 +245,7 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
     }
   }
   
-  if (pointer_record != &s_null_record && spaceToFree == NONE) {
+  if (spaceToFree == NONE) {
     delete pointer_record;
   }
 }
