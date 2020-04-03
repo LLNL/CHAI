@@ -631,11 +631,15 @@ GPU_TEST(ManagedArray, ReallocateGPU)
 TEST(ManagedArray, NullpointerConversions)
 {
   chai::ManagedArray<float> a;
+  printf("a.free()\n");
   a.free();
+  printf("a to nullptr\n");
   a = nullptr;
 
   chai::ManagedArray<const float> b;
+  printf("b.free()\n");
   b.free();
+  printf("b to nullptr\n");
   b = nullptr;
 
   ASSERT_EQ(a.size(), 0u);
