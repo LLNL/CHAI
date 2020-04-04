@@ -198,7 +198,6 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
       if (pointer_record->m_pointers[space]) {
         if (pointer_record->m_owned[space]) {
           void* space_ptr = pointer_record->m_pointers[space];
-          printf("in free with space_ptr %p %b \n",space_ptr, pointer_record==&s_null_record);
 #if defined(CHAI_ENABLE_UM)
           if (space_ptr == pointer_record->m_pointers[UM]) {
             callback(pointer_record,
@@ -238,10 +237,10 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
           }
 #endif
         }
-      }
-      else
-      {
-        m_resource_manager.deregisterAllocation(pointer_record->m_pointers[space]);
+        else
+        {
+           m_resource_manager.deregisterAllocation(pointer_record->m_pointers[space]);
+        }
       }
     }
   }

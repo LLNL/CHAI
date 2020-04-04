@@ -23,10 +23,6 @@ blt_add_executable(
   SOURCES chai-umpire-allocators.cpp
   DEPENDS_ON ${chai_umpire_example_depends})
 
-blt_add_test(
-  NAME managed_array_test
-  COMMAND managed_array_tests)
-
 if (ENABLE_CUDA OR ENABLE_HIP)
   blt_add_executable(
     NAME chai-example.exe
