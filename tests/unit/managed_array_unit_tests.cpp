@@ -35,6 +35,25 @@ TEST(ManagedArray, SpaceConstructorCPU)
   array.free();
 }
 
+TEST(ManagedArray, ReallocDefaultConstructor)
+{
+  chai::ManagedArray<float> array;
+  array.reallocate(1);
+  float val = array[0];
+  (void)val;
+  ASSERT_EQ(array.size(), 1u);
+}
+
+TEST(ManagedArray, ReallocSizeConstructor)
+{
+  chai::ManagedArray<float> array(10);
+  array[0] = 1.0;
+  array[9] = 2.0;
+  array.reallocate(20);
+  ASSERT_EQ(array[0], 1.0);
+  ASSERT_EQ(array[9], 2.0);
+}
+
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 TEST(ManagedArray, SpaceConstructorGPU)
 {
