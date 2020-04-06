@@ -343,7 +343,7 @@ void ManagedArray<T>::move(ExecutionSpace space)
 
   /* When moving from GPU to CPU we need to move the inner arrays after the outer array. */
 #if defined(CHAI_ENABLE_CUDA)
-  if (prev_space == GPU) {
+  if (space != GPU && prev_space == GPU) {
     moveInnerImpl(space);
   }
 #endif

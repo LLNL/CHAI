@@ -163,9 +163,11 @@ public:
   ExecutionSpace getDefaultAllocationSpace();
 
   /*!
-   * \brief Free all allocations associated with the given PointerRecord.
+   * \brief Free allocation(s) associated with the given PointerRecord.
+   *        Default (space == NONE) will free all allocations and delete
+   *        the pointer record.
    */
-  void free(PointerRecord* pointer);
+  void free(PointerRecord* pointer, ExecutionSpace space = NONE);
 
 #if defined(CHAI_ENABLE_PICK)
   template <typename T>
@@ -268,6 +270,15 @@ public:
    */
   bool deviceSynchronize() { return m_device_synchronize; }
 
+  /*!
+   * \brief Evicts the data in the given space.
+   *
+   * \param space Execution space to evict.
+   * \param destinationSpace The execution space to move the data to.
+   *                            Must not equal space or NONE.
+   */
+  void evict(ExecutionSpace space, ExecutionSpace destinationSpace);
+
 protected:
   /*!
    * \brief Construct a new ArrayManager.
@@ -294,6 +305,14 @@ private:
    * \brief Deregister a PointerRecord from the ArrayManager.
    */
   void deregisterPointer(PointerRecord* record);
+
+  /*!
+   * \brief set the allocator for an execution space.
+   *
+   * \param space Execution space to set the default allocator for.
+   * \param allocator The allocator to use for this space. Will be copied into chai.
+   */
+  void setAllocator(ExecutionSpace space, umpire::Allocator &allocator);
 
   /*!
    * \brief Move data in PointerRecord to the corresponding ExecutionSpace.

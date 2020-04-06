@@ -73,7 +73,7 @@ CHAI_INLINE
 typename ArrayManager::T_non_const<T> ArrayManager::pick(T* src_ptr, size_t index)
 {
   T_non_const<T> val;
-  m_resource_manager.registerAllocation(const_cast<T_non_const<T>*>(&val), new umpire::util::AllocationRecord{const_cast<T_non_const<T>*>(&val), sizeof(T), m_resource_manager.getAllocator("HOST").getAllocationStrategy()});
+  m_resource_manager.registerAllocation(const_cast<T_non_const<T>*>(&val), umpire::util::AllocationRecord{const_cast<T_non_const<T>*>(&val), sizeof(T), m_resource_manager.getAllocator("HOST").getAllocationStrategy()});
   m_resource_manager.copy(const_cast<T_non_const<T>*>(&val), const_cast<T_non_const<T>*>(src_ptr+index), sizeof(T));
   m_resource_manager.deregisterAllocation(&val);
   return val;
@@ -83,12 +83,16 @@ template<typename T>
 CHAI_INLINE
 void ArrayManager::set(T* dst_ptr, size_t index, const T& val)
 {
-  m_resource_manager.registerAllocation(const_cast<T_non_const<T>*>(&val), new umpire::util::AllocationRecord{const_cast<T_non_const<T>*>(&val), sizeof(T), m_resource_manager.getAllocator("HOST").getAllocationStrategy()});
+  m_resource_manager.registerAllocation(const_cast<T_non_const<T>*>(&val), umpire::util::AllocationRecord{const_cast<T_non_const<T>*>(&val), sizeof(T), m_resource_manager.getAllocator("HOST").getAllocationStrategy()});
   m_resource_manager.copy(const_cast<T_non_const<T>*>(dst_ptr+index), const_cast<T_non_const<T>*>(&val), sizeof(T));
   m_resource_manager.deregisterAllocation(const_cast<T_non_const<T>*>(&val));
 }
 #endif
 
+CHAI_INLINE
+void ArrayManager::setAllocator(ExecutionSpace space, umpire::Allocator &allocator) {
+   *m_allocators[space] = allocator;
+}
 } // end of namespace chai
 
 #endif // CHAI_ArrayManager_INL

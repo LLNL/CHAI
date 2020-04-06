@@ -14,5 +14,6 @@
 #cmakedefine CHAI_DISABLE_RM
 #cmakedefine CHAI_ENABLE_UM
 #cmakedefine CHAI_ENABLE_RAJA_PLUGIN
+#cmakedefine CHAI_ENABLE_GPU_SIMULATION_MODE
 
 #endif // CHAI_config_HPP
