@@ -6,7 +6,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #include <climits>
 
-#include "benchmark/benchmark_api.h"
+#include "benchmark/benchmark.h"
 
 #include "chai/ArrayManager.hpp"
 
