@@ -9,6 +9,16 @@
 
 #include <functional>
 
+#if defined(_WIN32) && !defined(CHAISTATICLIB)
+#ifdef CHAISHAREDDLL_EXPORTS
+#define CHAISHAREDDLL_API __declspec(dllexport)
+#else
+#define CHAISHAREDDLL_API __declspec(dllimport)
+#endif
+#else
+#define CHAISHAREDDLL_API
+#endif
+
 namespace chai
 {
 
@@ -16,7 +26,7 @@ typedef unsigned int uint;
 
 enum Action { ACTION_ALLOC, ACTION_FREE, ACTION_MOVE };
 
-using UserCallback = std::function<void(Action, ExecutionSpace, size_t)>;
+using UserCallback = std::function<void(Action, ExecutionSpace, std::size_t)>;
 
 } // end of namespace chai
 
