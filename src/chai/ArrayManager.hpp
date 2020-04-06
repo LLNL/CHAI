@@ -280,6 +280,14 @@ private:
   void deregisterPointer(PointerRecord* record);
 
   /*!
+   * \brief set the allocator for an execution space.
+   *
+   * \param space Execution space to set the default allocator for.
+   * \param allocator The allocator to use for this space. Will be copied into chai.
+   */
+  void setAllocator(ExecutionSpace space, umpire::Allocator &allocator);
+
+  /*!
    * \brief Move data in PointerRecord to the corresponding ExecutionSpace.
    *
    * \param record
