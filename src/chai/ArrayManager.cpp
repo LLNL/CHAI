@@ -189,63 +189,66 @@ void ArrayManager::allocate(
   CHAI_LOG(Debug, "Allocated array at: " << pointer_record->m_pointers[space]);
 }
 
-void ArrayManager::free(PointerRecord* pointer_record)
+void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFree)
 {
   if (!pointer_record) return;
 
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
-    if (pointer_record->m_pointers[space]) {
-      if (pointer_record->m_owned[space]) {
-        void* space_ptr = pointer_record->m_pointers[space];
+    if (space == spaceToFree || spaceToFree == NONE) {
+      if (pointer_record->m_pointers[space]) {
+        if (pointer_record->m_owned[space]) {
+          void* space_ptr = pointer_record->m_pointers[space];
 #if defined(CHAI_ENABLE_UM)
-        if (space_ptr == pointer_record->m_pointers[UM]) {
-          callback(pointer_record,
-                   ACTION_FREE,
-                   ExecutionSpace(UM),
-                   pointer_record->m_size);
-          {
-            std::lock_guard<std::mutex> lock(m_mutex);
-            m_pointer_map.erase(space_ptr);
-          }
+          if (space_ptr == pointer_record->m_pointers[UM]) {
+            callback(pointer_record,
+                     ACTION_FREE,
+                     ExecutionSpace(UM),
+                     pointer_record->m_size);
+            {
+              std::lock_guard<std::mutex> lock(m_mutex);
+              m_pointer_map.erase(space_ptr);
+            }
 
-          auto alloc = m_resource_manager.getAllocator(
-              pointer_record->m_allocators[space]);
-          alloc.deallocate(space_ptr);
+            auto alloc = m_resource_manager.getAllocator(
+                pointer_record->m_allocators[space]);
+            alloc.deallocate(space_ptr);
 
-          for (int space_t = CPU; space_t < NUM_EXECUTION_SPACES; ++space_t) {
-            if (space_ptr == pointer_record->m_pointers[space_t])
-              pointer_record->m_pointers[space_t] = nullptr;
-          }
-        } else {
+            for (int space_t = CPU; space_t < NUM_EXECUTION_SPACES; ++space_t) {
+              if (space_ptr == pointer_record->m_pointers[space_t])
+                pointer_record->m_pointers[space_t] = nullptr;
+            }
+          } else {
 #endif
-          callback(pointer_record,
-                   ACTION_FREE,
-                   ExecutionSpace(space),
-                   pointer_record->m_size);
-          {
-            std::lock_guard<std::mutex> lock(m_mutex);
-            m_pointer_map.erase(space_ptr);
-          }
+            callback(pointer_record,
+                     ACTION_FREE,
+                     ExecutionSpace(space),
+                     pointer_record->m_size);
+            {
+              std::lock_guard<std::mutex> lock(m_mutex);
+              m_pointer_map.erase(space_ptr);
+            }
 
-          auto alloc = m_resource_manager.getAllocator(
-              pointer_record->m_allocators[space]);
-          alloc.deallocate(space_ptr);
+            auto alloc = m_resource_manager.getAllocator(
+                pointer_record->m_allocators[space]);
+            alloc.deallocate(space_ptr);
 
-          pointer_record->m_pointers[space] = nullptr;
+            pointer_record->m_pointers[space] = nullptr;
 #if defined(CHAI_ENABLE_UM)
+          }
+#endif
         }
-#endif
-      }
-      else
-      {
-        m_resource_manager.deregisterAllocation(pointer_record->m_pointers[space]);
+        else
+        {
+           m_resource_manager.deregisterAllocation(pointer_record->m_pointers[space]);
+        }
       }
     }
   }
-
-  delete pointer_record;
+  
+  if (pointer_record != &s_null_record && spaceToFree == NONE) {
+    delete pointer_record;
+  }
 }
-
 
 size_t ArrayManager::getSize(void* ptr)
 {
@@ -369,5 +372,52 @@ ArrayManager::getAllocatorId(ExecutionSpace space) const
   return m_allocators[space]->getId();
 
 }
+
+void ArrayManager::evict(ExecutionSpace space, ExecutionSpace destinationSpace) {
+   // Check arguments
+   if (space == NONE) {
+      // Nothing to be done
+      return;
+   }
+
+   if (destinationSpace == NONE) {
+      // If the destination space is NONE, evicting invalidates all data and
+      // leaves us in a bad state (if the last touch was in the eviction space).
+      CHAI_LOG(Warning, "evict does nothing with destinationSpace == NONE!");
+      return;
+   }
+
+   if (space == destinationSpace) {
+      // It doesn't make sense to evict to the same space, so do nothing
+      CHAI_LOG(Warning, "evict does nothing with space == destinationSpace!");
+      return;
+   }
+
+   // Now move and evict
+   std::vector<PointerRecord*> pointersToEvict;
+
+   for (auto entry : m_pointer_map) {
+      // Get the pointer record
+      auto record = *entry.second;
+
+      // Move the data and register the touches
+      move(record, destinationSpace);
+      registerTouch(record, destinationSpace);
+
+      // If the destinationSpace is ever allowed to be NONE, then we will need to
+      // update the touch in the eviction space and make sure the last space is not
+      // the eviction space.
+
+      // Mark record for eviction later in this routine
+      pointersToEvict.push_back(record);
+   }
+
+   // This must be done in a second pass because free erases from m_pointer_map,
+   // which would invalidate the iterator in the above loop
+   for (auto entry : pointersToEvict) {
+      free(entry, space);
+   }
+}
+
 
 }  // end of namespace chai

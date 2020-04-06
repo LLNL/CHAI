@@ -158,7 +158,7 @@ CHAI_HOST void ManagedArray<T>::free()
   #if defined(CHAI_ENABLE_UM)
     cudaFree(m_active_base_pointer);
   #else
-    ::free(m_active_base_pointer);
+    ::free((void *)m_active_base_pointer);
   #endif
 
     m_active_base_pointer = nullptr;
