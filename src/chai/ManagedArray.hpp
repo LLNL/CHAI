@@ -180,6 +180,15 @@ public:
   CHAI_HOST_DEVICE T* getActivePointer() const;
 
   /*!
+   * \brief get access to the pointer in the given execution space
+   * @return a copy of the pointer in the given execution space
+   *
+   * \param space The space to get the pointer for.
+   * \param do_move Ensure data at that pointer is live and valid.
+   */
+  CHAI_HOST T* getPointer(ExecutionSpace space, bool do_move = true);
+
+  /*!
    * \brief
    *
    */

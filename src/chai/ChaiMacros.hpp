@@ -44,7 +44,7 @@
 
 #else
 
-#if defined(DEBUG)
+#if defined(CHAI_DEBUG)
 
 #define CHAI_LOG(level, msg) \
   std::cerr << "[" << __FILE__ << "] " << msg << std::endl;

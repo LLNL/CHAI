@@ -138,6 +138,9 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
   m_is_slice(other.m_is_slice)
 {
 #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
+  if (other.m_pointer_record != nullptr) {
+     m_elems = other.m_pointer_record->m_size/sizeof(T);
+  }
   move(m_resource_manager->getExecutionSpace());
 #endif
 }
@@ -370,7 +373,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool ) :
   m_active_base_pointer(data),
 #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   m_resource_manager(ArrayManager::getInstance()),
-  m_elems(m_resource_manager->getSize(m_active_base_pointer)),
+  m_elems(m_resource_manager->getSize((void *)m_active_base_pointer)/sizeof(T)),
   m_pointer_record(m_resource_manager->getPointerRecord(data)),
 #else
   m_resource_manager(nullptr),
@@ -395,6 +398,22 @@ T*
 ManagedArray<T>::getActivePointer() const
 {
   return m_active_pointer;
+}
+
+template<typename T> 
+T*
+ManagedArray<T>::getPointer(ExecutionSpace space, bool do_move) { 
+   if (m_elems == 0 && !m_is_slice) { 
+      return nullptr;
+   }
+   if (do_move) {
+      ExecutionSpace oldContext = m_resource_manager->getExecutionSpace();
+      m_resource_manager->setExecutionSpace(space);
+      move(space);
+      m_resource_manager->setExecutionSpace(oldContext);
+   }
+   int offset = m_is_slice ? m_offset : 0 ;
+   return ((T*) m_pointer_record->m_pointers[space]) + offset;
 }
 
 //template<typename T>

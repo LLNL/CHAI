@@ -21,6 +21,7 @@ mark_as_advanced(DISABLE_RM)
 option(ENABLE_UM "Use CUDA unified (managed) memory" Off)
 option(ENABLE_RAJA_PLUGIN "Build plugin to set RAJA execution spaces" Off)
 option(CHAI_ENABLE_GPU_ERROR_CHECKING "Enable GPU error checking" On)
+option(CHAI_DEBUG "Enable Debug Logging.")
 
 set(ENABLE_TESTS On CACHE BOOL "")
 set(ENABLE_EXAMPLES On CACHE BOOL "")
