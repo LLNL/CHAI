@@ -66,6 +66,7 @@ struct PointerRecord {
         m_pointers[space] = nullptr;
         m_touched[space] = false;
         m_owned[space] = true;
+        m_allocators[space] = 0;
      }
   }
 };
