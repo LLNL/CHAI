@@ -36,6 +36,18 @@ class CHAICopyable
 };
 
 /*!
+ * \class CHAIDISAMBIGUATE
+ *
+ * \brief Type to disambiguate otherwise ambiguous constructors.
+ *
+ */
+class CHAIDISAMBIGUATE
+{
+public:
+  CHAI_HOST_DEVICE CHAIDISAMBIGUATE(){};
+  CHAI_HOST_DEVICE ~CHAIDISAMBIGUATE(){};
+};
+/*!
  * \class ManagedArray
  *
  * \brief Provides an array-like class that automatically transfers data
@@ -156,7 +168,7 @@ public:
 
   CHAI_HOST void move(ExecutionSpace space);
 
-  CHAI_HOST_DEVICE ManagedArray<T> slice(size_t begin, size_t elems=-1) const;
+  CHAI_HOST_DEVICE ManagedArray<T> slice(size_t begin, size_t elems=(size_t)-1) const;
   /*!
    * \brief Return reference to i-th element of the ManagedArray.
    *
@@ -241,7 +253,7 @@ public:
    * \param val Source location of the value
    * \tparam T The type of data value in ManagedArray.
    */
-  CHAI_HOST_DEVICE void set(size_t i, T& val) const;
+  CHAI_HOST_DEVICE void set(size_t i, T val) const;
 
   /*!
    * \brief Increment the value of element i in the ManagedArray.
@@ -277,8 +289,10 @@ public:
    * \param data Raw pointer to data.
    * \param enable Boolean argument (unused) added to differentiate constructor.
    */
-  template <bool Q = 0>
-  CHAI_HOST_DEVICE ManagedArray(T* data, bool test = Q);
+  template <bool Q = false>
+  CHAI_HOST_DEVICE ManagedArray(T* data,
+                               CHAIDISAMBIGUATE test = CHAIDISAMBIGUATE(),
+                               bool foo = Q);
 #endif
 
 
@@ -425,7 +439,7 @@ CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T> ManagedArray<T>::slice( size_t offs
 {
   ManagedArray<T> slice;
   slice.m_resource_manager = m_resource_manager;
-  if (elems == -1) {
+  if (elems == (size_t) -1) {
     elems = size() - offset;
   }
   if (offset + elems > size()) {

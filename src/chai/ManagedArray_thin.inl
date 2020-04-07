@@ -193,7 +193,7 @@ typename ManagedArray<T>::T_non_const ManagedArray<T>::pick(size_t i) const {
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T& val) const { 
+CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const {
 #if !defined(__CUDA_ARCH__) && defined(CHAI_ENABLE_UM)
   cudaDeviceSynchronize();
 #endif
@@ -242,7 +242,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
 template<typename T>
 template<bool Q>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool test) :
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, CHAIDISAMBIGUATE, bool) :
   m_active_pointer(data),
   m_resource_manager(ArrayManager::getInstance()),
   m_elems(m_resource_manager->getSize(m_active_pointer)),

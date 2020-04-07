@@ -253,7 +253,7 @@ typename ManagedArray<T>::T_non_const ManagedArray<T>::pick(size_t i) const {
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T& val) const { 
+CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const {
   #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
     #if defined(CHAI_ENABLE_UM)
       if(m_pointer_record->m_pointers[UM] == m_active_pointer) {
@@ -368,7 +368,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
 template<typename T>
 template<bool Q>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool ) :
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, CHAIDISAMBIGUATE, bool ) :
   m_active_pointer(data),
   m_active_base_pointer(data),
 #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
