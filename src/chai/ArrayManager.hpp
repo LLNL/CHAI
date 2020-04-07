@@ -295,7 +295,15 @@ private:
   /*!
    * \brief Deregister a PointerRecord from the ArrayManager.
    */
-  void deregisterPointer(PointerRecord* record);
+  void deregisterPointer(PointerRecord* record, bool deregisterFromUmpire=false);
+
+  /*!
+   * \brief Returns the front of the allocation associated with this pointer, nullptr if allocation not found.
+   *
+   * \param pointer Pointer to address of that we want the front of the allocation for.
+   */
+  CHAISHAREDDLL_API void * frontOfAllocation(void * pointer);
+
 
   /*!
    * \brief set the allocator for an execution space.

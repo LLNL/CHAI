@@ -59,26 +59,84 @@ void ArrayManager::registerPointer(
   std::lock_guard<std::mutex> lock(m_mutex);
   auto pointer = record->m_pointers[space];
 
+  // if we are registering a new pointer record for a pointer where there is already
+  // a pointer record, we assume the old record was somehow abandoned by the host
+  // application and trigger an ACTION_FOUND_ABANDONED callback
+  auto found_pointer_record_pair = m_pointer_map.find(pointer);
+  if (found_pointer_record_pair != m_pointer_map.end()) {
+     PointerRecord ** found_pointer_record_addr = found_pointer_record_pair->second;
+     if (found_pointer_record_addr != nullptr) {
+
+        CHAI_LOG(Warning, "ArrayManager::registerPointer found a record for " <<
+                   pointer << " already there.  Deleting abandoned pointer record.");
+
+        PointerRecord *foundRecord = *(found_pointer_record_pair->second);
+
+        callback(foundRecord, ACTION_FOUND_ABANDONED, space, foundRecord->m_size);
+
+        for (int fspace = 0; fspace < NUM_EXECUTION_SPACES; ++fspace) {
+           foundRecord->m_pointers[fspace] = nullptr;
+        }
+
+        delete foundRecord;
+     }
+  }
+
   CHAI_LOG(Debug, "Registering " << pointer << " in space " << space);
 
   m_pointer_map.insert(pointer, record);
-  //record->m_last_space = space;
 
   for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
     if (!record->m_pointers[i]) record->m_owned[i] = true;
   }
   record->m_owned[space] = owned;
+
+  if (pointer) {
+     // if umpire already knows about this pointer, we want to make sure its records and ours
+     // are consistent
+     if (m_resource_manager.hasAllocator(pointer)) {
+         umpire::util::AllocationRecord *allocation_record = const_cast<umpire::util::AllocationRecord *>(m_resource_manager.findAllocationRecord(pointer));
+         allocation_record->size = record->m_size;
+     }
+     // register with umpire if it's not there so that umpire can perform data migrations
+     else {
+        umpire::util::AllocationRecord new_allocation_record;
+        new_allocation_record.ptr = pointer;
+        new_allocation_record.size = record->m_size;
+        new_allocation_record.strategy = m_resource_manager.getAllocator(record->m_allocators[space]).getAllocationStrategy();
+
+        m_resource_manager.registerAllocation(pointer, new_allocation_record);
+     }
+  }
 }
 
-
-void ArrayManager::deregisterPointer(PointerRecord* record)
+void ArrayManager::deregisterPointer(PointerRecord* record, bool deregisterFromUmpire)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
   for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
-    if (record->m_pointers[i]) m_pointer_map.erase(record->m_pointers[i]);
+    void * pointer = record->m_pointers[i];
+    if (pointer) {
+       if (deregisterFromUmpire) {
+          m_resource_manager.deregisterAllocation(pointer);
+       }
+       m_pointer_map.erase(pointer);
+    }
   }
+  if (record != &s_null_record) {
+     delete record;
+  }
+}
 
-  delete record;
+void * ArrayManager::frontOfAllocation(void * pointer) {
+  if (pointer) {
+    if (m_resource_manager.hasAllocator(pointer)) {
+       auto allocation_record = m_resource_manager.findAllocationRecord(pointer);
+       if (allocation_record) {
+         return allocation_record->ptr;
+       }
+    }
+  }
+  return nullptr;
 }
 
 void ArrayManager::setExecutionSpace(ExecutionSpace space)
