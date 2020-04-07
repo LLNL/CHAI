@@ -11,6 +11,7 @@ blt_list_append(TO chai_integration_test_depends ELEMENTS cuda IF ${ENABLE_CUDA}
 blt_list_append(TO chai_integration_test_depends ELEMENTS hip IF ${ENABLE_HIP})
 blt_list_append(TO chai_integration_test_depends ELEMENTS openmp IF ${ENABLE_OPENMP})
 
+# ManagedArray tests
 blt_add_executable(
   NAME managed_array_tests
   SOURCES managed_array_tests.cpp

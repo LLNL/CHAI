@@ -92,6 +92,12 @@ T* ManagedArray<T>::getActivePointer() const
   return m_active_pointer;
 }
 
+template <typename T>
+T* ManagedArray<T>::getPointer(ExecutionSpace /*space*/, bool)
+{
+  return m_active_pointer;
+}
+
 template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::allocate(size_t elems,
@@ -116,6 +122,7 @@ CHAI_HOST void ManagedArray<T>::allocate(size_t elems,
   else {
     CHAI_LOG(Debug, "Attempted to allocate slice!");
   }
+  m_active_base_pointer = m_active_pointer;
 }
 
 template<typename T>
@@ -187,7 +194,7 @@ typename ManagedArray<T>::T_non_const ManagedArray<T>::pick(size_t i) const {
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T& val) const { 
+CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const {
 #if !defined(__CUDA_ARCH__) && defined(CHAI_ENABLE_UM)
   cudaDeviceSynchronize();
 #endif
@@ -236,7 +243,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
 template<typename T>
 template<bool Q>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, bool test) :
+CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, CHAIDISAMBIGUATE, bool) :
   m_active_pointer(data),
   m_resource_manager(ArrayManager::getInstance()),
   m_elems(m_resource_manager->getSize(m_active_pointer)),
@@ -255,13 +262,58 @@ typename std::enable_if< !std::is_const<U>::value ,
 }
 
 template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE
-ManagedArray<T>&
-ManagedArray<T>::operator= (std::nullptr_t from) {
+CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>& ManagedArray<T>::operator= (std::nullptr_t from) 
+{
   m_active_pointer = from;
+  m_active_base_pointer = from;
   m_elems = 0;
+  m_is_slice = false;
   return *this;
+}
+
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator==(
+    ManagedArray<T>& rhs) const
+{
+  return (m_active_pointer == rhs.m_active_pointer);
+}
+
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator!=(
+    ManagedArray<T>& rhs) const
+{
+  return (m_active_pointer != rhs.m_active_pointer);
+}
+
+
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator==(T* from) const
+{
+  return m_active_pointer == from;
+}
+
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator!=(T* from) const
+{
+  return m_active_pointer != from;
+}
+
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator==(std::nullptr_t from) const
+{
+  return m_active_pointer == from;
+}
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator!=(
+    std::nullptr_t from) const
+{
+  return m_active_pointer != from;
+}
+
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>::operator bool() const
+{
+  return m_active_pointer != nullptr;
 }
 
 } // end of namespace chai

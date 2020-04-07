@@ -173,7 +173,7 @@ namespace chai {
          ///
          /// Default constructor.
          ///
-         constexpr managed_ptr() noexcept = default;
+         CHAI_HOST_DEVICE constexpr managed_ptr() noexcept = default;
 
          ///
          /// @author Alan Dayton

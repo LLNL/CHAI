@@ -31,6 +31,7 @@ void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* point
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     if (pointer_record->m_pointers[space] == pointer) {
       my_space = static_cast<ExecutionSpace>(space);
+      break;
     }
   }
 
@@ -88,6 +89,11 @@ void ArrayManager::set(T* dst_ptr, size_t index, const T& val)
   m_resource_manager.deregisterAllocation(const_cast<T_non_const<T>*>(&val));
 }
 #endif
+
+CHAI_INLINE
+void ArrayManager::copy(void * dst, void * src, size_t size) {
+   m_resource_manager.copy(dst,src,size);
+}
 
 CHAI_INLINE
 void ArrayManager::setAllocator(ExecutionSpace space, umpire::Allocator &allocator) {

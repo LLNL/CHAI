@@ -13,6 +13,7 @@
 #cmakedefine CHAI_ENABLE_IMPLICIT_CONVERSIONS
 #cmakedefine CHAI_DISABLE_RM
 #cmakedefine CHAI_ENABLE_UM
+#cmakedefine CHAI_DEBUG
 #cmakedefine CHAI_ENABLE_RAJA_PLUGIN
 #cmakedefine CHAI_ENABLE_GPU_SIMULATION_MODE
 
