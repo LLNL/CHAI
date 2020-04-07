@@ -52,7 +52,7 @@ public:
 
   using PointerMap = umpire::util::MemoryMap<PointerRecord*>;
 
-  static PointerRecord s_null_record;
+  CHAISHAREDDLL_API static PointerRecord s_null_record;
 
   /*!
    * \brief Get the singleton instance.
@@ -60,6 +60,7 @@ public:
    * \return Pointer to the ArrayManager instance.
    *
    */
+  CHAISHAREDDLL_API
   CHAI_HOST_DEVICE
   static ArrayManager* getInstance();
 
@@ -68,14 +69,14 @@ public:
    *
    * \param space The space to set as current.
    */
-  void setExecutionSpace(ExecutionSpace space);
+  CHAISHAREDDLL_API void setExecutionSpace(ExecutionSpace space);
 
   /*!
    * \brief Get the current execution space.
    *
    * \return The current execution space.jo
    */
-  ExecutionSpace getExecutionSpace();
+  CHAISHAREDDLL_API ExecutionSpace getExecutionSpace();
 
   /*!
    * \brief Move data in pointer to the current execution space.
@@ -83,16 +84,16 @@ public:
    * \param pointer Pointer to data in any execution space.
    * \return Pointer to data in the current execution space.
    */
-  void* move(void* pointer,
-             PointerRecord* pointer_record,
-             ExecutionSpace = NONE);
+  CHAISHAREDDLL_API void* move(void* pointer,
+                               PointerRecord* pointer_record,
+                               ExecutionSpace = NONE);
 
   /*!
    * \brief Register a touch of the pointer in the current execution space.
    *
    * \param pointer Raw pointer to register a touch of.
    */
-  void registerTouch(PointerRecord* pointer_record);
+  CHAISHAREDDLL_API void registerTouch(PointerRecord* pointer_record);
 
   /*!
    * \brief Register a touch of the pointer in the given execution space.
@@ -102,7 +103,7 @@ public:
    * \param pointer Raw pointer to register a touch of.
    * \param space Space to register touch.
    */
-  void registerTouch(PointerRecord* pointer_record, ExecutionSpace space);
+  CHAISHAREDDLL_API void registerTouch(PointerRecord* pointer_record, ExecutionSpace space);
 
   /*!
    * \brief Make a new allocation of the data described by the PointerRecord in
@@ -111,7 +112,7 @@ public:
    * \param pointer_record
    * \param space Space in which to make the allocation.
    */
-  void allocate(PointerRecord* pointer_record, ExecutionSpace space = CPU);
+  CHAISHAREDDLL_API void allocate(PointerRecord* pointer_record, ExecutionSpace space = CPU);
 
   /*!
    * \brief Reallocate data.
@@ -135,7 +136,7 @@ public:
    *
    * \param space New space for default allocations.
    */
-  void setDefaultAllocationSpace(ExecutionSpace space);
+  CHAISHAREDDLL_API void setDefaultAllocationSpace(ExecutionSpace space);
 
   /*!
    * \brief Get the currently set default allocation space.
@@ -144,14 +145,14 @@ public:
    *
    * \return Current default space for allocations.
    */
-  ExecutionSpace getDefaultAllocationSpace();
+  CHAISHAREDDLL_API ExecutionSpace getDefaultAllocationSpace();
 
   /*!
    * \brief Free allocation(s) associated with the given PointerRecord.
    *        Default (space == NONE) will free all allocations and delete
    *        the pointer record.
    */
-  void free(PointerRecord* pointer, ExecutionSpace space = NONE);
+  CHAISHAREDDLL_API void free(PointerRecord* pointer, ExecutionSpace space = NONE);
 
 #if defined(CHAI_ENABLE_PICK)
   template <typename T>
@@ -167,9 +168,9 @@ public:
    * \param pointer Pointer to find the size of.
    * \return Size of pointer.
    */
-  size_t getSize(void* pointer);
+  CHAISHAREDDLL_API size_t getSize(void* pointer);
 
-  PointerRecord* makeManaged(void* pointer,
+  CHAISHAREDDLL_API PointerRecord* makeManaged(void* pointer,
                              size_t size,
                              ExecutionSpace space,
                              bool owned);
@@ -177,14 +178,14 @@ public:
   /*!
    * \brief Assign a user-defined callback triggerd upon memory operations.
    */
-  void setUserCallback(void* pointer, UserCallback const& f);
+  CHAISHAREDDLL_API void setUserCallback(void* pointer, UserCallback const& f);
 
   /*!
    * \brief Set touched to false in all spaces for the given PointerRecord.
    *
    * \param pointer_record PointerRecord to reset.
    */
-  void resetTouch(PointerRecord* pointer_record);
+  CHAISHAREDDLL_API void resetTouch(PointerRecord* pointer_record);
 
   /*!
    * \brief Find the PointerRecord corresponding to the raw pointer.
@@ -194,7 +195,7 @@ public:
    * \return PointerRecord containing the raw pointer, or an empty
    *         PointerRecord if none found.
    */
-  PointerRecord* getPointerRecord(void* pointer);
+  CHAISHAREDDLL_API PointerRecord* getPointerRecord(void* pointer);
 
   /*!
    * \brief Create a copy of the given PointerRecord with a new allocation
@@ -204,30 +205,30 @@ public:
    *
    * \return A copy of the given PointerRecord, must be free'd with delete.
    */
-  PointerRecord* deepCopyRecord(PointerRecord const* record);
+  CHAISHAREDDLL_API PointerRecord* deepCopyRecord(PointerRecord const* record);
 
   /*!
    * \brief Create a copy of the pointer map.
    *
    * \return A copy of the pointer map. Can be used to find memory leaks.
    */
-  std::unordered_map<void*, const PointerRecord*> getPointerMap() const;
+  CHAISHAREDDLL_API std::unordered_map<void*, const PointerRecord*> getPointerMap() const;
 
   /*!
    * \brief Get the total number of arrays registered with the array manager.
    *
    * \return The total number of arrays registered with the array manager.
    */
-  size_t getTotalNumArrays() const;
+  CHAISHAREDDLL_API size_t getTotalNumArrays() const;
 
   /*!
    * \brief Get the total amount of memory allocated.
    *
    * \return The total amount of memory allocated.
    */
-  size_t getTotalSize() const;
+  CHAISHAREDDLL_API size_t getTotalSize() const;
 
-  int getAllocatorId(ExecutionSpace space) const;
+  CHAISHAREDDLL_API int getAllocatorId(ExecutionSpace space) const;
 
   /*!
    * \brief Turn callbacks on.
@@ -261,7 +262,7 @@ public:
    * \param destinationSpace The execution space to move the data to.
    *                            Must not equal space or NONE.
    */
-  void evict(ExecutionSpace space, ExecutionSpace destinationSpace);
+  CHAISHAREDDLL_API void evict(ExecutionSpace space, ExecutionSpace destinationSpace);
 
 protected:
   /*!
