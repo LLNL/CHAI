@@ -117,12 +117,15 @@ CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(PointerRecord* record, ExecutionSpace space):
   m_active_pointer(static_cast<T*>(record->m_pointers[space])),
   m_active_base_pointer(static_cast<T*>(record->m_pointers[space])),
-  m_resource_manager(ArrayManager::getInstance()),
+  m_resource_manager(nullptr),
   m_elems(record->m_size/sizeof(T)),
   m_offset(0),
   m_pointer_record(record),
   m_is_slice(false)
 {
+#if !defined(__CUDA_ARCH__)
+   m_resource_manager = ArrayManager::getInstance();
+#endif
 }
 
 
@@ -189,15 +192,23 @@ CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::reallocate(size_t elems)
 {
   if(!m_is_slice) {
-    CHAI_LOG(Debug, "Reallocating array of size " << m_elems << " with new size" << elems);
+    if (elems > 0) {
+      if (m_elems == 0 && m_active_base_pointer == nullptr) {
+        return allocate(elems, CPU);
+      }
+      CHAI_LOG(Debug, "Reallocating array of size " << m_elems << " with new size" << elems);
 
-    m_elems = elems;
-    m_active_base_pointer =
-      static_cast<T*>(m_resource_manager->reallocate<T>(m_active_base_pointer, elems,
-                                                      m_pointer_record));
-    m_active_pointer = m_active_base_pointer; // Cannot be a slice
+      m_elems = elems;
+      m_active_base_pointer =
+        static_cast<T*>(m_resource_manager->reallocate<T>(m_active_base_pointer, elems,
+                                                          m_pointer_record));
+      m_active_pointer = m_active_base_pointer; // Cannot be a slice
 
-    CHAI_LOG(Debug, "m_active_ptr reallocated at address: " << m_active_pointer);
+      CHAI_LOG(Debug, "m_active_ptr reallocated at address: " << m_active_pointer);
+    }
+    else {
+      this->free();
+    }
   }
 }
 
