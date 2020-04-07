@@ -390,6 +390,12 @@ ManagedArray<T>::getActiveBasePointer() const
   return m_active_base_pointer;
 }
 
+template<typename T>
+T*
+ManagedArray<T>::getActivePointer() const
+{
+  return m_active_pointer;
+}
 
 //template<typename T>
 //ManagedArray<T>::operator ManagedArray<

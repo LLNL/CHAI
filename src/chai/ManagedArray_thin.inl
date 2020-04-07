@@ -80,6 +80,17 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data,
 {
 }
 
+template <typename T>
+T* ManagedArray<T>::getActiveBasePointer() const
+{
+  return m_active_base_pointer;
+}
+
+template <typename T>
+T* ManagedArray<T>::getActivePointer() const
+{
+  return m_active_pointer;
+}
 
 template<typename T>
 CHAI_INLINE
