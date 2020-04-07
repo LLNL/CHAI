@@ -156,24 +156,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
 }
 
 template<typename T>
-CHAI_INLINE
-CHAI_HOST ManagedArray<T> ManagedArray<T>::slice(size_t offset, size_t elems) {
-  ManagedArray<T> slice(nullptr);
-  slice.m_resource_manager = m_resource_manager;
-  if(offset + elems > size()) {
-    CHAI_LOG(Debug, "Invalid slice. No active pointer or index out of bounds");
-  } else {
-    slice.m_pointer_record = m_pointer_record;
-    slice.m_active_base_pointer = m_active_base_pointer;
-    slice.m_offset = offset + m_offset;
-    slice.m_active_pointer = m_active_base_pointer + slice.m_offset;
-    slice.m_elems = elems;
-    slice.m_is_slice = true;
-  }
-  return slice;
-}
-
-template<typename T>
 CHAI_HOST void ManagedArray<T>::allocate(
     size_t elems,
     ExecutionSpace space, 
@@ -365,7 +347,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
   m_resource_manager->setExecutionSpace(CPU);
   auto non_const_active_base_pointer = const_cast<T_non_const*>(static_cast<T*>(m_active_base_pointer));
   m_active_base_pointer = static_cast<T_non_const*>(m_resource_manager->move(non_const_active_base_pointer, m_pointer_record));
-  m_active_pointer = m_active_base_pointer;
+  m_active_pointer = m_active_base_pointer + m_offset;
 
   m_resource_manager->registerTouch(m_pointer_record);
 

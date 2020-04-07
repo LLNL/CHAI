@@ -80,19 +80,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data,
 {
 }
 
-template<typename T>
-CHAI_INLINE
-CHAI_HOST ManagedArray<T> ManagedArray<T>::slice(size_t offset, size_t elems) {
-  ManagedArray<T> slice;
-  if (offset + elems > size()) {
-    CHAI_LOG(Debug, "Invalid slice. No active pointer or index out of bounds");
-  } else {
-    slice.m_active_pointer = m_active_pointer + offset;
-    slice.m_elems = elems;
-    slice.m_is_slice = true;
-  }
-  return slice;
-}
 
 template<typename T>
 CHAI_INLINE

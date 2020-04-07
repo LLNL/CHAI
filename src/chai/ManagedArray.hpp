@@ -156,7 +156,7 @@ public:
 
   CHAI_HOST void move(ExecutionSpace space);
 
-  CHAI_HOST ManagedArray<T> slice(size_t begin, size_t end);
+  CHAI_HOST_DEVICE ManagedArray<T> slice(size_t begin, size_t elems=-1) const;
   /*!
    * \brief Return reference to i-th element of the ManagedArray.
    *
@@ -171,7 +171,13 @@ public:
    * \brief get access to m_active_pointer
    * @return a copy of m_active_pointer
    */
-  T* getActiveBasePointer() const;
+  CHAI_HOST_DEVICE T* getActiveBasePointer() const;
+
+  /*!
+   * \brief get access to m_active_pointer
+   * @return a copy of m_active_pointer
+   */
+  CHAI_HOST_DEVICE T* getActivePointer() const;
 
   /*!
    * \brief
@@ -314,20 +320,20 @@ private:
   /*!
    * Pointer to ArrayManager instance.
    */
-  ArrayManager* m_resource_manager = nullptr;
+  mutable ArrayManager* m_resource_manager = nullptr;
 
   /*!
    * Number of elements in the ManagedArray.
    */
-  size_t m_elems = 0;
-  size_t m_offset = 0;
+  mutable size_t m_elems = 0;
+  mutable size_t m_offset = 0;
 
   /*!
    * Pointer to PointerRecord data.
    */
-  PointerRecord* m_pointer_record = nullptr;
+  mutable PointerRecord* m_pointer_record = nullptr;
  
-  bool m_is_slice = false;
+  mutable bool m_is_slice = false;
  
 };
 
@@ -394,6 +400,30 @@ ManagedArray<T> deepCopy(ManagedArray<T> const& array)
   PointerRecord* copy_record = manager->deepCopyRecord(record);
 
   return ManagedArray<T>(copy_record, copy_record->m_last_space);
+}
+
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T> ManagedArray<T>::slice( size_t offset, size_t elems) const
+{
+  ManagedArray<T> slice;
+  slice.m_resource_manager = m_resource_manager;
+  if (elems == -1) {
+    elems = size() - offset;
+  }
+  if (offset + elems > size()) {
+#ifndef __CUDA_ARCH__
+    CHAI_LOG(Debug,
+             "Invalid slice. No active pointer or index out of bounds");
+#endif
+  } else {
+    slice.m_pointer_record = m_pointer_record;
+    slice.m_active_base_pointer = m_active_base_pointer;
+    slice.m_offset = offset + m_offset;
+    slice.m_active_pointer = m_active_base_pointer + slice.m_offset;
+    slice.m_elems = elems;
+    slice.m_is_slice = true;
+  }
+  return slice;
 }
 
 }  // end of namespace chai
