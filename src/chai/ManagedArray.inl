@@ -456,8 +456,7 @@ typename std::enable_if< !std::is_const<U>::value ,
                          ManagedArray<const U> >::type () const
 
 {
-  return ManagedArray<const T>(const_cast<const T*>(m_active_base_pointer), 
-  m_resource_manager, m_elems, m_pointer_record);
+  return *reinterpret_cast<ManagedArray<const T> *>(const_cast<ManagedArray<T> *>(this));
 }
 
 template<typename T>

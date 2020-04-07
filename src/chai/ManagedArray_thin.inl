@@ -122,6 +122,7 @@ CHAI_HOST void ManagedArray<T>::allocate(size_t elems,
   else {
     CHAI_LOG(Debug, "Attempted to allocate slice!");
   }
+  m_active_base_pointer = m_active_pointer;
 }
 
 template<typename T>
