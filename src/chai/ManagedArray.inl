@@ -400,10 +400,10 @@ ManagedArray<T>::getActivePointer() const
   return m_active_pointer;
 }
 
-template<typename T> 
+template<typename T>
 T*
-ManagedArray<T>::getPointer(ExecutionSpace space, bool do_move) { 
-   if (m_elems == 0 && !m_is_slice) { 
+ManagedArray<T>::getPointer(ExecutionSpace space, bool do_move) {
+   if (m_elems == 0 && !m_is_slice) {
       return nullptr;
    }
    if (do_move) {
@@ -460,8 +460,57 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE
 bool
-ManagedArray<T>::operator== (ManagedArray<T>& rhs) {
+ManagedArray<T>::operator== (ManagedArray<T>& rhs) const
+{
   return (m_active_pointer ==  rhs.m_active_pointer);
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+bool
+ManagedArray<T>::operator!= (ManagedArray<T>& rhs) const
+{
+  return (m_active_pointer !=  rhs.m_active_pointer);
+}
+
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+bool
+ManagedArray<T>::operator== (T * from) const {
+   return m_active_pointer == from;
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+bool
+ManagedArray<T>::operator!= (T * from) const {
+   return m_active_pointer != from;
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+bool
+ManagedArray<T>::operator== (std::nullptr_t from) const {
+   return m_active_pointer == from || m_elems == 0;
+}
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+bool
+ManagedArray<T>::operator!= (std::nullptr_t from) const {
+   return m_active_pointer != from && m_elems > 0;
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+ManagedArray<T>::operator bool () const {
+   return m_elems > 0;
 }
 
 template<typename T>

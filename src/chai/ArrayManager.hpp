@@ -231,6 +231,12 @@ public:
   CHAISHAREDDLL_API int getAllocatorId(ExecutionSpace space) const;
 
   /*!
+   * \brief Wraps our resource manager's copy.
+   *
+   */
+  CHAISHAREDDLL_API void copy(void * dst, void * src, size_t size);
+
+  /*!
    * \brief Turn callbacks on.
    */
   void enableCallbacks() { m_callbacks_active = true; }

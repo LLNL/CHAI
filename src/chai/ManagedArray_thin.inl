@@ -261,13 +261,58 @@ typename std::enable_if< !std::is_const<U>::value ,
 }
 
 template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE
-ManagedArray<T>&
-ManagedArray<T>::operator= (std::nullptr_t from) {
+CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>& ManagedArray<T>::operator= (std::nullptr_t from) 
+{
   m_active_pointer = from;
+  m_active_base_pointer = from;
   m_elems = 0;
+  m_is_slice = false;
   return *this;
+}
+
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator==(
+    ManagedArray<T>& rhs) const
+{
+  return (m_active_pointer == rhs.m_active_pointer);
+}
+
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator!=(
+    ManagedArray<T>& rhs) const
+{
+  return (m_active_pointer != rhs.m_active_pointer);
+}
+
+
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator==(T* from) const
+{
+  return m_active_pointer == from;
+}
+
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator!=(T* from) const
+{
+  return m_active_pointer != from;
+}
+
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator==(std::nullptr_t from) const
+{
+  return m_active_pointer == from;
+}
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator!=(
+    std::nullptr_t from) const
+{
+  return m_active_pointer != from;
+}
+
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>::operator bool() const
+{
+  return m_active_pointer != nullptr;
 }
 
 } // end of namespace chai
