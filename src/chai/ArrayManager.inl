@@ -49,12 +49,12 @@ void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* point
     void* old_ptr = pointer_record->m_pointers[space];
 
     if (old_ptr) {
-      pointer_record->m_user_callback(ACTION_ALLOC, ExecutionSpace(space), sizeof(T) * elems);
+      callback(pointer_record, ACTION_ALLOC, ExecutionSpace(space), sizeof(T) * elems);
       void* new_ptr = m_allocators[space]->allocate(sizeof(T)*elems);
 
       m_resource_manager.copy(new_ptr, old_ptr, num_bytes_to_copy);
 
-      pointer_record->m_user_callback(ACTION_FREE, ExecutionSpace(space), sizeof(T) * elems);
+      callback(pointer_record, ACTION_FREE, ExecutionSpace(space), sizeof(T) * elems);
       m_allocators[space]->deallocate(old_ptr);
 
       pointer_record->m_pointers[space] = new_ptr;
