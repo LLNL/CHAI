@@ -329,12 +329,11 @@ private:
    * \param space The space in which the event occurred
    * \param size The number of bytes in the array associated with this pointer record
    */
-  inline void callback(PointerRecord* record,
+  inline void callback(const PointerRecord* record,
                        Action action,
-                       ExecutionSpace space,
-                       size_t size) const {
+                       ExecutionSpace space) const {
      if (m_callbacks_active && record) {
-        record->m_user_callback(action, space, size);
+        record->m_user_callback(record, action, space);
      }
   }
 

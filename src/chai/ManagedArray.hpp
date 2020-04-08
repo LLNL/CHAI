@@ -128,7 +128,7 @@ public:
   CHAI_HOST void allocate(size_t elems,
                           ExecutionSpace space = CPU,
                           UserCallback const& cback =
-                          [](Action, ExecutionSpace, size_t) {});
+                          [] (const PointerRecord*, Action, ExecutionSpace) {});
 
   /*!
    * \brief Reallocate data for the ManagedArray.
