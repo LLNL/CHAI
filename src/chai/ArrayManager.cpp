@@ -214,7 +214,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   }
 #endif
 
-  callback(record, ACTION_CAPTURED, space, record->m_size);
+  callback(record, ACTION_CAPTURED, space);
 
   if (space == record->m_last_space) {
     return;
