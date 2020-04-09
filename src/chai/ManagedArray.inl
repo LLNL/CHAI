@@ -25,7 +25,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
 {
 #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   m_resource_manager = ArrayManager::getInstance();
-  m_pointer_record = &s_null_record;
+  m_pointer_record = &ArrayManager::s_null_record;
 #endif
 }
 
@@ -102,7 +102,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t) :
 {
 #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
    m_resource_manager = ArrayManager::getInstance();
-   m_pointer_record = &ArrayManager::s_null_record();
+   m_pointer_record = &ArrayManager::s_null_record;
 #endif
 }
 
@@ -163,7 +163,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
    if (m_resource_manager == nullptr) {
       m_resource_manager = ArrayManager::getInstance();
    }
-   if (m_pointer_record == &chai::ArrayManager::s_null_record || m_pointer_record==nullptr) {
+   if (m_pointer_record == &ArrayManager::s_null_record || m_pointer_record==nullptr) {
       bool owned = true;
       m_pointer_record = m_resource_manager->makeManaged((void *) data, sizeof(T)*m_elems,ExecutionSpace(CPU),true);
    }
@@ -185,7 +185,7 @@ CHAI_HOST void ManagedArray<T>::allocate(
        if (space == NONE) {
           space = m_resource_manager->getDefaultAllocationSpace();
        }
-       if (m_pointer_record == &chai::ArrayManager::s_null_record) {
+       if (m_pointer_record == &ArrayManager::s_null_record) {
           m_pointer_record = m_resource_manager->makeManaged((void *) m_active_base_pointer,m_elems*sizeof(T),CPU,true);
        }
 
@@ -221,7 +221,7 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t elems)
         return allocate(elems, CPU);
       }
       CHAI_LOG(Debug, "Reallocating array of size " << m_elems << " with new size" << elems);
-      if (m_pointer_record == &chai::ArrayManager::s_null_record) {
+      if (m_pointer_record == &ArrayManager::s_null_record) {
          m_pointer_record = m_resource_manager->makeManaged((void *)m_active_base_pointer,m_elems*sizeof(T),CPU,true);
       }
       size_t old_size = m_elems;
@@ -264,7 +264,7 @@ CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
     m_offset = 0;
     // The call to m_resource_manager::free, above, has deallocated m_pointer_record if space == NONE.
     if (space == NONE) {
-       m_pointer_record = &s_null_record;
+       m_pointer_record = &ArrayManager::s_null_record;
     }
     m_is_slice = false;
   } else {
@@ -540,7 +540,7 @@ ManagedArray<T>::operator= (std::nullptr_t) {
   m_elems = 0;
   m_offset = 0;
   #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
-  m_pointer_record = ArrayManager::&s_null_record;
+  m_pointer_record = &ArrayManager::s_null_record;
   #else
   m_pointer_record = nullptr;
   #endif
