@@ -1434,7 +1434,7 @@ GPU_TEST(ManagedArray, CopyConstruct)
 
   chai::ManagedArray<int> results(1, chai::GPU);
 
-  forall(cuda(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
     results[i] = array2[i];
   });
 
