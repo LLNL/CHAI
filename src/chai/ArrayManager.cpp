@@ -333,7 +333,7 @@ void ArrayManager::setUserCallback(void* pointer, UserCallback const& f)
   pointer_record->m_user_callback = f;
 }
 
-void ArrayManager::setUserCallback(UserCallback const& f)
+void ArrayManager::setGlobalUserCallback(UserCallback const& f)
 {
   m_user_callback = f;
 }

@@ -144,9 +144,9 @@ TEST(ArrayManager, controlGlobalCallback)
   bool callbacksAreOn = false;
 
   // Set a global callback
-  arrayManager->setUserCallback([&] (const chai::PointerRecord*, chai::Action, chai::ExecutionSpace) {
-                                  callbacksAreOn = true;
-                                });
+  arrayManager->setGlobalUserCallback([&] (const chai::PointerRecord*, chai::Action, chai::ExecutionSpace) {
+                                        callbacksAreOn = true;
+                                      });
 
   // Allocate an array and make sure the callback was called
   size_t sizeOfArray = 5;
@@ -165,9 +165,9 @@ TEST(ArrayManager, controlGlobalCallback)
 
   // Now make sure the order doesn't matter for when the callback is set compared
   // to when callbacks are enabled
-  arrayManager->setUserCallback([&] (const chai::PointerRecord*, chai::Action, chai::ExecutionSpace) {
-                                  callbacksAreOn = true;
-                                });
+  arrayManager->setGlobalUserCallback([&] (const chai::PointerRecord*, chai::Action, chai::ExecutionSpace) {
+                                        callbacksAreOn = true;
+                                      });
 
   // Reset the variable for testing if callbacks are on or off
   callbacksAreOn = false;

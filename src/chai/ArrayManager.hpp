@@ -185,7 +185,7 @@ public:
    * \brief Assign a user-defined callback triggered upon memory operations.
    *        This callback applies to all ManagedArrays.
    */
-  CHAISHAREDDLL_API void setUserCallback(UserCallback const& f);
+  CHAISHAREDDLL_API void setGlobalUserCallback(UserCallback const& f);
 
   /*!
    * \brief Set touched to false in all spaces for the given PointerRecord.
