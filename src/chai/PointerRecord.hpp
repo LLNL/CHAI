@@ -61,7 +61,7 @@ struct PointerRecord {
    *
    */
   PointerRecord() : m_size(0), m_last_space(NONE) { 
-     m_user_callback = [] (Action, ExecutionSpace, size_t) {};
+     m_user_callback = [] (const PointerRecord*, Action, ExecutionSpace) {};
      for (int space = 0; space < NUM_EXECUTION_SPACES; ++space ) {
         m_pointers[space] = nullptr;
         m_touched[space] = false;

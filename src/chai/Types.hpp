@@ -7,7 +7,11 @@
 #ifndef CHAI_Types_HPP
 #define CHAI_Types_HPP
 
+// Std library headers
 #include <functional>
+
+// CHAI headers
+#include "chai/ExecutionSpaces.hpp"
 
 #if defined(_WIN32) && !defined(CHAISTATICLIB)
 #ifdef CHAISHAREDDLL_EXPORTS
@@ -21,13 +25,13 @@
 
 namespace chai
 {
+  struct PointerRecord;
 
-typedef unsigned int uint;
+  typedef unsigned int uint;
 
-enum Action { ACTION_ALLOC, ACTION_FREE, ACTION_MOVE, ACTION_FOUND_ABANDONED };
+  enum Action { ACTION_ALLOC, ACTION_FREE, ACTION_MOVE, ACTION_FOUND_ABANDONED };
 
-using UserCallback = std::function<void(Action, ExecutionSpace, std::size_t)>;
-
+  using UserCallback = std::function<void(const PointerRecord*, Action, ExecutionSpace)>;
 } // end of namespace chai
 
 
