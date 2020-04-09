@@ -1423,7 +1423,7 @@ GPU_TEST(ManagedArray, DeviceDeepCopy)
 
 #ifdef CHAI_ENABLE_CUDA
 
-CUDA_TEST(ManagedArray, CopyConstruct)
+GPU_TEST(ManagedArray, CopyConstruct)
 {
   const int expectedValue = rand();
 
