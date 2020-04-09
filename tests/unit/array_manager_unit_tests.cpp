@@ -88,7 +88,7 @@ TEST(ArrayManager, controlCallbacks)
   // Allocate one array and set a callback
   size_t sizeOfArray = 5;
   chai::ManagedArray<int> array1(sizeOfArray, chai::CPU);
-  array1.setUserCallback([&] (chai::Action, chai::ExecutionSpace, std::size_t) {
+  array1.setUserCallback([&] (const chai::PointerRecord*, chai::Action, chai::ExecutionSpace) {
                            callbacksAreOn = true;
                          });
 
@@ -104,7 +104,7 @@ TEST(ArrayManager, controlCallbacks)
 
   // Allocate another array and set a callback
   chai::ManagedArray<int> array2(sizeOfArray, chai::CPU);
-  array2.setUserCallback([&] (chai::Action, chai::ExecutionSpace, std::size_t) {
+  array2.setUserCallback([&] (const chai::PointerRecord*, chai::Action, chai::ExecutionSpace) {
                            callbacksAreOn = true;
                          });
 
@@ -120,7 +120,7 @@ TEST(ArrayManager, controlCallbacks)
 
   // Allocate a third array and set a callback
   chai::ManagedArray<int> array3(sizeOfArray, chai::CPU);
-  array3.setUserCallback([&] (chai::Action, chai::ExecutionSpace, std::size_t) {
+  array3.setUserCallback([&] (const chai::PointerRecord*, chai::Action, chai::ExecutionSpace) {
                            callbacksAreOn = true;
                          });
 

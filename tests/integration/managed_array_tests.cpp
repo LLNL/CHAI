@@ -798,7 +798,8 @@ GPU_TEST(ManagedArray, UserCallback)
   chai::ManagedArray<float> array;
   array.allocate(20,
                  chai::CPU,
-                 [&](chai::Action act, chai::ExecutionSpace s, size_t bytes) {
+                 [&] (const chai::PointerRecord* record, chai::Action act, chai::ExecutionSpace s) {
+                    const size_t bytes = record->m_size;
                     printf("cback: act=%d, space=%d, bytes=%ld\n",
                       (int)act, (int)s, (long)bytes);
                    if (act == chai::ACTION_MOVE) {
@@ -842,8 +843,9 @@ GPU_TEST(ManagedArray, CallBackConst)
   int num_h2d = 0;
   int num_d2h = 0;
 
-  auto callBack = [&](chai::Action act, chai::ExecutionSpace s, size_t bytes)
+  auto callBack = [&](const chai::PointerRecord* record, chai::Action act, chai::ExecutionSpace s)
   {
+    const size_t bytes = record->m_size;
     printf("cback: act=%d, space=%d, bytes=%ld\n", (int) act, (int) s, (long) bytes);
     if (act == chai::ACTION_MOVE)
     {
@@ -898,8 +900,9 @@ GPU_TEST(ManagedArray, CallBackConstArray)
   int num_h2d = 0;
   int num_d2h = 0;
 
-  auto callBack = [&](chai::Action act, chai::ExecutionSpace s, size_t bytes)
+  auto callBack = [&] (const chai::PointerRecord* record, chai::Action act, chai::ExecutionSpace s)
   {
+    const size_t bytes = record->m_size;
     printf("cback: act=%d, space=%d, bytes=%ld\n", (int) act, (int) s, (long) bytes);
     if (act == chai::ACTION_MOVE)
     {
@@ -997,8 +1000,9 @@ GPU_TEST(ManagedArray, CallBackConstArrayConst)
   int num_h2d = 0;
   int num_d2h = 0;
 
-  auto callBack = [&](chai::Action act, chai::ExecutionSpace s, size_t bytes)
+  auto callBack = [&] (const chai::PointerRecord* record, chai::Action act, chai::ExecutionSpace s)
   {
+    const size_t bytes = record->m_size;
     printf("cback: act=%d, space=%d, bytes=%ld\n", (int) act, (int) s, (long) bytes);
     if (act == chai::ACTION_MOVE)
     {

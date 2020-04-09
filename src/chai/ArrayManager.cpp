@@ -71,8 +71,7 @@ void ArrayManager::registerPointer(
                    pointer << " already there.  Deleting abandoned pointer record.");
 
         PointerRecord *foundRecord = *(found_pointer_record_pair->second);
-
-        callback(foundRecord, ACTION_FOUND_ABANDONED, space, foundRecord->m_size);
+        callback(foundRecord, ACTION_FOUND_ABANDONED, space);
 
         for (int fspace = 0; fspace < NUM_EXECUTION_SPACES; ++fspace) {
            foundRecord->m_pointers[fspace] = nullptr;
@@ -232,9 +231,12 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   if (!record->m_touched[record->m_last_space]) {
     return;
   } else {
-    callback(record, ACTION_MOVE, space, record->m_size);
-    std::lock_guard<std::mutex> lock(m_mutex);
-    m_resource_manager.copy(dst_pointer, src_pointer);
+    {
+      std::lock_guard<std::mutex> lock(m_mutex);
+      m_resource_manager.copy(dst_pointer, src_pointer);
+    }
+
+    callback(record, ACTION_MOVE, space);
   }
 
   resetTouch(record);
@@ -247,8 +249,8 @@ void ArrayManager::allocate(
   auto size = pointer_record->m_size;
   auto alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[space]);
 
-  callback(pointer_record, ACTION_ALLOC, space, size);
-  pointer_record->m_pointers[space] =  alloc.allocate(size);
+  pointer_record->m_pointers[space] = alloc.allocate(size);
+  callback(pointer_record, ACTION_ALLOC, space);
 
   registerPointer(pointer_record, space);
 
@@ -268,8 +270,7 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
           if (space_ptr == pointer_record->m_pointers[UM]) {
             callback(pointer_record,
                      ACTION_FREE,
-                     ExecutionSpace(UM),
-                     pointer_record->m_size);
+                     ExecutionSpace(UM));
             {
               std::lock_guard<std::mutex> lock(m_mutex);
               m_pointer_map.erase(space_ptr);
@@ -287,8 +288,7 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
 #endif
             callback(pointer_record,
                      ACTION_FREE,
-                     ExecutionSpace(space),
-                     pointer_record->m_size);
+                     ExecutionSpace(space));
             {
               std::lock_guard<std::mutex> lock(m_mutex);
               m_pointer_map.erase(space_ptr);
@@ -365,7 +365,7 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
   pointer_record->m_pointers[space] = pointer;
   pointer_record->m_owned[space] = owned;
   pointer_record->m_size = size;
-  pointer_record->m_user_callback = [](Action, ExecutionSpace, size_t) {};
+  pointer_record->m_user_callback = [] (const PointerRecord*, Action, ExecutionSpace) {};
   
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     pointer_record->m_allocators[space] = getAllocatorId(ExecutionSpace(space));
@@ -390,7 +390,7 @@ PointerRecord* ArrayManager::deepCopyRecord(PointerRecord const* record)
   PointerRecord* copy = new PointerRecord{};
   const size_t size = record->m_size;
   copy->m_size = size;
-  copy->m_user_callback = [](Action, ExecutionSpace, size_t) {};
+  copy->m_user_callback = [] (const PointerRecord*, Action, ExecutionSpace) {};
 
   const ExecutionSpace last_space = record->m_last_space;
 
