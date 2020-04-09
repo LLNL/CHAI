@@ -333,6 +333,11 @@ void ArrayManager::setUserCallback(void* pointer, UserCallback const& f)
   pointer_record->m_user_callback = f;
 }
 
+void ArrayManager::setUserCallback(UserCallback const& f)
+{
+  m_user_callback = f;
+}
+
 PointerRecord* ArrayManager::getPointerRecord(void* pointer)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
