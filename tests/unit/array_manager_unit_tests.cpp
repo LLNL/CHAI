@@ -132,4 +132,52 @@ TEST(ArrayManager, controlCallbacks)
   ASSERT_TRUE(callbacksAreOn);
 }
 
+/*!
+ * \brief Tests to see if global callback can be turned on or off
+ */
+TEST(ArrayManager, controlGlobalCallback)
+{
+  // First check that callbacks are turned on by default
+  chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
+
+  // Variable for testing if callbacks are on or off
+  bool callbacksAreOn = false;
+
+  // Set a global callback
+  arrayManager->setGlobalUserCallback([&] (const chai::PointerRecord*, chai::Action, chai::ExecutionSpace) {
+                                        callbacksAreOn = true;
+                                      });
+
+  // Allocate an array and make sure the callback was called
+  size_t sizeOfArray = 5;
+  chai::ManagedArray<int> array(sizeOfArray, chai::CPU);
+  ASSERT_TRUE(callbacksAreOn);
+
+  // Now turn off callbacks
+  arrayManager->disableCallbacks();
+
+  // Reset the variable for testing if callbacks are on or off
+  callbacksAreOn = false;
+
+  // Realloc the array and make sure the callback was NOT called
+  array.reallocate(2 * sizeOfArray);
+  ASSERT_FALSE(callbacksAreOn);
+
+  // Now make sure the order doesn't matter for when the callback is set compared
+  // to when callbacks are enabled
+  arrayManager->setGlobalUserCallback([&] (const chai::PointerRecord*, chai::Action, chai::ExecutionSpace) {
+                                        callbacksAreOn = true;
+                                      });
+
+  // Reset the variable for testing if callbacks are on or off
+  callbacksAreOn = false;
+
+  // Turn on callbacks
+  arrayManager->enableCallbacks();
+
+  // Make sure the callback is called
+  array.free();
+  ASSERT_TRUE(callbacksAreOn);
+}
+
 #endif // !CHAI_DISABLE_RM
