@@ -172,27 +172,34 @@ ExecutionSpace ArrayManager::getExecutionSpace()
 
 void ArrayManager::registerTouch(PointerRecord* pointer_record)
 {
-  registerTouch(pointer_record, m_current_execution_space);
+  if (m_current_execution_space == NONE) return;
+  if (pointer_record) {
+     registerTouch(pointer_record, m_current_execution_space);
+  }
 }
 
 void ArrayManager::registerTouch(PointerRecord* pointer_record,
                                  ExecutionSpace space)
 {
-  CHAI_LOG(Debug, pointer_record->m_pointers[space] << " touched in space " << space);
+  if (pointer_record) {
+     CHAI_LOG(Debug, pointer_record->m_pointers[space] << " touched in space " << space);
 
-  if (space != NONE) {
-    std::lock_guard<std::mutex> lock(m_mutex);
-    pointer_record->m_touched[space] = true;
-    pointer_record->m_last_space = space;
+     if (space != NONE) {
+       std::lock_guard<std::mutex> lock(m_mutex);
+       pointer_record->m_touched[space] = true;
+       pointer_record->m_last_space = space;
+     }
   }
 }
 
 
 void ArrayManager::resetTouch(PointerRecord* pointer_record)
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
-  for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
-    pointer_record->m_touched[space] = false;
+  if (pointer_record && pointer_record!= &s_null_record) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
+      pointer_record->m_touched[space] = false;
+    }
   }
 }
 
@@ -208,10 +215,11 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   }
 #endif
 
+  callback(record, ACTION_CAPTURED, space, record->m_size);
+
   if (space == record->m_last_space) {
     return;
   }
-
 
   void* src_pointer = record->m_pointers[record->m_last_space];
   void* dst_pointer = record->m_pointers[space];
@@ -297,7 +305,7 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
         }
         else
         {
-           m_resource_manager.deregisterAllocation(pointer_record->m_pointers[space]);
+          m_resource_manager.deregisterAllocation(pointer_record->m_pointers[space]);
         }
       }
     }
@@ -307,6 +315,7 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
     delete pointer_record;
   }
 }
+
 
 size_t ArrayManager::getSize(void* ptr)
 {
@@ -349,14 +358,22 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
       pointer,
       {pointer, size, m_allocators[space]->getAllocationStrategy()});
 
-  auto pointer_record = new PointerRecord{};
-
+  auto pointer_record = getPointerRecord(pointer);
+  if (pointer_record == &s_null_record) {
+     pointer_record = new PointerRecord();
+  }
   pointer_record->m_pointers[space] = pointer;
   pointer_record->m_owned[space] = owned;
   pointer_record->m_size = size;
   pointer_record->m_user_callback = [](Action, ExecutionSpace, size_t) {};
+  
+  for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
+    pointer_record->m_allocators[space] = getAllocatorId(ExecutionSpace(space));
+  }
 
-  registerPointer(pointer_record, space, owned);
+  if (pointer && size > 0) {
+     registerPointer(pointer_record, space, owned);
+  }
 
   // TODO Is this a problem?
   // for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
@@ -428,7 +445,6 @@ int
 ArrayManager::getAllocatorId(ExecutionSpace space) const
 {
   return m_allocators[space]->getId();
-
 }
 
 void ArrayManager::evict(ExecutionSpace space, ExecutionSpace destinationSpace) {

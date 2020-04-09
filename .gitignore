@@ -3,4 +3,7 @@ install*/
 .vscode/
 *.swp
 *.swo
+Win32/chai.vcxproj.user
+Win32/.vs/
+Win32/x64/
 *.aps

@@ -24,7 +24,7 @@ namespace chai
 
 typedef unsigned int uint;
 
-enum Action { ACTION_ALLOC, ACTION_FREE, ACTION_MOVE, ACTION_FOUND_ABANDONED };
+enum Action { ACTION_ALLOC, ACTION_FREE, ACTION_MOVE, ACTION_CAPTURED, ACTION_FOUND_ABANDONED };
 
 using UserCallback = std::function<void(Action, ExecutionSpace, std::size_t)>;
 

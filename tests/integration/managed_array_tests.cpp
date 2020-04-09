@@ -1417,6 +1417,29 @@ GPU_TEST(ManagedArray, DeviceDeepCopy)
 #endif
 #endif  // defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 
+#ifdef CHAI_ENABLE_CUDA
+
+CUDA_TEST(ManagedArray, CopyConstruct)
+{
+  const int expectedValue = rand();
+
+  chai::ManagedArray<int> array(1, chai::CPU);
+  array[0] = expectedValue;
+
+  chai::ManagedArray<int> array2 = array;
+
+  chai::ManagedArray<int> results(1, chai::GPU);
+
+  forall(cuda(), 0, 1, [=] __device__ (int i) {
+    results[i] = array2[i];
+  });
+
+  results.move(chai::CPU);
+  ASSERT_EQ(results[0], expectedValue);
+}
+
+#endif
+
 TEST(ManagedArray, SizeZero)
 {
   chai::ManagedArray<double> array;
