@@ -178,9 +178,16 @@ public:
                                                bool owned);
 
   /*!
-   * \brief Assign a user-defined callback triggerd upon memory operations.
+   * \brief Assign a user-defined callback triggered upon memory operations.
+   *        This callback applies to a single ManagedArray.
    */
   CHAISHAREDDLL_API void setUserCallback(void* pointer, UserCallback const& f);
+
+  /*!
+   * \brief Assign a user-defined callback triggered upon memory operations.
+   *        This callback applies to all ManagedArrays.
+   */
+  CHAISHAREDDLL_API void setGlobalUserCallback(UserCallback const& f);
 
   /*!
    * \brief Set touched to false in all spaces for the given PointerRecord.
@@ -339,8 +346,16 @@ private:
   inline void callback(const PointerRecord* record,
                        Action action,
                        ExecutionSpace space) const {
-     if (m_callbacks_active && record) {
-        record->m_user_callback(record, action, space);
+     if (m_callbacks_active) {
+        // Callback for this ManagedArray only
+        if (record && record->m_user_callback) {
+           record->m_user_callback(record, action, space);
+        }
+
+        // Callback for all ManagedArrays
+        if (m_user_callback) {
+           m_user_callback(record, action, space);
+        }
      }
   }
 
@@ -350,7 +365,7 @@ private:
   ExecutionSpace m_current_execution_space;
 
   /**
-   * Default space for new allocations
+   * Default space for new allocations.
    */
   ExecutionSpace m_default_allocation_space;
 
@@ -365,9 +380,20 @@ private:
    */
   umpire::Allocator* m_allocators[NUM_EXECUTION_SPACES];
 
+  /*!
+   * \brief The umpire resource manager.
+   */
   umpire::ResourceManager& m_resource_manager;
 
+  /*!
+   * \brief Used for thread-safe operations.
+   */
   mutable std::mutex m_mutex;
+
+  /*!
+   * \brief A callback triggered upon memory operations on all ManagedArrays.
+   */
+  UserCallback m_user_callback;
 
   /*!
    * \brief Controls whether or not callbacks are called.

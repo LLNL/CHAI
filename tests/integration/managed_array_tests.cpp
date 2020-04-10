@@ -53,6 +53,20 @@ TEST(ManagedArray, Const)
 
   array.free();
 }
+
+TEST(ManagedArray, UserCallbackHost)
+{
+   bool callbackCalled = false;
+
+   chai::ManagedArray<float> array(10);
+   array.setUserCallback([&] (const chai::PointerRecord*, chai::Action, chai::ExecutionSpace) {
+                           callbackCalled = true;
+                         });
+
+   array.free();
+   ASSERT_TRUE(callbackCalled);
+}
+
 #endif
 
 TEST(ManagedArray, Slice) {
