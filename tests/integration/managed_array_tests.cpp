@@ -5,7 +5,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
 #include "gtest/gtest.h"
-
 #define GPU_TEST(X, Y)              \
   static void gpu_test_##X##Y();    \
   TEST(X, Y) { gpu_test_##X##Y(); } \
@@ -16,6 +15,8 @@
 #else
 #define device_assert(EXP) assert(EXP)
 #endif
+
+#define assert_empty_map(IGNORED) ASSERT_EQ(chai::ArrayManager::getInstance()->getPointerMap().size(),0)
 
 #include "chai/config.hpp"
 
@@ -38,6 +39,8 @@ TEST(ManagedArray, SetOnHost)
   forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
 
   array.free();
+
+  assert_empty_map(true);
 }
 
 #if (!defined(CHAI_DISABLE_RM))
@@ -52,6 +55,7 @@ TEST(ManagedArray, Const)
   forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array_const[i], i); });
 
   array.free();
+  assert_empty_map(true);
 }
 
 TEST(ManagedArray, UserCallbackHost)
@@ -79,6 +83,7 @@ TEST(ManagedArray, Slice) {
   chai::ManagedArray<float> sl = array.slice(0,5);
   sl.free();
   array.free();
+  assert_empty_map(true);
 }
 
 TEST(ManagedArray, SliceOfSlice) {
@@ -102,6 +107,7 @@ TEST(ManagedArray, SliceOfSlice) {
   sl1.free();
   sl2.free();
   array.free();
+  assert_empty_map(true);
 }
 
 #if defined(CHAI_ENABLE_PICK)
@@ -117,6 +123,7 @@ TEST(ManagedArray, PickHostFromHostConst) {
   ASSERT_EQ(temp, 5);
 
   array.free();
+  assert_empty_map(true);
 }
 #endif
 
@@ -130,6 +137,7 @@ TEST(ManagedArray, PickHostFromHost)
   ASSERT_EQ(temp, 5);
 
   array.free();
+  assert_empty_map(true);
 }
 
 TEST(ManagedArray, SetHostToHost)
@@ -143,6 +151,7 @@ TEST(ManagedArray, SetHostToHost)
   ASSERT_EQ(array[5], 10);
 
   array.free();
+  assert_empty_map(true);
 }
 
 
@@ -168,6 +177,7 @@ TEST(ManagedArray, IncrementDecrementOnHost)
 
   arrayI.free();
   arrayD.free();
+  assert_empty_map(true);
 }
 
 
@@ -184,7 +194,7 @@ TEST(ManagedArray, PickHostFromHostConstUM) {
   ASSERT_EQ(temp, 5);
 
   array.free();
-  // array_const.free();
+  assert_empty_map(true);
 }
 #endif
 
@@ -198,6 +208,7 @@ TEST(ManagedArray, PickHostFromHostUM)
   ASSERT_EQ(temp, 5);
 
   array.free();
+  assert_empty_map(true);
 }
 
 TEST(ManagedArray, SetHostToHostUM)
@@ -211,6 +222,7 @@ TEST(ManagedArray, SetHostToHostUM)
   ASSERT_EQ(array[5], 10);
 
   array.free();
+  assert_empty_map(true);
 }
 
 TEST(ManagedArray, IncrementDecrementOnHostUM)
@@ -235,6 +247,7 @@ TEST(ManagedArray, IncrementDecrementOnHostUM)
 
   arrayI.free();
   arrayD.free();
+  assert_empty_map(true);
 }
 #endif
 
@@ -260,6 +273,7 @@ GPU_TEST(ManagedArray, PickandSetDeviceToDeviceUM)
 
   array1.free();
   array2.free();
+  assert_empty_map(true);
 }
 
 GPU_TEST(ManagedArray, PickHostFromDeviceUM)
@@ -272,6 +286,7 @@ GPU_TEST(ManagedArray, PickHostFromDeviceUM)
   ASSERT_EQ(temp, 5);
 
   array.free();
+  assert_empty_map(true);
 }
 
 #if (!defined(CHAI_DISABLE_RM))
@@ -286,7 +301,7 @@ GPU_TEST(ManagedArray, PickHostFromDeviceConstUM) {
   ASSERT_EQ(temp, 5);
 
   array.free();
-  // array_const.free();
+  assert_empty_map(true);
 }
 #endif
 
@@ -302,6 +317,7 @@ GPU_TEST(ManagedArray, SetHostToDeviceUM)
   ASSERT_EQ(temp, 10);
 
   array.free();
+  assert_empty_map(true);
 }
 
 GPU_TEST(ManagedArray, IncrementDecrementOnDeviceUM)
@@ -326,6 +342,7 @@ GPU_TEST(ManagedArray, IncrementDecrementOnDeviceUM)
 
   arrayI.free();
   arrayD.free();
+  assert_empty_map(true);
 }
 
 GPU_TEST(ManagedArray, IncrementDecrementFromHostOnDeviceUM)
@@ -345,6 +362,7 @@ GPU_TEST(ManagedArray, IncrementDecrementFromHostOnDeviceUM)
   ASSERT_EQ(temp, 8);
 
   array.free();
+  assert_empty_map(true);
 }
 
 GPU_TEST(ManagedArray, PickandSetSliceDeviceToDeviceUM) {
@@ -367,6 +385,7 @@ GPU_TEST(ManagedArray, PickandSetSliceDeviceToDeviceUM) {
   });
 
   array.free();
+  assert_empty_map(true);
 }
 #endif
 
@@ -390,6 +409,7 @@ GPU_TEST(ManagedArray, PickandSetDeviceToDevice)
 
   array1.free();
   array2.free();
+  assert_empty_map(true);
 }
 
 GPU_TEST(ManagedArray, PickandSetSliceDeviceToDevice) {
@@ -412,6 +432,7 @@ GPU_TEST(ManagedArray, PickandSetSliceDeviceToDevice) {
   });
 
   array.free();
+  assert_empty_map(true);
 }
 
 
@@ -425,6 +446,7 @@ GPU_TEST(ManagedArray, PickHostFromDevice)
   ASSERT_EQ(temp, 5);
 
   array.free();
+  assert_empty_map(true);
 }
 
 GPU_TEST(ManagedArray, PickHostFromDeviceConst)
@@ -441,7 +463,7 @@ GPU_TEST(ManagedArray, PickHostFromDeviceConst)
   ASSERT_EQ(temp, 5);
 
   array.free();
-  // array_const.free();
+  assert_empty_map(true);
 }
 
 GPU_TEST(ManagedArray, SetHostToDevice)
@@ -456,6 +478,7 @@ GPU_TEST(ManagedArray, SetHostToDevice)
   ASSERT_EQ(temp, 10);
 
   array.free();
+  assert_empty_map(true);
 }
 GPU_TEST(ManagedArray, IncrementDecrementOnDevice)
 {
@@ -479,6 +502,7 @@ GPU_TEST(ManagedArray, IncrementDecrementOnDevice)
 
   arrayI.free();
   arrayD.free();
+  assert_empty_map(true);
 }
 
 GPU_TEST(ManagedArray, IncrementDecrementFromHostOnDevice)
@@ -498,6 +522,7 @@ GPU_TEST(ManagedArray, IncrementDecrementFromHostOnDevice)
   ASSERT_EQ(temp, 8);
 
   array.free();
+  assert_empty_map(true);
 }
 #endif
 #endif
@@ -523,6 +548,7 @@ GPU_TEST(ManagedArray, SliceOfSliceDevice) {
   sl1.free();
   sl2.free();
   array.free();
+  assert_empty_map(true);
 }
 
 GPU_TEST(ManagedArray, SliceDevice) {
@@ -546,6 +572,7 @@ GPU_TEST(ManagedArray, SliceDevice) {
   sl1.free();
   sl2.free();
   array.free();
+  assert_empty_map(true);
 }
 
 GPU_TEST(ManagedArray, SetOnDevice) {
@@ -558,6 +585,7 @@ GPU_TEST(ManagedArray, SetOnDevice) {
   forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], 2 * i); });
 
   array.free();
+  assert_empty_map(true);
 }
 
 GPU_TEST(ManagedArray, GetGpuOnHost)
@@ -569,6 +597,7 @@ GPU_TEST(ManagedArray, GetGpuOnHost)
   forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
 
   array.free();
+  assert_empty_map(true);
 }
 
 #if defined(CHAI_ENABLE_UM)
@@ -581,6 +610,7 @@ GPU_TEST(ManagedArray, SetOnDeviceUM)
   forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
 
   array.free();
+  assert_empty_map(true);
 }
 #endif
 #endif
@@ -594,6 +624,7 @@ TEST(ManagedArray, Allocate)
   ASSERT_EQ(array.size(), 10u);
 
   array.free();
+  assert_empty_map(true);
 }
 
 TEST(ManagedArray, ReallocateCPU)
@@ -616,6 +647,7 @@ TEST(ManagedArray, ReallocateCPU)
   });
 
   array.free();
+  assert_empty_map(true);
 }
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
@@ -639,6 +671,7 @@ GPU_TEST(ManagedArray, ReallocateGPU)
   });
 
   array.free();
+  assert_empty_map(true);
 }
 #endif
 
@@ -658,6 +691,7 @@ TEST(ManagedArray, NullpointerConversions)
   chai::ManagedArray<float> c(nullptr);
 
   ASSERT_EQ(c.size(), 0u);
+  assert_empty_map(true);
 }
 
 #if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
@@ -671,6 +705,7 @@ TEST(ManagedArray, ImplicitConversions)
 
   a.free();
   SUCCEED();
+  assert_empty_map(true);
 }
 #endif
 
@@ -689,6 +724,7 @@ TEST(ManagedArray, PodTest)
   });
 
   array.free();
+  assert_empty_map(true);
 }
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
@@ -707,6 +743,7 @@ GPU_TEST(ManagedArray, PodTestGPU)
   });
 
   array.free();
+  assert_empty_map(true);
 }
 #endif
 
@@ -731,6 +768,7 @@ TEST(ManagedArray, ExternalConstructorUnowned)
   }
 
   std::free(data);
+  assert_empty_map(true);
 }
 
 TEST(ManagedArray, ExternalConstructorOwned)
@@ -747,6 +785,7 @@ TEST(ManagedArray, ExternalConstructorOwned)
   forall(sequential(), 0, 20, [=](int i) { ASSERT_EQ(data[i], array[i]); });
 
   array.free();
+  assert_empty_map(true);
 }
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 GPU_TEST(ManagedArray, ExternalUnownedMoveToGPU)
@@ -764,6 +803,7 @@ GPU_TEST(ManagedArray, ExternalUnownedMoveToGPU)
   forall(sequential(), 0, 20, [=] (int i) { ASSERT_EQ(array[i], 1.0f * i); });
 
   array.free();
+  assert_empty_map(true);
 }
 #endif
 #endif
@@ -776,6 +816,7 @@ TEST(ManagedArray, Reset)
 
   array.reset();
   array.free();
+  assert_empty_map(true);
 }
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
@@ -793,6 +834,7 @@ GPU_TEST(ManagedArray, ResetDevice)
   forall(sequential(), 0, 20, [=](int i) { ASSERT_EQ(array[i], 0.0f); });
 
   array.free();
+  assert_empty_map(true);
 }
 #endif
 #endif
@@ -850,6 +892,7 @@ GPU_TEST(ManagedArray, UserCallback)
 
   ASSERT_EQ(bytes_alloc, 2 * 20 * sizeof(float));
   ASSERT_EQ(bytes_free, 2 * 20 * sizeof(float));
+  assert_empty_map(true);
 }
 
 GPU_TEST(ManagedArray, CallBackConst)
@@ -873,6 +916,10 @@ GPU_TEST(ManagedArray, CallBackConst)
         printf("Moved to device\n");
         ++num_h2d;
       }
+    }
+    if (act == chai::ACTION_FOUND_ABANDONED) {
+       printf("in abandoned!\n");
+       ASSERT_EQ(false,true);
     }
   };
 
@@ -907,6 +954,7 @@ GPU_TEST(ManagedArray, CallBackConst)
   ASSERT_EQ(num_d2h, 0);
 
   array.free();
+  assert_empty_map(true);
 }
 
 GPU_TEST(ManagedArray, CallBackConstArray)
@@ -931,6 +979,12 @@ GPU_TEST(ManagedArray, CallBackConstArray)
         ++num_h2d;
       }
     }
+    if (act == chai::ACTION_FOUND_ABANDONED) {
+       printf("in abandoned!\n");
+       while(true) {
+
+       }
+    }
   };
 
   const int N = 5;
@@ -951,12 +1005,9 @@ GPU_TEST(ManagedArray, CallBackConstArray)
 
       chai::ManagedArray<int> errorTemp(N);
 
-      forall(sequential(), 0, N,
-        [=](int j)
-        {
-          temp[j] = N * i + j;
-        }
-      );
+      forall(sequential(), 0, N, [=](int j) {
+        temp[j] = N * i + j;
+      });
 
       outerArray[i] = temp;
       outerErrorArray[i] = errorTemp;
@@ -1007,6 +1058,7 @@ GPU_TEST(ManagedArray, CallBackConstArray)
 
   outerArray.free();
   outerErrorArray.free();
+  assert_empty_map(true);
 }
 
 GPU_TEST(ManagedArray, CallBackConstArrayConst)
@@ -1108,6 +1160,7 @@ GPU_TEST(ManagedArray, CallBackConstArrayConst)
 
   outerArray.free();
   outerErrorArray.free();
+  assert_empty_map(true);
 }
 
 #endif
@@ -1127,6 +1180,7 @@ GPU_TEST(ManagedArray, Move)
   ASSERT_EQ(array[5], 5);
 
   array.free();
+  assert_empty_map(true);
 }
 
 /**
@@ -1175,6 +1229,7 @@ GPU_TEST(ManagedArray, MoveInnerToHost)
   }
 
   outerArray.free();
+  assert_empty_map(true);
 }
 
 /**
@@ -1237,6 +1292,7 @@ GPU_TEST(ManagedArray, MoveInnerToDevice)
   }
 
   outerArray.free();
+  assert_empty_map(true);
 }
 
 /**
@@ -1315,6 +1371,7 @@ GPU_TEST(ManagedArray, MoveInnerToDevice2)
     outerArray[i].free();
   }
   outerArray.free();
+  assert_empty_map(true);
 }
 
 GPU_TEST(ManagedArray, MoveInnerToDeviceAgain)
@@ -1382,6 +1439,7 @@ GPU_TEST(ManagedArray, MoveInnerToDeviceAgain)
   }
 
   outerArray.free();
+  assert_empty_map(true);
 }
 #endif  // CHAI_DISABLE_RM
 #endif  // defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
@@ -1407,6 +1465,7 @@ TEST(ManagedArray, DeepCopy)
 
   array.free();
   copy.free();
+  assert_empty_map(true);
 }
 #endif
 
@@ -1431,18 +1490,18 @@ GPU_TEST(ManagedArray, DeviceDeepCopy)
 
   array.free();
   copy.free();
+  assert_empty_map(true);
 }
-#endif
-#endif  // defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-
-#ifdef CHAI_ENABLE_CUDA
 
 GPU_TEST(ManagedArray, CopyConstruct)
 {
   const int expectedValue = rand();
 
   chai::ManagedArray<int> array(1, chai::CPU);
-  array[0] = expectedValue;
+
+  forall(sequential(), 0, 1, [=] (int i) {
+    array[i] = expectedValue;
+  });
 
   chai::ManagedArray<int> array2 = array;
 
@@ -1454,8 +1513,13 @@ GPU_TEST(ManagedArray, CopyConstruct)
 
   results.move(chai::CPU);
   ASSERT_EQ(results[0], expectedValue);
+
+  array.free();
+  results.free();
+  assert_empty_map(true);
 }
 
+#endif
 #endif
 
 TEST(ManagedArray, SizeZero)
@@ -1464,6 +1528,7 @@ TEST(ManagedArray, SizeZero)
   ASSERT_EQ(array.size(), 0u);
   array.allocate(0);
   ASSERT_EQ(array.size(), 0u);
+  assert_empty_map(true);
 }
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
@@ -1482,5 +1547,6 @@ GPU_TEST(ManagedArray, CopyZero)
   });
 
   array.free();
+  assert_empty_map(true);
 }
 #endif

@@ -56,9 +56,15 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(size_t elems, ExecutionSpace spac
 }
 
 
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t)
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t)
+    : m_active_pointer(nullptr),
+      m_active_base_pointer(nullptr),
+      m_resource_manager(nullptr),
+      m_elems(0),
+      m_offset(0),
+      m_pointer_record(nullptr),
+      m_is_slice(false)
 {
 }
 
@@ -260,6 +266,7 @@ ManagedArray<T>::ManagedArray(T* data, CHAIDISAMBIGUATE, bool) :
   m_resource_manager(nullptr),
   m_elems(-1),
   m_pointer_record(nullptr),
+  m_offset(0),
   m_is_slice(false)
 {
 }

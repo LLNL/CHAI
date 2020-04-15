@@ -129,6 +129,7 @@ public:
                           [] (const PointerRecord*, Action, ExecutionSpace) {});
 
 
+
   /*!
    * \brief Reallocate data for the ManagedArray.
    *

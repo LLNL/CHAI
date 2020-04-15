@@ -237,11 +237,20 @@ public:
    */
   CHAISHAREDDLL_API size_t getTotalSize() const;
 
+  /*!
+   * \brief Calls callbacks of pointers still in the map with ACTION_LEAKED.
+   */
+  CHAISHAREDDLL_API void reportLeaks() const;
+
+  /*!
+   * \brief Get the allocator ID
+   *
+   * \return The allocator ID.
+   */
   CHAISHAREDDLL_API int getAllocatorId(ExecutionSpace space) const;
 
   /*!
    * \brief Wraps our resource manager's copy.
-   *
    */
   CHAISHAREDDLL_API void copy(void * dst, void * src, size_t size); 
   

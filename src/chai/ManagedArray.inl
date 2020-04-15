@@ -126,10 +126,18 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   m_elems = other.m_pointer_record->m_size/sizeof(T);
   if (m_active_base_pointer) {
-     /// Move nested ManagedArrays first, so they are working with a valid m_active_pointer for the host,
-     // and so the meta data associated with them are updated before we move that down.
-     moveInnerImpl();
+     ExecutionSpace prev_space = m_pointer_record->m_last_space;
+     if (prev_space == CPU) {
+        /// Move nested ManagedArrays first, so they are working with a valid m_active_pointer for the host,
+        // and so the meta data associated with them are updated before we move the other array down.
+        moveInnerImpl();
+     }
      move();
+     if (prev_space == GPU) {
+        /// Move nested ManagedArrays after the move, so they are working with a valid m_active_pointer for the host,
+        // and so the meta data associated with them are updated with live GPU data
+        moveInnerImpl();
+     }
   }
 #endif
 }

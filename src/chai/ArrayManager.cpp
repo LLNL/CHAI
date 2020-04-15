@@ -67,17 +67,21 @@ void ArrayManager::registerPointer(
      PointerRecord ** found_pointer_record_addr = found_pointer_record_pair->second;
      if (found_pointer_record_addr != nullptr) {
 
-        CHAI_LOG(Warning, "ArrayManager::registerPointer found a record for " <<
-                   pointer << " already there.  Deleting abandoned pointer record.");
-
         PointerRecord *foundRecord = *(found_pointer_record_pair->second);
-        callback(foundRecord, ACTION_FOUND_ABANDONED, space);
+        // if it's actually the same pointer record, then we're OK. If it's a different
+        // one, delete the old one.
+        if (foundRecord != record) {
+           CHAI_LOG(Warning, "ArrayManager::registerPointer found a record for " <<
+                      pointer << " already there.  Deleting abandoned pointer record.");
 
-        for (int fspace = 0; fspace < NUM_EXECUTION_SPACES; ++fspace) {
-           foundRecord->m_pointers[fspace] = nullptr;
+           callback(foundRecord, ACTION_FOUND_ABANDONED, space);
+
+           for (int fspace = 0; fspace < NUM_EXECUTION_SPACES; ++fspace) {
+              foundRecord->m_pointers[fspace] = nullptr;
+           }
+
+           delete foundRecord;
         }
-
-        delete foundRecord;
      }
   }
 
@@ -118,6 +122,7 @@ void ArrayManager::deregisterPointer(PointerRecord* record, bool deregisterFromU
        if (deregisterFromUmpire) {
           m_resource_manager.deregisterAllocation(pointer);
        }
+       CHAI_LOG(Debug, "DeRegistering " << pointer);
        m_pointer_map.erase(pointer);
     }
   }
@@ -262,17 +267,13 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     if (space == spaceToFree || spaceToFree == NONE) {
       if (pointer_record->m_pointers[space]) {
+        void* space_ptr = pointer_record->m_pointers[space];
         if (pointer_record->m_owned[space]) {
-          void* space_ptr = pointer_record->m_pointers[space];
 #if defined(CHAI_ENABLE_UM)
           if (space_ptr == pointer_record->m_pointers[UM]) {
             callback(pointer_record,
                      ACTION_FREE,
                      ExecutionSpace(UM));
-            {
-              std::lock_guard<std::mutex> lock(m_mutex);
-              m_pointer_map.erase(space_ptr);
-            }
 
             auto alloc = m_resource_manager.getAllocator(
                 pointer_record->m_allocators[space]);
@@ -287,10 +288,6 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
             callback(pointer_record,
                      ACTION_FREE,
                      ExecutionSpace(space));
-            {
-              std::lock_guard<std::mutex> lock(m_mutex);
-              m_pointer_map.erase(space_ptr);
-            }
 
             auto alloc = m_resource_manager.getAllocator(
                 pointer_record->m_allocators[space]);
@@ -304,6 +301,11 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
         else
         {
           m_resource_manager.deregisterAllocation(pointer_record->m_pointers[space]);
+        }
+        {
+          std::lock_guard<std::mutex> lock(m_mutex);
+          CHAI_LOG(Debug, "DeRegistering " << space_ptr);
+          m_pointer_map.erase(space_ptr);
         }
       }
     }
@@ -361,6 +363,7 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
       {pointer, size, m_allocators[space]->getAllocationStrategy()});
 
   auto pointer_record = getPointerRecord(pointer);
+
   if (pointer_record == &s_null_record) {
      if (pointer) {
         pointer_record = new PointerRecord();
@@ -368,6 +371,11 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
         return pointer_record;
      }
   }
+  else {
+     CHAI_LOG(Warning, "ArrayManager::makeManaged found abandoned pointer record!!!");
+     callback(pointer_record, ACTION_FOUND_ABANDONED, space);
+  }
+
   pointer_record->m_pointers[space] = pointer;
   pointer_record->m_owned[space] = owned;
   pointer_record->m_size = size;
@@ -445,6 +453,13 @@ size_t ArrayManager::getTotalSize() const
   }
 
   return total;
+}
+
+void ArrayManager::reportLeaks() const
+{
+  for (auto entry : m_pointer_map) {
+    callback(*entry.second, ACTION_LEAKED, NONE);
+  }
 }
 
 int

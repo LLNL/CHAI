@@ -80,6 +80,8 @@ void forall(gpu, int begin, int end, LOOP_BODY&& body)
   hipLaunchKernelGGL(forall_kernel_gpu, dim3(gridSize), dim3(blockSize), 0,0,
                      begin, end - begin, body);
   hipDeviceSynchronize();
+#elif defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+  forall_kernel_cpu(begin, end, body);
 #endif
   
   rm->setExecutionSpace(chai::NONE);
