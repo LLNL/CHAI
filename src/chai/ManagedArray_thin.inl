@@ -158,8 +158,8 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t new_elems)
 template <typename T>
 CHAI_INLINE CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
 {
-  if (space == CPU || space == NONE) {
-    if (!m_is_slice) {
+  if (!m_is_slice) {
+    if (space == CPU || space == NONE) {
 #if defined(CHAI_ENABLE_UM)
       cudaFree(m_active_pointer);
 #else
@@ -167,9 +167,11 @@ CHAI_INLINE CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
 #endif
       m_active_pointer = nullptr;
       m_active_base_pointer = nullptr;
-    } else {
-      CHAI_LOG(Debug, "tried to free slice!");
+      m_elems = 0;
     }
+  }
+  else {
+    CHAI_LOG(Debug, "tried to free slice!");
   }
 }
 

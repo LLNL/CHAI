@@ -112,7 +112,7 @@ public:
    */
   CHAI_HOST_DEVICE ManagedArray(std::nullptr_t other);
 
-  CHAI_HOST_DEVICE ManagedArray(PointerRecord* record, ExecutionSpace space);
+  CHAI_HOST ManagedArray(PointerRecord* record, ExecutionSpace space);
 
   /*!
    * \brief Allocate data for the ManagedArray in the specified space.
@@ -342,7 +342,7 @@ private:
    */
   template <bool B = std::is_base_of<CHAICopyable, T>::value,
             typename std::enable_if<!B, int>::type = 0>
-  CHAI_HOST_DEVICE void moveInnerImpl();
+  CHAI_HOST void moveInnerImpl();
 #endif
 
 public:

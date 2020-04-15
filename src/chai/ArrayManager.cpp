@@ -172,18 +172,16 @@ ExecutionSpace ArrayManager::getExecutionSpace()
 void ArrayManager::registerTouch(PointerRecord* pointer_record)
 {
   if (m_current_execution_space == NONE) return;
-  if (pointer_record) {
-     registerTouch(pointer_record, m_current_execution_space);
-  }
+  registerTouch(pointer_record, m_current_execution_space);
 }
 
 void ArrayManager::registerTouch(PointerRecord* pointer_record,
                                  ExecutionSpace space)
 {
-  if (pointer_record) {
-     CHAI_LOG(Debug, pointer_record->m_pointers[space] << " touched in space " << space);
+  if (pointer_record && pointer_record != s_null_record) {
 
      if (space != NONE) {
+       CHAI_LOG(Debug, pointer_record->m_pointers[space] << " touched in space " << space);
        std::lock_guard<std::mutex> lock(m_mutex);
        pointer_record->m_touched[space] = true;
        pointer_record->m_last_space = space;
@@ -316,7 +314,6 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
   }
 }
 
-
 size_t ArrayManager::getSize(void* ptr)
 {
   // TODO
@@ -365,7 +362,11 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
 
   auto pointer_record = getPointerRecord(pointer);
   if (pointer_record == &s_null_record) {
-     pointer_record = new PointerRecord();
+     if (pointer) {
+        pointer_record = new PointerRecord();
+     } else {
+        return pointer_record;
+     }
   }
   pointer_record->m_pointers[space] = pointer;
   pointer_record->m_owned[space] = owned;

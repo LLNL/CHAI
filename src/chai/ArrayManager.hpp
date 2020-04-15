@@ -151,7 +151,7 @@ public:
 
   /*!
    * \brief Free allocation(s) associated with the given PointerRecord.
-   *        Default (space == NONE) will free all allocations and delete 
+   *        Default (space == NONE) will free all allocations and delete
    *        the pointer record.
    */
   CHAISHAREDDLL_API void free(PointerRecord* pointer, ExecutionSpace space = NONE);
