@@ -126,18 +126,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   m_elems = other.m_pointer_record->m_size/sizeof(T);
   if (m_active_base_pointer) {
-     ExecutionSpace prev_space = m_pointer_record->m_last_space;
-     if (prev_space == CPU) {
-        /// Move nested ManagedArrays first, so they are working with a valid m_active_pointer for the host,
-        // and so the meta data associated with them are updated before we move the other array down.
-        moveInnerImpl();
-     }
      move();
-     if (prev_space == GPU) {
-        /// Move nested ManagedArrays after the move, so they are working with a valid m_active_pointer for the host,
-        // and so the meta data associated with them are updated with live GPU data
-        moveInnerImpl();
-     }
   }
 #endif
 }
@@ -378,6 +367,12 @@ CHAI_HOST
 void ManagedArray<T>::move(ExecutionSpace space)
 {
   if (m_pointer_record != &ArrayManager::s_null_record) {
+     ExecutionSpace prev_space = m_pointer_record->m_last_space;
+     if (prev_space == CPU) {
+        /// Move nested ManagedArrays first, so they are working with a valid m_active_pointer for the host,
+        // and so the meta data associated with them are updated before we move the other array down.
+        moveInnerImpl();
+     }
      CHAI_LOG(Debug, "Moving " << m_active_pointer);
      m_active_base_pointer = static_cast<T*>(m_resource_manager->move((void *)m_active_base_pointer, m_pointer_record, space));
      m_active_pointer = m_active_base_pointer + m_offset;
@@ -386,6 +381,11 @@ void ManagedArray<T>::move(ExecutionSpace space)
      if (!std::is_const<T>::value) {
        CHAI_LOG(Debug, "T is non-const, registering touch of pointer" << m_active_pointer);
        m_resource_manager->registerTouch(m_pointer_record);
+     }
+     if (prev_space == GPU) {
+        /// Move nested ManagedArrays after the move, so they are working with a valid m_active_pointer for the host,
+        // and so the meta data associated with them are updated with live GPU data
+        moveInnerImpl();
      }
   }
 }
@@ -408,12 +408,10 @@ CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
      }
      ExecutionSpace prev_space = m_resource_manager->getExecutionSpace();
      m_resource_manager->setExecutionSpace(CPU);
-     auto non_const_active_base_pointer = const_cast<T_non_const*>(static_cast<T*>(m_active_base_pointer));
-     m_active_base_pointer = static_cast<T_non_const*>(m_resource_manager->move(non_const_active_base_pointer, m_pointer_record));
-     m_active_pointer = m_active_base_pointer+m_offset;
+     move();
 
+     // always touch regarless of constness of type (don't trust the application not to const-cast)
      m_resource_manager->registerTouch(m_pointer_record);
-
 
      // Reset to whatever space we rode in on
      m_resource_manager->setExecutionSpace(prev_space);
