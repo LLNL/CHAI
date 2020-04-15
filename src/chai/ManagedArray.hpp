@@ -166,7 +166,7 @@ public:
    */
   CHAI_HOST void registerTouch(ExecutionSpace space);
 
-  CHAI_HOST void move(ExecutionSpace space=NONE);
+  CHAI_HOST void move(ExecutionSpace space=NONE) const;
 
   CHAI_HOST_DEVICE ManagedArray<T> slice(size_t begin, size_t elems=(size_t)-1) const;
 
@@ -330,7 +330,7 @@ private:
    */
   template <bool B = std::is_base_of<CHAICopyable, T>::value,
             typename std::enable_if<B, int>::type = 0>
-  CHAI_HOST void moveInnerImpl();
+  CHAI_HOST void moveInnerImpl() const; 
 
   /*!
    * \brief Does nothing since the inner data type does not inherit from
@@ -343,7 +343,7 @@ private:
    */
   template <bool B = std::is_base_of<CHAICopyable, T>::value,
             typename std::enable_if<!B, int>::type = 0>
-  CHAI_HOST void moveInnerImpl();
+  CHAI_HOST void moveInnerImpl() const;
 #endif
 
 public:

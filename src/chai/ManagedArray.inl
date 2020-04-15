@@ -364,7 +364,7 @@ CHAI_HOST_DEVICE void ManagedArray<T>::decr(size_t i) const {
 template <typename T>
 CHAI_INLINE
 CHAI_HOST
-void ManagedArray<T>::move(ExecutionSpace space)
+void ManagedArray<T>::move(ExecutionSpace space) const
 {
   if (m_pointer_record != &ArrayManager::s_null_record) {
      ExecutionSpace prev_space = m_pointer_record->m_last_space;
@@ -594,7 +594,7 @@ template<bool B, typename std::enable_if<B, int>::type>
 CHAI_INLINE
 CHAI_HOST
 void
-ManagedArray<T>::moveInnerImpl()
+ManagedArray<T>::moveInnerImpl() const
 {
   int len = m_pointer_record->m_size / sizeof(T);
   T * host_ptr = (T *) m_pointer_record->m_pointers[CPU]; 
@@ -612,7 +612,7 @@ template<bool B, typename std::enable_if<!B, int>::type>
 CHAI_INLINE
 CHAI_HOST
 void
-ManagedArray<T>::moveInnerImpl()
+ManagedArray<T>::moveInnerImpl() const
 {
 }
 
