@@ -15,7 +15,6 @@ namespace chai
 
 PointerRecord ArrayManager::s_null_record = PointerRecord();
 
-CHAI_HOST_DEVICE
 ArrayManager* ArrayManager::getInstance()
 {
   static ArrayManager s_resource_manager_instance;

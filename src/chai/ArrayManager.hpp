@@ -61,7 +61,6 @@ public:
    *
    */
   CHAISHAREDDLL_API
-  CHAI_HOST_DEVICE
   static ArrayManager* getInstance();
 
   /*!
