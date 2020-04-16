@@ -697,7 +697,8 @@ TEST(ManagedArray, NullpointerConversions)
 #if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
 TEST(ManagedArray, ImplicitConversions)
 {
-  chai::ManagedArray<float> a(10);
+  chai::ManagedArray<float> a(1);
+  a[0] = 3.14159;
 
   chai::ManagedArray<float> a2 = a;
   

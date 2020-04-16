@@ -168,7 +168,8 @@ CHAI_HOST void ManagedArray<T>::allocate(
           space = m_resource_manager->getDefaultAllocationSpace();
        }
        if (m_pointer_record == &ArrayManager::s_null_record) {
-          m_pointer_record = m_resource_manager->makeManaged((void *) m_active_base_pointer,m_elems*sizeof(T),space,true);
+          // since we are about to allocate, this will get registered
+          m_pointer_record = new PointerRecord();
        }
 
        m_pointer_record->m_user_callback = cback;
