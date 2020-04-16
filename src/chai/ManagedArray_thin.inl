@@ -169,7 +169,7 @@ CHAI_INLINE CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
 #if defined(CHAI_ENABLE_UM)
       cudaFree(m_active_pointer);
 #else
-      ::free(m_active_pointer);
+      ::free((void *)m_active_pointer);
 #endif
       m_active_pointer = nullptr;
       m_active_base_pointer = nullptr;
@@ -239,7 +239,7 @@ CHAI_INLINE CHAI_HOST void ManagedArray<T>::registerTouch(ExecutionSpace)
 }
 
 template <typename T>
-CHAI_INLINE CHAI_HOST void ManagedArray<T>::move(ExecutionSpace)
+CHAI_INLINE CHAI_HOST void ManagedArray<T>::move(ExecutionSpace) const
 {
 }
 
