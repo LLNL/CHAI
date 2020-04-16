@@ -16,7 +16,12 @@
 #define device_assert(EXP) assert(EXP)
 #endif
 
+#ifdef CHAI_DISABLE_RM
+#define assert_empty_map(IGNORED)
+#else
 #define assert_empty_map(IGNORED) ASSERT_EQ(chai::ArrayManager::getInstance()->getPointerMap().size(),0)
+#endif
+
 
 #include "chai/config.hpp"
 
@@ -982,9 +987,7 @@ GPU_TEST(ManagedArray, CallBackConstArray)
     }
     if (act == chai::ACTION_FOUND_ABANDONED) {
        printf("in abandoned!\n");
-       while(true) {
-
-       }
+       ASSERT_TRUE(false);
     }
   };
 

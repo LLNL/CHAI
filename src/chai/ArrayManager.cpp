@@ -67,7 +67,7 @@ void ArrayManager::registerPointer(
      PointerRecord ** found_pointer_record_addr = found_pointer_record_pair->second;
      if (found_pointer_record_addr != nullptr) {
 
-        PointerRecord *foundRecord = *(found_pointer_record_pair->second);
+        PointerRecord *foundRecord = *found_pointer_record_addr;
         // if it's actually the same pointer record, then we're OK. If it's a different
         // one, delete the old one.
         if (foundRecord != record) {
@@ -76,7 +76,7 @@ void ArrayManager::registerPointer(
 
            callback(foundRecord, ACTION_FOUND_ABANDONED, space);
 
-           for (int fspace = 0; fspace < NUM_EXECUTION_SPACES; ++fspace) {
+           for (int fspace = CPU; fspace < NUM_EXECUTION_SPACES; ++fspace) {
               foundRecord->m_pointers[fspace] = nullptr;
            }
 
@@ -122,7 +122,7 @@ void ArrayManager::deregisterPointer(PointerRecord* record, bool deregisterFromU
        if (deregisterFromUmpire) {
           m_resource_manager.deregisterAllocation(pointer);
        }
-       CHAI_LOG(Debug, "DeRegistering " << pointer);
+       CHAI_LOG(Debug, "De-registering " << pointer);
        m_pointer_map.erase(pointer);
     }
   }
@@ -176,7 +176,6 @@ ExecutionSpace ArrayManager::getExecutionSpace()
 
 void ArrayManager::registerTouch(PointerRecord* pointer_record)
 {
-  if (m_current_execution_space == NONE) return;
   registerTouch(pointer_record, m_current_execution_space);
 }
 
@@ -300,7 +299,7 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
         }
         else
         {
-          m_resource_manager.deregisterAllocation(pointer_record->m_pointers[space]);
+          m_resource_manager.deregisterAllocation(space_ptr);
         }
         {
           std::lock_guard<std::mutex> lock(m_mutex);
