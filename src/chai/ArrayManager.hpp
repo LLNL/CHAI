@@ -311,6 +311,13 @@ private:
    */
   CHAISHAREDDLL_API void * frontOfAllocation(void * pointer);
 
+  /*!
+   * \brief Get the allocator for an execution space.
+   *
+   * \param space Execution space of the allocator to get.
+   * \param allocator The allocator for this space.
+   */
+  void getAllocator(ExecutionSpace space, umpire::Allocator &allocator);
 
   /*!
    * \brief set the allocator for an execution space.
