@@ -315,9 +315,10 @@ private:
    * \brief Get the allocator for an execution space.
    *
    * \param space Execution space of the allocator to get.
-   * \param allocator The allocator for this space.
+   *
+   * \return The allocator for the given space.
    */
-  void getAllocator(ExecutionSpace space, umpire::Allocator &allocator);
+  umpire::Allocator getAllocator(ExecutionSpace space);
 
   /*!
    * \brief set the allocator for an execution space.
