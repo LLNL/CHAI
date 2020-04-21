@@ -391,13 +391,6 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
      registerPointer(pointer_record, space, owned);
   }
 
-  // TODO Is this a problem?
-  // for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
-  //   // If pointer is already active on some execution space, return that
-  //   pointer if(pointer_record->m_touched[i] == true)
-  //     return pointer_record->m_pointers[i];
-  // }
-
   return pointer_record;
 }
 
