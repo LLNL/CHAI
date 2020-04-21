@@ -124,8 +124,11 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
   m_is_slice(other.m_is_slice)
 {
 #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
-  m_elems = other.m_pointer_record->m_size/sizeof(T);
   if (m_active_base_pointer) {
+     // we only update m_elems if we are not null and we have a pointer record
+     if (m_pointer_record) {
+        m_elems = m_pointer_record->m_size/sizeof(T);
+     }
      move();
   }
 #endif
@@ -372,7 +375,7 @@ void ManagedArray<T>::move(ExecutionSpace space) const
 {
   if (m_pointer_record != &ArrayManager::s_null_record) {
      ExecutionSpace prev_space = m_pointer_record->m_last_space;
-     if (prev_space == CPU) {
+     if (prev_space == CPU || prev_space == NONE) {
         /// Move nested ManagedArrays first, so they are working with a valid m_active_pointer for the host,
         // and so the meta data associated with them are updated before we move the other array down.
         moveInnerImpl();
@@ -529,8 +532,10 @@ ManagedArray<T>::operator= (std::nullptr_t) {
   m_offset = 0;
   #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   m_pointer_record = &ArrayManager::s_null_record;
+  m_resource_manager = ArrayManager::getInstance();
   #else
   m_pointer_record = nullptr;
+  m_resource_manager = nullptr;
   #endif
   m_is_slice = false;
   return *this;
