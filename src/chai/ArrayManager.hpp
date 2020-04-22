@@ -287,6 +287,15 @@ public:
    */
   void setAllocator(ExecutionSpace space, umpire::Allocator &allocator);
 
+  /*!
+   * \brief Get the allocator for an execution space.
+   *
+   * \param space Execution space of the allocator to get.
+   *
+   * \return The allocator for the given space.
+   */
+  umpire::Allocator getAllocator(ExecutionSpace space);
+  
  /*!
    * \brief Turn callbacks on.
    */
@@ -334,6 +343,7 @@ protected:
 
 
 private:
+
 
   /*!
    * \brief Move data in PointerRecord to the corresponding ExecutionSpace.

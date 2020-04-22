@@ -104,6 +104,11 @@ void ArrayManager::copy(void * dst, void * src, size_t size) {
 }
 
 CHAI_INLINE
+umpire::Allocator ArrayManager::getAllocator(ExecutionSpace space) {
+   return *m_allocators[space];
+}
+
+CHAI_INLINE
 void ArrayManager::setAllocator(ExecutionSpace space, umpire::Allocator &allocator) {
    *m_allocators[space] = allocator;
 }
