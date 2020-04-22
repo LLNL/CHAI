@@ -224,7 +224,15 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t elems)
       // if T is a CHAICopyable, then it is important to initialize all the new
       // ManagedArrays to nullptr at allocation, since it is extremely easy to
       // trigger a moveInnerImpl, which expects inner values to be initialized.
-      initInner(old_size);
+      if (initInner(old_size)) {
+        // if we are active on the  GPU, we need to send any newly initialized inner members to the device
+        if (m_pointer_record->m_last_space == GPU && old_size < m_elems) {
+          umpire::ResourceManager & umpire_rm = umpire::ResourceManager::getInstance();
+          void *src = (T*)m_pointer_record->m_pointers[CPU] + old_size;
+          void *dst = (T*)m_pointer_record->m_pointers[GPU] + old_size;
+          umpire_rm.copy(dst,src,(m_elems-old_size)*sizeof(T));
+        }
+      }
 
       CHAI_LOG(Debug, "m_active_ptr reallocated at address: " << m_active_pointer);
     }

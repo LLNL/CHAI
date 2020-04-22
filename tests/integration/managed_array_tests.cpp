@@ -1167,6 +1167,65 @@ GPU_TEST(ManagedArray, CallBackConstArrayConst)
   assert_empty_map(true);
 }
 
+GPU_TEST(ManagedArray, DeviceInitializedNestedArrays)
+{
+  int N = 5;
+  /* Create the outer array. */
+  chai::ManagedArray<chai::ManagedArray<int>> outerArray(N);
+
+  forall(gpu(), 0, N,
+    [=]__device__(int i)
+    {
+      outerArray[i] = nullptr;
+    }
+  );
+
+  forall(sequential(), 0, N,
+    [=](int i)
+    {
+       outerArray[i] = chai::ManagedArray<int>(1);
+    }
+  );
+
+  forall(gpu(), 0, N,
+    [=]__device__(int i)
+    {
+      for (int j = 0; j < 1; ++j) {
+         outerArray[i][j] = 0;
+      }
+    }
+  );
+
+  outerArray.reallocate(2*N);
+
+  forall(sequential(), N,2*N,
+    [=](int i)
+    {
+       outerArray[i] = chai::ManagedArray<int>(1);
+    }
+  );
+
+  forall(gpu(), N, 2*N,
+    [=]__device__(int i)
+    {
+      for (int j = 0; j < 1; ++j) {
+         outerArray[i][j] = 0;
+      }
+    }
+  );
+
+  forall(sequential(), 0, 2*N,
+    [=](int i)
+    {
+      for (int j = 0; j < 1; ++j) {
+        ASSERT_EQ(outerArray[i][j],0);
+      }
+      outerArray[i].free();
+    }
+  );
+  outerArray.free();
+  assert_empty_map(true);
+}
 #endif
 #endif
 

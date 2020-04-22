@@ -378,18 +378,20 @@ private:
   // trigger a moveInnerImpl, which expects inner values to be initialized.
   template <bool B = std::is_base_of<CHAICopyable, T>::value,
             typename std::enable_if<B, int>::type = 0>
-  CHAI_HOST void initInner(size_t start = 0)
+  CHAI_HOST bool initInner(size_t start = 0)
   {
     for (size_t i = start; i < m_elems; ++i) {
       m_active_base_pointer[i] = nullptr;
     }
+    return true;
   }
 
   // Do not deep initialize if T is not a CHAICopyable.
   template <bool B = std::is_base_of<CHAICopyable, T>::value,
             typename std::enable_if<!B, int>::type = 0>
-  CHAI_HOST void initInner(size_t = 0)
+  CHAI_HOST bool initInner(size_t = 0)
   {
+    return false;
   }
 #endif
 protected:
