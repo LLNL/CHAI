@@ -89,9 +89,7 @@ public:
    * \param elems Number of elements in the array.
    * \param space Execution space in which to allocate the array.
    */
-  CHAI_HOST_DEVICE ManagedArray(
-      size_t elems,
-      ExecutionSpace space = NONE);
+  CHAI_HOST_DEVICE ManagedArray(size_t elems, ExecutionSpace space = NONE);
 
   CHAI_HOST_DEVICE ManagedArray(
       size_t elems,
@@ -114,7 +112,7 @@ public:
    */
   CHAI_HOST_DEVICE ManagedArray(std::nullptr_t other);
 
-  CHAI_HOST_DEVICE ManagedArray(PointerRecord* record, ExecutionSpace space);
+  CHAI_HOST ManagedArray(PointerRecord* record, ExecutionSpace space);
 
   /*!
    * \brief Allocate data for the ManagedArray in the specified space.
@@ -130,6 +128,8 @@ public:
                           UserCallback const& cback =
                           [] (const PointerRecord*, Action, ExecutionSpace) {});
 
+
+
   /*!
    * \brief Reallocate data for the ManagedArray.
    *
@@ -142,7 +142,7 @@ public:
   /*!
    * \brief Free all data allocated by this ManagedArray.
    */
-  CHAI_HOST void free();
+  CHAI_HOST void free(ExecutionSpace space = NONE);
 
   /*!
    * \brief Reset array state.
@@ -166,9 +166,10 @@ public:
    */
   CHAI_HOST void registerTouch(ExecutionSpace space);
 
-  CHAI_HOST void move(ExecutionSpace space);
+  CHAI_HOST void move(ExecutionSpace space=NONE) const;
 
   CHAI_HOST_DEVICE ManagedArray<T> slice(size_t begin, size_t elems=(size_t)-1) const;
+
   /*!
    * \brief Return reference to i-th element of the ManagedArray.
    *
@@ -181,7 +182,7 @@ public:
 
   /*!
    * \brief get access to m_active_pointer
-   * @return a copy of m_active_pointer
+   * @return a copy of m_active_base_pointer
    */
   CHAI_HOST_DEVICE T* getActiveBasePointer() const;
 
@@ -222,6 +223,7 @@ public:
 
   CHAI_HOST_DEVICE ManagedArray<T>& operator=(std::nullptr_t);
 
+
   CHAI_HOST_DEVICE bool operator==(ManagedArray<T>& rhs) const;
   CHAI_HOST_DEVICE bool operator!=(ManagedArray<T>& from) const;
 
@@ -233,6 +235,7 @@ public:
 
 
   CHAI_HOST_DEVICE explicit operator bool() const;
+
 
 #if defined(CHAI_ENABLE_PICK)
   /*!
@@ -291,8 +294,8 @@ public:
    */
   template <bool Q = false>
   CHAI_HOST_DEVICE ManagedArray(T* data,
-                               CHAIDISAMBIGUATE test = CHAIDISAMBIGUATE(),
-                               bool foo = Q);
+                                CHAIDISAMBIGUATE test = CHAIDISAMBIGUATE(),
+                                bool foo = Q);
 #endif
 
 
@@ -310,14 +313,13 @@ public:
    */
   CHAI_HOST void setUserCallback(UserCallback const& cback)
   {
-    m_pointer_record->m_user_callback = cback;
+    if (m_pointer_record && m_pointer_record != &ArrayManager::s_null_record) {
+      m_pointer_record->m_user_callback = cback;
+    }
   }
-#endif
 
 
 private:
-  CHAI_HOST void modify(size_t i, const T& val) const;
-
   /*!
    * \brief Moves the inner data of a ManagedArray.
    *
@@ -328,7 +330,7 @@ private:
    */
   template <bool B = std::is_base_of<CHAICopyable, T>::value,
             typename std::enable_if<B, int>::type = 0>
-  CHAI_HOST void moveInnerImpl(ExecutionSpace space);
+  CHAI_HOST void moveInnerImpl() const; 
 
   /*!
    * \brief Does nothing since the inner data type does not inherit from
@@ -341,8 +343,58 @@ private:
    */
   template <bool B = std::is_base_of<CHAICopyable, T>::value,
             typename std::enable_if<!B, int>::type = 0>
-  CHAI_HOST void moveInnerImpl(ExecutionSpace space);
+  CHAI_HOST void moveInnerImpl() const;
+#endif
 
+public:
+  CHAI_HOST_DEVICE void shallowCopy(ManagedArray<T> const& other) const
+  {
+    m_active_pointer = other.m_active_pointer;
+    m_active_base_pointer = other.m_active_base_pointer;
+    m_resource_manager = other.m_resource_manager;
+    m_elems = other.m_elems;
+    m_offset = other.m_offset;
+    m_pointer_record = other.m_pointer_record;
+    m_is_slice = other.m_is_slice;
+#ifndef CHAI_DISABLE_RM
+#ifndef __CUDA_ARCH__
+  // if we can, ensure elems is based off the pointer_record size to protect against
+  // casting leading to incorrect size info in m_elems.
+  if (m_pointer_record != nullptr) {
+     m_elems = m_pointer_record->m_size / sizeof(T);
+  }
+#endif
+#endif
+  }
+
+
+private:
+  CHAI_HOST void modify(size_t i, const T& val) const;
+  // The following are only used by ManagedArray.inl, but for template
+  // shenanigan reasons need to be defined here.
+#if !defined(CHAI_DISABLE_RM)
+  // if T is a CHAICopyable, then it is important to initialize all the
+  // ManagedArrays to nullptr at allocation, since it is extremely easy to
+  // trigger a moveInnerImpl, which expects inner values to be initialized.
+  template <bool B = std::is_base_of<CHAICopyable, T>::value,
+            typename std::enable_if<B, int>::type = 0>
+  CHAI_HOST bool initInner(size_t start = 0)
+  {
+    for (size_t i = start; i < m_elems; ++i) {
+      m_active_base_pointer[i] = nullptr;
+    }
+    return true;
+  }
+
+  // Do not deep initialize if T is not a CHAICopyable.
+  template <bool B = std::is_base_of<CHAICopyable, T>::value,
+            typename std::enable_if<!B, int>::type = 0>
+  CHAI_HOST bool initInner(size_t = 0)
+  {
+    return false;
+  }
+#endif
+protected:
   /*!
    * Currently active data pointer.
    */
@@ -364,9 +416,8 @@ private:
    * Pointer to PointerRecord data.
    */
   mutable PointerRecord* m_pointer_record = nullptr;
- 
+
   mutable bool m_is_slice = false;
- 
 };
 
 /*!
@@ -424,7 +475,7 @@ template <typename T>
 ManagedArray<T> deepCopy(ManagedArray<T> const& array)
 {
   T* data_ptr = array.getActiveBasePointer();
-  
+
   ArrayManager* manager = ArrayManager::getInstance();
 
   PointerRecord const* record = manager->getPointerRecord(data_ptr);
@@ -465,5 +516,4 @@ CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T> ManagedArray<T>::slice( size_t offs
 #else
 #include "chai/ManagedArray.inl"
 #endif
-
 #endif  // CHAI_ManagedArray_HPP

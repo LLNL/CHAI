@@ -16,11 +16,10 @@
 namespace chai {
 
 template <typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
-   std::initializer_list<chai::ExecutionSpace> spaces,
-   std::initializer_list<umpire::Allocator> allocators) :
-  ManagedArray()
+CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
+    std::initializer_list<chai::ExecutionSpace> spaces,
+    std::initializer_list<umpire::Allocator> allocators)
+    : ManagedArray()
 {
   if (m_pointer_record) {
      int i = 0;
@@ -56,9 +55,16 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(size_t elems, ExecutionSpace spac
   this->allocate(elems, space);
 }
 
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t)
+
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t)
+    : m_active_pointer(nullptr),
+      m_active_base_pointer(nullptr),
+      m_resource_manager(nullptr),
+      m_elems(0),
+      m_offset(0),
+      m_pointer_record(nullptr),
+      m_is_slice(false)
 {
 }
 
@@ -155,114 +161,130 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t new_elems)
   }
 }
 
-template<typename T>
-CHAI_INLINE
-CHAI_HOST void ManagedArray<T>::free()
+template <typename T>
+CHAI_INLINE CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
 {
   if (!m_is_slice) {
-  #if defined(CHAI_ENABLE_UM)
-    cudaFree(m_active_base_pointer);
-  #else
-    ::free((void *)m_active_base_pointer);
-  #endif
-
-    m_active_base_pointer = nullptr;
-    m_active_pointer = nullptr;
+    if (space == CPU || space == NONE) {
+#if defined(CHAI_ENABLE_UM)
+      cudaFree(m_active_pointer);
+#else
+      ::free((void *)m_active_pointer);
+#endif
+      m_active_pointer = nullptr;
+      m_active_base_pointer = nullptr;
+      m_elems = 0;
+    }
   }
   else {
     CHAI_LOG(Debug, "tried to free slice!");
   }
 }
 
-template<typename T>
-CHAI_INLINE
-CHAI_HOST void ManagedArray<T>::reset()
+
+template <typename T>
+CHAI_INLINE CHAI_HOST void ManagedArray<T>::reset()
 {
 }
 
 
 #if defined(CHAI_ENABLE_PICK)
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE
-typename ManagedArray<T>::T_non_const ManagedArray<T>::pick(size_t i) const { 
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE typename ManagedArray<T>::T_non_const ManagedArray<
+    T>::pick(size_t i) const
+{
 #if !defined(__CUDA_ARCH__) && defined(CHAI_ENABLE_UM)
   cudaDeviceSynchronize();
 #endif
-  return (T_non_const) m_active_pointer[i]; 
+  return (T_non_const)m_active_pointer[i];
 }
 
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const {
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const
+{
 #if !defined(__CUDA_ARCH__) && defined(CHAI_ENABLE_UM)
   cudaDeviceSynchronize();
 #endif
-  m_active_pointer[i] = val; 
+  m_active_pointer[i] = val;
 }
 
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE void ManagedArray<T>::incr(size_t i) const { 
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE void ManagedArray<T>::incr(size_t i) const
+{
 #if !defined(__CUDA_ARCH__) && defined(CHAI_ENABLE_UM)
   cudaDeviceSynchronize();
 #endif
-  ++m_active_pointer[i]; 
+  ++m_active_pointer[i];
 }
 
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE void ManagedArray<T>::decr(size_t i) const { 
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE void ManagedArray<T>::decr(size_t i) const
+{
 #if !defined(__CUDA_ARCH__) && defined(CHAI_ENABLE_UM)
   cudaDeviceSynchronize();
 #endif
-  --m_active_pointer[i]; 
+  --m_active_pointer[i];
 }
 #endif
 
-template<typename T>
-CHAI_INLINE
-CHAI_HOST size_t ManagedArray<T>::size() const {
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE size_t ManagedArray<T>::size() const
+{
   return m_elems;
 }
 
-template<typename T>
-template<typename Idx>
-CHAI_INLINE
-CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const Idx i) const {
+template <typename T>
+CHAI_INLINE CHAI_HOST void ManagedArray<T>::registerTouch(ExecutionSpace)
+{
+}
+
+template <typename T>
+CHAI_INLINE CHAI_HOST void ManagedArray<T>::move(ExecutionSpace) const
+{
+}
+
+template <typename T>
+template <typename Idx>
+CHAI_INLINE CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const Idx i) const
+{
   return m_active_pointer[i];
 }
 
 #if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const
+{
   return m_active_pointer;
 }
 
-template<typename T>
-template<bool Q>
-CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, CHAIDISAMBIGUATE, bool) :
+template <typename T>
+template <bool Q>
+CHAI_INLINE CHAI_HOST_DEVICE
+ManagedArray<T>::ManagedArray(T* data, CHAIDISAMBIGUATE, bool) :
   m_active_pointer(data),
-  m_resource_manager(ArrayManager::getInstance()),
-  m_elems(m_resource_manager->getSize(m_active_pointer)),
+  m_active_base_pointer(data),
+  m_resource_manager(nullptr),
+  m_elems(-1),
+  m_pointer_record(nullptr),
+  m_offset(0),
   m_is_slice(false)
 {
 }
 #endif
 
-template<typename T>
-template< typename U>
-ManagedArray<T>::operator 
-typename std::enable_if< !std::is_const<U>::value , 
-                         ManagedArray<const U> >::type () const
+template <typename T>
+template <typename U>
+ManagedArray<T>::operator typename std::
+    enable_if<!std::is_const<U>::value, ManagedArray<const U> >::type() const
 {
-  return ManagedArray<const T>(const_cast<const T*>(m_active_pointer), m_resource_manager, m_elems, nullptr);
+  return ManagedArray<const T>(const_cast<const T*>(m_active_pointer),
+                               m_resource_manager,
+                               m_elems,
+                               nullptr);
 }
 
-template<typename T>
-CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>& ManagedArray<T>::operator= (std::nullptr_t from) 
+template <typename T>
+CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>& ManagedArray<T>::operator=(std::nullptr_t from)
 {
   m_active_pointer = from;
   m_active_base_pointer = from;
@@ -299,13 +321,12 @@ CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator!=(T* from) const
 }
 
 template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator==(std::nullptr_t from) const
+CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator==( std::nullptr_t from) const
 {
   return m_active_pointer == from;
 }
 template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator!=(
-    std::nullptr_t from) const
+CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator!=( std::nullptr_t from) const
 {
   return m_active_pointer != from;
 }
@@ -316,6 +337,6 @@ CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>::operator bool() const
   return m_active_pointer != nullptr;
 }
 
-} // end of namespace chai
+}  // end of namespace chai
 
-#endif // CHAI_ManagedArray_thin_INL
+#endif  // CHAI_ManagedArray_thin_INL

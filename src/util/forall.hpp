@@ -25,7 +25,7 @@ struct gpu {
 template <typename LOOP_BODY>
 void forall_kernel_cpu(int begin, int end, LOOP_BODY body)
 {
-  for (int i = 0; i < (end - begin); ++i) {
+  for (int i = begin; i < end; ++i) {
     body(i);
   }
 }
@@ -56,7 +56,7 @@ __global__ void forall_kernel_gpu(int start, int length, LOOP_BODY body)
   int idx = blockDim.x * blockIdx.x + threadIdx.x;
 
   if (idx < length) {
-    body(idx);
+    body(idx+start);
   }
 }
 
@@ -73,7 +73,9 @@ void forall(gpu, int begin, int end, LOOP_BODY&& body)
   size_t blockSize = 32;
   size_t gridSize = (end - begin + blockSize - 1) / blockSize;
 
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+  forall_kernel_cpu(begin, end, body);
+#elif defined(CHAI_ENABLE_CUDA)
   forall_kernel_gpu<<<gridSize, blockSize>>>(begin, end - begin, body);
   cudaDeviceSynchronize();
 #elif defined(CHAI_ENABLE_HIP)

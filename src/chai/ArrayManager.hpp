@@ -61,7 +61,6 @@ public:
    *
    */
   CHAISHAREDDLL_API
-  CHAI_HOST_DEVICE
   static ArrayManager* getInstance();
 
   /*!
@@ -126,7 +125,9 @@ public:
    * \return Pointer to the allocated memory.
    */
   template <typename T>
-  void* reallocate(void* pointer, size_t elems, PointerRecord* record);
+  void* reallocate(void* pointer,
+                   size_t elems,
+                   PointerRecord* record);
 
   /*!
    * \brief Set the default space for new ManagedArray allocations.
@@ -156,10 +157,10 @@ public:
 
 #if defined(CHAI_ENABLE_PICK)
   template <typename T>
-  T_non_const<T> pick(T* src_ptr, size_t index);
+   T_non_const<T> pick(T* src_ptr, size_t index);
 
   template <typename T>
-  void set(T* dst_ptr, size_t index, const T& val);
+   void set(T* dst_ptr, size_t index, const T& val);
 #endif
 
   /*!
@@ -171,9 +172,9 @@ public:
   CHAISHAREDDLL_API size_t getSize(void* pointer);
 
   CHAISHAREDDLL_API PointerRecord* makeManaged(void* pointer,
-                             size_t size,
-                             ExecutionSpace space,
-                             bool owned);
+                                               size_t size,
+                                               ExecutionSpace space,
+                                               bool owned);
 
   /*!
    * \brief Assign a user-defined callback triggered upon memory operations.
@@ -235,15 +236,67 @@ public:
    */
   CHAISHAREDDLL_API size_t getTotalSize() const;
 
+  /*!
+   * \brief Calls callbacks of pointers still in the map with ACTION_LEAKED.
+   */
+  CHAISHAREDDLL_API void reportLeaks() const;
+
+  /*!
+   * \brief Get the allocator ID
+   *
+   * \return The allocator ID.
+   */
   CHAISHAREDDLL_API int getAllocatorId(ExecutionSpace space) const;
 
   /*!
    * \brief Wraps our resource manager's copy.
-   *
    */
-  CHAISHAREDDLL_API void copy(void * dst, void * src, size_t size);
+  CHAISHAREDDLL_API void copy(void * dst, void * src, size_t size); 
+  
+  /*!
+   * \brief Registering an allocation with the ArrayManager
+   *
+   * \param record PointerRecord of this allocation.
+   * \param space Space in which the pointer was allocated.
+   * \param owned Should the allocation be free'd by CHAI?
+   */
+  CHAISHAREDDLL_API void registerPointer(PointerRecord* record,
+                                         ExecutionSpace space,
+                                         bool owned = true);
 
   /*!
+   * \brief Deregister a PointerRecord from the ArrayManager.
+   *
+   * \param record PointerRecord of allocation to deregister.
+   * \param deregisterFromUmpire If true, deregister from umpire as well.
+   */
+  CHAISHAREDDLL_API void deregisterPointer(PointerRecord* record, bool deregisterFromUmpire=false);
+
+  /*!
+   * \brief Returns the front of the allocation associated with this pointer, nullptr if allocation not found.
+   *
+   * \param pointer Pointer to address of that we want the front of the allocation for.
+   */
+  CHAISHAREDDLL_API void * frontOfAllocation(void * pointer);
+
+  /*!
+   * \brief set the allocator for an execution space.
+   *
+   * \param space Execution space to set the default allocator for.
+   * \param allocator The allocator to use for this space. Will be copied into chai.
+   */
+  void setAllocator(ExecutionSpace space, umpire::Allocator &allocator);
+
+  /*!
+   * \brief Get the allocator for an execution space.
+   *
+   * \param space Execution space of the allocator to get.
+   *
+   * \return The allocator for the given space.
+   */
+  umpire::Allocator getAllocator(ExecutionSpace space);
+  
+ /*!
    * \brief Turn callbacks on.
    */
   void enableCallbacks() { m_callbacks_active = true; }
@@ -277,6 +330,7 @@ public:
    */
   CHAISHAREDDLL_API void evict(ExecutionSpace space, ExecutionSpace destinationSpace);
 
+
 protected:
   /*!
    * \brief Construct a new ArrayManager.
@@ -286,47 +340,10 @@ protected:
    */
   ArrayManager();
 
+
+
 private:
 
-  /*!
-   * \brief Registering an allocation with the ArrayManager
-   *
-   * \param record PointerRecord of this allocation.
-   * \param space Space in which the pointer was allocated.
-   * \param owned Should the allocation be free'd by CHAI?
-   */
-  void registerPointer(PointerRecord* record,
-                       ExecutionSpace space,
-                       bool owned = true);
-
-  /*!
-   * \brief Deregister a PointerRecord from the ArrayManager.
-   */
-  void deregisterPointer(PointerRecord* record, bool deregisterFromUmpire=false);
-
-  /*!
-   * \brief Returns the front of the allocation associated with this pointer, nullptr if allocation not found.
-   *
-   * \param pointer Pointer to address of that we want the front of the allocation for.
-   */
-  CHAISHAREDDLL_API void * frontOfAllocation(void * pointer);
-
-  /*!
-   * \brief Get the allocator for an execution space.
-   *
-   * \param space Execution space of the allocator to get.
-   *
-   * \return The allocator for the given space.
-   */
-  umpire::Allocator getAllocator(ExecutionSpace space);
-
-  /*!
-   * \brief set the allocator for an execution space.
-   *
-   * \param space Execution space to set the default allocator for.
-   * \param allocator The allocator to use for this space. Will be copied into chai.
-   */
-  void setAllocator(ExecutionSpace space, umpire::Allocator &allocator);
 
   /*!
    * \brief Move data in PointerRecord to the corresponding ExecutionSpace.
@@ -335,8 +352,8 @@ private:
    * \param space
    */
   void move(PointerRecord* record, ExecutionSpace space);
-
-  /*!
+  
+    /*!
    * \brief Execute a user callback if callbacks are active
    *
    * \param record The pointer record containing the callback

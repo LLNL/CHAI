@@ -37,7 +37,7 @@ These arguments are explained in more detail below:
   GPU_SIMULATION_MODE support, then only the ``CPU`` execution space is available for use.
 
 * ENABLE_GPU_SIMULATION_MODE
-  This option simulates GPU support by enableing the GPU execution space, backed by a HOST
+  This option simulates GPU support by enabling the GPU execution space, backed by a HOST
   umpire allocator. If CHAI is built without CUDA, HIP, or GPU_SIMULATION_MODE support, 
   then only the ``CPU`` execution space is available for use.
 
