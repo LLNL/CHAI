@@ -57,12 +57,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
 
   this->allocate(elems, space);
 
-#if defined(CHAI_ENABLE_UM)
-  if(space == UM) {
-    m_pointer_record->m_pointers[CPU] = m_active_pointer;
-    m_pointer_record->m_pointers[GPU] = m_active_pointer;
-  }
-#endif
 #endif
 }
 
@@ -77,13 +71,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
 {
 #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   this->allocate(elems, space);
-
-  #if defined(CHAI_ENABLE_UM)
-  if(space == UM) {
-    m_pointer_record->m_pointers[CPU] = m_active_base_pointer;
-    m_pointer_record->m_pointers[GPU] = m_active_base_pointer;
-  }
-  #endif
 #endif
 }
 
@@ -129,7 +116,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
      if (m_pointer_record) {
         m_elems = m_pointer_record->m_size/sizeof(T);
      }
-     move();
+     move(m_resource_manager->getExecutionSpace());
   }
 #endif
 }
@@ -173,8 +160,9 @@ CHAI_HOST void ManagedArray<T>::allocate(
        if (m_pointer_record == &ArrayManager::s_null_record) {
          // since we are about to allocate, this will get registered
          m_pointer_record = new PointerRecord();
-         for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
-           m_pointer_record->m_allocators[space] = m_resource_manager->getAllocatorId(ExecutionSpace(space));
+         for (int s = CPU; s < NUM_EXECUTION_SPACES; ++s) {
+           ExecutionSpace allocator_space = space == PINNED ? PINNED : ExecutionSpace(s);
+           m_pointer_record->m_allocators[s] = m_resource_manager->getAllocatorId(allocator_space);
          }
        }
 
@@ -191,9 +179,23 @@ CHAI_HOST void ManagedArray<T>::allocate(
        // ManagedArrays to nullptr at allocation, since it is extremely easy to
        // trigger a moveInnerImpl, which expects inner values to be initialized.
        initInner();
-
+     
+#if defined(CHAI_ENABLE_UM)
+      if(space == UM) {
+        m_pointer_record->m_last_space = UM;
+        m_pointer_record->m_pointers[CPU] = m_active_pointer;
+        m_pointer_record->m_pointers[GPU] = m_active_pointer;
+      }
+#endif
+#if defined(CHAI_ENABLE_PINNED)
+      if (space == PINNED) {
+        m_pointer_record->m_last_space = PINNED;
+        m_pointer_record->m_pointers[CPU] = m_active_pointer;
+        m_pointer_record->m_pointers[GPU] = m_active_pointer;
+      }
+#endif
        CHAI_LOG(Debug, "m_active_base_ptr allocated at address: " << m_active_base_pointer);
-     }
+    }
   }
 }
 
@@ -393,16 +395,24 @@ void ManagedArray<T>::move(ExecutionSpace space) const
      m_active_pointer = m_active_base_pointer + m_offset;
 
      CHAI_LOG(Debug, "Moved to " << m_active_pointer);
+#if defined(CHAI_ENABLE_UM)
+    if (m_pointer_record->m_last_space == UM) {
+    } else
+#endif
+#if defined(CHAI_ENABLE_PINNED)
+    if (m_pointer_record->m_last_space == PINNED) {
+    } else 
+#endif
      if (!std::is_const<T>::value) {
        CHAI_LOG(Debug, "T is non-const, registering touch of pointer" << m_active_pointer);
        m_resource_manager->registerTouch(m_pointer_record);
      }
-     if (prev_space == GPU) {
+     if (space != GPU && prev_space == GPU) {
         /// Move nested ManagedArrays after the move, so they are working with a valid m_active_pointer for the host,
         // and so the meta data associated with them are updated with live GPU data
         moveInnerImpl();
      }
-  }
+   }
 }
 
 template<typename T>
@@ -423,7 +433,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
      }
      ExecutionSpace prev_space = m_resource_manager->getExecutionSpace();
      m_resource_manager->setExecutionSpace(CPU);
-     move();
+     move(CPU);
 
      // always touch regarless of constness of type (don't trust the application not to const-cast)
      m_resource_manager->registerTouch(m_pointer_record);

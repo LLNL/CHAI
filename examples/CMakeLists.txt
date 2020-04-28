@@ -28,5 +28,10 @@ if (ENABLE_CUDA OR ENABLE_HIP)
     NAME chai-example.exe
     SOURCES example.cpp
     DEPENDS_ON ${chai_umpire_example_depends})
+
+  blt_add_executable(
+    NAME pinned.exe
+    SOURCES pinned.cpp
+    DEPENDS_ON ${chai_umpire_example_depends})
 endif ()
 

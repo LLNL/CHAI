@@ -367,6 +367,8 @@ public:
 #endif
   }
 
+  CHAI_HOST_DEVICE bool isSlice() { return m_is_slice;}
+
 
 private:
   CHAI_HOST void modify(size_t i, const T& val) const;
