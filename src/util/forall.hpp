@@ -71,8 +71,9 @@ void forall(gpu_async, int begin, int end, LOOP_BODY&& body)
 
   size_t blockSize = 32;
   size_t gridSize = (end - begin + blockSize - 1) / blockSize;
-
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+  forall_kernel_cpu(begin, end, body);
+#elif defined(CHAI_ENABLE_CUDA)
   forall_kernel_gpu<<<gridSize, blockSize>>>(begin, end - begin, body);
 #elif defined(CHAI_ENABLE_HIP)
   hipLaunchKernelGGL(forall_kernel_gpu, dim3(gridSize), dim3(blockSize), 0,0,
