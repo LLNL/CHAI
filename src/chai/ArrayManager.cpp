@@ -491,7 +491,14 @@ size_t ArrayManager::getTotalSize() const
 void ArrayManager::reportLeaks() const
 {
   for (auto entry : m_pointer_map) {
-    callback(*entry.second, ACTION_LEAKED, NONE);
+    const void* pointer = entry.first;
+    const PointerRecord* record = *entry.second;
+
+    for (int s = CPU; s < NUM_EXECUTION_SPACES; ++s) {
+      if (pointer == record->m_pointers[s]) {
+        callback(record, ACTION_LEAKED, ExecutionSpace(s));
+      }
+    }
   }
 }
 
