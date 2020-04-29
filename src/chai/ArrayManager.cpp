@@ -427,7 +427,7 @@ ArrayManager::getPointerMap() const
   std::unordered_map<void*, const PointerRecord*> mapCopy;
 
   std::lock_guard<std::mutex> lock(m_mutex);
-  for (auto entry : m_pointer_map) {
+  for (const auto& entry : m_pointer_map) {
     mapCopy[entry.first] = *entry.second;
   }
 
@@ -443,7 +443,7 @@ size_t ArrayManager::getTotalSize() const
   size_t total = 0;
 
   std::lock_guard<std::mutex> lock(m_mutex);
-  for (auto entry : m_pointer_map) {
+  for (const auto& entry : m_pointer_map) {
     total += (*entry.second)->m_size;
   }
 
@@ -452,7 +452,7 @@ size_t ArrayManager::getTotalSize() const
 
 void ArrayManager::reportLeaks() const
 {
-  for (auto entry : m_pointer_map) {
+  for (const auto& entry : m_pointer_map) {
     const void* pointer = entry.first;
     const PointerRecord* record = *entry.second;
 
@@ -493,7 +493,7 @@ void ArrayManager::evict(ExecutionSpace space, ExecutionSpace destinationSpace) 
    // Now move and evict
    std::vector<PointerRecord*> pointersToEvict;
 
-   for (auto entry : m_pointer_map) {
+   for (const auto& entry : m_pointer_map) {
       // Get the pointer record
       auto record = *entry.second;
 
@@ -511,7 +511,7 @@ void ArrayManager::evict(ExecutionSpace space, ExecutionSpace destinationSpace) 
 
    // This must be done in a second pass because free erases from m_pointer_map,
    // which would invalidate the iterator in the above loop
-   for (auto entry : pointersToEvict) {
+   for (const auto& entry : pointersToEvict) {
       free(entry, space);
    }
 }
