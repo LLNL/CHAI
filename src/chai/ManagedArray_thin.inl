@@ -24,7 +24,7 @@ CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
   if (m_pointer_record) {
      int i = 0;
 
-     for (auto& space : spaces) {
+     for (const auto& space : spaces) {
        m_pointer_record->m_allocators[space] = allocators.begin()[i++].getId();
      }
   }
