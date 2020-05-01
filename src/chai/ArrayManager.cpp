@@ -239,7 +239,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   if (record->m_last_space == PINNED) {
     if (space == CPU && m_need_sync_for_pinned) {
       m_need_sync_for_pinned = false;
-      cudaDeviceSynchronize();
+      synchronize();
     }
     return;
   }

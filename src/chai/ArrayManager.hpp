@@ -24,7 +24,48 @@
 
 namespace chai
 {
+// CHAI_GPU_ERROR_CHECK macro
+#if defined(__CUDACC__) || defined(__HIPCC__)
 
+#ifdef CHAI_ENABLE_GPU_ERROR_CHECKING
+
+#ifdef __CUDACC__
+inline void gpuErrorCheck(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess) {
+      fprintf(stderr, "[CHAI] GPU Error: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) {
+         exit(code);
+      }
+   }
+}
+#elif defined __HIPCC__
+inline void gpuErrorCheck(hipError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess) {
+      fprintf(stderr, "[CHAI] GPU Error: %s %s %d\n", hipGetErrorString(code), file, line);
+      if (abort) {
+         exit(code);
+      }
+   }
+}
+#endif
+
+
+#define CHAI_GPU_ERROR_CHECK(code) { gpuErrorCheck((code), __FILE__, __LINE__); }
+#else // CHAI_ENABLE_GPU_ERROR_CHECKING
+#define CHAI_GPU_ERROR_CHECK(code) code
+#endif // CHAI_ENABLE_GPU_ERROR_CHECKING
+
+#endif
+
+inline void synchronize() {
+#if defined(__HIPCC__) && defined (CHAI_ENABLE_HIP) &&!defined(__HIP_DEVICE_COMPILE__)
+   CHAI_GPU_ERROR_CHECK(hipDeviceSynchronize());
+#elif defined(__CUDACC__) && defined (CHAI_ENABLE_CUDA) &&!defined(__CUDA_ARCH__)
+   CHAI_GPU_ERROR_CHECK(cudaDeviceSynchronize());
+#endif
+}
 /*!
  * \brief Singleton that manages caching and movement of ManagedArray objects.
  *

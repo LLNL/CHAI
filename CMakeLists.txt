@@ -23,6 +23,7 @@ option(ENABLE_PINNED "Use pinned host memory" Off)
 option(ENABLE_RAJA_PLUGIN "Build plugin to set RAJA execution spaces" Off)
 option(CHAI_ENABLE_GPU_ERROR_CHECKING "Enable GPU error checking" On)
 option(CHAI_DEBUG "Enable Debug Logging.")
+set(ENABLE_RAJA_NESTED_TEST ON CACHE BOOL "Enable raja-chai-nested-tests, which fails to build on Debug CUDA builds.")
 
 set(ENABLE_TESTS On CACHE BOOL "")
 set(ENABLE_EXAMPLES On CACHE BOOL "")

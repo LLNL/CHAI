@@ -302,7 +302,7 @@ typename ManagedArray<T>::T_non_const ManagedArray<T>::pick(size_t i) const {
   #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
     #if defined(CHAI_ENABLE_UM)
       if(m_pointer_record->m_pointers[UM] == m_active_base_pointer) {
-        cudaDeviceSynchronize();
+        synchronize();
         return (T_non_const)(m_active_pointer[i]);
       }
     #endif
@@ -325,7 +325,7 @@ CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const {
   #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
     #if defined(CHAI_ENABLE_UM)
       if(m_pointer_record->m_pointers[UM] == m_active_pointer) {
-        cudaDeviceSynchronize();
+        synchronize();
         m_active_pointer[i] = val;
         return;
       }
@@ -347,7 +347,7 @@ CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::modify(size_t i, const T& val) const { 
   #if defined(CHAI_ENABLE_UM)
     if(m_pointer_record->m_pointers[UM] == m_active_pointer) {
-      cudaDeviceSynchronize();
+      synchronize();
       m_active_pointer[i] = m_active_pointer[i] + val;
       return;
     }
