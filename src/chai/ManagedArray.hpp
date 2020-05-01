@@ -367,6 +367,9 @@ public:
 #endif
   }
 
+  /*!
+  * Accessor for m_is_slice -whether this array was created with a slice() command.
+  */
   CHAI_HOST_DEVICE bool isSlice() { return m_is_slice;}
 
 
