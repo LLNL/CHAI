@@ -22,14 +22,20 @@
 #include "umpire/Allocator.hpp"
 #include "umpire/util/MemoryMap.hpp"
 
+#if defined(CHAI_ENABLE_CUDA)
+#include <cuda_runtime_api.h>
+#endif
+#if defined(CHAI_ENABLE_HIP)
+#include <hip_runtime_api.h>
+#endif
 namespace chai
 {
 // CHAI_GPU_ERROR_CHECK macro
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 
 #ifdef CHAI_ENABLE_GPU_ERROR_CHECKING
 
-#ifdef __CUDACC__
+#ifdef CHAI_ENABLE_CUDA
 inline void gpuErrorCheck(cudaError_t code, const char *file, int line, bool abort=true)
 {
    if (code != cudaSuccess) {
@@ -39,7 +45,7 @@ inline void gpuErrorCheck(cudaError_t code, const char *file, int line, bool abo
       }
    }
 }
-#elif defined __HIPCC__
+#elif CHAI_ENABLE_HIP
 inline void gpuErrorCheck(hipError_t code, const char *file, int line, bool abort=true)
 {
    if (code != cudaSuccess) {
@@ -60,9 +66,9 @@ inline void gpuErrorCheck(hipError_t code, const char *file, int line, bool abor
 #endif
 
 inline void synchronize() {
-#if defined(__HIPCC__) && defined (CHAI_ENABLE_HIP) &&!defined(__HIP_DEVICE_COMPILE__)
+#if defined (CHAI_ENABLE_HIP) &&!defined(__HIP_DEVICE_COMPILE__)
    CHAI_GPU_ERROR_CHECK(hipDeviceSynchronize());
-#elif defined(__CUDACC__) && defined (CHAI_ENABLE_CUDA) &&!defined(__CUDA_ARCH__)
+#elif defined (CHAI_ENABLE_CUDA) &&!defined(__CUDA_ARCH__)
    CHAI_GPU_ERROR_CHECK(cudaDeviceSynchronize());
 #endif
 }
