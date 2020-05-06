@@ -255,7 +255,8 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 
   if (!record->m_touched[record->m_last_space]) {
     return;
-  } else {
+  } else if (dst_pointer != src_pointer) {
+    // Exclude the copy if src and dst are the same (can happen for PINNED memory)
     {
       std::lock_guard<std::mutex> lock(m_mutex);
       m_resource_manager.copy(dst_pointer, src_pointer);
