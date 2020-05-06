@@ -133,7 +133,7 @@ namespace chai {
    ///       only be valid in the correct context. Take care when passing raw pointers
    ///       as arguments to member functions.
    ///    Be aware that CHAI checks every CUDA API call for GPU errors by default. To
-   ///       turn off GPU error checking, pass -DCHAI_ENABLE_CHAI_GPU_ERROR_CHECKING=OFF as
+   ///       turn off GPU error checking, pass -DCHAI_ENABLE_GPU_ERROR_CHECKING=OFF as
    ///       an argument to cmake when building CHAI. To turn on synchronization after
    ///       every kernel, call ArrayManager::getInstance()->enableDeviceSynchronize().
    ///       Alternatively, call cudaDeviceSynchronize() after any call to make_managed,
