@@ -184,7 +184,10 @@ CHAI_HOST void ManagedArray<T>::allocate(
       if(space == UM) {
         m_pointer_record->m_last_space = UM;
         m_pointer_record->m_pointers[CPU] = m_active_pointer;
+
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
         m_pointer_record->m_pointers[GPU] = m_active_pointer;
+#endif
       }
 #endif
 #if defined(CHAI_ENABLE_PINNED)
