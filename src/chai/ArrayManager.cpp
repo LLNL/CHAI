@@ -52,8 +52,9 @@ ArrayManager::ArrayManager() :
   m_allocators[UM] =
       new umpire::Allocator(m_resource_manager.getAllocator("UM"));
 #endif
+
 #if defined(CHAI_ENABLE_PINNED)
-#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+#if (defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)) && !defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
     m_allocators[PINNED] =
              new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
 #else
