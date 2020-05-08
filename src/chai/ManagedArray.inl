@@ -191,7 +191,10 @@ CHAI_HOST void ManagedArray<T>::allocate(
       if (space == PINNED) {
         m_pointer_record->m_last_space = PINNED;
         m_pointer_record->m_pointers[CPU] = m_active_pointer;
+
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
         m_pointer_record->m_pointers[GPU] = m_active_pointer;
+#endif
       }
 #endif
        CHAI_LOG(Debug, "m_active_base_ptr allocated at address: " << m_active_base_pointer);
