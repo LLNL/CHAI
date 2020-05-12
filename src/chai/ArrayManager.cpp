@@ -8,6 +8,10 @@
 
 #include "chai/config.hpp"
 
+#if defined(CHAI_ENABLE_CUDA)
+#include "cuda_runtime_api.h"
+#endif
+
 #include "umpire/ResourceManager.hpp"
 
 namespace chai
@@ -47,6 +51,16 @@ ArrayManager::ArrayManager() :
 #if defined(CHAI_ENABLE_UM)
   m_allocators[UM] =
       new umpire::Allocator(m_resource_manager.getAllocator("UM"));
+#endif
+
+#if defined(CHAI_ENABLE_PINNED)
+#if (defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)) && !defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+    m_allocators[PINNED] =
+             new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
+#else
+  m_allocators[PINNED] =
+      new umpire::Allocator(m_resource_manager.getAllocator("PINNED"));
+#endif
 #endif
 }
 
@@ -147,6 +161,12 @@ void ArrayManager::setExecutionSpace(ExecutionSpace space)
   CHAI_LOG(Debug, "Setting execution space to " << space);
   std::lock_guard<std::mutex> lock(m_mutex);
 
+#if defined(CHAI_ENABLE_PINNED)
+  if (chai::GPU == space) {
+    m_need_sync_for_pinned = true;
+  }
+#endif
+
   m_current_execution_space = space;
 }
 
@@ -209,17 +229,27 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
     return;
   }
 
+  callback(record, ACTION_CAPTURED, space);
+
+  if (space == record->m_last_space) {
+    return;
+  }
+
 #if defined(CHAI_ENABLE_UM)
   if (record->m_last_space == UM) {
     return;
   }
 #endif
 
-  callback(record, ACTION_CAPTURED, space);
-
-  if (space == record->m_last_space) {
+#if defined(CHAI_ENABLE_PINNED)
+  if (record->m_last_space == PINNED) {
+    if (space == CPU && m_need_sync_for_pinned) {
+      m_need_sync_for_pinned = false;
+      synchronize();
+    }
     return;
   }
+#endif
 
   void* src_pointer = record->m_pointers[record->m_last_space];
   void* dst_pointer = record->m_pointers[space];
@@ -231,7 +261,8 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 
   if (!record->m_touched[record->m_last_space]) {
     return;
-  } else {
+  } else if (dst_pointer != src_pointer) {
+    // Exclude the copy if src and dst are the same (can happen for PINNED memory)
     {
       std::lock_guard<std::mutex> lock(m_mutex);
       m_resource_manager.copy(dst_pointer, src_pointer);
@@ -273,8 +304,22 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
                      ACTION_FREE,
                      ExecutionSpace(UM));
 
+            auto alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[UM]);
+            alloc.deallocate(space_ptr);
+
+            for (int space_t = CPU; space_t < NUM_EXECUTION_SPACES; ++space_t) {
+              if (space_ptr == pointer_record->m_pointers[space_t])
+                pointer_record->m_pointers[space_t] = nullptr;
+            }
+          } else {
+#elif defined(CHAI_ENABLE_PINNED)
+          if (space_ptr == pointer_record->m_pointers[PINNED]) {
+            callback(pointer_record,
+                     ACTION_FREE,
+                     ExecutionSpace(PINNED));
+
             auto alloc = m_resource_manager.getAllocator(
-                pointer_record->m_allocators[space]);
+                pointer_record->m_allocators[PINNED]);
             alloc.deallocate(space_ptr);
 
             for (int space_t = CPU; space_t < NUM_EXECUTION_SPACES; ++space_t) {
@@ -292,7 +337,7 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
             alloc.deallocate(space_ptr);
 
             pointer_record->m_pointers[space] = nullptr;
-#if defined(CHAI_ENABLE_UM)
+#if defined(CHAI_ENABLE_UM) || defined(CHAI_ENABLE_PINNED)
           }
 #endif
         }

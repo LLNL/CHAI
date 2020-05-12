@@ -17,5 +17,6 @@
 #cmakedefine CHAI_ENABLE_GPU_ERROR_CHECKING
 #cmakedefine CHAI_ENABLE_RAJA_PLUGIN
 #cmakedefine CHAI_ENABLE_GPU_SIMULATION_MODE
+#cmakedefine CHAI_ENABLE_PINNED
 
 #endif // CHAI_config_HPP

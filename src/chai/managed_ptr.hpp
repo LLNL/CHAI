@@ -59,26 +59,6 @@
 #include <cstddef>
 #include <functional>
 
-#ifdef __CUDACC__
-
-#ifdef CHAI_ENABLE_GPU_ERROR_CHECKING
-
-inline void gpuErrorCheck(cudaError_t code, const char *file, int line, bool abort=true)
-{
-   if (code != cudaSuccess) {
-      fprintf(stderr, "[CHAI] GPU Error: %s %s %d\n", cudaGetErrorString(code), file, line);
-      if (abort) {
-         exit(code);
-      }
-   }
-}
-
-#define GPU_ERROR_CHECK(code) { gpuErrorCheck((code), __FILE__, __LINE__); }
-#else // CHAI_ENABLE_GPU_ERROR_CHECKING
-#define GPU_ERROR_CHECK(code) code
-#endif // CHAI_ENABLE_GPU_ERROR_CHECKING
-
-#endif // __CUDACC__
 
 namespace chai {
    namespace detail {
@@ -557,7 +537,7 @@ namespace chai {
 
 #ifndef CHAI_DISABLE_RM
                                  if (ArrayManager::getInstance()->deviceSynchronize()) {
-                                    GPU_ERROR_CHECK(cudaDeviceSynchronize());
+                                    synchronize();
                                  }
 #endif
                               }
@@ -589,7 +569,7 @@ namespace chai {
 
 #ifndef CHAI_DISABLE_RM
                               if (ArrayManager::getInstance()->deviceSynchronize()) {
-                                 GPU_ERROR_CHECK(cudaDeviceSynchronize());
+                                 synchronize();
                               }
 #endif
                            }
@@ -929,20 +909,20 @@ namespace chai {
 
          // Allocate space on the GPU to hold the pointer to the new object
          T** gpuBuffer;
-         GPU_ERROR_CHECK(cudaMalloc(&gpuBuffer, sizeof(T*)));
+         CHAI_GPU_ERROR_CHECK(cudaMalloc(&gpuBuffer, sizeof(T*)));
 
          // Create the object on the device
          make_on_device<<<1, 1>>>(gpuBuffer, args...);
 
 #ifndef CHAI_DISABLE_RM
          if (ArrayManager::getInstance()->deviceSynchronize()) {
-            GPU_ERROR_CHECK(cudaDeviceSynchronize());
+            synchronize();
          }
 #endif
 
          // Allocate space on the CPU for the pointer and copy the pointer to the CPU
          T** cpuBuffer = (T**) malloc(sizeof(T*));
-         GPU_ERROR_CHECK(cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(T*),
+         CHAI_GPU_ERROR_CHECK(cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(T*),
                                     cudaMemcpyDeviceToHost));
 
          // Get the GPU pointer
@@ -950,7 +930,7 @@ namespace chai {
 
          // Free the host and device buffers
          free(cpuBuffer);
-         GPU_ERROR_CHECK(cudaFree(gpuBuffer));
+         CHAI_GPU_ERROR_CHECK(cudaFree(gpuBuffer));
 
 #ifndef CHAI_DISABLE_RM
          // Set the execution space back to the previous value
@@ -987,20 +967,20 @@ namespace chai {
 
          // Allocate space on the GPU to hold the pointer to the new object
          T** gpuBuffer;
-         GPU_ERROR_CHECK(cudaMalloc(&gpuBuffer, sizeof(T*)));
+         CHAI_GPU_ERROR_CHECK(cudaMalloc(&gpuBuffer, sizeof(T*)));
 
          // Create the object on the device
          make_on_device_from_factory<T><<<1, 1>>>(gpuBuffer, f, args...);
 
 #ifndef CHAI_DISABLE_RM
          if (ArrayManager::getInstance()->deviceSynchronize()) {
-            GPU_ERROR_CHECK(cudaDeviceSynchronize());
+            synchronize();
          }
 #endif
 
          // Allocate space on the CPU for the pointer and copy the pointer to the CPU
          T** cpuBuffer = (T**) malloc(sizeof(T*));
-         GPU_ERROR_CHECK(cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(T*),
+         CHAI_GPU_ERROR_CHECK(cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(T*),
                                     cudaMemcpyDeviceToHost));
 
          // Get the GPU pointer
@@ -1008,7 +988,7 @@ namespace chai {
 
          // Free the host and device buffers
          free(cpuBuffer);
-         GPU_ERROR_CHECK(cudaFree(gpuBuffer));
+         CHAI_GPU_ERROR_CHECK(cudaFree(gpuBuffer));
 
 #ifndef CHAI_DISABLE_RM
          // Set the execution space back to the previous value

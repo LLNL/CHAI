@@ -22,9 +22,56 @@
 #include "umpire/Allocator.hpp"
 #include "umpire/util/MemoryMap.hpp"
 
+#if defined(CHAI_ENABLE_CUDA)
+#include <cuda_runtime_api.h>
+#endif
+#if defined(CHAI_ENABLE_HIP)
+#include <hip_runtime_api.h>
+#endif
 namespace chai
 {
+// CHAI_GPU_ERROR_CHECK macro
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 
+#ifdef CHAI_ENABLE_GPU_ERROR_CHECKING
+
+#ifdef CHAI_ENABLE_CUDA
+inline void gpuErrorCheck(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess) {
+      fprintf(stderr, "[CHAI] GPU Error: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) {
+         exit(code);
+      }
+   }
+}
+#elif CHAI_ENABLE_HIP
+inline void gpuErrorCheck(hipError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess) {
+      fprintf(stderr, "[CHAI] GPU Error: %s %s %d\n", hipGetErrorString(code), file, line);
+      if (abort) {
+         exit(code);
+      }
+   }
+}
+#endif
+
+
+#define CHAI_GPU_ERROR_CHECK(code) { gpuErrorCheck((code), __FILE__, __LINE__); }
+#else // CHAI_ENABLE_GPU_ERROR_CHECKING
+#define CHAI_GPU_ERROR_CHECK(code) code
+#endif // CHAI_ENABLE_GPU_ERROR_CHECKING
+
+#endif
+
+inline void synchronize() {
+#if defined (CHAI_ENABLE_HIP) &&!defined(__HIP_DEVICE_COMPILE__)
+   CHAI_GPU_ERROR_CHECK(hipDeviceSynchronize());
+#elif defined (CHAI_ENABLE_CUDA) &&!defined(__CUDA_ARCH__)
+   CHAI_GPU_ERROR_CHECK(cudaDeviceSynchronize());
+#endif
+}
 /*!
  * \brief Singleton that manages caching and movement of ManagedArray objects.
  *
@@ -422,6 +469,13 @@ private:
    * Whether or not to synchronize on device after every CHAI kernel.
    */
   bool m_device_synchronize = false;
+
+#if defined(CHAI_ENABLE_PINNED)
+  /*!
+   * Whether or not a synchronize is needed to ensure pinned memory is up to date.
+   */
+  bool m_need_sync_for_pinned = false;
+#endif
 };
 
 }  // end of namespace chai

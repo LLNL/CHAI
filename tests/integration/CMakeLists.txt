@@ -56,16 +56,18 @@ if (ENABLE_RAJA_PLUGIN)
     raja-chai-tests
     PUBLIC ${PROJECT_BINARY_DIR}/include)
 
-  blt_add_executable(
-    NAME raja-chai-nested-tests 
-    SOURCES raja-chai-nested.cpp
-    DEPENDS_ON ${raja_test_depends})
+  if (ENABLE_RAJA_NESTED_TEST)
+    blt_add_executable(
+      NAME raja-chai-nested-tests 
+      SOURCES raja-chai-nested.cpp
+      DEPENDS_ON ${raja_test_depends})
 
-  blt_add_test(
-    NAME raja-chai-nested-tests
-    COMMAND raja-chai-nested-tests)
+    blt_add_test(
+      NAME raja-chai-nested-tests
+      COMMAND raja-chai-nested-tests)
 
-  target_include_directories(
-    raja-chai-nested-tests
-    PUBLIC ${PROJECT_BINARY_DIR}/include)
+    target_include_directories(
+      raja-chai-nested-tests
+      PUBLIC ${PROJECT_BINARY_DIR}/include)
+  endif ()
 endif ()

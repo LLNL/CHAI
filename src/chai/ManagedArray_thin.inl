@@ -193,8 +193,8 @@ template <typename T>
 CHAI_INLINE CHAI_HOST_DEVICE typename ManagedArray<T>::T_non_const ManagedArray<
     T>::pick(size_t i) const
 {
-#if !defined(__CUDA_ARCH__) && defined(CHAI_ENABLE_UM)
-  cudaDeviceSynchronize();
+#ifdef CHAI_ENABLE_UM
+  synchronize();
 #endif
   return (T_non_const)m_active_pointer[i];
 }
@@ -202,8 +202,8 @@ CHAI_INLINE CHAI_HOST_DEVICE typename ManagedArray<T>::T_non_const ManagedArray<
 template <typename T>
 CHAI_INLINE CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const
 {
-#if !defined(__CUDA_ARCH__) && defined(CHAI_ENABLE_UM)
-  cudaDeviceSynchronize();
+#if defined(CHAI_ENABLE_UM)
+  synchronize();
 #endif
   m_active_pointer[i] = val;
 }
@@ -211,8 +211,8 @@ CHAI_INLINE CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const
 template <typename T>
 CHAI_INLINE CHAI_HOST_DEVICE void ManagedArray<T>::incr(size_t i) const
 {
-#if !defined(__CUDA_ARCH__) && defined(CHAI_ENABLE_UM)
-  cudaDeviceSynchronize();
+#if defined(CHAI_ENABLE_UM)
+   synchronize();
 #endif
   ++m_active_pointer[i];
 }
@@ -220,8 +220,8 @@ CHAI_INLINE CHAI_HOST_DEVICE void ManagedArray<T>::incr(size_t i) const
 template <typename T>
 CHAI_INLINE CHAI_HOST_DEVICE void ManagedArray<T>::decr(size_t i) const
 {
-#if !defined(__CUDA_ARCH__) && defined(CHAI_ENABLE_UM)
-  cudaDeviceSynchronize();
+#if defined(CHAI_ENABLE_UM)
+   synchronize();
 #endif
   --m_active_pointer[i];
 }
