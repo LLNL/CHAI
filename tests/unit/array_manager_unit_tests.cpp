@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-19, Lawrence Livermore National Security, LLC and CHAI
+// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
 // project contributors. See the COPYRIGHT file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
@@ -88,7 +88,7 @@ TEST(ArrayManager, controlCallbacks)
   // Allocate one array and set a callback
   size_t sizeOfArray = 5;
   chai::ManagedArray<int> array1(sizeOfArray, chai::CPU);
-  array1.setUserCallback([&] (chai::Action, chai::ExecutionSpace, std::size_t) {
+  array1.setUserCallback([&] (const chai::PointerRecord*, chai::Action, chai::ExecutionSpace) {
                            callbacksAreOn = true;
                          });
 
@@ -104,7 +104,7 @@ TEST(ArrayManager, controlCallbacks)
 
   // Allocate another array and set a callback
   chai::ManagedArray<int> array2(sizeOfArray, chai::CPU);
-  array2.setUserCallback([&] (chai::Action, chai::ExecutionSpace, std::size_t) {
+  array2.setUserCallback([&] (const chai::PointerRecord*, chai::Action, chai::ExecutionSpace) {
                            callbacksAreOn = true;
                          });
 
@@ -120,7 +120,7 @@ TEST(ArrayManager, controlCallbacks)
 
   // Allocate a third array and set a callback
   chai::ManagedArray<int> array3(sizeOfArray, chai::CPU);
-  array3.setUserCallback([&] (chai::Action, chai::ExecutionSpace, std::size_t) {
+  array3.setUserCallback([&] (const chai::PointerRecord*, chai::Action, chai::ExecutionSpace) {
                            callbacksAreOn = true;
                          });
 
@@ -129,6 +129,54 @@ TEST(ArrayManager, controlCallbacks)
 
   // Make sure the callback is called with ACTION_FREE
   array3.free();
+  ASSERT_TRUE(callbacksAreOn);
+}
+
+/*!
+ * \brief Tests to see if global callback can be turned on or off
+ */
+TEST(ArrayManager, controlGlobalCallback)
+{
+  // First check that callbacks are turned on by default
+  chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
+
+  // Variable for testing if callbacks are on or off
+  bool callbacksAreOn = false;
+
+  // Set a global callback
+  arrayManager->setGlobalUserCallback([&] (const chai::PointerRecord*, chai::Action, chai::ExecutionSpace) {
+                                        callbacksAreOn = true;
+                                      });
+
+  // Allocate an array and make sure the callback was called
+  size_t sizeOfArray = 5;
+  chai::ManagedArray<int> array(sizeOfArray, chai::CPU);
+  ASSERT_TRUE(callbacksAreOn);
+
+  // Now turn off callbacks
+  arrayManager->disableCallbacks();
+
+  // Reset the variable for testing if callbacks are on or off
+  callbacksAreOn = false;
+
+  // Realloc the array and make sure the callback was NOT called
+  array.reallocate(2 * sizeOfArray);
+  ASSERT_FALSE(callbacksAreOn);
+
+  // Now make sure the order doesn't matter for when the callback is set compared
+  // to when callbacks are enabled
+  arrayManager->setGlobalUserCallback([&] (const chai::PointerRecord*, chai::Action, chai::ExecutionSpace) {
+                                        callbacksAreOn = true;
+                                      });
+
+  // Reset the variable for testing if callbacks are on or off
+  callbacksAreOn = false;
+
+  // Turn on callbacks
+  arrayManager->enableCallbacks();
+
+  // Make sure the callback is called
+  array.free();
   ASSERT_TRUE(callbacksAreOn);
 }
 

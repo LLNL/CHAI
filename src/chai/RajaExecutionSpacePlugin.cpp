@@ -75,14 +75,32 @@ RajaExecutionSpacePlugin::postLaunch(RAJA::util::PluginContext)
 }
 
 }
+RAJA_INSTANTIATE_REGISTRY(RAJA::util::PluginRegistry);
+
+// this is needed to link a dynamic lib as RAJA does not provide an exported definition of this symbol.
+#if defined(_WIN32) && !defined(CHAISTATICLIB)
+#ifdef CHAISHAREDDLL_EXPORTS
+namespace RAJA
+{
+namespace util
+{
+
+PluginStrategy::PluginStrategy() = default;
+
+}  // namespace util
+}  // namespace RAJA
+#endif
+#endif
 
 // Register plugin with RAJA
 RAJA::util::PluginRegistry::Add<chai::RajaExecutionSpacePlugin> P(
      "RajaExecutionSpacePlugin",
      "Plugin to set CHAI execution space based on RAJA execution platform");
 
+
 namespace chai {
 
   void linkRajaPlugin() {}
 
 }
+

@@ -15,19 +15,30 @@ Here is a summary of the configuration options, their default value, and meaning
       ===========================  ======== ===============================================================================
       Variable                     Default  Meaning
       ===========================  ======== ===============================================================================
-      ENABLE_CUDA                  On       Enable CUDA support
+      ENABLE_CUDA                  Off      Enable CUDA support.
+      ENABLE_HIP                   Off      Enable HIP support.
+      ENABLE_GPU_SIMULATION_MODE   Off      Simulates GPU execution.
       ENABLE_UM                    Off      Enable support for CUDA Unified Memory.
       ENABLE_CNEM                  Off      Enable cnmem for GPU allocations
       ENABLE_IMPLICIT_CONVERSIONS  On       Enable implicit conversions between ManagedArray and raw pointers
       DISABLE_RM                   Off      Disable the ArrayManager and make ManagedArray a thin wrapper around a pointer.
-      ENABLE_TESTING               On       Build test executables
-      ENABLE_BENCHMARKS            On       Build benchmark programs
+      ENABLE_TESTING               On       Build test executables.
+      ENABLE_BENCHMARKS            On       Build benchmark programs.
       ===========================  ======== ===============================================================================
 
 These arguments are explained in more detail below:
 
 * ENABLE_CUDA
-  This option enables support for GPUs. If CHAI is built without CUDA support,
+  This option enables support for GPUs using CUDA. If CHAI is built without CUDA, HIP, or
+  GPU_SIMULATION_MODE support, then only the ``CPU`` execution space is available for use.
+
+* ENABLE_HIP
+  This option enables support for GPUs using HIP. If CHAI is built without CUDA, HIP, or
+  GPU_SIMULATION_MODE support, then only the ``CPU`` execution space is available for use.
+
+* ENABLE_GPU_SIMULATION_MODE
+  This option simulates GPU support by enabling the GPU execution space, backed by a HOST
+  umpire allocator. If CHAI is built without CUDA, HIP, or GPU_SIMULATION_MODE support, 
   then only the ``CPU`` execution space is available for use.
 
 * ENABLE_UM

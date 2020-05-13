@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-19, Lawrence Livermore National Security, LLC and CHAI
+// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
 // project contributors. See the COPYRIGHT file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
@@ -22,9 +22,56 @@
 #include "umpire/Allocator.hpp"
 #include "umpire/util/MemoryMap.hpp"
 
+#if defined(CHAI_ENABLE_CUDA)
+#include <cuda_runtime_api.h>
+#endif
+#if defined(CHAI_ENABLE_HIP)
+#include <hip_runtime_api.h>
+#endif
 namespace chai
 {
+// CHAI_GPU_ERROR_CHECK macro
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 
+#ifdef CHAI_ENABLE_GPU_ERROR_CHECKING
+
+#ifdef CHAI_ENABLE_CUDA
+inline void gpuErrorCheck(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess) {
+      fprintf(stderr, "[CHAI] GPU Error: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) {
+         exit(code);
+      }
+   }
+}
+#elif CHAI_ENABLE_HIP
+inline void gpuErrorCheck(hipError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess) {
+      fprintf(stderr, "[CHAI] GPU Error: %s %s %d\n", hipGetErrorString(code), file, line);
+      if (abort) {
+         exit(code);
+      }
+   }
+}
+#endif
+
+
+#define CHAI_GPU_ERROR_CHECK(code) { gpuErrorCheck((code), __FILE__, __LINE__); }
+#else // CHAI_ENABLE_GPU_ERROR_CHECKING
+#define CHAI_GPU_ERROR_CHECK(code) code
+#endif // CHAI_ENABLE_GPU_ERROR_CHECKING
+
+#endif
+
+inline void synchronize() {
+#if defined (CHAI_ENABLE_HIP) &&!defined(__HIP_DEVICE_COMPILE__)
+   CHAI_GPU_ERROR_CHECK(hipDeviceSynchronize());
+#elif defined (CHAI_ENABLE_CUDA) &&!defined(__CUDA_ARCH__)
+   CHAI_GPU_ERROR_CHECK(cudaDeviceSynchronize());
+#endif
+}
 /*!
  * \brief Singleton that manages caching and movement of ManagedArray objects.
  *
@@ -52,7 +99,7 @@ public:
 
   using PointerMap = umpire::util::MemoryMap<PointerRecord*>;
 
-  static PointerRecord s_null_record;
+  CHAISHAREDDLL_API static PointerRecord s_null_record;
 
   /*!
    * \brief Get the singleton instance.
@@ -60,7 +107,7 @@ public:
    * \return Pointer to the ArrayManager instance.
    *
    */
-  CHAI_HOST_DEVICE
+  CHAISHAREDDLL_API
   static ArrayManager* getInstance();
 
   /*!
@@ -68,14 +115,14 @@ public:
    *
    * \param space The space to set as current.
    */
-  void setExecutionSpace(ExecutionSpace space);
+  CHAISHAREDDLL_API void setExecutionSpace(ExecutionSpace space);
 
   /*!
    * \brief Get the current execution space.
    *
    * \return The current execution space.jo
    */
-  ExecutionSpace getExecutionSpace();
+  CHAISHAREDDLL_API ExecutionSpace getExecutionSpace();
 
   /*!
    * \brief Move data in pointer to the current execution space.
@@ -83,16 +130,16 @@ public:
    * \param pointer Pointer to data in any execution space.
    * \return Pointer to data in the current execution space.
    */
-  void* move(void* pointer,
-             PointerRecord* pointer_record,
-             ExecutionSpace = NONE);
+  CHAISHAREDDLL_API void* move(void* pointer,
+                               PointerRecord* pointer_record,
+                               ExecutionSpace = NONE);
 
   /*!
    * \brief Register a touch of the pointer in the current execution space.
    *
    * \param pointer Raw pointer to register a touch of.
    */
-  void registerTouch(PointerRecord* pointer_record);
+  CHAISHAREDDLL_API void registerTouch(PointerRecord* pointer_record);
 
   /*!
    * \brief Register a touch of the pointer in the given execution space.
@@ -102,7 +149,7 @@ public:
    * \param pointer Raw pointer to register a touch of.
    * \param space Space to register touch.
    */
-  void registerTouch(PointerRecord* pointer_record, ExecutionSpace space);
+  CHAISHAREDDLL_API void registerTouch(PointerRecord* pointer_record, ExecutionSpace space);
 
   /*!
    * \brief Make a new allocation of the data described by the PointerRecord in
@@ -111,7 +158,7 @@ public:
    * \param pointer_record
    * \param space Space in which to make the allocation.
    */
-  void allocate(PointerRecord* pointer_record, ExecutionSpace space = CPU);
+  CHAISHAREDDLL_API void allocate(PointerRecord* pointer_record, ExecutionSpace space = CPU);
 
   /*!
    * \brief Reallocate data.
@@ -125,7 +172,9 @@ public:
    * \return Pointer to the allocated memory.
    */
   template <typename T>
-  void* reallocate(void* pointer, size_t elems, PointerRecord* record);
+  void* reallocate(void* pointer,
+                   size_t elems,
+                   PointerRecord* record);
 
   /*!
    * \brief Set the default space for new ManagedArray allocations.
@@ -135,7 +184,7 @@ public:
    *
    * \param space New space for default allocations.
    */
-  void setDefaultAllocationSpace(ExecutionSpace space);
+  CHAISHAREDDLL_API void setDefaultAllocationSpace(ExecutionSpace space);
 
   /*!
    * \brief Get the currently set default allocation space.
@@ -144,19 +193,21 @@ public:
    *
    * \return Current default space for allocations.
    */
-  ExecutionSpace getDefaultAllocationSpace();
+  CHAISHAREDDLL_API ExecutionSpace getDefaultAllocationSpace();
 
   /*!
-   * \brief Free all allocations associated with the given PointerRecord.
+   * \brief Free allocation(s) associated with the given PointerRecord.
+   *        Default (space == NONE) will free all allocations and delete
+   *        the pointer record.
    */
-  void free(PointerRecord* pointer);
+  CHAISHAREDDLL_API void free(PointerRecord* pointer, ExecutionSpace space = NONE);
 
 #if defined(CHAI_ENABLE_PICK)
   template <typename T>
-  T_non_const<T> pick(T* src_ptr, size_t index);
+   T_non_const<T> pick(T* src_ptr, size_t index);
 
   template <typename T>
-  void set(T* dst_ptr, size_t index, const T& val);
+   void set(T* dst_ptr, size_t index, const T& val);
 #endif
 
   /*!
@@ -165,24 +216,31 @@ public:
    * \param pointer Pointer to find the size of.
    * \return Size of pointer.
    */
-  size_t getSize(void* pointer);
+  CHAISHAREDDLL_API size_t getSize(void* pointer);
 
-  PointerRecord* makeManaged(void* pointer,
-                             size_t size,
-                             ExecutionSpace space,
-                             bool owned);
+  CHAISHAREDDLL_API PointerRecord* makeManaged(void* pointer,
+                                               size_t size,
+                                               ExecutionSpace space,
+                                               bool owned);
 
   /*!
-   * \brief Assign a user-defined callback triggerd upon memory operations.
+   * \brief Assign a user-defined callback triggered upon memory operations.
+   *        This callback applies to a single ManagedArray.
    */
-  void setUserCallback(void* pointer, UserCallback const& f);
+  CHAISHAREDDLL_API void setUserCallback(void* pointer, UserCallback const& f);
+
+  /*!
+   * \brief Assign a user-defined callback triggered upon memory operations.
+   *        This callback applies to all ManagedArrays.
+   */
+  CHAISHAREDDLL_API void setGlobalUserCallback(UserCallback const& f);
 
   /*!
    * \brief Set touched to false in all spaces for the given PointerRecord.
    *
    * \param pointer_record PointerRecord to reset.
    */
-  void resetTouch(PointerRecord* pointer_record);
+  CHAISHAREDDLL_API void resetTouch(PointerRecord* pointer_record);
 
   /*!
    * \brief Find the PointerRecord corresponding to the raw pointer.
@@ -192,7 +250,7 @@ public:
    * \return PointerRecord containing the raw pointer, or an empty
    *         PointerRecord if none found.
    */
-  PointerRecord* getPointerRecord(void* pointer);
+  CHAISHAREDDLL_API PointerRecord* getPointerRecord(void* pointer);
 
   /*!
    * \brief Create a copy of the given PointerRecord with a new allocation
@@ -202,32 +260,90 @@ public:
    *
    * \return A copy of the given PointerRecord, must be free'd with delete.
    */
-  PointerRecord* deepCopyRecord(PointerRecord const* record);
+  CHAISHAREDDLL_API PointerRecord* deepCopyRecord(PointerRecord const* record);
 
   /*!
    * \brief Create a copy of the pointer map.
    *
    * \return A copy of the pointer map. Can be used to find memory leaks.
    */
-  std::unordered_map<void*, const PointerRecord*> getPointerMap() const;
+  CHAISHAREDDLL_API std::unordered_map<void*, const PointerRecord*> getPointerMap() const;
 
   /*!
    * \brief Get the total number of arrays registered with the array manager.
    *
    * \return The total number of arrays registered with the array manager.
    */
-  size_t getTotalNumArrays() const;
+  CHAISHAREDDLL_API size_t getTotalNumArrays() const;
 
   /*!
    * \brief Get the total amount of memory allocated.
    *
    * \return The total amount of memory allocated.
    */
-  size_t getTotalSize() const;
-
-  int getAllocatorId(ExecutionSpace space) const;
+  CHAISHAREDDLL_API size_t getTotalSize() const;
 
   /*!
+   * \brief Calls callbacks of pointers still in the map with ACTION_LEAKED.
+   */
+  CHAISHAREDDLL_API void reportLeaks() const;
+
+  /*!
+   * \brief Get the allocator ID
+   *
+   * \return The allocator ID.
+   */
+  CHAISHAREDDLL_API int getAllocatorId(ExecutionSpace space) const;
+
+  /*!
+   * \brief Wraps our resource manager's copy.
+   */
+  CHAISHAREDDLL_API void copy(void * dst, void * src, size_t size); 
+  
+  /*!
+   * \brief Registering an allocation with the ArrayManager
+   *
+   * \param record PointerRecord of this allocation.
+   * \param space Space in which the pointer was allocated.
+   * \param owned Should the allocation be free'd by CHAI?
+   */
+  CHAISHAREDDLL_API void registerPointer(PointerRecord* record,
+                                         ExecutionSpace space,
+                                         bool owned = true);
+
+  /*!
+   * \brief Deregister a PointerRecord from the ArrayManager.
+   *
+   * \param record PointerRecord of allocation to deregister.
+   * \param deregisterFromUmpire If true, deregister from umpire as well.
+   */
+  CHAISHAREDDLL_API void deregisterPointer(PointerRecord* record, bool deregisterFromUmpire=false);
+
+  /*!
+   * \brief Returns the front of the allocation associated with this pointer, nullptr if allocation not found.
+   *
+   * \param pointer Pointer to address of that we want the front of the allocation for.
+   */
+  CHAISHAREDDLL_API void * frontOfAllocation(void * pointer);
+
+  /*!
+   * \brief set the allocator for an execution space.
+   *
+   * \param space Execution space to set the default allocator for.
+   * \param allocator The allocator to use for this space. Will be copied into chai.
+   */
+  void setAllocator(ExecutionSpace space, umpire::Allocator &allocator);
+
+  /*!
+   * \brief Get the allocator for an execution space.
+   *
+   * \param space Execution space of the allocator to get.
+   *
+   * \return The allocator for the given space.
+   */
+  umpire::Allocator getAllocator(ExecutionSpace space);
+  
+ /*!
    * \brief Turn callbacks on.
    */
   void enableCallbacks() { m_callbacks_active = true; }
@@ -252,6 +368,16 @@ public:
    */
   bool deviceSynchronize() { return m_device_synchronize; }
 
+  /*!
+   * \brief Evicts the data in the given space.
+   *
+   * \param space Execution space to evict.
+   * \param destinationSpace The execution space to move the data to.
+   *                            Must not equal space or NONE.
+   */
+  CHAISHAREDDLL_API void evict(ExecutionSpace space, ExecutionSpace destinationSpace);
+
+
 protected:
   /*!
    * \brief Construct a new ArrayManager.
@@ -261,23 +387,10 @@ protected:
    */
   ArrayManager();
 
+
+
 private:
 
-  /*!
-   * \brief Registering an allocation with the ArrayManager
-   *
-   * \param record PointerRecord of this allocation.
-   * \param space Space in which the pointer was allocated.
-   * \param owned Should the allocation be free'd by CHAI?
-   */
-  void registerPointer(PointerRecord* record,
-                       ExecutionSpace space,
-                       bool owned = true);
-
-  /*!
-   * \brief Deregister a PointerRecord from the ArrayManager.
-   */
-  void deregisterPointer(PointerRecord* record);
 
   /*!
    * \brief Move data in PointerRecord to the corresponding ExecutionSpace.
@@ -286,8 +399,8 @@ private:
    * \param space
    */
   void move(PointerRecord* record, ExecutionSpace space);
-
-  /*!
+  
+    /*!
    * \brief Execute a user callback if callbacks are active
    *
    * \param record The pointer record containing the callback
@@ -295,12 +408,19 @@ private:
    * \param space The space in which the event occurred
    * \param size The number of bytes in the array associated with this pointer record
    */
-  inline void callback(PointerRecord* record,
+  inline void callback(const PointerRecord* record,
                        Action action,
-                       ExecutionSpace space,
-                       size_t size) const {
-     if (m_callbacks_active && record) {
-        record->m_user_callback(action, space, size);
+                       ExecutionSpace space) const {
+     if (m_callbacks_active) {
+        // Callback for this ManagedArray only
+        if (record && record->m_user_callback) {
+           record->m_user_callback(record, action, space);
+        }
+
+        // Callback for all ManagedArrays
+        if (m_user_callback) {
+           m_user_callback(record, action, space);
+        }
      }
   }
 
@@ -310,7 +430,7 @@ private:
   ExecutionSpace m_current_execution_space;
 
   /**
-   * Default space for new allocations
+   * Default space for new allocations.
    */
   ExecutionSpace m_default_allocation_space;
 
@@ -325,9 +445,20 @@ private:
    */
   umpire::Allocator* m_allocators[NUM_EXECUTION_SPACES];
 
+  /*!
+   * \brief The umpire resource manager.
+   */
   umpire::ResourceManager& m_resource_manager;
 
+  /*!
+   * \brief Used for thread-safe operations.
+   */
   mutable std::mutex m_mutex;
+
+  /*!
+   * \brief A callback triggered upon memory operations on all ManagedArrays.
+   */
+  UserCallback m_user_callback;
 
   /*!
    * \brief Controls whether or not callbacks are called.
@@ -338,6 +469,13 @@ private:
    * Whether or not to synchronize on device after every CHAI kernel.
    */
   bool m_device_synchronize = false;
+
+#if defined(CHAI_ENABLE_PINNED)
+  /*!
+   * Whether or not a synchronize is needed to ensure pinned memory is up to date.
+   */
+  bool m_need_sync_for_pinned = false;
+#endif
 };
 
 }  // end of namespace chai

@@ -14,7 +14,7 @@ RED="\033[1;31m"
 GREEN="\033[1;32m"
 NOCOLOR="\033[0m"
 
-files_no_license=$(grep -l '2016,' \
+files_no_license=$(grep -l '2016-19,' \
   benchmarks/**/*(^/) \
   cmake/**/*(^/) \
   docs/**/*~*rst(^/)\
@@ -28,7 +28,7 @@ if [ $files_no_license ]; then
   print "${RED} [!] Some files need copyright year updating: ${NOCOLOR}"
   echo "${files_no_license}"
 
-  echo ${files_no_license} | xargs sed -i '' 's/2016,/2016-2018,/'
+  echo ${files_no_license} | xargs sed -i '' 's/2016-19,/2016-20,/'
 
   print "${GREEN} [Ok] Copyright years updated."
 

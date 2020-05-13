@@ -1,5 +1,5 @@
 ##############################################################################
-# Copyright (c) 2016-19, Lawrence Livermore National Security, LLC and CHAI
+# Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
 # project contributors. See the COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
@@ -7,18 +7,23 @@
 cmake_policy(SET CMP0057 NEW)
 cmake_policy(SET CMP0048 NEW)
 
-project(Chai LANGUAGES CXX VERSION 2.0.0)
+project(Chai LANGUAGES CXX VERSION 2.1.0)
 
 set(ENABLE_CUDA Off CACHE BOOL "Enable CUDA")
 set(ENABLE_HIP Off CACHE BOOL "Enable HIP")
-set(ENABLE_OPENMP On CACHE BOOL "Enable OpenMP")
+set(ENABLE_GPU_SIMULATION_MODE Off CACHE BOOL "Enable GPU Simulation Mode")
+set(ENABLE_OPENMP OFF CACHE BOOL "Enable OpenMP")
+set(ENABLE_MPI Off CACHE BOOL "Enable MPI (for umpire replay only)")
 set(ENABLE_BENCHMARKS On CACHE BOOL "Enable benchmarks")
 option(ENABLE_IMPLICIT_CONVERSIONS "Enable implicit conversions to-from raw pointers" On)
 option(DISABLE_RM "Make ManagedArray a thin wrapper" Off)
 mark_as_advanced(DISABLE_RM)
 option(ENABLE_UM "Use CUDA unified (managed) memory" Off)
+option(ENABLE_PINNED "Use pinned host memory" Off)
 option(ENABLE_RAJA_PLUGIN "Build plugin to set RAJA execution spaces" Off)
 option(CHAI_ENABLE_GPU_ERROR_CHECKING "Enable GPU error checking" On)
+option(CHAI_DEBUG "Enable Debug Logging.")
+set(ENABLE_RAJA_NESTED_TEST ON CACHE BOOL "Enable raja-chai-nested-tests, which fails to build on Debug CUDA builds.")
 
 set(ENABLE_TESTS On CACHE BOOL "")
 set(ENABLE_EXAMPLES On CACHE BOOL "")
