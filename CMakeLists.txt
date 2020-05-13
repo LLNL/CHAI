@@ -1,5 +1,5 @@
 ##############################################################################
-# Copyright (c) 2016-19, Lawrence Livermore National Security, LLC and CHAI
+# Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
 # project contributors. See the COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
@@ -7,7 +7,7 @@
 cmake_policy(SET CMP0057 NEW)
 cmake_policy(SET CMP0048 NEW)
 
-project(Chai LANGUAGES CXX VERSION 2.0.0)
+project(Chai LANGUAGES CXX VERSION 2.1.0)
 
 set(ENABLE_CUDA Off CACHE BOOL "Enable CUDA")
 set(ENABLE_HIP Off CACHE BOOL "Enable HIP")
