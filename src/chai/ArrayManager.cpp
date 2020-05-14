@@ -56,10 +56,10 @@ ArrayManager::ArrayManager() :
 #if defined(CHAI_ENABLE_PINNED)
 #if (defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)) && !defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
     m_allocators[PINNED] =
-             new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
+             new umpire::Allocator(m_resource_manager.getAllocator("PINNED"));
 #else
   m_allocators[PINNED] =
-      new umpire::Allocator(m_resource_manager.getAllocator("PINNED"));
+      new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
 #endif
 #endif
 }
@@ -161,11 +161,9 @@ void ArrayManager::setExecutionSpace(ExecutionSpace space)
   CHAI_LOG(Debug, "Setting execution space to " << space);
   std::lock_guard<std::mutex> lock(m_mutex);
 
-#if defined(CHAI_ENABLE_PINNED)
   if (chai::GPU == space) {
-    m_need_sync_for_pinned = true;
+    m_synced_since_last_kernel = false;
   }
-#endif
 
   m_current_execution_space = space;
 }
@@ -243,9 +241,8 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 
 #if defined(CHAI_ENABLE_PINNED)
   if (record->m_last_space == PINNED) {
-    if (space == CPU && m_need_sync_for_pinned) {
-      m_need_sync_for_pinned = false;
-      synchronize();
+    if (space == CPU) {
+      syncIfNeeded();
     }
     return;
   }
