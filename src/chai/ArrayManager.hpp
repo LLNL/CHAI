@@ -369,6 +369,11 @@ public:
   bool deviceSynchronize() { return m_device_synchronize; }
 
   /*!
+   * \brief synchronioze the device if there hasn't been a synchronize since the last kernel
+   */
+  bool syncIfNeeded();
+
+  /*!
    * \brief Evicts the data in the given space.
    *
    * \param space Execution space to evict.
@@ -470,12 +475,11 @@ private:
    */
   bool m_device_synchronize = false;
 
-#if defined(CHAI_ENABLE_PINNED)
   /*!
-   * Whether or not a synchronize is needed to ensure pinned memory is up to date.
+   * Whether or not a synchronize has been performed since the launch of the last
+   * GPU context
    */
-  bool m_need_sync_for_pinned = false;
-#endif
+  bool m_synced_since_last_kernel = false;
 };
 
 }  // end of namespace chai
