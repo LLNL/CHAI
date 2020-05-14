@@ -112,6 +112,16 @@ CHAI_INLINE
 void ArrayManager::setAllocator(ExecutionSpace space, umpire::Allocator &allocator) {
    *m_allocators[space] = allocator;
 }
+
+CHAI_INLINE
+bool ArrayManager::syncIfNeeded() {
+  if (!m_synced_since_last_kernel) {
+     synchronize();
+     m_synced_since_last_kernel = true;
+     return true;
+  }
+  return false;
+}
 } // end of namespace chai
 
 #endif // CHAI_ArrayManager_INL
