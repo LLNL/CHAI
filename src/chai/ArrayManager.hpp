@@ -369,7 +369,7 @@ public:
   bool deviceSynchronize() { return m_device_synchronize; }
 
   /*!
-   * \brief synchronioze the device if there hasn't been a synchronize since the last kernel
+   * \brief synchronize the device if there hasn't been a synchronize since the last kernel
    */
   bool syncIfNeeded();
 
