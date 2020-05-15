@@ -72,7 +72,6 @@ blt_add_library(
   NAME chai
   SOURCES ${chai_sources}
   HEADERS ${chai_headers}
-  HEADERS_OUTPUT_SUBDIR chai
   DEPENDS_ON ${chai_depends})
 
 install(FILES ${chai_headers} DESTINATION include/chai/)
