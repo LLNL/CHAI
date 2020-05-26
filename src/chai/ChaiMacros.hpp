@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-19, Lawrence Livermore National Security, LLC and CHAI
+// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
 // project contributors. See the COPYRIGHT file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
@@ -44,7 +44,7 @@
 
 #else
 
-#if defined(DEBUG)
+#if defined(CHAI_DEBUG)
 
 #define CHAI_LOG(level, msg) \
   std::cerr << "[" << __FILE__ << "] " << msg << std::endl;

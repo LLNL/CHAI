@@ -1,5 +1,5 @@
 ##############################################################################
-# Copyright (c) 2016-19, Lawrence Livermore National Security, LLC and CHAI
+# Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
 # project contributors. See the COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
@@ -48,6 +48,9 @@ if (ENABLE_CUDA OR ENABLE_HIP)
     NAME resource-multi-array.exe
     SOURCES resource-multi-array.cpp
     DEPENDS_ON ${chai_umpire_example_depends})
-
+  blt_add_executable(
+    NAME pinned.exe
+    SOURCES pinned.cpp
+    DEPENDS_ON ${chai_umpire_example_depends})
 endif ()
 

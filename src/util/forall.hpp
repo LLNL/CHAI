@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-19, Lawrence Livermore National Security, LLC and CHAI
+// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
 // project contributors. See the COPYRIGHT file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
@@ -21,12 +21,14 @@ struct sequential {
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 struct gpu {
 };
+
+struct gpu_async {};
 #endif
 
 template <typename LOOP_BODY>
 void forall_kernel_cpu(int begin, int end, LOOP_BODY body)
 {
-  for (int i = 0; i < (end - begin); ++i) {
+  for (int i = begin; i < end; ++i) {
     body(i);
   }
 }
@@ -76,8 +78,28 @@ __global__ void forall_kernel_gpu(int start, int length, LOOP_BODY body)
   int idx = blockDim.x * blockIdx.x + threadIdx.x;
 
   if (idx < length) {
-    body(idx);
+    body(idx+start);
   }
+}
+
+template <typename LOOP_BODY>
+void forall(gpu_async, int begin, int end, LOOP_BODY&& body)
+{
+  chai::ArrayManager* rm = chai::ArrayManager::getInstance();
+
+  rm->setExecutionSpace(chai::GPU);
+
+  size_t blockSize = 32;
+  size_t gridSize = (end - begin + blockSize - 1) / blockSize;
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+  forall_kernel_cpu(begin, end, body);
+#elif defined(CHAI_ENABLE_CUDA)
+  forall_kernel_gpu<<<gridSize, blockSize>>>(begin, end - begin, body);
+#elif defined(CHAI_ENABLE_HIP)
+  hipLaunchKernelGGL(forall_kernel_gpu, dim3(gridSize), dim3(blockSize), 0,0,
+                     begin, end - begin, body);
+#endif
+  rm->setExecutionSpace(chai::NONE);
 }
 
 /*
@@ -93,7 +115,9 @@ void forall(gpu, int begin, int end, LOOP_BODY&& body)
   size_t blockSize = 32;
   size_t gridSize = (end - begin + blockSize - 1) / blockSize;
 
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+  forall_kernel_cpu(begin, end, body);
+#elif defined(CHAI_ENABLE_CUDA)
   forall_kernel_gpu<<<gridSize, blockSize>>>(begin, end - begin, body);
   cudaDeviceSynchronize();
 #elif defined(CHAI_ENABLE_HIP)

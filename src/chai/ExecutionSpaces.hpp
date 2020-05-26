@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-19, Lawrence Livermore National Security, LLC and CHAI
+// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
 // project contributors. See the COPYRIGHT file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
@@ -28,6 +28,9 @@ enum ExecutionSpace {
 #if defined(CHAI_ENABLE_UM)
   UM,
 #endif
+#if defined(CHAI_ENABLE_PINNED)
+  PINNED,
+#endif
   // NUM_EXECUTION_SPACES should always be last!
   /*! Used to count total number of spaces */
   NUM_EXECUTION_SPACES
@@ -36,6 +39,9 @@ enum ExecutionSpace {
 #endif
 #if !defined(CHAI_ENABLE_UM)
   ,UM
+#endif
+#if !defined(CHAI_ENABLE_PINNED)
+  ,PINNED
 #endif
 };
 

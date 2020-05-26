@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-19, Lawrence Livermore National Security, LLC and CHAI
+// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
 // project contributors. See the COPYRIGHT file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
@@ -58,10 +58,23 @@ struct PointerRecord {
 
   int m_allocators[NUM_EXECUTION_SPACES];
 
-
   bool transfer_pending;
   camp::resources::Event m_event;
   camp::resources::Resource* m_last_resource = nullptr;
+
+  /*!
+   * \brief Default constructor
+   *
+   */
+  PointerRecord() : m_size(0), m_last_space(NONE) { 
+     m_user_callback = [] (const PointerRecord*, Action, ExecutionSpace) {};
+     for (int space = 0; space < NUM_EXECUTION_SPACES; ++space ) {
+        m_pointers[space] = nullptr;
+        m_touched[space] = false;
+        m_owned[space] = true;
+        m_allocators[space] = 0;
+     }
+  }
 };
 
 }  // end of namespace chai
