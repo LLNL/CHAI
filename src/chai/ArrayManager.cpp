@@ -36,11 +36,7 @@ ArrayManager::ArrayManager() :
   m_default_allocation_space = CPU;
 
   m_allocators[CPU] =
-#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-      new umpire::Allocator(m_resource_manager.getAllocator("PINNED"));
-#else
       new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
-#endif
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
