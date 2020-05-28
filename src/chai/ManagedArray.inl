@@ -437,7 +437,24 @@ CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
      if (m_pointer_record == nullptr || m_pointer_record == &ArrayManager::s_null_record) {
         CHAI_LOG(Warning, "nullptr pointer_record associated with non-nullptr active_pointer")
      }
+
      ExecutionSpace prev_space = m_resource_manager->getExecutionSpace();
+
+     bool check_touched = ( false
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+        || m_pointer_record->m_touched[GPU]
+#endif
+#if defined(CHAI_ENABLE_UM)
+        || m_pointer_record->m_touched[UM]
+#endif
+#if defined(CHAI_ENABLE_PINNED)
+        || m_pointer_record->m_touched[PINNED]
+#endif
+      );
+
+     if (!check_touched)
+       return m_active_pointer;
+       
      m_resource_manager->setExecutionSpace(CPU);
      move(CPU);
 
