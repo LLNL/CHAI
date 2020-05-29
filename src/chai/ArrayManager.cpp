@@ -69,6 +69,7 @@ void ArrayManager::registerPointer(
    ExecutionSpace space,
    bool owned)
 {
+  std::lock_guard<std::mutex> lock(m_mutex);
   auto pointer = record->m_pointers[space];
 
   // if we are registering a new pointer record for a pointer where there is already
@@ -127,6 +128,7 @@ void ArrayManager::registerPointer(
 
 void ArrayManager::deregisterPointer(PointerRecord* record, bool deregisterFromUmpire)
 {
+  std::lock_guard<std::mutex> lock(m_mutex);
   for (int i = 0; i < NUM_EXECUTION_SPACES; i++) {
     void * pointer = record->m_pointers[i];
     if (pointer) {
@@ -338,6 +340,7 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
         }
         {
           CHAI_LOG(Debug, "DeRegistering " << space_ptr);
+          std::lock_guard<std::mutex> lock(m_mutex);
           m_pointer_map.erase(space_ptr);
         }
       }
@@ -381,6 +384,7 @@ void ArrayManager::setGlobalUserCallback(UserCallback const& f)
 
 PointerRecord* ArrayManager::getPointerRecord(void* pointer)
 {
+  std::lock_guard<std::mutex> lock(m_mutex);
   auto record = m_pointer_map.find(pointer);
   return record->second ? *record->second : &s_null_record;
 }
@@ -458,6 +462,7 @@ PointerRecord* ArrayManager::deepCopyRecord(PointerRecord const* record)
 std::unordered_map<void*, const PointerRecord*>
 ArrayManager::getPointerMap() const
 {
+  std::lock_guard<std::mutex> lock(m_mutex);
   std::unordered_map<void*, const PointerRecord*> mapCopy;
 
   for (const auto& entry : m_pointer_map) {
@@ -473,6 +478,7 @@ size_t ArrayManager::getTotalNumArrays() const { return m_pointer_map.size(); }
 // possible
 size_t ArrayManager::getTotalSize() const
 {
+  std::lock_guard<std::mutex> lock(m_mutex);
   size_t total = 0;
 
   for (const auto& entry : m_pointer_map) {
@@ -484,6 +490,7 @@ size_t ArrayManager::getTotalSize() const
 
 void ArrayManager::reportLeaks() const
 {
+  std::lock_guard<std::mutex> lock(m_mutex);
   for (const auto& entry : m_pointer_map) {
     const void* pointer = entry.first;
     const PointerRecord* record = *entry.second;
@@ -524,7 +531,7 @@ void ArrayManager::evict(ExecutionSpace space, ExecutionSpace destinationSpace) 
 
    // Now move and evict
    std::vector<PointerRecord*> pointersToEvict;
-
+   std::lock_guard<std::mutex> lock(m_mutex);
    for (const auto& entry : m_pointer_map) {
       // Get the pointer record
       auto record = *entry.second;
