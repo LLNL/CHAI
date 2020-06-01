@@ -54,9 +54,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
   ManagedArray()
 {
 #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
-
   this->allocate(elems, space);
-
 #endif
 }
 
@@ -111,7 +109,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
   m_is_slice(other.m_is_slice)
 {
 #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
-  if (m_active_base_pointer) {
+  if (m_active_base_pointer || m_elems > 0 ) {
      // we only update m_elems if we are not null and we have a pointer record
      if (m_pointer_record) {
         m_elems = m_pointer_record->m_size/sizeof(T);
@@ -154,9 +152,6 @@ CHAI_HOST void ManagedArray<T>::allocate(
      if (elems > 0) {
        CHAI_LOG(Debug, "Allocating array of size " << elems << " in space " << space);
 
-       if (space == NONE) {
-          space = m_resource_manager->getDefaultAllocationSpace();
-       }
        if (m_pointer_record == &ArrayManager::s_null_record) {
          // since we are about to allocate, this will get registered
          m_pointer_record = new PointerRecord();
@@ -170,9 +165,13 @@ CHAI_HOST void ManagedArray<T>::allocate(
        m_elems = elems;
        m_pointer_record->m_size = sizeof(T)*elems;
 
-       m_resource_manager->allocate(m_pointer_record, space);
-
-       m_active_base_pointer = static_cast<T*>(m_pointer_record->m_pointers[space]);
+       if (space != NONE) {
+         m_resource_manager->allocate(m_pointer_record, space);
+         m_active_base_pointer = static_cast<T*>(m_pointer_record->m_pointers[space]);
+       } else {
+         m_active_base_pointer = nullptr;
+         m_pointer_record->m_pointers[space] = nullptr;
+       }
        m_active_pointer = m_active_base_pointer; // Cannot be a slice
 
        // if T is a CHAICopyable, then it is important to initialize all the
