@@ -159,7 +159,6 @@ void * ArrayManager::frontOfAllocation(void * pointer) {
 void ArrayManager::setExecutionSpace(ExecutionSpace space)
 {
   CHAI_LOG(Debug, "Setting execution space to " << space);
-  std::lock_guard<std::mutex> lock(m_mutex);
 
   if (chai::GPU == space) {
     m_synced_since_last_kernel = false;
@@ -203,7 +202,6 @@ void ArrayManager::registerTouch(PointerRecord* pointer_record,
 
      if (space != NONE) {
        CHAI_LOG(Debug, pointer_record->m_pointers[space] << " touched in space " << space);
-       std::lock_guard<std::mutex> lock(m_mutex);
        pointer_record->m_touched[space] = true;
        pointer_record->m_last_space = space;
      }
@@ -214,7 +212,6 @@ void ArrayManager::registerTouch(PointerRecord* pointer_record,
 void ArrayManager::resetTouch(PointerRecord* pointer_record)
 {
   if (pointer_record && pointer_record!= &s_null_record) {
-    std::lock_guard<std::mutex> lock(m_mutex);
     for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
       pointer_record->m_touched[space] = false;
     }
@@ -261,7 +258,6 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   } else if (dst_pointer != src_pointer) {
     // Exclude the copy if src and dst are the same (can happen for PINNED memory)
     {
-      std::lock_guard<std::mutex> lock(m_mutex);
       m_resource_manager.copy(dst_pointer, src_pointer);
     }
 
@@ -343,8 +339,8 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
           m_resource_manager.deregisterAllocation(space_ptr);
         }
         {
-          std::lock_guard<std::mutex> lock(m_mutex);
           CHAI_LOG(Debug, "DeRegistering " << space_ptr);
+          std::lock_guard<std::mutex> lock(m_mutex);
           m_pointer_map.erase(space_ptr);
         }
       }
@@ -466,9 +462,9 @@ PointerRecord* ArrayManager::deepCopyRecord(PointerRecord const* record)
 std::unordered_map<void*, const PointerRecord*>
 ArrayManager::getPointerMap() const
 {
+  std::lock_guard<std::mutex> lock(m_mutex);
   std::unordered_map<void*, const PointerRecord*> mapCopy;
 
-  std::lock_guard<std::mutex> lock(m_mutex);
   for (const auto& entry : m_pointer_map) {
     mapCopy[entry.first] = *entry.second;
   }
@@ -482,9 +478,9 @@ size_t ArrayManager::getTotalNumArrays() const { return m_pointer_map.size(); }
 // possible
 size_t ArrayManager::getTotalSize() const
 {
+  std::lock_guard<std::mutex> lock(m_mutex);
   size_t total = 0;
 
-  std::lock_guard<std::mutex> lock(m_mutex);
   for (const auto& entry : m_pointer_map) {
     total += (*entry.second)->m_size;
   }
@@ -494,6 +490,7 @@ size_t ArrayManager::getTotalSize() const
 
 void ArrayManager::reportLeaks() const
 {
+  std::lock_guard<std::mutex> lock(m_mutex);
   for (const auto& entry : m_pointer_map) {
     const void* pointer = entry.first;
     const PointerRecord* record = *entry.second;
@@ -534,7 +531,7 @@ void ArrayManager::evict(ExecutionSpace space, ExecutionSpace destinationSpace) 
 
    // Now move and evict
    std::vector<PointerRecord*> pointersToEvict;
-
+   std::lock_guard<std::mutex> lock(m_mutex);
    for (const auto& entry : m_pointer_map) {
       // Get the pointer record
       auto record = *entry.second;

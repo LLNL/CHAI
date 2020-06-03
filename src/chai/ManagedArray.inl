@@ -411,7 +411,7 @@ void ManagedArray<T>::move(ExecutionSpace space) const
 #endif
      if (!std::is_const<T>::value) {
        CHAI_LOG(Debug, "T is non-const, registering touch of pointer" << m_active_pointer);
-       m_resource_manager->registerTouch(m_pointer_record);
+       m_resource_manager->registerTouch(m_pointer_record, space);
      }
      if (space != GPU && prev_space == GPU) {
         /// Move nested ManagedArrays after the move, so they are working with a valid m_active_pointer for the host,
@@ -437,15 +437,8 @@ CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
      if (m_pointer_record == nullptr || m_pointer_record == &ArrayManager::s_null_record) {
         CHAI_LOG(Warning, "nullptr pointer_record associated with non-nullptr active_pointer")
      }
-     ExecutionSpace prev_space = m_resource_manager->getExecutionSpace();
-     m_resource_manager->setExecutionSpace(CPU);
+
      move(CPU);
-
-     // always touch regarless of constness of type (don't trust the application not to const-cast)
-     m_resource_manager->registerTouch(m_pointer_record);
-
-     // Reset to whatever space we rode in on
-     m_resource_manager->setExecutionSpace(prev_space);
   }
 
   if (m_elems == 0 && !m_is_slice) {
