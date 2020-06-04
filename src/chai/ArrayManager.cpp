@@ -36,7 +36,11 @@ ArrayManager::ArrayManager() :
   m_default_allocation_space = CPU;
 
   m_allocators[CPU] =
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+      new umpire::Allocator(m_resource_manager.getAllocator("PINNED"));
+#else
       new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
+#endif
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
@@ -257,55 +261,12 @@ void ArrayManager::resetTouch(PointerRecord* pointer_record)
 
 void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 {
-  if (space == NONE) {
-    return;
-  }
-
-  callback(record, ACTION_CAPTURED, space);
-
-  if (space == record->m_last_space) {
-    return;
-  }
-
-#if defined(CHAI_ENABLE_UM)
-  if (record->m_last_space == UM) {
-    return;
-  }
-#endif
-
-#if defined(CHAI_ENABLE_PINNED)
-  if (record->m_last_space == PINNED) {
-    if (space == CPU) {
-      syncIfNeeded();
-    }
-    return;
-  }
-#endif
-
-  void* src_pointer = record->m_pointers[record->m_last_space];
-  void* dst_pointer = record->m_pointers[space];
-
-  if (!dst_pointer) {
-    allocate(record, space);
-    dst_pointer = record->m_pointers[space];
-  }
-
-  if (!record->m_touched[record->m_last_space]) {
-    return;
-  } else if (dst_pointer != src_pointer) {
-    // Exclude the copy if src and dst are the same (can happen for PINNED memory)
-    {
-      std::lock_guard<std::mutex> lock(m_mutex);
-      m_resource_manager.copy(dst_pointer, src_pointer);
-    }
-
-    callback(record, ACTION_MOVE, space);
-  }
-
-  resetTouch(record);
+  move(record,space,nullptr);
 }
+
 void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resources::Resource* resource)
 {
+
   if (space == NONE) {
     return;
   }
@@ -341,40 +302,47 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
 
   if (!record->m_touched[record->m_last_space]) {
     return;
-  } else if (dst_pointer != src_pointer) {
-    // Exclude the copy if src and dst are the same (can happen for PINNED memory)
-    {
-      std::lock_guard<std::mutex> lock(m_mutex);
-      m_resource_manager.copy(dst_pointer, src_pointer);
-    }
-
-    callback(record, ACTION_MOVE, space);
-
   } else {
-    callback(record, ACTION_MOVE, space);
-    std::lock_guard<std::mutex> lock(m_mutex);
+    // Logical flow for when we are using resources.
+    // This is terrible and needs re-evaluation.
+    if (resource){
+      callback(record, ACTION_MOVE, space);
+      std::lock_guard<std::mutex> lock(m_mutex);
 
-    if (record->transfer_pending) {
-      resource->wait_for(&record->m_event);
-      record->transfer_pending = false;
-      return;
+      if (record->transfer_pending) {
+        resource->wait_for(&record->m_event);
+        record->transfer_pending = false;
+        return;
+      }
+
+      camp::resources::Resource* res;
+      if (space == chai::CPU){
+        res = record->m_last_resource;
+      }else{
+        res = resource;
+      }
+
+      if (res == nullptr){
+        m_resource_manager.copy(dst_pointer, src_pointer);
+        return;
+      }
+
+      auto e = m_resource_manager.copy(dst_pointer, src_pointer, *res);
+      record->transfer_pending = true;
+      record->m_event = e;
+
+    // Default logical flow when not using non resource move.
+    } else {
+      if (dst_pointer != src_pointer) {
+        // Exclude the copy if src and dst are the same (can happen for PINNED memory)
+        {
+          std::lock_guard<std::mutex> lock(m_mutex);
+          m_resource_manager.copy(dst_pointer, src_pointer);
+        }
+
+        callback(record, ACTION_MOVE, space);
+      }
     }
-
-    camp::resources::Resource* res;
-    if (space == chai::CPU){
-      res = record->m_last_resource;
-    }else{
-      res = resource;
-    }
-
-    if (res == nullptr){
-      m_resource_manager.copy(dst_pointer, src_pointer);
-      return;
-    }
-
-    auto e = m_resource_manager.copy(dst_pointer, src_pointer, *res);
-    record->transfer_pending = true;
-    record->m_event = e;
   }
 
   resetTouch(record);

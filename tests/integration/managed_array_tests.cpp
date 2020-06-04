@@ -779,7 +779,12 @@ TEST(ManagedArray, ExternalConstructorUnowned)
 
 TEST(ManagedArray, ExternalConstructorOwned)
 {
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+  float* data;
+  cudaMallocHost(&data, 20*sizeof(float));
+#else
   float* data = static_cast<float*>(std::malloc(20 * sizeof(float)));
+#endif
 
   for (int i = 0; i < 20; i++) {
     data[i] = 1.0f * i;
@@ -796,7 +801,9 @@ TEST(ManagedArray, ExternalConstructorOwned)
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 GPU_TEST(ManagedArray, ExternalUnownedMoveToGPU)
 {
-  float data[20];
+  float* data;
+  cudaMallocHost(&data, 20*sizeof(float));
+
   for (int i = 0; i < 20; i++) {
     data[i] = 0.;
   }
