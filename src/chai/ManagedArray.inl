@@ -388,7 +388,8 @@ template <typename T>
 CHAI_INLINE
 CHAI_HOST
 void ManagedArray<T>::move(ExecutionSpace space) const
-{
+{ 
+  std::cout<< "ManageArray Move Null res" << std::endl;
   if (m_pointer_record != &ArrayManager::s_null_record) {
      ExecutionSpace prev_space = m_pointer_record->m_last_space;
      if (prev_space == CPU || prev_space == NONE) {

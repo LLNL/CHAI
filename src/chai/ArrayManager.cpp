@@ -37,7 +37,7 @@ ArrayManager::ArrayManager() :
 
   m_allocators[CPU] =
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
-      new umpire::Allocator(m_resource_manager.getAllocator("PINNED"));
+      new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
 #else
       new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
 #endif
@@ -261,6 +261,7 @@ void ArrayManager::resetTouch(PointerRecord* pointer_record)
 
 void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 {
+  std::cout<< "Resource null"<<std::endl;
   move(record,space,nullptr);
 }
 
@@ -283,14 +284,14 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
     return;
   }
 
-#if defined(CHAI_ENABLE_PINNED)
-  if (record->m_last_space == PINNED) {
-    if (space == CPU) {
-      syncIfNeeded();
-    }
-    return;
-  }
-#endif
+//#if defined(CHAI_ENABLE_PINNED)
+//  if (record->m_last_space == PINNED) {
+//    if (space == CPU) {
+//      syncIfNeeded();
+//    }
+//    return;
+//  }
+//#endif
 
   void* src_pointer = record->m_pointers[record->m_last_space];
   void* dst_pointer = record->m_pointers[space];
@@ -306,11 +307,12 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
     // Logical flow for when we are using resources.
     // This is terrible and needs re-evaluation.
     if (resource){
-      callback(record, ACTION_MOVE, space);
       std::lock_guard<std::mutex> lock(m_mutex);
 
       if (record->transfer_pending) {
         resource->wait_for(&record->m_event);
+        //record->m_event.wait();
+        std::cout<< " - "<<record->name<<" Resource copy end" << std::endl;
         record->transfer_pending = false;
         return;
       }
@@ -324,15 +326,21 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
 
       if (res == nullptr){
         m_resource_manager.copy(dst_pointer, src_pointer);
+        std::cout << " + res null ";
+        callback(record, ACTION_MOVE, space);
         return;
       }
 
       auto e = m_resource_manager.copy(dst_pointer, src_pointer, *res);
+      std::cout<< " - "<<record->name<<" Resource copy start" << std::endl;
+      callback(record, ACTION_MOVE, space);
       record->transfer_pending = true;
       record->m_event = e;
 
     // Default logical flow when not using non resource move.
     } else {
+      std::cout<< "Resource null 2"<<std::endl;
+
       if (dst_pointer != src_pointer) {
         // Exclude the copy if src and dst are the same (can happen for PINNED memory)
         {
