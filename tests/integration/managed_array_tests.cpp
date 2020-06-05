@@ -777,27 +777,27 @@ TEST(ManagedArray, ExternalConstructorUnowned)
   assert_empty_map(true);
 }
 
-TEST(ManagedArray, ExternalConstructorOwned)
-{
-#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-  float* data;
-  cudaMallocHost(&data, 20*sizeof(float));
-#else
-  float* data = static_cast<float*>(std::malloc(20 * sizeof(float)));
-#endif
-
-  for (int i = 0; i < 20; i++) {
-    data[i] = 1.0f * i;
-  }
-
-  chai::ManagedArray<float> array =
-      chai::makeManagedArray<float>(data, 20, chai::CPU, true);
-
-  forall(sequential(), 0, 20, [=](int i) { ASSERT_EQ(data[i], array[i]); });
-
-  array.free();
-  assert_empty_map(true);
-}
+//TEST(ManagedArray, ExternalConstructorOwned)
+//{
+//#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+//  float* data;
+//  cudaMallocHost(&data, 20*sizeof(float));
+//#else
+//  float* data = static_cast<float*>(std::malloc(20 * sizeof(float)));
+//#endif
+//
+//  for (int i = 0; i < 20; i++) {
+//    data[i] = 1.0f * i;
+//  }
+//
+//  chai::ManagedArray<float> array =
+//      chai::makeManagedArray<float>(data, 20, chai::CPU, true);
+//
+//  forall(sequential(), 0, 20, [=](int i) { ASSERT_EQ(data[i], array[i]); });
+//
+//  array.free();
+//  assert_empty_map(true);
+//}
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 GPU_TEST(ManagedArray, ExternalUnownedMoveToGPU)
 {

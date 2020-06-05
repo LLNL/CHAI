@@ -44,6 +44,21 @@ enum ExecutionSpace {
   ,PINNED
 #endif
 };
+static std::vector<char*> PrintExecSpace = { 
+  (char *)"NONE",
+  (char *)"CPU",
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+  (char *)"GPU",
+#endif
+#if defined(CHAI_ENABLE_UM)
+  (char *)"UM",
+#endif
+#if defined(CHAI_ENABLE_PINNED)
+  (char *)"PINNED",
+#endif
+  (char *)"NUM_EXECUTION_SPACES"
+};
+
 
 inline bool operator==(const ExecutionSpace& s, const camp::resources::Platform& p) {
   if(s == chai::CPU && p == camp::resources::Platform::host) return true;

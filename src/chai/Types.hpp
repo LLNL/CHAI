@@ -9,6 +9,7 @@
 
 // Std library headers
 #include <functional>
+#include <vector>
 
 // CHAI headers
 #include "chai/ExecutionSpaces.hpp"
@@ -30,6 +31,14 @@ namespace chai
   typedef unsigned int uint;
 
   enum Action { ACTION_ALLOC, ACTION_FREE, ACTION_MOVE, ACTION_CAPTURED, ACTION_FOUND_ABANDONED, ACTION_LEAKED };
+  static std::vector<char*> PrintAction = { 
+    (char *)"ACTION_ALLOC",
+    (char *)"ACTION_FREE",
+    (char *)"ACTION_MOVE",
+    (char *)"ACTION_CAPTURED",
+    (char *)"ACTION_FOUND_ABANDONED",
+    (char *)"ACTION_LEAKED"
+  };
 
   using UserCallback = std::function<void(const PointerRecord*, Action, ExecutionSpace)>;
 } // end of namespace chai
