@@ -19,12 +19,33 @@
 #ifdef CHAI_ENABLE_CUDA
 GPU_TEST(ManagedArray, Simple)
 {
+  auto callBack = [&](const chai::PointerRecord* record, chai::Action act, chai::ExecutionSpace s)
+  {
+    const size_t bytes = record->m_size;
+    printf("cback: act=%s, space=%s, bytes=%ld\n", chai::PrintAction[(int) act], chai::PrintExecSpace[(int) s], (long) bytes);
+    if (act == chai::ACTION_MOVE)
+    {
+      if (s == chai::CPU)
+      {
+        printf("Moved to host\n");
+      }
+      else if (s == chai::GPU)
+      {
+        printf("Moved to device\n");
+      }
+    }
+    if (act == chai::ACTION_FOUND_ABANDONED) {
+       printf("in abandoned!\n");
+       ASSERT_EQ(false,true);
+    }
+  };
   constexpr std::size_t ARRAY_SIZE{1024};
 
   camp::resources::Resource host{camp::resources::Host{}};
   camp::resources::Resource device{camp::resources::Cuda{}};
 
   chai::ManagedArray<double> array(ARRAY_SIZE);
+  array.setUserCallback(callBack);
 
   forall(&host, 0, ARRAY_SIZE, [=] __host__ __device__ (int i) {
       array[i] = i;
@@ -33,6 +54,8 @@ GPU_TEST(ManagedArray, Simple)
   forall(&device, 0, ARRAY_SIZE, [=] __host__ __device__ (int i) {
       array[i] = array[i] * 2.0;
   });
+
+  array.move(chai::CPU, &device);
 
   // print on host
   forall(&host, 0, ARRAY_SIZE, [=] __host__ __device__ (int i) {
