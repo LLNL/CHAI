@@ -41,15 +41,40 @@ int get_clockrate()
 
 int main()
 {
+  auto callBack = [&](const chai::PointerRecord* record, chai::Action act, chai::ExecutionSpace s)
+  {
+    const size_t bytes = record->m_size;
+    printf("%s cback: act=%s, space=%s, bytes=%ld\n", record->name.c_str(), chai::PrintAction[(int) act], chai::PrintExecSpace[(int) s], (long) bytes);
+    if (act == chai::ACTION_MOVE)
+    {
+      if (s == chai::CPU)
+      {
+        printf("Moved to host\n");
+      }
+      else if (s == chai::GPU)
+      {
+        printf("Moved to device\n");
+      }
+    }
+    if (act == chai::ACTION_FOUND_ABANDONED) {
+       printf("in abandoned!\n");
+       //ASSERT_EQ(false,true);
+    }
+  };
+
   constexpr std::size_t ARRAY_SIZE{100};
   std::vector<chai::ManagedArray<double>> arrays;
   camp::resources::Resource host{camp::resources::Host{}}; 
+
 
   int clockrate{get_clockrate()};
 
   for (std::size_t i = 0; i < 10; ++i) {
     arrays.push_back(chai::ManagedArray<double>(ARRAY_SIZE));
+    arrays[i].m_pointer_record->name = "array "+ std::to_string(i);
+    arrays[i].setUserCallback(callBack);
   }
+
 
   for (auto array : arrays) {
     // set on host
@@ -66,6 +91,7 @@ int main()
         wait_for(20, clockrate);
     });
 
+    std::cout<< "Move to CPU called" << std::endl;
     array.move(chai::CPU, &resource);
   }
 

@@ -421,9 +421,10 @@ protected:
   /*!
    * Pointer to PointerRecord data.
    */
-  mutable PointerRecord* m_pointer_record = nullptr;
 
   mutable bool m_is_slice = false;
+public:
+  mutable PointerRecord* m_pointer_record = nullptr;
 };
 
 /*!
