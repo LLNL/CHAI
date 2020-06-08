@@ -297,6 +297,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
   void* dst_pointer = record->m_pointers[space];
 
   if (!dst_pointer) {
+    std::cout<<"ALLLOCATING!!!!"<<std::endl;
     allocate(record, space);
     dst_pointer = record->m_pointers[space];
   }
@@ -310,8 +311,12 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
       std::lock_guard<std::mutex> lock(m_mutex);
 
       if (record->transfer_pending) {
+        if (!&record->m_event)
+          std::cout<< "Event NULL" << std::endl;
+        
         resource->wait_for(&record->m_event);
         //record->m_event.wait();
+        
         std::cout<< " - "<<record->name<<" Resource copy end" << std::endl;
         record->transfer_pending = false;
         return;
@@ -332,6 +337,8 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
       }
 
       auto e = m_resource_manager.copy(dst_pointer, src_pointer, *res);
+      //m_resource_manager.copy(dst_pointer, src_pointer);
+      //auto e = res->get_event();
       std::cout<< " - "<<record->name<<" Resource copy start" << std::endl;
       callback(record, ACTION_MOVE, space);
       record->transfer_pending = true;

@@ -29,14 +29,38 @@ int main()
   const int ARRAY_SIZE = 10;
   std::vector< chai::ManagedArray<float> > arrays;
 
+  auto callBack = [&](const chai::PointerRecord* record, chai::Action act, chai::ExecutionSpace s)
+  {
+    const size_t bytes = record->m_size;
+    printf("%s cback: act=%s, space=%s, bytes=%ld\n", record->name.c_str(), chai::PrintAction[(int) act], chai::PrintExecSpace[(int) s], (long) bytes);
+    if (act == chai::ACTION_MOVE)
+    {
+      if (s == chai::CPU)
+      {
+        printf("Moved to host\n");
+      }
+      else if (s == chai::GPU)
+      {
+        printf("Moved to device\n");
+      }
+    }
+    if (act == chai::ACTION_FOUND_ABANDONED) {
+       printf("in abandoned!\n");
+       //ASSERT_EQ(false,true);
+    }
+  };
+
   for (int i = 0; i < NUM_ARRAYS; i++) {
     arrays.push_back(chai::ManagedArray<float>(10, chai::GPU));
+    arrays[i].m_pointer_record->name = "array "+ std::to_string(i);
+    arrays[i].setUserCallback(callBack);
   }
 
   std::cout << "calling forall with cuda context" << std::endl;
   for (auto array : arrays) {
 
     camp::resources::Resource res{camp::resources::Cuda()};
+
     auto clock_lambda_1 = [=] CHAI_HOST_DEVICE (int idx) {
       array[idx] = idx * 2;
       unsigned int start_clock = (unsigned int) clock();
@@ -48,7 +72,10 @@ int main()
       }
     };
 
+
+    std::cout << "Calling forall" << std::endl;
     auto e = forall(&res, 0, ARRAY_SIZE, clock_lambda_1);
+    std::cout << "Move to CPU called" << std::endl;
     array.move(chai::CPU, &res); // asynchronous move
   }
 
