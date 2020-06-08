@@ -253,7 +253,8 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
     dst_pointer = record->m_pointers[space];
   }
 
-  if (!record->m_touched[record->m_last_space]) {
+
+  if ( (!record->m_touched[record->m_last_space]) || (! src_pointer )) {
     return;
   } else if (dst_pointer != src_pointer) {
     // Exclude the copy if src and dst are the same (can happen for PINNED memory)
