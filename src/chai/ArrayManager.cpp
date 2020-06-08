@@ -314,7 +314,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
         if (!&record->m_event)
           std::cout<< "Event NULL" << std::endl;
         
-        resource->wait_for(&record->m_event);
+        //resource->wait_for(&record->m_event);
         //record->m_event.wait();
         
         std::cout<< " - "<<record->name<<" Resource copy end" << std::endl;
