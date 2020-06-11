@@ -33,6 +33,7 @@ ArrayManager::ArrayManager() :
 {
   m_pointer_map.clear();
   m_current_execution_space = NONE;
+  m_current_resource = nullptr;
   m_default_allocation_space = CPU;
 
   m_allocators[CPU] =
@@ -311,13 +312,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
       std::lock_guard<std::mutex> lock(m_mutex);
 
       if (record->transfer_pending) {
-        if (!&record->m_event)
-          std::cout<< "Event NULL" << std::endl;
-        
-        //resource->wait_for(&record->m_event);
-        //record->m_event.wait();
-        
-        std::cout<< " - "<<record->name<<" Resource copy end" << std::endl;
+        resource->wait_for(&record->m_event);
         record->transfer_pending = false;
         return;
       }

@@ -58,9 +58,9 @@ struct PointerRecord {
 
   int m_allocators[NUM_EXECUTION_SPACES];
 
-  bool transfer_pending;
-  camp::resources::Event m_event;
-  camp::resources::Resource* m_last_resource = nullptr;
+  bool transfer_pending{false};
+  camp::resources::Event m_event{};
+  camp::resources::Resource* m_last_resource{nullptr};
 
   /*!
    * \brief Default constructor
