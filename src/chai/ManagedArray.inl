@@ -460,13 +460,14 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, CHAIDISAMBIGUATE, bool )
 #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   m_resource_manager(ArrayManager::getInstance()),
   m_elems(m_resource_manager->getSize((void *)m_active_base_pointer)/sizeof(T)),
+  m_offset(0),
   m_pointer_record(m_resource_manager->getPointerRecord((void *)data)),
 #else
   m_resource_manager(nullptr),
   m_elems(0),
+  m_offset(0),
   m_pointer_record(nullptr),
 #endif
-  m_offset(0),
   m_is_slice(false)
 {
 #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
@@ -479,14 +480,14 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, CHAIDISAMBIGUATE, bool )
 #endif
 
 template<typename T>
-T*
+CHAI_HOST_DEVICE T*
 ManagedArray<T>::getActiveBasePointer() const
 {
   return m_active_base_pointer;
 }
 
 template<typename T>
-T*
+CHAI_HOST_DEVICE T*
 ManagedArray<T>::getActivePointer() const
 {
   return m_active_pointer;
