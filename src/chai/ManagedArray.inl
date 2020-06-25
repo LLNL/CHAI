@@ -480,14 +480,14 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, CHAIDISAMBIGUATE, bool )
 #endif
 
 template<typename T>
-T*
+CHAI_HOST_DEVICE T*
 ManagedArray<T>::getActiveBasePointer() const
 {
   return m_active_base_pointer;
 }
 
 template<typename T>
-T*
+CHAI_HOST_DEVICE T*
 ManagedArray<T>::getActivePointer() const
 {
   return m_active_pointer;
