@@ -495,7 +495,7 @@ ManagedArray<T>::getActivePointer() const
 
 template<typename T> 
 T*
-ManagedArray<T>::getPointer(ExecutionSpace space, bool do_move) { 
+ManagedArray<T>::data(ExecutionSpace space, bool do_move) {
    if (m_pointer_record == nullptr || m_pointer_record == &ArrayManager::s_null_record) {
       return nullptr;
    }

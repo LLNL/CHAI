@@ -206,7 +206,7 @@ public:
    * \param space The space to get the pointer for.
    * \param do_move Ensure data at that pointer is live and valid.
    */
-  CHAI_HOST T* getPointer(ExecutionSpace space, bool do_move = true);
+  CHAI_HOST T* data(ExecutionSpace space, bool do_move = true);
 
   /*!
    * \brief

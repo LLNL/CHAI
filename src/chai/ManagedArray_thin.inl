@@ -99,7 +99,7 @@ T* ManagedArray<T>::getActivePointer() const
 }
 
 template <typename T>
-T* ManagedArray<T>::getPointer(ExecutionSpace /*space*/, bool)
+T* ManagedArray<T>::data(ExecutionSpace /*space*/, bool)
 {
   return m_active_pointer;
 }
