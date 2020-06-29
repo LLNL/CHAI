@@ -7,7 +7,7 @@
 #include "camp/resource.hpp"
 
 #include "../src/util/forall.hpp"
-#include "resource-example-util.hpp"
+#include "../src/util/gpu_clock.hpp"
 
 #include <vector>
 #include <utility>

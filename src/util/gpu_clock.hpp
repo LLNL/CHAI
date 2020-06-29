@@ -1,5 +1,5 @@
-#ifndef RESOURCE_EXAMPLE_UTIL_HPP
-#define RESOURCE_EXAMPLE_UTIL_HPP
+#ifndef GPU_CLOCK_HPP
+#define GPU_CLOCK_HPP
 
 
 inline __host__ __device__ void
@@ -36,4 +36,4 @@ int get_clockrate()
 #endif
 }
 
-#endif  // RESOURCE_EXAMPLE_UTIL_HPP
+#endif  // GPU_CLOCK_HPP

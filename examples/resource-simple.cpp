@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
 #include "../src/util/forall.hpp"
-#include "resource-example-util.hpp"
+#include "../src/util/gpu_clock.hpp"
 
 #include "chai/ManagedArray.hpp"
 #include "camp/resource.hpp"
