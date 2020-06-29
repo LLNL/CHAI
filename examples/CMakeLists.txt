@@ -29,10 +29,6 @@ if (ENABLE_CUDA OR ENABLE_HIP)
     SOURCES example.cpp
     DEPENDS_ON ${chai_umpire_example_depends})
   blt_add_executable(
-    NAME resource-integration.exe
-    SOURCES resource.cpp
-    DEPENDS_ON ${chai_umpire_example_depends})
-  blt_add_executable(
     NAME resource-depends.exe
     SOURCES resource-depends.cpp
     DEPENDS_ON ${chai_umpire_example_depends})
