@@ -18,6 +18,8 @@ TEST(ArrayManager, Constructor)
 
 #ifndef CHAI_DISABLE_RM
 
+#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
+
 TEST(ArrayManager, getPointerMap)
 {
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
@@ -73,6 +75,7 @@ TEST(ArrayManager, getPointerMap)
   ASSERT_EQ(rm->getTotalSize(),
             (sizeOfArray1 * sizeof(int)) + (sizeOfArray2 * sizeof(double)));
 }
+#endif
 
 /*!
  * \brief Tests to see if callbacks can be turned on or off
