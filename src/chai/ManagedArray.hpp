@@ -219,6 +219,18 @@ public:
   CHAI_HOST T* data(ExecutionSpace space, bool do_move = true);
 
   /*!
+   * \brief Deprecated! Use the data method instead!
+   *        Return the raw pointer to the data in the given execution
+   *        space. Optionally move the data to that execution space.
+   *
+   * \param space The execution space from which to retrieve the raw pointer.
+   * \param do_move Ensure data at that pointer is live and valid.
+   *
+   * @return A copy of the pointer in the given execution space
+   */
+  CHAI_HOST T* getPointer(ExecutionSpace space, bool do_move = true);
+
+  /*!
    * \brief
    *
    */

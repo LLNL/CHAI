@@ -499,7 +499,7 @@ T* ManagedArray<T>::data() const {
 #endif
 }
 
-template<typename T> 
+template<typename T>
 T* ManagedArray<T>::data(ExecutionSpace space, bool do_move) {
    if (m_pointer_record == nullptr || m_pointer_record == &ArrayManager::s_null_record) {
       return nullptr;
@@ -520,6 +520,10 @@ T* ManagedArray<T>::data(ExecutionSpace space, bool do_move) {
    return ((T*) m_pointer_record->m_pointers[space]) + offset;
 }
 
+template<typename T>
+T* ManagedArray<T>::getPointer(ExecutionSpace space, bool do_move) {
+   return data(space, do_move);
+}
 
 //template<typename T>
 //ManagedArray<T>::operator ManagedArray<

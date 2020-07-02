@@ -104,6 +104,12 @@ T* ManagedArray<T>::data(ExecutionSpace /*space*/, bool)
   return m_active_pointer;
 }
 
+template <typename T>
+T* ManagedArray<T>::getPointer(ExecutionSpace space, bool do_move)
+{
+  return data(space, do_move);
+}
+
 template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::allocate(size_t elems,
