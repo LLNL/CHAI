@@ -446,12 +446,12 @@ private:
   }
 
   /*!
-   * current execution space.
+   * Current execution space.
    */
   ExecutionSpace m_current_execution_space;
 
   /*!
-   * current resource.
+   * Current resource.
    */
   camp::resources::Resource* m_current_resource;
 
