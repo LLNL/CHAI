@@ -1617,7 +1617,7 @@ GPU_TEST(ManagedArray, CopyZero)
 TEST(ManagedArray, NoAllocation)
 {
   chai::ManagedArray<double> array(10, chai::NONE);
-  double* data = array.getPointer(chai::NONE, false);
+  double* data = array.data(chai::NONE, false);
   ASSERT_EQ(data, nullptr);
 
   forall(sequential(), 0, 10, [=] (int i) {
