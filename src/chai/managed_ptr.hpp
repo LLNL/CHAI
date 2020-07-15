@@ -664,7 +664,7 @@ namespace chai {
       ///
       template <typename T>
       CHAI_HOST_DEVICE T* getRawPointers(ManagedArray<T> arg) {
-         return (T*) arg;
+         return arg.data();
       }
 
       ///
