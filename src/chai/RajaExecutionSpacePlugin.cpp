@@ -54,7 +54,7 @@ RajaExecutionSpacePlugin::RajaExecutionSpacePlugin() :
 }
 
 void 
-RajaExecutionSpacePlugin::preLaunch(RAJA::util::PluginContext p)
+RajaExecutionSpacePlugin::preCapture(RAJA::util::PluginContext p)
 {
   switch (p.platform) {
     case RAJA::Platform::host: 
@@ -69,7 +69,7 @@ RajaExecutionSpacePlugin::preLaunch(RAJA::util::PluginContext p)
 }
 
 void 
-RajaExecutionSpacePlugin::postLaunch(RAJA::util::PluginContext)
+RajaExecutionSpacePlugin::postCapture(RAJA::util::PluginContext)
 {
   m_arraymanager->setExecutionSpace(chai::NONE);
 }

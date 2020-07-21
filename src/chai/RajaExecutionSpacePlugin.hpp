@@ -55,9 +55,9 @@ class RajaExecutionSpacePlugin :
   public:
     RajaExecutionSpacePlugin();
 
-    void preLaunch(RAJA::util::PluginContext p);
+    void preCapture(RAJA::util::PluginContext p);
 
-    void postLaunch(RAJA::util::PluginContext p);
+    void postCapture(RAJA::util::PluginContext p);
 
   private:
     chai::ArrayManager* m_arraymanager;
