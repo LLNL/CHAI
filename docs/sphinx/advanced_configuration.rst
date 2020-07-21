@@ -21,7 +21,7 @@ Here is a summary of the configuration options, their default value, and meaning
       ENABLE_UM                    Off      Enable support for CUDA Unified Memory.
       ENABLE_IMPLICIT_CONVERSIONS  On       Enable implicit conversions between ManagedArray and raw pointers
       DISABLE_RM                   Off      Disable the ArrayManager and make ManagedArray a thin wrapper around a pointer.
-      ENABLE_TESTING               On       Build test executables.
+      ENABLE_TESTS                 On       Build test executables.
       ENABLE_BENCHMARKS            On       Build benchmark programs.
       ===========================  ======== ===============================================================================
 
@@ -56,7 +56,7 @@ These arguments are explained in more detail below:
   ``ManagedArray`` objects function as thin wrappers around a raw pointer. This
   option can be used with CPU-only allocations, or with CUDA Unified Memory.
 
-* ENABLE_TESTING
+* ENABLE_TESTS
   This option controls whether or not test executables will be built.
 
 * ENABLE_BENCHMARKS
