@@ -500,7 +500,7 @@ T* ManagedArray<T>::data() const {
 }
 
 template<typename T>
-T* ManagedArray<T>::data(ExecutionSpace space, bool do_move) {
+T* ManagedArray<T>::data(ExecutionSpace space, bool do_move) const {
    if (m_pointer_record == nullptr || m_pointer_record == &ArrayManager::s_null_record) {
       return nullptr;
    }
@@ -521,7 +521,7 @@ T* ManagedArray<T>::data(ExecutionSpace space, bool do_move) {
 }
 
 template<typename T>
-T* ManagedArray<T>::getPointer(ExecutionSpace space, bool do_move) {
+T* ManagedArray<T>::getPointer(ExecutionSpace space, bool do_move) const {
    return data(space, do_move);
 }
 
