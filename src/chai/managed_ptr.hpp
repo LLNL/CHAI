@@ -60,6 +60,12 @@
 #include <functional>
 
 
+// forward declaration of care::host_device_ptr
+namespace care {
+    template <typename T>
+    class host_device_ptr;
+}//namespace care
+
 namespace chai {
    namespace detail {
 #ifdef __CUDACC__
@@ -666,6 +672,24 @@ namespace chai {
       CHAI_HOST_DEVICE T* getRawPointers(ManagedArray<T> arg) {
          return arg.data();
       }
+
+      ///
+      /// @author Danny Taller
+      ///
+      /// This implementation of getRawPointers handles the CARE host_device_ptr type.
+      /// Note that without this function, care host_device_ptrs will go to the The non-CHAI type
+      /// version of this function (NOT the ManagedArray version), so the make managed paradigm
+      /// will fail unless implicit conversions are allowed.
+      ///
+      /// @param[in] arg The host_device_ptr from which to extract a raw pointer
+      ///
+      /// @return arg cast to a raw pointer
+      ///
+      template <typename T>
+      CHAI_HOST_DEVICE T* getRawPointers(care::host_device_ptr<T> arg) {
+         return ((ManagedArray<T>)arg).data();
+      }
+ 
 
       ///
       /// @author Alan Dayton
