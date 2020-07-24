@@ -49,7 +49,7 @@ def get_spec_path(spec, package_name, path_replacements = {}, use_bin = False) :
     return path
 
 
-class CHAI(CMakePackage, CudaPackage):
+class Chai(CMakePackage, CudaPackage):
     """
     Copy-hiding array interface for data migration between memory spaces
     """
