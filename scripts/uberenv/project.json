@@ -1,5 +1,5 @@
 {
-"package_name" : "umpire",
+"package_name" : "chai",
 "package_version" : "develop",
 "package_final_phase" : "hostconfig",
 "package_source_dir" : "../..",
