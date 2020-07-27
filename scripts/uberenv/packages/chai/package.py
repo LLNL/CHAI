@@ -230,8 +230,6 @@ class Chai(CMakePackage, CudaPackage):
         umpire_conf_path = spec['umpire'].prefix + "/share/umpire/cmake"
         cfg.write(cmake_cache_entry("umpire_DIR",umpire_conf_path))
 
-        cfg.write(cmake_cache_option("ENABLE_TESTS", self.run_tests))
-
         #######################
         # Close and save
         #######################
