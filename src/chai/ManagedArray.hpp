@@ -216,7 +216,7 @@ public:
    *
    * @return A copy of the pointer in the given execution space
    */
-  CHAI_HOST T* data(ExecutionSpace space, bool do_move = true);
+  CHAI_HOST T* data(ExecutionSpace space, bool do_move = true) const;
 
   /*!
    * \brief Deprecated! Use the data method instead!
@@ -228,7 +228,7 @@ public:
    *
    * @return A copy of the pointer in the given execution space
    */
-  CHAI_HOST T* getPointer(ExecutionSpace space, bool do_move = true);
+  CHAI_HOST T* getPointer(ExecutionSpace space, bool do_move = true) const;
 
   /*!
    * \brief
