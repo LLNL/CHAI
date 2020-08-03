@@ -219,6 +219,17 @@ class Chai(CMakePackage, CudaPackage):
         else:
             cfg.write(cmake_cache_option("ENABLE_CUDA", False))
 
+        if "+raja" in spec:
+            cfg.write("#------------------{0}\n".format("-" * 60))
+            cfg.write("# RAJA\n")
+            cfg.write("#------------------{0}\n\n".format("-" * 60))
+
+            cfg.write(cmake_cache_option("ENABLE_RAJA_PLUGIN", True))
+            raja_dir = spec['raja'].prefix
+            cfg.write(cmake_cache_entry("RAJA_DIR", raja_dir))
+        else:
+            cfg.write(cmake_cache_option("ENABLE_RAJA_PLUGIN", False))
+
         # shared vs static libs
         cfg.write(cmake_cache_option("BUILD_SHARED_LIBS","+shared" in spec))
 

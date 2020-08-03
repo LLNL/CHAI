@@ -70,7 +70,6 @@ stages:
 .build_blueos_3_ppc64le_ib_p9_script:
   extends: .build_blueos_3_ppc64le_ib_script
 
-
 # This is where jobs are included.
 include:
   - local: .gitlab/quartz-templates.yml

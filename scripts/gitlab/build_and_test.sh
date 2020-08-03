@@ -19,6 +19,9 @@ build_root=${BUILD_ROOT:-""}
 hostconfig=${HOST_CONFIG:-""}
 spec=${SPEC:-""}
 
+raja_version=${UPDATE_RAJA:-""}
+umpire_version=${UPDATE_UMPIRE:-""}
+
 # Dependencies
 if [[ "${option}" != "--build-only" && "${option}" != "--test-only" ]]
 then
@@ -32,11 +35,29 @@ then
         exit 1
     fi
 
+    extra_variants=""
+    extra_deps=""
+
+    if [[ -n ${raja_version} ]]
+    then
+        extra_variants="${extra_variants} +raja"
+        extra_deps="${extra_deps} ^raja@${raja_version}"
+    fi
+
+    if [[ -n ${umpire_version} ]]
+    then
+        extra_variants="${extra_variants} +umpire"
+        extra_deps="${extra_deps} ^umpire@${umpire_version}"
+    fi
+
+    [[ -n ${extra_variants} ]] && spec="${spec} ${extra_variants}"
+    [[ -n ${extra_deps} ]] && spec="${spec} ${extra_deps}"
+
     prefix_opt=""
 
     if [[ -d /dev/shm ]]
     then
-        prefix="/dev/shm/${hostname}/${spec}"
+        prefix="/dev/shm/${hostname}/${spec// /_}"
         mkdir -p ${prefix}
         prefix_opt="--prefix=${prefix}"
     fi
