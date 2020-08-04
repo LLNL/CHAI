@@ -26,7 +26,7 @@ template<typename T>
 CHAI_INLINE
 void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* pointer_record)
 {
-  ExecutionSpace my_space;
+  ExecutionSpace my_space = CPU;
 
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
     if (pointer_record->m_pointers[space] == pointer) {

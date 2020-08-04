@@ -1620,3 +1620,53 @@ GPU_TEST(ManagedArray, CopyZero)
   assert_empty_map(true);
 }
 #endif
+
+TEST(ManagedArray, NoAllocation)
+{
+  chai::ManagedArray<double> array(10, chai::NONE);
+  double* data = array.data(chai::NONE, false);
+  ASSERT_EQ(data, nullptr);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+    array[i] = i;
+  });
+
+  forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
+}
+
+TEST(ManagedArray, NoAllocationNull)
+{
+  chai::ManagedArray<double> array;
+  array.allocate(10, chai::NONE);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+    array[i] = i;
+  });
+
+  forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
+}
+
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+GPU_TEST(ManagedArray, NoAllocationGPU)
+{
+  chai::ManagedArray<double> array(10, chai::NONE);
+
+  forall(gpu(), 0, 10, [=] __device__ (int i) {
+    array[i] = i;
+  });
+
+  forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
+}
+
+GPU_TEST(ManagedArray, NoAllocationNullGPU)
+{
+  chai::ManagedArray<double> array;
+  array.allocate(10, chai::NONE);
+
+  forall(gpu(), 0, 10, [=] __device__ (int i) {
+    array[i] = i;
+  });
+
+  forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
+}
+#endif

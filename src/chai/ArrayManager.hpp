@@ -28,7 +28,7 @@
 #include <cuda_runtime_api.h>
 #endif
 #if defined(CHAI_ENABLE_HIP)
-#include <hip_runtime_api.h>
+#include "hip/hip_runtime_api.h"
 #endif
 namespace chai
 {
@@ -47,10 +47,10 @@ inline void gpuErrorCheck(cudaError_t code, const char *file, int line, bool abo
       }
    }
 }
-#elif CHAI_ENABLE_HIP
+#elif defined(CHAI_ENABLE_HIP)
 inline void gpuErrorCheck(hipError_t code, const char *file, int line, bool abort=true)
 {
-   if (code != cudaSuccess) {
+   if (code != hipSuccess) {
       fprintf(stderr, "[CHAI] GPU Error: %s %s %d\n", hipGetErrorString(code), file, line);
       if (abort) {
          exit(code);
