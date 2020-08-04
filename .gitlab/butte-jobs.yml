@@ -44,7 +44,7 @@ clang_4_0_0 (build and test on butte):
     SPEC: "%clang@4.0.0"
   extends: .build_and_test_on_butte_advanced
 
-clang_9_0_0_libcpp (build and test on butte):
+clang_9_0_0 (build and test on butte):
   variables:
     SPEC: "%clang@9.0.0"
   extends: .build_and_test_on_butte_advanced
