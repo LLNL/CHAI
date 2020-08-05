@@ -66,13 +66,15 @@ class Chai(CMakePackage, CudaPackage):
     version('1.1.0', tag='v1.1.0', submodules='True')
     version('1.0', tag='v1.0', submodules='True')
 
+    variant('shared', default=True, description='Build Shared Libs')
+
     depends_on('cmake@3.8:', type='build')
     depends_on('umpire')
 
     depends_on('cmake@3.9:', type='build', when="+cuda")
     depends_on('umpire+cuda', when="+cuda")
 
-    phases = ['hostconfig', 'cmake', 'build','install']
+    phases = ['hostconfig', 'cmake', 'build', 'install']
 
     def _get_sys_type(self, spec):
         sys_type = str(spec.architecture)
@@ -217,6 +219,8 @@ class Chai(CMakePackage, CudaPackage):
         else:
             cfg.write(cmake_cache_option("ENABLE_CUDA", False))
 
+        # shared vs static libs
+        cfg.write(cmake_cache_option("BUILD_SHARED_LIBS","+shared" in spec))
 
         umpire_conf_path = spec['umpire'].prefix + "/share/umpire/cmake"
         cfg.write(cmake_cache_entry("umpire_DIR",umpire_conf_path))
