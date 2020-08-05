@@ -184,6 +184,8 @@ class Umpire(CMakePackage, CudaPackage):
         cfg.write("# CMake executable path: %s\n" % cmake_exe)
         cfg.write("#------------------\n\n".format("-" * 60))
 
+        cfg.write(cmake_cache_string("CMAKE_BUILD_TYPE", spec.variants['build_type'].value))
+
         #######################
         # Compiler Settings
         #######################
@@ -220,11 +222,16 @@ class Umpire(CMakePackage, CudaPackage):
                                             description))
 
         if "toss_3_x86_64_ib" in sys_type:
-            release_flags = "-O3 -finline-functions -axCORE-AVX2 -diag-disable cpu-dispatch"
-            cfg.write(cmake_cache_entry("CMAKE_CXX_FLAGS_RELEASE", release_flags))
-            reldebinf_flags = "-O3 -g -finline-functions -axCORE-AVX2 -diag-disable cpu-dispatch"
-            cfg.write(cmake_cache_entry("CMAKE_CXX_FLAGS_RELWITHDEBINFO", reldebinf_flags))
+            release_flags = "-O3"
+            reldebinf_flags = "-O3 -g"
             debug_flags = "-O0 -g"
+
+            if "intel" in str(spec.compiler):
+                release_flags = ' '.join([release_flags,'-finline-functions -axCORE-AVX2 -diag-disable cpu-dispatch'])
+                reldebinf_flags = ' '.join([reldebinf_flags,'-finline-functions -axCORE-AVX2 -diag-disable cpu-dispatch'])
+
+            cfg.write(cmake_cache_entry("CMAKE_CXX_FLAGS_RELEASE", release_flags))
+            cfg.write(cmake_cache_entry("CMAKE_CXX_FLAGS_RELWITHDEBINFO", reldebinf_flags))
             cfg.write(cmake_cache_entry("CMAKE_CXX_FLAGS_DEBUG", debug_flags))
 
         if "+cuda" in spec:
