@@ -10,11 +10,13 @@ if (NOT TARGET umpire)
     # installed umpire-config.cmake
     list(APPEND CMAKE_PREFIX_PATH ${umpire_DIR})
     find_package(umpire REQUIRED)
+
     if (ENABLE_MPI)
       set(UMPIRE_DEPENDS mpi)
     else()
       set(UMPIRE_DEPENDS)
     endif()
+
     blt_register_library(
       NAME umpire
       INCLUDES ${UMPIRE_INCLUDE_DIRS}
@@ -26,6 +28,23 @@ if (NOT TARGET umpire)
     add_subdirectory(${PROJECT_SOURCE_DIR}/src/tpl/umpire)
     set(ENABLE_FORTRAN ${OLD_ENABLE_FORTRAN})
   endif()
+
+  # Umpire depends on camp
+  if (NOT TARGET camp)
+    if (DEFINED camp_DIR)
+      find_package(camp REQUIRED)
+      set_target_properties(camp PROPERTIES IMPORTED_GLOBAL TRUE)
+    else ()
+      add_subdirectory(camp)
+    endif()
+
+    if(ENABLE_CUDA)
+      blt_add_target_definitions(
+        TO camp
+        SCOPE INTERFACE
+        TARGET_DEFINITIONS CAMP_HAVE_CUDA)
+    endif()
+  endif ()
 endif()
 
 if (ENABLE_RAJA_PLUGIN)
