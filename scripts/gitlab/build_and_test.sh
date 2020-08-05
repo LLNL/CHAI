@@ -46,7 +46,6 @@ then
 
     if [[ -n ${umpire_version} ]]
     then
-        extra_variants="${extra_variants} +umpire"
         extra_deps="${extra_deps} ^umpire@${umpire_version}"
     fi
 
