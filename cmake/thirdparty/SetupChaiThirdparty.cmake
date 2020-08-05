@@ -35,7 +35,7 @@ if (NOT TARGET umpire)
       find_package(camp REQUIRED)
       set_target_properties(camp PROPERTIES IMPORTED_GLOBAL TRUE)
     else ()
-      add_subdirectory(camp)
+      message(FATAL_ERROR "camp is required. Please set camp_DIR")
     endif()
 
     if(ENABLE_CUDA)
