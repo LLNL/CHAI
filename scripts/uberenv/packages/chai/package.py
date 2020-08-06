@@ -238,8 +238,6 @@ class Chai(CMakePackage, CudaPackage):
 
         umpire_conf_path = spec['umpire'].prefix + "/share/umpire/cmake"
         cfg.write(cmake_cache_entry("umpire_DIR",umpire_conf_path))
-        camp_conf_path = spec['umpire'].prefix + "/lib/cmake/camp"
-        cfg.write(cmake_cache_entry("camp_DIR", camp_conf_path))
 
         #######################
         # Close and save
