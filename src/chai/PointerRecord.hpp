@@ -76,7 +76,6 @@ struct PointerRecord {
      }
   }
 
-  std::string name;
 };
 
 }  // end of namespace chai
