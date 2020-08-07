@@ -9,7 +9,6 @@
 
 // Std library headers
 #include <functional>
-#include <vector>
 
 // CHAI headers
 #include "chai/ExecutionSpaces.hpp"
