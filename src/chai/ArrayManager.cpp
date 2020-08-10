@@ -399,6 +399,10 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
     space = getDefaultAllocationSpace();
   }
 
+  if (pointer == nullptr) {
+     return &s_null_record ;
+  }
+
   m_resource_manager.registerAllocation(
       pointer,
       {pointer, size, m_allocators[space]->getAllocationStrategy()});
