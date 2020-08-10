@@ -395,12 +395,12 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
                                          ExecutionSpace space,
                                          bool owned)
 {
-  if (space == NONE) {
-    space = getDefaultAllocationSpace();
-  }
-
   if (pointer == nullptr) {
      return &s_null_record ;
+  }
+
+  if (space == NONE) {
+    space = getDefaultAllocationSpace();
   }
 
   m_resource_manager.registerAllocation(
