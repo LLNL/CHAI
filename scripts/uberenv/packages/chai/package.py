@@ -68,6 +68,8 @@ class Chai(CMakePackage, CudaPackage):
 
     variant('shared', default=True, description='Build Shared Libs')
     variant('raja', default=False, description='Build plugin for RAJA')
+    variant('tests', default='basic', values=('none', 'basic', 'benchmarks'),
+            multi=False, description='Tests to run')
 
     depends_on('cmake@3.8:', type='build')
     depends_on('umpire')
@@ -238,6 +240,9 @@ class Chai(CMakePackage, CudaPackage):
 
         umpire_conf_path = spec['umpire'].prefix + "/share/umpire/cmake"
         cfg.write(cmake_cache_entry("umpire_DIR",umpire_conf_path))
+
+        cfg.write(cmake_cache_option("ENABLE_BENCHMARKS", 'tests=benchmarks' in spec))
+        cfg.write(cmake_cache_option("ENABLE_TESTS", not 'tests=none' in spec))
 
         #######################
         # Close and save
