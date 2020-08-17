@@ -46,7 +46,7 @@
 #include "chai/RajaExecutionSpacePlugin.hpp"
 
 namespace {
-  namespace chai {
+  namespace anonymous_chai {
     struct pluginLinker {
       pluginLinker() {
         (void) chai::linkRajaPlugin();
