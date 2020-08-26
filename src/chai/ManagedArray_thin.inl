@@ -113,9 +113,21 @@ T* ManagedArray<T>::getActivePointer() const
 }
 
 template <typename T>
-T* ManagedArray<T>::getPointer(ExecutionSpace /*space*/, bool)
+CHAI_HOST_DEVICE T* ManagedArray<T>::data() const
+{
+   return m_active_pointer;
+}
+
+template <typename T>
+T* ManagedArray<T>::data(ExecutionSpace /*space*/, bool /*do_move*/) const
 {
   return m_active_pointer;
+}
+
+template <typename T>
+T* ManagedArray<T>::getPointer(ExecutionSpace space, bool do_move) const
+{
+  return data(space, do_move);
 }
 
 template<typename T>

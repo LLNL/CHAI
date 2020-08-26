@@ -431,25 +431,8 @@ CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const Idx i) const {
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
-#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
-  if (m_active_pointer) {
-     if (m_pointer_record == nullptr || m_pointer_record == &ArrayManager::s_null_record) {
-        CHAI_LOG(Warning, "nullptr pointer_record associated with non-nullptr active_pointer")
-     }
-
-     move(CPU);
-  }
-
-  if (m_elems == 0 && !m_is_slice) {
-     return nullptr;
-  }
-
-  return m_active_pointer;
-#else
-  return m_active_pointer;
-#endif
+   return data();
 }
-
 
 template<typename T>
 template<bool Q>
@@ -493,25 +476,54 @@ ManagedArray<T>::getActivePointer() const
   return m_active_pointer;
 }
 
-template<typename T> 
-T*
-ManagedArray<T>::getPointer(ExecutionSpace space, bool do_move) { 
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+T* ManagedArray<T>::data() const {
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
+  if (m_active_pointer) {
+     if (m_pointer_record == nullptr || m_pointer_record == &ArrayManager::s_null_record) {
+        CHAI_LOG(Warning, "nullptr pointer_record associated with non-nullptr active_pointer")
+     }
+
+     move(CPU);
+  }
+
+  if (m_elems == 0 && !m_is_slice) {
+     return nullptr;
+  }
+
+  return m_active_pointer;
+#else
+  return m_active_pointer;
+#endif
+}
+
+template<typename T>
+T* ManagedArray<T>::data(ExecutionSpace space, bool do_move) const {
    if (m_pointer_record == nullptr || m_pointer_record == &ArrayManager::s_null_record) {
       return nullptr;
    }
+
    if (m_elems == 0 && !m_is_slice) { 
       return nullptr;
    }
+
    if (do_move) {
       ExecutionSpace oldContext = m_resource_manager->getExecutionSpace();
       m_resource_manager->setExecutionSpace(space);
       move(space);
       m_resource_manager->setExecutionSpace(oldContext);
    }
+
    int offset = m_is_slice ? m_offset : 0 ;
    return ((T*) m_pointer_record->m_pointers[space]) + offset;
 }
 
+template<typename T>
+T* ManagedArray<T>::getPointer(ExecutionSpace space, bool do_move) const {
+   return data(space, do_move);
+}
 
 //template<typename T>
 //ManagedArray<T>::operator ManagedArray<
