@@ -58,12 +58,12 @@
 #endif
 
 #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
-#define __DEVICE_COMPILE__
+#define CHAI_DEVICE_COMPILE
 #endif
 
 // shorthand for GPU Compilation. Must go after hip/hip_runtime.h is included so that HIPCC is defined
 #if defined(__CUDACC__) || defined(__HIPCC__)
-#define __GPUCC__
+#define CHAI_GPUCC
 #endif
 
 #define CHAI_INLINE inline
