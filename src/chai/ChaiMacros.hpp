@@ -56,6 +56,11 @@
 
 #endif
 
+// shorthand for GPU Compilation. Must go after hip/hip_runtime.h is included so that HIPCC is defined
+#if defined(__CUDACC__) || defined(__HIPCC__)
+#define __GPUCC__
+#endif
+
 #define CHAI_INLINE inline
 
 #define CHAI_UNUSED_ARG(X)

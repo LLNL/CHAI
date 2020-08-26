@@ -62,7 +62,7 @@
 
 namespace chai {
    namespace detail {
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__GPUCC__)
       template <typename T>
       __global__ void destroy_on_device(T* gpuPointer);
 #endif
@@ -195,7 +195,7 @@ namespace chai {
                   case CPU:
                      m_cpu_pointer = pointers.begin()[i++];
                      break;
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__GPUCC__)
                   case GPU:
                      m_gpu_pointer = pointers.begin()[i++];
                      break;
@@ -243,7 +243,7 @@ namespace chai {
                   case CPU:
                      m_cpu_pointer = pointers.begin()[i++];
                      break;
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__GPUCC__)
                   case GPU:
                      m_gpu_pointer = pointers.begin()[i++];
                      break;
@@ -332,7 +332,7 @@ namespace chai {
                   case CPU:
                      m_cpu_pointer = pointers.begin()[i++];
                      break;
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__GPUCC__)
                   case GPU:
                      m_gpu_pointer = pointers.begin()[i++];
                      break;
@@ -428,7 +428,7 @@ namespace chai {
             switch (space) {
                case CPU:
                   return m_cpu_pointer;
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__GPUCC__)
                case GPU:
                   return m_gpu_pointer;
 #endif
@@ -529,7 +529,7 @@ namespace chai {
                            case CPU:
                               delete pointer;
                               break;
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__GPUCC__)
                            case GPU:
                            {
                               if (pointer) {
@@ -561,7 +561,7 @@ namespace chai {
                         case CPU:
                            delete pointer;
                            break;
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__GPUCC__)
                         case GPU:
                         {
                            if (pointer) {
@@ -794,7 +794,7 @@ namespace chai {
          return cpuPointer;
       }
 
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__GPUCC__)
       ///
       /// @author Alan Dayton
       ///
@@ -1035,7 +1035,7 @@ namespace chai {
    template <typename T,
              typename... Args>
    CHAI_HOST managed_ptr<T> make_managed(Args... args) {
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__GPUCC__)
       // Construct on the GPU first to take advantage of asynchrony
       T* gpuPointer = detail::make_on_device<T>(args...);
 #endif
@@ -1044,7 +1044,7 @@ namespace chai {
       T* cpuPointer = detail::make_on_host<T>(args...);
 
       // Construct and return the managed_ptr
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__GPUCC__)
       return managed_ptr<T>({CPU, GPU}, {cpuPointer, gpuPointer});
 #else
       return managed_ptr<T>({CPU}, {cpuPointer});
@@ -1075,7 +1075,7 @@ namespace chai {
       static_assert(std::is_convertible<R*, T*>::value,
                     "F does not return a pointer that is convertible to T*.");
 
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__GPUCC__)
       // Construct on the GPU first to take advantage of asynchrony
       T* gpuPointer = detail::make_on_device_from_factory<R>(f, args...);
 #endif
@@ -1084,7 +1084,7 @@ namespace chai {
       T* cpuPointer = detail::make_on_host_from_factory<R>(f, args...);
 
       // Construct and return the managed_ptr
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__GPUCC__)
       return managed_ptr<T>({CPU, GPU}, {cpuPointer, gpuPointer});
 #else
       return managed_ptr<T>({CPU}, {cpuPointer});
@@ -1104,7 +1104,7 @@ namespace chai {
    CHAI_HOST managed_ptr<T> static_pointer_cast(const managed_ptr<U>& other) noexcept {
       T* cpuPointer = static_cast<T*>(other.get());
 
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__GPUCC__)
       T* gpuPointer = static_cast<T*>(other.get(GPU, false));
 
       return managed_ptr<T>(other, {CPU, GPU}, {cpuPointer, gpuPointer});
@@ -1126,7 +1126,7 @@ namespace chai {
    CHAI_HOST managed_ptr<T> dynamic_pointer_cast(const managed_ptr<U>& other) noexcept {
       T* cpuPointer = dynamic_cast<T*>(other.get());
 
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__GPUCC__)
       T* gpuPointer = nullptr;
 
       if (cpuPointer) {
@@ -1152,7 +1152,7 @@ namespace chai {
    CHAI_HOST managed_ptr<T> const_pointer_cast(const managed_ptr<U>& other) noexcept {
       T* cpuPointer = const_cast<T*>(other.get());
 
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__GPUCC__)
       T* gpuPointer = const_cast<T*>(other.get(GPU, false));
 
       return managed_ptr<T>(other, {CPU, GPU}, {cpuPointer, gpuPointer});
@@ -1174,7 +1174,7 @@ namespace chai {
    CHAI_HOST managed_ptr<T> reinterpret_pointer_cast(const managed_ptr<U>& other) noexcept {
       T* cpuPointer = reinterpret_cast<T*>(other.get());
 
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__GPUCC__)
       T* gpuPointer = reinterpret_cast<T*>(other.get(GPU, false));
 
       return managed_ptr<T>(other, {CPU, GPU}, {cpuPointer, gpuPointer});
