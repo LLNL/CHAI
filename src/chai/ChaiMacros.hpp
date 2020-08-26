@@ -57,6 +57,10 @@
 
 #endif
 
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+#define __DEVICE_COMPILE__
+#endif
+
 // shorthand for GPU Compilation. Must go after hip/hip_runtime.h is included so that HIPCC is defined
 #if defined(__CUDACC__) || defined(__HIPCC__)
 #define __GPUCC__

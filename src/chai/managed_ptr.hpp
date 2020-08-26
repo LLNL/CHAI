@@ -272,7 +272,7 @@ namespace chai {
             m_gpu_pointer(other.m_gpu_pointer),
             m_pointer_record(other.m_pointer_record)
          {
-#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
+#if !defined(__DEVICE_COMPILE__)
             move();
 #endif
          }
@@ -297,7 +297,7 @@ namespace chai {
             static_assert(std::is_convertible<U*, T*>::value,
                           "U* must be convertible to T*.");
 
-#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
+#if !defined(__DEVICE_COMPILE__)
             move();
 #endif
          }
@@ -363,7 +363,7 @@ namespace chai {
                m_gpu_pointer = other.m_gpu_pointer;
                m_pointer_record = other.m_pointer_record;
 
-#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
+#if !defined(__DEVICE_COMPILE__)
                move();
 #endif
             }
@@ -391,7 +391,7 @@ namespace chai {
             m_gpu_pointer = other.m_gpu_pointer;
             m_pointer_record = other.m_pointer_record;
 
-#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
+#if !defined(__DEVICE_COMPILE__)
             move();
 #endif
 
@@ -404,7 +404,7 @@ namespace chai {
          /// Returns the CPU or GPU pointer depending on the calling context.
          ///
          CHAI_HOST_DEVICE inline T* get() const {
-#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
+#if !defined(__DEVICE_COMPILE__)
             move();
             return m_cpu_pointer;
 #else
@@ -443,7 +443,7 @@ namespace chai {
          /// Returns the CPU or GPU pointer depending on the calling context.
          ///
          CHAI_HOST_DEVICE inline T* operator->() const {
-#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
+#if !defined(__DEVICE_COMPILE__)
             return m_cpu_pointer;
 #else
             return m_gpu_pointer;
@@ -456,7 +456,7 @@ namespace chai {
          /// Returns the CPU or GPU reference depending on the calling context.
          ///
          CHAI_HOST_DEVICE inline T& operator*() const {
-#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
+#if !defined(__DEVICE_COMPILE__)
             return *m_cpu_pointer;
 #else
             return *m_gpu_pointer;
