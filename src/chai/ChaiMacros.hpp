@@ -13,7 +13,7 @@
 
 #if defined(CHAI_ENABLE_CUDA)
 
-#include <cuda/cuda_runtime.h>
+#include <cuda_runtime_api.h>
 
 #define CHAI_HOST __host__
 #define CHAI_DEVICE __device__
