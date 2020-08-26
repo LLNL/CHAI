@@ -909,7 +909,7 @@ namespace chai {
 
          // Allocate space on the GPU to hold the pointer to the new object
          T** gpuBuffer;
-         CHAI_GPU_ERROR_CHECK(cudaMalloc(&gpuBuffer, sizeof(T*)));
+         gpuMalloc(&gpuBuffer, sizeof(T*));
 
          // Create the object on the device
          make_on_device<<<1, 1>>>(gpuBuffer, args...);
@@ -922,15 +922,14 @@ namespace chai {
 
          // Allocate space on the CPU for the pointer and copy the pointer to the CPU
          T** cpuBuffer = (T**) malloc(sizeof(T*));
-         CHAI_GPU_ERROR_CHECK(cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(T*),
-                                    cudaMemcpyDeviceToHost));
+         gpuMemcpy(cpuBuffer, gpuBuffer, sizeof(T*), gpuMemcpyDeviceToHost);
 
          // Get the GPU pointer
          T* gpuPointer = cpuBuffer[0];
 
          // Free the host and device buffers
          free(cpuBuffer);
-         CHAI_GPU_ERROR_CHECK(cudaFree(gpuBuffer));
+         gpuFree(gpuBuffer);
 
 #ifndef CHAI_DISABLE_RM
          // Set the execution space back to the previous value
@@ -967,7 +966,7 @@ namespace chai {
 
          // Allocate space on the GPU to hold the pointer to the new object
          T** gpuBuffer;
-         CHAI_GPU_ERROR_CHECK(cudaMalloc(&gpuBuffer, sizeof(T*)));
+         gpuMalloc(&gpuBuffer, sizeof(T*));
 
          // Create the object on the device
          make_on_device_from_factory<T><<<1, 1>>>(gpuBuffer, f, args...);
@@ -980,15 +979,14 @@ namespace chai {
 
          // Allocate space on the CPU for the pointer and copy the pointer to the CPU
          T** cpuBuffer = (T**) malloc(sizeof(T*));
-         CHAI_GPU_ERROR_CHECK(cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(T*),
-                                    cudaMemcpyDeviceToHost));
+         gpuMemcpy(cpuBuffer, gpuBuffer, sizeof(T*), gpuMemcpyDeviceToHost);
 
          // Get the GPU pointer
          T* gpuPointer = cpuBuffer[0];
 
          // Free the host and device buffers
          free(cpuBuffer);
-         CHAI_GPU_ERROR_CHECK(cudaFree(gpuBuffer));
+         gpuFree(gpuBuffer);
 
 #ifndef CHAI_DISABLE_RM
          // Set the execution space back to the previous value
