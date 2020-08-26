@@ -11,7 +11,9 @@
 
 #include "umpire/util/Macros.hpp"
 
-#if defined(CHAI_ENABLE_CUDA) && defined(__CUDACC__)
+#if defined(CHAI_ENABLE_CUDA)
+
+#include <cuda/cuda_runtime.h>
 
 #define CHAI_HOST __host__
 #define CHAI_DEVICE __device__
@@ -25,7 +27,6 @@
 #define gpuMemcpyDefault cudaMemcpyDefault
 
 // NOTE: Cannot have if defined(__HIPCC__) in the condition below, since __HIPCC__ comes from the included header hip_runtime below.
-// This behavior is different than __CUDACC__ 
 #elif defined(CHAI_ENABLE_HIP)
 
 #include <hip/hip_runtime.h>
