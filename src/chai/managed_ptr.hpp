@@ -909,7 +909,7 @@ namespace chai {
 
          // Allocate space on the GPU to hold the pointer to the new object
          T** gpuBuffer;
-         gpuMalloc(&gpuBuffer, sizeof(T*));
+         gpuMalloc((void**)(&gpuBuffer), sizeof(T*));
 
          // Create the object on the device
          make_on_device<<<1, 1>>>(gpuBuffer, args...);
@@ -966,7 +966,7 @@ namespace chai {
 
          // Allocate space on the GPU to hold the pointer to the new object
          T** gpuBuffer;
-         gpuMalloc(&gpuBuffer, sizeof(T*));
+         gpuMalloc((void**)(&gpuBuffer), sizeof(T*));
 
          // Create the object on the device
          make_on_device_from_factory<T><<<1, 1>>>(gpuBuffer, f, args...);

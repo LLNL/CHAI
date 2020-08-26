@@ -76,7 +76,7 @@ inline void synchronize() {
 }
 
 // wrapper for hip/cuda free
-CHAI_HOST_DEVICE inline void gpuFree(void* buffer) {
+CHAI_HOST inline void gpuFree(void* buffer) {
 #if defined (CHAI_ENABLE_HIP)
    CHAI_GPU_ERROR_CHECK(hipFree(buffer));
 #elif defined (CHAI_ENABLE_CUDA)
@@ -85,7 +85,7 @@ CHAI_HOST_DEVICE inline void gpuFree(void* buffer) {
 }
 
 // wrapper for hip/cuda malloc
-CHAI_HOST_DEVICE inline void gpuMalloc(void** devPtr, size_t size) {
+CHAI_HOST inline void gpuMalloc(void** devPtr, size_t size) {
 #if defined (CHAI_ENABLE_HIP)
    CHAI_GPU_ERROR_CHECK(hipMalloc(devPtr, size));
 #elif defined (CHAI_ENABLE_CUDA)
@@ -94,7 +94,7 @@ CHAI_HOST_DEVICE inline void gpuMalloc(void** devPtr, size_t size) {
 }
 
 // wrapper for hip/cuda managed malloc
-CHAI_HOST_DEVICE inline void gpuMallocManaged(void** devPtr, size_t size) {
+CHAI_HOST inline void gpuMallocManaged(void** devPtr, size_t size) {
 #if defined (CHAI_ENABLE_HIP)
    CHAI_GPU_ERROR_CHECK(hipMallocManaged(devPtr, size));
 #elif defined (CHAI_ENABLE_CUDA)
