@@ -386,7 +386,7 @@ public:
     m_pointer_record = other.m_pointer_record;
     m_is_slice = other.m_is_slice;
 #ifndef CHAI_DISABLE_RM
-#ifndef __CUDA_ARCH__
+#if !defined(CHAI_DEVICE_COMPILE)
   // if we can, ensure elems is based off the pointer_record size to protect against
   // casting leading to incorrect size info in m_elems.
   if (m_pointer_record != nullptr) {
@@ -543,7 +543,7 @@ CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T> ManagedArray<T>::slice( size_t offs
     elems = size() - offset;
   }
   if (offset + elems > size()) {
-#ifndef __CUDA_ARCH__
+#if !defined(CHAI_DEVICE_COMPILE)
     CHAI_LOG(Debug,
              "Invalid slice. No active pointer or index out of bounds");
 #endif
