@@ -68,6 +68,20 @@ CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t)
 {
 }
 
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST ManagedArray<T>::ManagedArray(PointerRecord* record, ExecutionSpace space):
+  m_active_pointer(static_cast<T*>(record->m_pointers[space])),
+  m_active_base_pointer(static_cast<T*>(record->m_pointers[space])),
+  m_resource_manager(nullptr),
+  m_elems(record->m_size/sizeof(T)),
+  m_offset(0),
+  m_pointer_record(nullptr),
+  m_is_slice(!record->m_owned[space])
+{
+}
+
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other) = default;
@@ -293,6 +307,18 @@ ManagedArray<T>::operator typename std::
                                m_resource_manager,
                                m_elems,
                                nullptr);
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+ManagedArray<T>&
+ManagedArray<T>::operator= (ManagedArray && other) {
+  if (this != &other) {
+      *this = other;
+      other = nullptr;
+  }
+  return *this;
 }
 
 template <typename T>

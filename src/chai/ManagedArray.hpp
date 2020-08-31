@@ -476,21 +476,36 @@ ManagedArray<T> makeManagedArray(T* data,
                                  ExecutionSpace space,
                                  bool owned)
 {
+#if !defined(CHAI_DISABLE_RM)
   ArrayManager* manager = ArrayManager::getInstance();
 
-  PointerRecord* record =
-      manager->makeManaged(data, sizeof(T) * elems, space, owned);
-
-  for (int space = CPU; space < NUM_EXECUTION_SPACES; space++) {
-    record->m_allocators[space] = 
-      manager->getAllocatorId(ExecutionSpace(space));
+  // First, try and find an existing PointerRecord for the pointer
+  PointerRecord* record = manager->getPointerRecord(data);
+  bool existingRecord = true;
+  if (record == &ArrayManager::s_null_record) {
+    // create a new pointer record for external pointer
+    record = manager->makeManaged(data, sizeof(T) * elems, space, owned);
+    existingRecord = false;
   }
+  ManagedArray<T> array(record, space);
 
-  ManagedArray<T> array = ManagedArray<T>(record, space);
+  if (existingRecord && !owned) {
+    // pointer has an owning PointerRecord, create a non-owning ManagedArray
+    // slice
+    array = array.slice(0, elems);
+  }
 
   if (!std::is_const<T>::value) {
     array.registerTouch(space);
   }
+#else
+  PointerRecord recordTmp;
+  recordTmp.m_pointers[space] = data;
+  recordTmp.m_size = sizeof(T) * elems;
+  recordTmp.m_owned[space] = owned;
+
+  ManagedArray<T> array(&recordTmp, space);
+#endif
 
   return array;
 }
