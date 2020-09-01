@@ -68,6 +68,20 @@ CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t)
 {
 }
 
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST ManagedArray<T>::ManagedArray(PointerRecord* record, ExecutionSpace space):
+  m_active_pointer(static_cast<T*>(record->m_pointers[space])),
+  m_active_base_pointer(static_cast<T*>(record->m_pointers[space])),
+  m_resource_manager(nullptr),
+  m_elems(record->m_size/sizeof(T)),
+  m_offset(0),
+  m_pointer_record(nullptr),
+  m_is_slice(!record->m_owned[space])
+{
+}
+
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other) = default;
@@ -130,8 +144,8 @@ CHAI_HOST void ManagedArray<T>::allocate(size_t elems,
     m_elems = elems;
 
   #if defined(CHAI_ENABLE_UM)
-    cudaMallocManaged(&m_active_pointer, sizeof(T) * elems);
-  #else
+    gpuMallocManaged(&m_active_pointer, sizeof(T) * elems);
+  #else // not CHAI_ENABLE_UM
     m_active_pointer = static_cast<T*>(malloc(sizeof(T) * elems));
   #endif
 
@@ -155,10 +169,10 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t new_elems)
     T* new_ptr;
 
   #if defined(CHAI_ENABLE_UM)
-    cudaMallocManaged(&new_ptr, sizeof(T) * new_elems);
-    cudaMemcpy(new_ptr, m_active_pointer, sizeof(T) * m_elems, cudaMemcpyDefault);
-    cudaFree(m_active_pointer);
-  #else  
+    gpuMallocManaged(&new_ptr, sizeof(T) * new_elems);
+    gpuMemcpy(new_ptr, m_active_pointer, sizeof(T) * m_elems, gpuMemcpyDefault);
+    gpuFree(m_active_pointer);
+  #else  // not CHAI_ENABLE_UM
     new_ptr = static_cast<T*>(realloc(m_active_pointer, sizeof(T) * new_elems));
   #endif
 
@@ -179,7 +193,7 @@ CHAI_INLINE CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
   if (!m_is_slice) {
     if (space == CPU || space == NONE) {
 #if defined(CHAI_ENABLE_UM)
-      cudaFree(m_active_pointer);
+      gpuFree(m_active_pointer);
 #else
       ::free((void *)m_active_pointer);
 #endif
@@ -293,6 +307,18 @@ ManagedArray<T>::operator typename std::
                                m_resource_manager,
                                m_elems,
                                nullptr);
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+ManagedArray<T>&
+ManagedArray<T>::operator= (ManagedArray && other) {
+  if (this != &other) {
+      *this = other;
+      other = nullptr;
+  }
+  return *this;
 }
 
 template <typename T>

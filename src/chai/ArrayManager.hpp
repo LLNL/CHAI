@@ -30,6 +30,7 @@
 #if defined(CHAI_ENABLE_HIP)
 #include "hip/hip_runtime_api.h"
 #endif
+
 namespace chai
 {
 // CHAI_GPU_ERROR_CHECK macro
@@ -67,6 +68,7 @@ inline void gpuErrorCheck(hipError_t code, const char *file, int line, bool abor
 
 #endif
 
+// wrapper for hip/cuda synchronize
 inline void synchronize() {
 #if defined (CHAI_ENABLE_HIP) &&!defined(__HIP_DEVICE_COMPILE__)
    CHAI_GPU_ERROR_CHECK(hipDeviceSynchronize());
@@ -74,6 +76,43 @@ inline void synchronize() {
    CHAI_GPU_ERROR_CHECK(cudaDeviceSynchronize());
 #endif
 }
+
+// wrapper for hip/cuda free
+CHAI_HOST inline void gpuFree(void* buffer) {
+#if defined (CHAI_ENABLE_HIP)
+   CHAI_GPU_ERROR_CHECK(hipFree(buffer));
+#elif defined (CHAI_ENABLE_CUDA)
+   CHAI_GPU_ERROR_CHECK(cudaFree(buffer));
+#endif
+}
+
+// wrapper for hip/cuda malloc
+CHAI_HOST inline void gpuMalloc(void** devPtr, size_t size) {
+#if defined (CHAI_ENABLE_HIP)
+   CHAI_GPU_ERROR_CHECK(hipMalloc(devPtr, size));
+#elif defined (CHAI_ENABLE_CUDA)
+   CHAI_GPU_ERROR_CHECK(cudaMalloc(devPtr, size));
+#endif
+}
+
+// wrapper for hip/cuda managed malloc
+CHAI_HOST inline void gpuMallocManaged(void** devPtr, size_t size) {
+#if defined (CHAI_ENABLE_HIP)
+   CHAI_GPU_ERROR_CHECK(hipMallocManaged(devPtr, size));
+#elif defined (CHAI_ENABLE_CUDA)
+   CHAI_GPU_ERROR_CHECK(cudaMallocManaged(devPtr, size));
+#endif
+}
+
+// wrapper for hip/cuda mem copy
+CHAI_HOST inline void  gpuMemcpy(void* dst, const void* src, size_t count, gpuMemcpyKind kind) {
+#if defined (CHAI_ENABLE_HIP)
+   CHAI_GPU_ERROR_CHECK(hipMemcpy(dst, src, count, kind));
+#elif defined (CHAI_ENABLE_CUDA)
+   CHAI_GPU_ERROR_CHECK(cudaMemcpy(dst, src, count, kind));
+#endif
+}
+
 /*!
  * \brief Singleton that manages caching and movement of ManagedArray objects.
  *

@@ -753,7 +753,6 @@ GPU_TEST(ManagedArray, PodTestGPU)
 }
 #endif
 
-#ifndef CHAI_DISABLE_RM
 TEST(ManagedArray, ExternalConstructorUnowned)
 {
   float* data = static_cast<float*>(std::malloc(100 * sizeof(float)));
@@ -778,6 +777,7 @@ TEST(ManagedArray, ExternalConstructorUnowned)
 }
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+#ifndef CHAI_DISABLE_RM
 GPU_TEST(ManagedArray, ExternalUnownedMoveToGPU)
 {
   float* data;
