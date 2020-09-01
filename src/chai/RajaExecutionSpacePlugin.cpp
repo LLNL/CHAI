@@ -1,32 +1,32 @@
 // ---------------------------------------------------------------------
 // Copyright (c) 2016, Lawrence Livermore National Security, LLC. All
 // rights reserved.
-// 
+//
 // Produced at the Lawrence Livermore National Laboratory.
-// 
+//
 // This file is part of CHAI.
-// 
+//
 // LLNL-CODE-705877
-// 
+//
 // For details, see https:://github.com/LLNL/CHAI
 // Please also see the NOTICE and LICENSE files.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
 // are met:
-// 
+//
 // - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
-// 
+//
 // - Redistributions in binary form must reproduce the above copyright
 //   notice, this list of conditions and the following disclaimer in the
 //   documentation and/or other materials provided with the
 //   distribution.
-// 
+//
 // - Neither the name of the LLNS/LLNL nor the names of its contributors
 //   may be used to endorse or promote products derived from this
 //   software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 // LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -53,23 +53,23 @@ RajaExecutionSpacePlugin::RajaExecutionSpacePlugin() :
 {
 }
 
-void 
-RajaExecutionSpacePlugin::preLaunch(RAJA::util::PluginContext p)
+void
+RajaExecutionSpacePlugin::preCapture(const RAJA::util::PluginContext& p)
 {
   switch (p.platform) {
-    case RAJA::Platform::host: 
+    case RAJA::Platform::host:
       m_arraymanager->setExecutionSpace(chai::CPU); break;
 #if defined(CHAI_ENABLE_CUDA)
     case RAJA::Platform::cuda:
       m_arraymanager->setExecutionSpace(chai::GPU); break;
 #endif
-    default: 
+    default:
       m_arraymanager->setExecutionSpace(chai::NONE);
   }
 }
 
-void 
-RajaExecutionSpacePlugin::postLaunch(RAJA::util::PluginContext)
+void
+RajaExecutionSpacePlugin::postCapture(const RAJA::util::PluginContext&)
 {
   m_arraymanager->setExecutionSpace(chai::NONE);
 }
@@ -93,7 +93,7 @@ PluginStrategy::PluginStrategy() = default;
 #endif
 
 // Register plugin with RAJA
-RAJA::util::PluginRegistry::Add<chai::RajaExecutionSpacePlugin> P(
+RAJA::util::PluginRegistry::add<chai::RajaExecutionSpacePlugin> P(
      "RajaExecutionSpacePlugin",
      "Plugin to set CHAI execution space based on RAJA execution platform");
 

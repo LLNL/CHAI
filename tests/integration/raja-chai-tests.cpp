@@ -22,6 +22,17 @@
   TEST(X, Y) { cuda_test_##X##_##Y(); } \
   static void cuda_test_##X##_##Y()
 
+#if defined(RAJA_ENABLE_CUDA)
+#define PARALLEL_RAJA_DEVICE __device__
+  using parallel_raja_policy = RAJA::cuda_exec<16>;
+#elif defined(RAJA_ENABLE_OPENMP)
+#define PARALLEL_RAJA_DEVICE
+  using parallel_raja_policy = RAJA::omp_parallel_for_exec;
+#else
+#define PARALLEL_RAJA_DEVICE
+  using parallel_raja_policy = RAJA::seq_exec;
+#endif
+
 CUDA_TEST(ChaiTest, Simple)
 {
   chai::ManagedArray<float> v1(10);
@@ -33,14 +44,9 @@ CUDA_TEST(ChaiTest, Simple)
 
   std::cout << "end of loop 1" << std::endl;
 
-
-#if defined(RAJA_ENABLE_CUDA)
-  RAJA::forall<RAJA::cuda_exec<16> >(RAJA::RangeSegment(0, 10), [=] __device__(int i) {
+  RAJA::forall<parallel_raja_policy>(RAJA::RangeSegment(0, 10), [=] PARALLEL_RAJA_DEVICE(int i) {
     v2[i] = v1[i] * 2.0f;
   });
-#else
-  RAJA::forall<RAJA::omp_for_exec>(RAJA::RangeSegment(0, 10), [=](int i) { v2[i] = v1[i] * 2.0f; });
-#endif
 
   std::cout << "end of loop 2" << std::endl;
 
@@ -48,14 +54,9 @@ CUDA_TEST(ChaiTest, Simple)
     ASSERT_FLOAT_EQ(v2[i], i * 2.0f);
   });
 
-
-#if defined(RAJA_ENABLE_CUDA)
-  RAJA::forall<RAJA::cuda_exec<16> >(RAJA::RangeSegment(0, 10), [=] __device__(int i) {
+  RAJA::forall<parallel_raja_policy>(RAJA::RangeSegment(0, 10), [=] PARALLEL_RAJA_DEVICE(int i) {
     v2[i] *= 2.0f;
   });
-#else
-  RAJA::forall<RAJA::omp_for_exec>(RAJA::RangeSegment(0, 10), [=](int i) { v2[i] *= 2.0f; });
-#endif
 
   float* raw_v2 = v2;
   for (int i = 0; i < 10; i++) {
@@ -78,26 +79,17 @@ CUDA_TEST(ChaiTest, Views)
     v1(i) = static_cast<float>(i * 1.0f);
   });
 
-#if defined(RAJA_ENABLE_CUDA)
-  RAJA::forall<RAJA::cuda_exec<16> >(RAJA::RangeSegment(0, 10), [=] __device__(int i) {
+  RAJA::forall<parallel_raja_policy>(RAJA::RangeSegment(0, 10), [=] PARALLEL_RAJA_DEVICE(int i) {
     v2(i) = v1(i) * 2.0f;
   });
-#else
-  RAJA::forall<RAJA::omp_for_exec>(RAJA::RangeSegment(0, 10), [=](int i) { v2(i) = v1(i) * 2.0f; });
-#endif
 
   RAJA::forall<RAJA::seq_exec>(RAJA::RangeSegment(0, 10), [=](int i) {
     ASSERT_FLOAT_EQ(v2(i), i * 2.0f);
   });
 
-
-#if defined(RAJA_ENABLE_CUDA)
-  RAJA::forall<RAJA::cuda_exec<16> >(RAJA::RangeSegment(0, 10), [=] __device__(int i) {
+  RAJA::forall<parallel_raja_policy>(RAJA::RangeSegment(0, 10), [=] PARALLEL_RAJA_DEVICE(int i) {
     v2(i) *= 2.0f;
   });
-#else
-  RAJA::forall<RAJA::omp_for_exec>(RAJA::RangeSegment(0, 10), [=](int i) { v2(i) *= 2.0f; });
-#endif
 
   float* raw_v2 = v2.data;
   for (int i = 0; i < 10; i++) {
