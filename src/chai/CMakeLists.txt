@@ -66,6 +66,12 @@ if (ENABLE_RAJA_PLUGIN)
   set (chai_depends
     ${chai_depends}
     RAJA)
+
+  if (ENABLE_CUDA)
+    set (chai_depends
+      ${chai_depends}
+      cuda)
+  endif ()
 endif ()
 
 blt_add_library(
