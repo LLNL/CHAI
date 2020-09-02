@@ -1,10 +1,9 @@
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/COPYRIGHT file for details.
+//////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
+// project contributors. See the COPYRIGHT file for details.
 //
-// SPDX-License-Identifier: (BSD-3-Clause)
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-
+// SPDX-License-Identifier: BSD-3-Clause
+//////////////////////////////////////////////////////////////////////////////
 ///
 /// Source file containing tests for CHAI in RAJA nested loops.
 ///
