@@ -48,7 +48,7 @@ RUN cd build && make -j 16
 RUN cd build && ctest -T test --output-on-failure
 
 
-FROM axom/compilers:nvcc-9 AS nvcc
+FROM axom/compilers:nvcc-10 AS nvcc
 COPY --chown=axom:axom . /home/axom/workspace
 WORKDIR /home/axom/workspace
 RUN mkdir build && cd build && cmake -DCMAKE_CXX_COMPILER=g++ -DENABLE_CUDA=On ..

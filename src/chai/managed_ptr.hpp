@@ -1,46 +1,9 @@
-// ---------------------------------------------------------------------
-// Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
-// rights reserved.
+//////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
+// project contributors. See the COPYRIGHT file for details.
 //
-// Produced at the Lawrence Livermore National Laboratory.
-//
-// This file is part of CHAI.
-//
-// LLNL-CODE-705877
-//
-// For details, see https:://github.com/LLNL/CHAI
-// Please also see the NOTICE and LICENSE files.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-//
-// - Redistributions of source code must retain the above copyright
-//   notice, this list of conditions and the following disclaimer.
-//
-// - Redistributions in binary form must reproduce the above copyright
-//   notice, this list of conditions and the following disclaimer in the
-//   documentation and/or other materials provided with the
-//   distribution.
-//
-// - Neither the name of the LLNS/LLNL nor the names of its contributors
-//   may be used to endorse or promote products derived from this
-//   software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-// OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-// AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
-// WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-// ---------------------------------------------------------------------
-
+// SPDX-License-Identifier: BSD-3-Clause
+//////////////////////////////////////////////////////////////////////////////
 #ifndef MANAGED_PTR_H_
 #define MANAGED_PTR_H_
 
@@ -62,7 +25,7 @@
 
 namespace chai {
    namespace detail {
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
       template <typename T>
       __global__ void destroy_on_device(T* gpuPointer);
 #endif
@@ -195,7 +158,7 @@ namespace chai {
                   case CPU:
                      m_cpu_pointer = pointers.begin()[i++];
                      break;
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
                   case GPU:
                      m_gpu_pointer = pointers.begin()[i++];
                      break;
@@ -243,7 +206,7 @@ namespace chai {
                   case CPU:
                      m_cpu_pointer = pointers.begin()[i++];
                      break;
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
                   case GPU:
                      m_gpu_pointer = pointers.begin()[i++];
                      break;
@@ -272,7 +235,7 @@ namespace chai {
             m_gpu_pointer(other.m_gpu_pointer),
             m_pointer_record(other.m_pointer_record)
          {
-#ifndef __CUDA_ARCH__
+#if !defined(CHAI_DEVICE_COMPILE)
             move();
 #endif
          }
@@ -297,7 +260,7 @@ namespace chai {
             static_assert(std::is_convertible<U*, T*>::value,
                           "U* must be convertible to T*.");
 
-#ifndef __CUDA_ARCH__
+#if !defined(CHAI_DEVICE_COMPILE)
             move();
 #endif
          }
@@ -332,7 +295,7 @@ namespace chai {
                   case CPU:
                      m_cpu_pointer = pointers.begin()[i++];
                      break;
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
                   case GPU:
                      m_gpu_pointer = pointers.begin()[i++];
                      break;
@@ -363,7 +326,7 @@ namespace chai {
                m_gpu_pointer = other.m_gpu_pointer;
                m_pointer_record = other.m_pointer_record;
 
-#ifndef __CUDA_ARCH__
+#if !defined(CHAI_DEVICE_COMPILE)
                move();
 #endif
             }
@@ -391,7 +354,7 @@ namespace chai {
             m_gpu_pointer = other.m_gpu_pointer;
             m_pointer_record = other.m_pointer_record;
 
-#ifndef __CUDA_ARCH__
+#if !defined(CHAI_DEVICE_COMPILE)
             move();
 #endif
 
@@ -404,7 +367,7 @@ namespace chai {
          /// Returns the CPU or GPU pointer depending on the calling context.
          ///
          CHAI_HOST_DEVICE inline T* get() const {
-#ifndef __CUDA_ARCH__
+#if !defined(CHAI_DEVICE_COMPILE)
             move();
             return m_cpu_pointer;
 #else
@@ -428,7 +391,7 @@ namespace chai {
             switch (space) {
                case CPU:
                   return m_cpu_pointer;
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
                case GPU:
                   return m_gpu_pointer;
 #endif
@@ -443,7 +406,7 @@ namespace chai {
          /// Returns the CPU or GPU pointer depending on the calling context.
          ///
          CHAI_HOST_DEVICE inline T* operator->() const {
-#ifndef __CUDA_ARCH__
+#if !defined(CHAI_DEVICE_COMPILE)
             return m_cpu_pointer;
 #else
             return m_gpu_pointer;
@@ -456,7 +419,7 @@ namespace chai {
          /// Returns the CPU or GPU reference depending on the calling context.
          ///
          CHAI_HOST_DEVICE inline T& operator*() const {
-#ifndef __CUDA_ARCH__
+#if !defined(CHAI_DEVICE_COMPILE)
             return *m_cpu_pointer;
 #else
             return *m_gpu_pointer;
@@ -529,7 +492,7 @@ namespace chai {
                            case CPU:
                               delete pointer;
                               break;
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
                            case GPU:
                            {
                               if (pointer) {
@@ -561,7 +524,7 @@ namespace chai {
                         case CPU:
                            delete pointer;
                            break;
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
                         case GPU:
                         {
                            if (pointer) {
@@ -664,7 +627,7 @@ namespace chai {
       ///
       template <typename T>
       CHAI_HOST_DEVICE T* getRawPointers(ManagedArray<T> arg) {
-         return (T*) arg;
+         return arg.data();
       }
 
       ///
@@ -794,7 +757,7 @@ namespace chai {
          return cpuPointer;
       }
 
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
       ///
       /// @author Alan Dayton
       ///
@@ -909,7 +872,7 @@ namespace chai {
 
          // Allocate space on the GPU to hold the pointer to the new object
          T** gpuBuffer;
-         CHAI_GPU_ERROR_CHECK(cudaMalloc(&gpuBuffer, sizeof(T*)));
+         gpuMalloc((void**)(&gpuBuffer), sizeof(T*));
 
          // Create the object on the device
          make_on_device<<<1, 1>>>(gpuBuffer, args...);
@@ -922,15 +885,14 @@ namespace chai {
 
          // Allocate space on the CPU for the pointer and copy the pointer to the CPU
          T** cpuBuffer = (T**) malloc(sizeof(T*));
-         CHAI_GPU_ERROR_CHECK(cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(T*),
-                                    cudaMemcpyDeviceToHost));
+         gpuMemcpy(cpuBuffer, gpuBuffer, sizeof(T*), gpuMemcpyDeviceToHost);
 
          // Get the GPU pointer
          T* gpuPointer = cpuBuffer[0];
 
          // Free the host and device buffers
          free(cpuBuffer);
-         CHAI_GPU_ERROR_CHECK(cudaFree(gpuBuffer));
+         gpuFree(gpuBuffer);
 
 #ifndef CHAI_DISABLE_RM
          // Set the execution space back to the previous value
@@ -967,7 +929,7 @@ namespace chai {
 
          // Allocate space on the GPU to hold the pointer to the new object
          T** gpuBuffer;
-         CHAI_GPU_ERROR_CHECK(cudaMalloc(&gpuBuffer, sizeof(T*)));
+         gpuMalloc((void**)(&gpuBuffer), sizeof(T*));
 
          // Create the object on the device
          make_on_device_from_factory<T><<<1, 1>>>(gpuBuffer, f, args...);
@@ -980,15 +942,14 @@ namespace chai {
 
          // Allocate space on the CPU for the pointer and copy the pointer to the CPU
          T** cpuBuffer = (T**) malloc(sizeof(T*));
-         CHAI_GPU_ERROR_CHECK(cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(T*),
-                                    cudaMemcpyDeviceToHost));
+         gpuMemcpy(cpuBuffer, gpuBuffer, sizeof(T*), gpuMemcpyDeviceToHost);
 
          // Get the GPU pointer
          T* gpuPointer = cpuBuffer[0];
 
          // Free the host and device buffers
          free(cpuBuffer);
-         CHAI_GPU_ERROR_CHECK(cudaFree(gpuBuffer));
+         gpuFree(gpuBuffer);
 
 #ifndef CHAI_DISABLE_RM
          // Set the execution space back to the previous value
@@ -1037,7 +998,7 @@ namespace chai {
    template <typename T,
              typename... Args>
    CHAI_HOST managed_ptr<T> make_managed(Args... args) {
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
       // Construct on the GPU first to take advantage of asynchrony
       T* gpuPointer = detail::make_on_device<T>(args...);
 #endif
@@ -1046,7 +1007,7 @@ namespace chai {
       T* cpuPointer = detail::make_on_host<T>(args...);
 
       // Construct and return the managed_ptr
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
       return managed_ptr<T>({CPU, GPU}, {cpuPointer, gpuPointer});
 #else
       return managed_ptr<T>({CPU}, {cpuPointer});
@@ -1077,7 +1038,7 @@ namespace chai {
       static_assert(std::is_convertible<R*, T*>::value,
                     "F does not return a pointer that is convertible to T*.");
 
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
       // Construct on the GPU first to take advantage of asynchrony
       T* gpuPointer = detail::make_on_device_from_factory<R>(f, args...);
 #endif
@@ -1086,7 +1047,7 @@ namespace chai {
       T* cpuPointer = detail::make_on_host_from_factory<R>(f, args...);
 
       // Construct and return the managed_ptr
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
       return managed_ptr<T>({CPU, GPU}, {cpuPointer, gpuPointer});
 #else
       return managed_ptr<T>({CPU}, {cpuPointer});
@@ -1106,7 +1067,7 @@ namespace chai {
    CHAI_HOST managed_ptr<T> static_pointer_cast(const managed_ptr<U>& other) noexcept {
       T* cpuPointer = static_cast<T*>(other.get());
 
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
       T* gpuPointer = static_cast<T*>(other.get(GPU, false));
 
       return managed_ptr<T>(other, {CPU, GPU}, {cpuPointer, gpuPointer});
@@ -1128,7 +1089,7 @@ namespace chai {
    CHAI_HOST managed_ptr<T> dynamic_pointer_cast(const managed_ptr<U>& other) noexcept {
       T* cpuPointer = dynamic_cast<T*>(other.get());
 
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
       T* gpuPointer = nullptr;
 
       if (cpuPointer) {
@@ -1154,7 +1115,7 @@ namespace chai {
    CHAI_HOST managed_ptr<T> const_pointer_cast(const managed_ptr<U>& other) noexcept {
       T* cpuPointer = const_cast<T*>(other.get());
 
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
       T* gpuPointer = const_cast<T*>(other.get(GPU, false));
 
       return managed_ptr<T>(other, {CPU, GPU}, {cpuPointer, gpuPointer});
@@ -1176,7 +1137,7 @@ namespace chai {
    CHAI_HOST managed_ptr<T> reinterpret_pointer_cast(const managed_ptr<U>& other) noexcept {
       T* cpuPointer = reinterpret_cast<T*>(other.get());
 
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
       T* gpuPointer = reinterpret_cast<T*>(other.get(GPU, false));
 
       return managed_ptr<T>(other, {CPU, GPU}, {cpuPointer, gpuPointer});

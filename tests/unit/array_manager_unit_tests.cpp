@@ -33,8 +33,8 @@ TEST(ArrayManager, getPointerMap)
   ASSERT_EQ(map1.size(), 1);
 
   // Check some of the entries in the pointer record
-  ASSERT_TRUE(map1.find(array1) != map1.end());
-  const chai::PointerRecord* record1Temp = map1[array1];
+  ASSERT_TRUE(map1.find(array1.data()) != map1.end());
+  const chai::PointerRecord* record1Temp = map1[array1.data()];
   ASSERT_EQ(record1Temp->m_size, sizeOfArray1 * sizeof(int));
   ASSERT_EQ(record1Temp->m_last_space, chai::CPU);
 
@@ -53,14 +53,14 @@ TEST(ArrayManager, getPointerMap)
   ASSERT_EQ(map2.size(), 2);
 
   // Check that the entries in the first record are not changed
-  ASSERT_TRUE(map2.find(array1) != map2.end());
-  const chai::PointerRecord* record1 = map1[array1];
+  ASSERT_TRUE(map2.find(array1.data()) != map2.end());
+  const chai::PointerRecord* record1 = map1[array1.data()];
   ASSERT_EQ(record1->m_size, sizeOfArray1 * sizeof(int));
   ASSERT_EQ(record1->m_last_space, chai::CPU);
 
   // Check some of the entries in the pointer record
-  ASSERT_TRUE(map2.find(array2) != map2.end());
-  const chai::PointerRecord* record2 = map2[array2];
+  ASSERT_TRUE(map2.find(array2.data()) != map2.end());
+  const chai::PointerRecord* record2 = map2[array2.data()];
   ASSERT_EQ(record2->m_size, sizeOfArray2 * sizeof(double));
   ASSERT_EQ(record2->m_last_space, chai::CPU);
 

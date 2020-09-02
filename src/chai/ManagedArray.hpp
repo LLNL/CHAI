@@ -20,6 +20,13 @@
 namespace chai
 {
 
+namespace {
+inline ExecutionSpace get_default_space() {
+  return ArrayManager::getInstance()->getDefaultAllocationSpace();
+}
+
+}
+
 
 struct InvalidConstCast;
 
@@ -89,7 +96,7 @@ public:
    * \param elems Number of elements in the array.
    * \param space Execution space in which to allocate the array.
    */
-  CHAI_HOST_DEVICE ManagedArray(size_t elems, ExecutionSpace space = NONE);
+  CHAI_HOST_DEVICE ManagedArray(size_t elems, ExecutionSpace space = get_default_space());
 
   CHAI_HOST_DEVICE ManagedArray(
       size_t elems,
@@ -193,13 +200,35 @@ public:
   CHAI_HOST_DEVICE T* getActivePointer() const;
 
   /*!
-   * \brief get access to the pointer in the given execution space
-   * @return a copy of the pointer in the given execution space
+   * \brief Move data to the current execution space (actually determined
+   *        by where the code is executing) and return a raw pointer.
    *
-   * \param space The space to get the pointer for.
-   * \param do_move Ensure data at that pointer is live and valid.
+   * \return Raw pointer to data in the current execution space
    */
-  CHAI_HOST T* getPointer(ExecutionSpace space, bool do_move = true);
+  CHAI_HOST_DEVICE T* data() const;
+
+  /*!
+   * \brief Return the raw pointer to the data in the given execution
+   *        space. Optionally move the data to that execution space.
+   *
+   * \param space The execution space from which to retrieve the raw pointer.
+   * \param do_move Ensure data at that pointer is live and valid.
+   *
+   * @return A copy of the pointer in the given execution space
+   */
+  CHAI_HOST T* data(ExecutionSpace space, bool do_move = true) const;
+
+  /*!
+   * \brief Deprecated! Use the data method instead!
+   *        Return the raw pointer to the data in the given execution
+   *        space. Optionally move the data to that execution space.
+   *
+   * \param space The execution space from which to retrieve the raw pointer.
+   * \param do_move Ensure data at that pointer is live and valid.
+   *
+   * @return A copy of the pointer in the given execution space
+   */
+  CHAI_HOST T* getPointer(ExecutionSpace space, bool do_move = true) const;
 
   /*!
    * \brief
@@ -357,7 +386,7 @@ public:
     m_pointer_record = other.m_pointer_record;
     m_is_slice = other.m_is_slice;
 #ifndef CHAI_DISABLE_RM
-#ifndef __CUDA_ARCH__
+#if !defined(CHAI_DEVICE_COMPILE)
   // if we can, ensure elems is based off the pointer_record size to protect against
   // casting leading to incorrect size info in m_elems.
   if (m_pointer_record != nullptr) {
@@ -447,21 +476,36 @@ ManagedArray<T> makeManagedArray(T* data,
                                  ExecutionSpace space,
                                  bool owned)
 {
+#if !defined(CHAI_DISABLE_RM)
   ArrayManager* manager = ArrayManager::getInstance();
 
-  PointerRecord* record =
-      manager->makeManaged(data, sizeof(T) * elems, space, owned);
-
-  for (int space = CPU; space < NUM_EXECUTION_SPACES; space++) {
-    record->m_allocators[space] = 
-      manager->getAllocatorId(ExecutionSpace(space));
+  // First, try and find an existing PointerRecord for the pointer
+  PointerRecord* record = manager->getPointerRecord(data);
+  bool existingRecord = true;
+  if (record == &ArrayManager::s_null_record) {
+    // create a new pointer record for external pointer
+    record = manager->makeManaged(data, sizeof(T) * elems, space, owned);
+    existingRecord = false;
   }
+  ManagedArray<T> array(record, space);
 
-  ManagedArray<T> array = ManagedArray<T>(record, space);
+  if (existingRecord && !owned) {
+    // pointer has an owning PointerRecord, create a non-owning ManagedArray
+    // slice
+    array = array.slice(0, elems);
+  }
 
   if (!std::is_const<T>::value) {
     array.registerTouch(space);
   }
+#else
+  PointerRecord recordTmp;
+  recordTmp.m_pointers[space] = data;
+  recordTmp.m_size = sizeof(T) * elems;
+  recordTmp.m_owned[space] = owned;
+
+  ManagedArray<T> array(&recordTmp, space);
+#endif
 
   return array;
 }
@@ -499,7 +543,7 @@ CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T> ManagedArray<T>::slice( size_t offs
     elems = size() - offset;
   }
   if (offset + elems > size()) {
-#ifndef __CUDA_ARCH__
+#if !defined(CHAI_DEVICE_COMPILE)
     CHAI_LOG(Debug,
              "Invalid slice. No active pointer or index out of bounds");
 #endif
