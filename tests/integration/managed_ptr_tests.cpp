@@ -513,7 +513,7 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_array_and_callback)
      array[i] = expectedValue;
   });
 
-  auto cpuPointer = new RawArrayClass(array);
+  auto cpuPointer = new RawArrayClass(array.data());
   auto gpuPointer = chai::detail::make_on_device<RawArrayClass>(array);
 
   auto callback = [=] (chai::Action action, chai::ExecutionSpace space, void*) mutable -> bool {

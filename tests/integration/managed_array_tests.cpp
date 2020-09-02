@@ -802,7 +802,7 @@ TEST(ManagedArray, ExternalOwnedFromManagedArray)
   chai::ManagedArray<float> arrayCopy =
       chai::makeManagedArray<float>(array.getPointer(chai::CPU), 20, chai::CPU, true);
 
-  ASSERT_EQ(array, arrayCopy);
+  ASSERT_EQ(array.data(), arrayCopy.data());
   // should be able to free through the new ManagedArray
   arrayCopy.free();
   assert_empty_map(true);

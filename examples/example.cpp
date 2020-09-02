@@ -91,7 +91,7 @@ int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv))
   forall(gpu(), 0, 10, [=] __device__(int i) { v2[i] *= 2.0f; });
 
   std::cout << "Casting v2 to a pointer." << std::endl;
-  float* raw_v2 = v2;
+  float* raw_v2 = v2.data();
 
   std::cout << "raw_v2 = [";
   for (int i = 0; i < 10; i++) {
@@ -100,7 +100,7 @@ int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv))
   std::cout << " ]" << std::endl;
 
   std::cout << "Casting device_array to a pointer." << std::endl;
-  int* raw_device_array = device_array;
+  int* raw_device_array = device_array.data();
   std::cout << "device_array = [";
   for (int i = 0; i < 10; i++) {
     std::cout << " " << device_array[i];
