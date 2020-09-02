@@ -58,6 +58,7 @@ nvcc_gcc_4_9_3_raja (build and test on lassen):
   variables:
     SPEC: "%gcc@4.9.3+cuda+raja"
   extends: .build_and_test_on_lassen
+  allow_failure: true
 
 nvcc_xl-beta-2019.06.20 (build and test on lassen):
   variables:
