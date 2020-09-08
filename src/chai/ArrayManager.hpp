@@ -66,6 +66,8 @@ inline void gpuErrorCheck(hipError_t code, const char *file, int line, bool abor
 
 #endif
 
+#if defined(CHAI_GPUCC)
+
 // wrapper for hip/cuda synchronize
 inline void synchronize() {
 #if defined (CHAI_ENABLE_HIP) &&!defined(__HIP_DEVICE_COMPILE__)
@@ -110,6 +112,8 @@ CHAI_HOST inline void  gpuMemcpy(void* dst, const void* src, size_t count, gpuMe
    CHAI_GPU_ERROR_CHECK(cudaMemcpy(dst, src, count, kind));
 #endif
 }
+
+#endif //#if defined(CHAI_GPUCC)
 
 /*!
  * \brief Singleton that manages caching and movement of ManagedArray objects.
