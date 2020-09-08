@@ -66,8 +66,6 @@ inline void gpuErrorCheck(hipError_t code, const char *file, int line, bool abor
 
 #endif
 
-#if defined(CHAI_GPUCC)
-
 // wrapper for hip/cuda synchronize
 inline void synchronize() {
 #if defined (CHAI_ENABLE_HIP) &&!defined(__HIP_DEVICE_COMPILE__)
@@ -76,6 +74,8 @@ inline void synchronize() {
    CHAI_GPU_ERROR_CHECK(cudaDeviceSynchronize());
 #endif
 }
+
+#if defined(CHAI_GPUCC)
 
 // wrapper for hip/cuda free
 CHAI_HOST inline void gpuFree(void* buffer) {
