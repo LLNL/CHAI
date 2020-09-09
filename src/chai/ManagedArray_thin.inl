@@ -119,6 +119,12 @@ CHAI_HOST_DEVICE T* ManagedArray<T>::data() const
 }
 
 template <typename T>
+CHAI_HOST_DEVICE T* ManagedArray<T>::cdata() const
+{
+   return m_active_pointer;
+}
+
+template <typename T>
 T* ManagedArray<T>::data(ExecutionSpace /*space*/, bool /*do_move*/) const
 {
   return m_active_pointer;
@@ -265,7 +271,7 @@ CHAI_INLINE CHAI_HOST void ManagedArray<T>::registerTouch(ExecutionSpace)
 }
 
 template <typename T>
-CHAI_INLINE CHAI_HOST void ManagedArray<T>::move(ExecutionSpace) const
+CHAI_INLINE CHAI_HOST void ManagedArray<T>::move(ExecutionSpace, bool) const
 {
 }
 
