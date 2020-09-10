@@ -954,7 +954,7 @@ namespace chai {
       gpuMalloc((void**)(&gpuBuffer), sizeof(T*));
 
       // Create the object on the device
-      make_on_device<<<1, 1>>>(gpuBuffer, args...);
+      detail::make_on_device<<<1, 1>>>(gpuBuffer, args...);
 
 #ifndef CHAI_DISABLE_RM
       if (ArrayManager::getInstance()->deviceSynchronize()) {
@@ -1011,7 +1011,7 @@ namespace chai {
       gpuMalloc((void**)(&gpuBuffer), sizeof(T*));
 
       // Create the object on the device
-      make_on_device_from_factory<T><<<1, 1>>>(gpuBuffer, f, args...);
+      detail::make_on_device_from_factory<T><<<1, 1>>>(gpuBuffer, f, args...);
 
 #ifndef CHAI_DISABLE_RM
       if (ArrayManager::getInstance()->deviceSynchronize()) {
