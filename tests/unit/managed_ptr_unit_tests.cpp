@@ -552,7 +552,7 @@ GPU_TEST(managed_ptr, gpu_nullptr_constructor)
 
 GPU_TEST(managed_ptr, gpu_gpu_pointer_constructor)
 {
-  TestDerived* gpuPointer = chai::detail::make_on_device<TestDerived>(3);
+  TestDerived* gpuPointer = chai::make_on_device<TestDerived>(3);
   chai::managed_ptr<TestDerived> derived({chai::GPU}, {gpuPointer});
 
   EXPECT_EQ(derived.get(), nullptr);
@@ -656,7 +656,7 @@ GPU_TEST(managed_ptr, gpu_new_and_delete_on_device_2)
 
 GPU_TEST(managed_ptr, simple_gpu_cpu_and_gpu_pointer_constructor)
 {
-  Simple* gpuPointer = chai::detail::make_on_device<Simple>(3);
+  Simple* gpuPointer = chai::make_on_device<Simple>(3);
   Simple* cpuPointer = new Simple(4);
 
   chai::managed_ptr<Simple> simple({chai::GPU, chai::CPU}, {gpuPointer, cpuPointer});
@@ -680,7 +680,7 @@ GPU_TEST(managed_ptr, simple_gpu_cpu_and_gpu_pointer_constructor)
 
 GPU_TEST(managed_ptr, gpu_cpu_and_gpu_pointer_constructor)
 {
-  TestDerived* gpuPointer = chai::detail::make_on_device<TestDerived>(3);
+  TestDerived* gpuPointer = chai::make_on_device<TestDerived>(3);
   TestDerived* cpuPointer = new TestDerived(4);
 
   chai::managed_ptr<TestDerived> derived({chai::GPU, chai::CPU}, {gpuPointer, cpuPointer});

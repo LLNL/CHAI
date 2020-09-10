@@ -160,7 +160,7 @@ TEST(managed_ptr, class_with_raw_array)
     array[i] = expectedValue;
   });
 
-  auto rawArrayClass = chai::make_managed<RawArrayClass>(array);
+  auto rawArrayClass = chai::make_managed<RawArrayClass>(chai::unpack(array));
 
   ASSERT_EQ(rawArrayClass->getValue(0), expectedValue);
 
@@ -181,7 +181,9 @@ TEST(managed_ptr, class_with_multiple_raw_arrays)
      array2[i] = expectedValue2;
   });
 
-  auto multipleRawArrayClass = chai::make_managed<MultipleRawArrayClass>(array1, array2);
+  auto multipleRawArrayClass = chai::make_managed<MultipleRawArrayClass>(
+                                 chai::unpack(array1),
+                                 chai::unpack(array2));
 
   ASSERT_EQ(multipleRawArrayClass->getValue(0, 0), expectedValue1);
   ASSERT_EQ(multipleRawArrayClass->getValue(1, 0), expectedValue2);
@@ -219,8 +221,9 @@ TEST(managed_ptr, class_with_raw_ptr)
      array[i] = expectedValue;
   });
 
-  auto rawArrayClass = chai::make_managed<RawArrayClass>(array);
-  auto rawPointerClass = chai::make_managed<RawPointerClass>(rawArrayClass);
+  auto rawArrayClass = chai::make_managed<RawArrayClass>(chai::unpack(array));
+  auto rawPointerClass = chai::make_managed<RawPointerClass>(
+                           chai::unpack(rawArrayClass));
 
   ASSERT_EQ((*rawPointerClass).getValue(0), expectedValue);
 
@@ -452,7 +455,7 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_array)
      array[i] = expectedValue;
   });
 
-  auto rawArrayClass = chai::make_managed<RawArrayClass>(array);
+  auto rawArrayClass = chai::make_managed<RawArrayClass>(chai::unpack(array));
   chai::ManagedArray<int> results(1, chai::GPU);
 
   forall(gpu(), 0, 1, [=] __device__ (int i) {
@@ -482,7 +485,7 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_array_and_callback)
 #else
   auto cpuPointer = new RawArrayClass(array.data());
 #endif
-  auto gpuPointer = chai::detail::make_on_device<RawArrayClass>(array);
+  auto gpuPointer = chai::make_on_device<RawArrayClass>(chai::unpack(array));
 
   auto callback = [=] (chai::Action action, chai::ExecutionSpace space, void*) mutable -> bool {
      switch (action) {
@@ -553,8 +556,9 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_ptr)
      array[0] = expectedValue;
   });
 
-  auto rawArrayClass = chai::make_managed<RawArrayClass>(array);
-  auto rawPointerClass = chai::make_managed<RawPointerClass>(rawArrayClass);
+  auto rawArrayClass = chai::make_managed<RawArrayClass>(chai::unpack(array));
+  auto rawPointerClass = chai::make_managed<RawPointerClass>(
+                           chai::unpack(rawArrayClass));
 
   chai::ManagedArray<int> results(1, chai::GPU);
 
@@ -793,7 +797,7 @@ TEST(managed_ptr, class_with_raw_array_of_pointers)
   chai::ManagedArray<int> array(1, chai::CPU);
   array[0] = expectedValue;
 
-  auto rawArrayClass = chai::make_managed<RawArrayClass>(array);
+  auto rawArrayClass = chai::make_managed<RawArrayClass>(chai::unpack(array));
   chai::managed_ptr<RawArrayClass> arrayOfPointers[1] = {rawArrayClass};
 
   auto rawArrayOfPointersClass = chai::make_managed<RawArrayOfPointersClass>(arrayOfPointers);
