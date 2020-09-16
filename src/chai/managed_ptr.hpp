@@ -612,7 +612,9 @@ namespace chai {
    ///
    /// @author Alan Dayton
    ///
-   /// A wrapper used for unpacking the internal pointers in the correct space
+   /// A wrapper used by the make_managed family of functions to indicate when
+   /// the internal pointers contained by a ManagedArray should be extracted.
+   /// It is not intended to be used directly, but rather created by unpack.
    ///
    template <typename T>
    class ManagedArrayUnpacker {
@@ -648,7 +650,9 @@ namespace chai {
    ///
    /// @author Alan Dayton
    ///
-   /// A wrapper used for unpacking the internal pointers in the correct space
+   /// A wrapper used by the make_managed family of functions to indicate when
+   /// the internal pointers contained by a managed_ptr should be extracted.
+   /// It is not intended to be used directly, but rather created by unpack.
    ///
    template <typename T>
    class managed_ptr_unpacker {
@@ -817,7 +821,8 @@ namespace chai {
    ///
    /// @param[in] arg The ManagedArray to unpack
    ///
-   /// @return A wrapper used for unpacking the internal pointers in the correct space
+   /// @return A wrapper used by make_managed for unpacking the internal pointers
+   ///         in the correct space
    ///
    template <typename T>
    CHAI_HOST ManagedArrayUnpacker<T> unpack(const ManagedArray<T>& arg) {
@@ -832,7 +837,8 @@ namespace chai {
    ///
    /// @param[in] arg The managed_ptr to unpack
    ///
-   /// @return A wrapper used for unpacking the internal pointers in the correct space
+   /// @return A wrapper used by make_managed for unpacking the internal pointers
+   ///         in the correct space
    ///
    template <typename T>
    CHAI_HOST managed_ptr_unpacker<T> unpack(const managed_ptr<T>& arg) {
