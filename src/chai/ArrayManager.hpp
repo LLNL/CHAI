@@ -75,6 +75,8 @@ inline void synchronize() {
 #endif
 }
 
+#if defined(CHAI_GPUCC)
+
 // wrapper for hip/cuda free
 CHAI_HOST inline void gpuFree(void* buffer) {
 #if defined (CHAI_ENABLE_HIP)
@@ -110,6 +112,8 @@ CHAI_HOST inline void  gpuMemcpy(void* dst, const void* src, size_t count, gpuMe
    CHAI_GPU_ERROR_CHECK(cudaMemcpy(dst, src, count, kind));
 #endif
 }
+
+#endif //#if defined(CHAI_GPUCC)
 
 /*!
  * \brief Singleton that manages caching and movement of ManagedArray objects.
