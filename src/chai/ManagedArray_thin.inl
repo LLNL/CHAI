@@ -119,7 +119,7 @@ CHAI_HOST_DEVICE T* ManagedArray<T>::data() const
 }
 
 template <typename T>
-CHAI_HOST_DEVICE T* ManagedArray<T>::cdata() const
+CHAI_HOST_DEVICE const T* ManagedArray<T>::cdata() const
 {
    return m_active_pointer;
 }
