@@ -850,6 +850,168 @@ GPU_TEST(ManagedArray, ExternalUnownedMoveToGPU)
 #endif
 #endif
 
+TEST(ManagedArray, data)
+{
+  int length = 10;
+  chai::ManagedArray<int> array(length);
+
+  forall(sequential(), 0, length, [=] (int i) {
+    array[i] = i;
+  });
+
+  int* data = array.data();
+
+  for (int i = 0; i < length; ++i) {
+    EXPECT_EQ(data[i], i);
+    data[i] = length - 1 - i;
+  }
+
+  forall(sequential(), 0, length, [=] (int i) {
+    EXPECT_EQ(array[i], length - 1 - i);
+  });
+
+  array.free();
+  assert_empty_map(true);
+}
+
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+#ifndef CHAI_DISABLE_RM
+GPU_TEST(ManagedArray, dataGPU)
+{
+  int transfersH2D = 0;
+  int transfersD2H = 0;
+
+  int length = 10;
+  chai::ManagedArray<int> array;
+  array.allocate(length,
+                 chai::GPU,
+                 [&] (const chai::PointerRecord* record, chai::Action act, chai::ExecutionSpace s) {
+                   if (act == chai::ACTION_MOVE) {
+                     if (s == chai::CPU) {
+                       ++transfersD2H;
+                     }
+                     else if (s == chai::GPU) {
+                       ++transfersH2D;
+                     }
+                   }
+                 });
+
+  forall(gpu(), 0, length, [=] __device__ (int i) {
+    int* d_data = array.data();
+    d_data[i] = i;
+  });
+
+  int* data = array.data();
+
+  EXPECT_EQ(transfersD2H, 1);
+
+  for (int i = 0; i < length; ++i) {
+    EXPECT_EQ(data[i], i);
+    data[i] = length - 1 - i;
+  }
+
+  forall(gpu(), 0, length, [=] __device__ (int i) {
+    int* d_data = array.data();
+    array[i] += 1;
+  });
+
+  EXPECT_EQ(transfersD2H, 1);
+  EXPECT_EQ(transfersH2D, 1);
+
+  forall(sequential(), 0, length, [=] (int i) {
+    EXPECT_EQ(array[i], length - i);
+  });
+
+  EXPECT_EQ(transfersD2H, 2);
+  EXPECT_EQ(transfersH2D, 1);
+
+  array.free();
+  assert_empty_map(true);
+}
+#endif
+#endif
+
+TEST(ManagedArray, cdata)
+{
+  int length = 10;
+  chai::ManagedArray<int> array(length);
+
+  forall(sequential(), 0, length, [=] (int i) {
+    array[i] = i;
+  });
+
+  const int* data = array.cdata();
+
+  for (int i = 0; i < length; ++i) {
+    EXPECT_EQ(data[i], i);
+  }
+
+  array.free();
+  assert_empty_map(true);
+}
+
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+#ifndef CHAI_DISABLE_RM
+GPU_TEST(ManagedArray, cdataGPU)
+{
+  int transfersH2D = 0;
+  int transfersD2H = 0;
+
+  int length = 10;
+  chai::ManagedArray<int> array;
+  array.allocate(length,
+                 chai::GPU,
+                 [&] (const chai::PointerRecord* record, chai::Action act, chai::ExecutionSpace s) {
+                   if (act == chai::ACTION_MOVE) {
+                     if (s == chai::CPU) {
+                       ++transfersD2H;
+                     }
+                     else if (s == chai::GPU) {
+                       ++transfersH2D;
+                     }
+                   }
+                 });
+
+  forall(gpu(), 0, length, [=] __device__ (int i) {
+    const int* d_data = array.cdata();
+
+    if (d_data[i] == array[i]) {
+      array[i] = i;
+    }
+  });
+
+  const int* data = array.cdata();
+
+  EXPECT_EQ(transfersD2H, 1);
+
+  for (int i = 0; i < length; ++i) {
+    EXPECT_EQ(data[i], i);
+  }
+
+  forall(gpu(), 0, length, [=] __device__ (int i) {
+    const int* d_data = array.cdata();
+
+    if (d_data[i] == array[i]) {
+       array[i] += 1;
+    }
+  });
+
+  EXPECT_EQ(transfersD2H, 1);
+  EXPECT_EQ(transfersH2D, 0);
+
+  forall(sequential(), 0, length, [=] (int i) {
+    EXPECT_EQ(array[i], i + 1);
+  });
+
+  EXPECT_EQ(transfersD2H, 2);
+  EXPECT_EQ(transfersH2D, 0);
+
+  array.free();
+  assert_empty_map(true);
+}
+#endif
+#endif
+
 TEST(ManagedArray, Reset)
 {
   chai::ManagedArray<float> array(20);
