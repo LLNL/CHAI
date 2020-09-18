@@ -878,6 +878,7 @@ TEST(ManagedArray, data)
 #ifndef CHAI_DISABLE_RM
 GPU_TEST(ManagedArray, dataGPU)
 {
+  // Initialize
   int transfersH2D = 0;
   int transfersD2H = 0;
 
@@ -896,11 +897,13 @@ GPU_TEST(ManagedArray, dataGPU)
                    }
                  });
 
+  // Touch on device
   forall(gpu(), 0, length, [=] __device__ (int i) {
     int* d_data = array.data();
     d_data[i] = i;
   });
 
+  // Move data to host with touch
   int* data = array.data();
 
   EXPECT_EQ(transfersD2H, 1);
@@ -910,19 +913,38 @@ GPU_TEST(ManagedArray, dataGPU)
     data[i] = length - 1 - i;
   }
 
+  // Move data to device with touch
   forall(gpu(), 0, length, [=] __device__ (int i) {
     int* d_data = array.data();
     array[i] += 1;
   });
 
-  EXPECT_EQ(transfersD2H, 1);
   EXPECT_EQ(transfersH2D, 1);
 
-  forall(sequential(), 0, length, [=] (int i) {
-    EXPECT_EQ(array[i], length - i);
-  });
+  // Move data to host without touch
+  chai::ManagedArray<const int> array2 = array;
+  const int* data2 = array2.data();
 
   EXPECT_EQ(transfersD2H, 2);
+
+  for (int i = 0; i < length; ++i) {
+    EXPECT_EQ(data2[i], length - i);
+  }
+
+  // Access on device with touch (should not be moved)
+  forall(gpu(), 0, length, [=] __device__ (int i) {
+    int* d_data = array.data();
+    array[i] += i;
+  });
+
+  EXPECT_EQ(transfersH2D, 1);
+
+  // Move data to host
+  forall(sequential(), 0, length, [=] (int i) {
+    EXPECT_EQ(array[i], length);
+  });
+
+  EXPECT_EQ(transfersD2H, 3);
   EXPECT_EQ(transfersH2D, 1);
 
   array.free();
