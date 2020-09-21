@@ -85,7 +85,27 @@ TEST(ManagedArray, Slice) {
       array[i] = i;
   });
 
-  chai::ManagedArray<float> sl = array.slice(0,5);
+  const int SLICE_SZ = 5;
+  chai::ManagedArray<float> sl = array.slice(0,SLICE_SZ);
+  ASSERT_EQ(SLICE_SZ, sl.size());
+
+  sl.free();
+  array.free();
+  assert_empty_map(true);
+}
+
+TEST(ManagedArray, SliceCopyCtor) {
+  chai::ManagedArray<float> array(10);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  const int SLICE_SZ = 5;
+  chai::ManagedArray<float> sl = array.slice(0,SLICE_SZ);
+  chai::ManagedArray<float> slcopy = sl;
+  ASSERT_EQ(SLICE_SZ, slcopy.size());
+
   sl.free();
   array.free();
   assert_empty_map(true);
@@ -98,8 +118,12 @@ TEST(ManagedArray, SliceOfSlice) {
       array[i] = i;
   });
 
+  const int SLICE_SZ_1 = 6;
+  const int SLICE_SZ_2 = 3;
   chai::ManagedArray<float> sl1 = array.slice(0,6);
   chai::ManagedArray<float> sl2 = sl1.slice(3,3);
+  ASSERT_EQ(sl1.size(), SLICE_SZ_1);
+  ASSERT_EQ(sl2.size(), SLICE_SZ_2);
 
   forall(sequential(), 0, 3, [=] (int i) {
       sl1[i] = sl2[i];
