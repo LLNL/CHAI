@@ -1,12 +1,12 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-19, Lawrence Livermore National Security, LLC and CHAI
+// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
 // project contributors. See the COPYRIGHT file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
 #include <climits>
 
-#include "benchmark/benchmark_api.h"
+#include "benchmark/benchmark.h"
 
 #include "chai/ArrayManager.hpp"
 

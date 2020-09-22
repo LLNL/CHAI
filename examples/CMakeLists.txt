@@ -1,5 +1,5 @@
 ##############################################################################
-# Copyright (c) 2016-19, Lawrence Livermore National Security, LLC and CHAI
+# Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
 # project contributors. See the COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
@@ -23,18 +23,10 @@ blt_add_executable(
   SOURCES chai-umpire-allocators.cpp
   DEPENDS_ON ${chai_umpire_example_depends})
 
-blt_add_test(
-  NAME managed_array_test
-  COMMAND managed_array_tests)
-
 if (ENABLE_CUDA OR ENABLE_HIP)
   blt_add_executable(
     NAME chai-example.exe
     SOURCES example.cpp
-    DEPENDS_ON ${chai_umpire_example_depends})
-  blt_add_executable(
-    NAME resource-integration.exe
-    SOURCES resource.cpp
     DEPENDS_ON ${chai_umpire_example_depends})
   blt_add_executable(
     NAME resource-depends.exe
@@ -52,9 +44,9 @@ if (ENABLE_CUDA OR ENABLE_HIP)
     NAME resource-multi-array.exe
     SOURCES resource-multi-array.cpp
     DEPENDS_ON ${chai_umpire_example_depends})
-
+  blt_add_executable(
+    NAME pinned.exe
+    SOURCES pinned.cpp
+    DEPENDS_ON ${chai_umpire_example_depends})
 endif ()
 
-# if (ENABLE_RAJA_PLUGIN)
-#   add_subdirectory(integration)
-# endif ()

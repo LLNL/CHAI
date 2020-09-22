@@ -1,5 +1,5 @@
 ##############################################################################
-# Copyright (c) 2016-19, Lawrence Livermore National Security, LLC and CHAI
+# Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
 # project contributors. See the COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
@@ -11,6 +11,8 @@ set(CHAI_ENABLE_IMPLICIT_CONVERSIONS ${ENABLE_IMPLICIT_CONVERSIONS})
 set(CHAI_DISABLE_RM ${DISABLE_RM})
 set(CHAI_ENABLE_UM ${ENABLE_UM})
 set(CHAI_ENABLE_RAJA_PLUGIN ${ENABLE_RAJA_PLUGIN})
+set(CHAI_ENABLE_GPU_SIMULATION_MODE ${ENABLE_GPU_SIMULATION_MODE})
+set(CHAI_ENABLE_PINNED ${ENABLE_PINNED})
 
 configure_file(
   ${PROJECT_SOURCE_DIR}/src/chai/config.hpp.in
@@ -71,7 +73,6 @@ blt_add_library(
   NAME chai
   SOURCES ${chai_sources}
   HEADERS ${chai_headers}
-  HEADERS_OUTPUT_SUBDIR chai
   DEPENDS_ON ${chai_depends})
 
 install(FILES ${chai_headers} DESTINATION include/chai/)
