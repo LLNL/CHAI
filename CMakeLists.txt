@@ -7,7 +7,7 @@
 cmake_policy(SET CMP0057 NEW)
 cmake_policy(SET CMP0048 NEW)
 
-project(Chai LANGUAGES CXX VERSION 2.1.1)
+project(Chai LANGUAGES CXX VERSION 2.2.1)
 
 set(ENABLE_CUDA Off CACHE BOOL "Enable CUDA")
 set(ENABLE_HIP Off CACHE BOOL "Enable HIP")

@@ -1,45 +1,9 @@
-// ---------------------------------------------------------------------
-// Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
-// rights reserved.
+//////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
+// project contributors. See the COPYRIGHT file for details.
 //
-// Produced at the Lawrence Livermore National Laboratory.
-//
-// This file is part of CHAI.
-//
-// LLNL-CODE-705877
-//
-// For details, see https:://github.com/LLNL/CHAI
-// Please also see the NOTICE and LICENSE files.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-//
-// - Redistributions of source code must retain the above copyright
-//   notice, this list of conditions and the following disclaimer.
-//
-// - Redistributions in binary form must reproduce the above copyright
-//   notice, this list of conditions and the following disclaimer in the
-//   documentation and/or other materials provided with the
-//   distribution.
-//
-// - Neither the name of the LLNS/LLNL nor the names of its contributors
-//   may be used to endorse or promote products derived from this
-//   software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-// OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-// AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
-// WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-// ---------------------------------------------------------------------
+// SPDX-License-Identifier: BSD-3-Clause
+//////////////////////////////////////////////////////////////////////////////
 #include "gtest/gtest.h"
 
 #define GPU_TEST(X, Y)              \
@@ -196,7 +160,7 @@ TEST(managed_ptr, class_with_raw_array)
     array[i] = expectedValue;
   });
 
-  auto rawArrayClass = chai::make_managed<RawArrayClass>(array);
+  auto rawArrayClass = chai::make_managed<RawArrayClass>(chai::unpack(array));
 
   ASSERT_EQ(rawArrayClass->getValue(0), expectedValue);
 
@@ -217,7 +181,9 @@ TEST(managed_ptr, class_with_multiple_raw_arrays)
      array2[i] = expectedValue2;
   });
 
-  auto multipleRawArrayClass = chai::make_managed<MultipleRawArrayClass>(array1, array2);
+  auto multipleRawArrayClass = chai::make_managed<MultipleRawArrayClass>(
+                                 chai::unpack(array1),
+                                 chai::unpack(array2));
 
   ASSERT_EQ(multipleRawArrayClass->getValue(0, 0), expectedValue1);
   ASSERT_EQ(multipleRawArrayClass->getValue(1, 0), expectedValue2);
@@ -255,8 +221,9 @@ TEST(managed_ptr, class_with_raw_ptr)
      array[i] = expectedValue;
   });
 
-  auto rawArrayClass = chai::make_managed<RawArrayClass>(array);
-  auto rawPointerClass = chai::make_managed<RawPointerClass>(rawArrayClass);
+  auto rawArrayClass = chai::make_managed<RawArrayClass>(chai::unpack(array));
+  auto rawPointerClass = chai::make_managed<RawPointerClass>(
+                           chai::unpack(rawArrayClass));
 
   ASSERT_EQ((*rawPointerClass).getValue(0), expectedValue);
 
@@ -488,7 +455,7 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_array)
      array[i] = expectedValue;
   });
 
-  auto rawArrayClass = chai::make_managed<RawArrayClass>(array);
+  auto rawArrayClass = chai::make_managed<RawArrayClass>(chai::unpack(array));
   chai::ManagedArray<int> results(1, chai::GPU);
 
   forall(gpu(), 0, 1, [=] __device__ (int i) {
@@ -513,8 +480,12 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_array_and_callback)
      array[i] = expectedValue;
   });
 
+#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
   auto cpuPointer = new RawArrayClass(array);
-  auto gpuPointer = chai::detail::make_on_device<RawArrayClass>(array);
+#else
+  auto cpuPointer = new RawArrayClass(array.data());
+#endif
+  auto gpuPointer = chai::make_on_device<RawArrayClass>(chai::unpack(array));
 
   auto callback = [=] (chai::Action action, chai::ExecutionSpace space, void*) mutable -> bool {
      switch (action) {
@@ -585,8 +556,9 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_ptr)
      array[0] = expectedValue;
   });
 
-  auto rawArrayClass = chai::make_managed<RawArrayClass>(array);
-  auto rawPointerClass = chai::make_managed<RawPointerClass>(rawArrayClass);
+  auto rawArrayClass = chai::make_managed<RawArrayClass>(chai::unpack(array));
+  auto rawPointerClass = chai::make_managed<RawPointerClass>(
+                           chai::unpack(rawArrayClass));
 
   chai::ManagedArray<int> results(1, chai::GPU);
 
@@ -825,7 +797,7 @@ TEST(managed_ptr, class_with_raw_array_of_pointers)
   chai::ManagedArray<int> array(1, chai::CPU);
   array[0] = expectedValue;
 
-  auto rawArrayClass = chai::make_managed<RawArrayClass>(array);
+  auto rawArrayClass = chai::make_managed<RawArrayClass>(chai::unpack(array));
   chai::managed_ptr<RawArrayClass> arrayOfPointers[1] = {rawArrayClass};
 
   auto rawArrayOfPointersClass = chai::make_managed<RawArrayOfPointersClass>(arrayOfPointers);

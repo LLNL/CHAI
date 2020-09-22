@@ -386,8 +386,8 @@ CHAI_HOST_DEVICE void ManagedArray<T>::decr(size_t i) const {
 template <typename T>
 CHAI_INLINE
 CHAI_HOST
-void ManagedArray<T>::move(ExecutionSpace space) const
-{ 
+void ManagedArray<T>::move(ExecutionSpace space, bool registerTouch) const
+{
   if (m_pointer_record != &ArrayManager::s_null_record) {
      ExecutionSpace prev_space = m_pointer_record->m_last_space;
      if (prev_space == CPU || prev_space == NONE) {
@@ -408,7 +408,7 @@ void ManagedArray<T>::move(ExecutionSpace space) const
     if (m_pointer_record->m_last_space == PINNED) {
     } else 
 #endif
-     if (!std::is_const<T>::value) {
+     if (registerTouch) {
        CHAI_LOG(Debug, "T is non-const, registering touch of pointer" << m_active_pointer);
        m_resource_manager->registerTouch(m_pointer_record, space);
      }
@@ -519,6 +519,29 @@ T* ManagedArray<T>::data() const {
      }
 
      move(CPU);
+  }
+
+  if (m_elems == 0 && !m_is_slice) {
+     return nullptr;
+  }
+
+  return m_active_pointer;
+#else
+  return m_active_pointer;
+#endif
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE
+const T* ManagedArray<T>::cdata() const {
+#if !defined(CHAI_DEVICE_COMPILE)
+  if (m_active_pointer) {
+     if (m_pointer_record == nullptr || m_pointer_record == &ArrayManager::s_null_record) {
+        CHAI_LOG(Warning, "nullptr pointer_record associated with non-nullptr active_pointer")
+     }
+
+     move(CPU, false);
   }
 
   if (m_elems == 0 && !m_is_slice) {
