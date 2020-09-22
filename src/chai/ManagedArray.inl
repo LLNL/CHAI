@@ -432,6 +432,12 @@ void ManagedArray<T>::move(ExecutionSpace space, camp::resources::Resource* reso
     //moveInnerImpl(space);
   }
 
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+  if (space == GPU && m_pointer_record->m_last_resource != resource ){
+    m_pointer_record->m_res_manager.push_back(resource);
+  }
+#endif
+
   m_active_base_pointer = static_cast<T*>(m_resource_manager->move(const_cast<T_non_const*>(m_active_base_pointer), m_pointer_record, resource, space));
   m_active_pointer = m_active_base_pointer + m_offset;
 
@@ -444,7 +450,7 @@ void ManagedArray<T>::move(ExecutionSpace space, camp::resources::Resource* reso
   if (space != NONE) m_pointer_record->m_last_resource = resource;
 
   /* When moving from GPU to CPU we need to move the inner arrays after the outer array. */
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
   if (prev_space == GPU) {
     moveInnerImpl();
     //moveInnerImpl(space);

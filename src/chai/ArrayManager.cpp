@@ -308,6 +308,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
 
       if (record->transfer_pending) {
         resource->wait_for(&record->m_event);
+        record->m_res_manager.clear();
         record->transfer_pending = false;
         return;
       }
@@ -323,6 +324,13 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
         m_resource_manager.copy(dst_pointer, src_pointer);
         callback(record, ACTION_MOVE, space);
         return;
+      }
+
+      if (!record->m_res_manager.is_empty()) {
+        for (int i = 0; i < record->m_res_manager.size(); i++) {
+          auto c_event = record->m_res_manager[i]->get_event();
+          res->wait_for(&c_event);
+        }
       }
 
       auto e = m_resource_manager.copy(dst_pointer, src_pointer, *res);

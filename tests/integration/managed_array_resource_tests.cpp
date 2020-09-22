@@ -159,9 +159,6 @@ GPU_TEST(ManagedArray, MultiStreamSingleArray)
       }
   });
 
-  e1.wait();
-  e2.wait();
-
   array1.move(chai::CPU, &dev1);
 
   camp::resources::Resource host{camp::resources::Host{}};

@@ -7,6 +7,7 @@
 #ifndef CHAI_PointerRecord_HPP
 #define CHAI_PointerRecord_HPP
 
+#include "chai/ActiveResourceManager.hpp"
 #include "chai/ExecutionSpaces.hpp"
 #include "chai/Types.hpp"
 
@@ -14,6 +15,7 @@
 
 #include <cstddef>
 #include <functional>
+#include <array>
 
 namespace chai
 {
@@ -61,6 +63,7 @@ struct PointerRecord {
   bool transfer_pending{false};
   camp::resources::Event m_event{};
   camp::resources::Resource* m_last_resource{nullptr};
+  ActiveResourceManager m_res_manager;
 
   /*!
    * \brief Default constructor
