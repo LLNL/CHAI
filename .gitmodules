@@ -7,9 +7,6 @@
 [submodule "src/tpl/raja"]
 	path = src/tpl/raja
 	url = https://github.com/LLNL/RAJA.git
-[submodule "scripts/radiuss-spack-config"]
-	path = scripts/radiuss-spack-config
-	url = https://github.com/LLNL/radiuss-spack-config
 [submodule "scripts/radiuss-spack-configs"]
 	path = scripts/radiuss-spack-configs
 	url = https://github.com/LLNL/radiuss-spack-configs
