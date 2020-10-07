@@ -53,7 +53,7 @@ then
 
     if [[ -d /dev/shm ]]
     then
-        prefix="/dev/shm/${hostname}/${spec// /_}"
+        prefix="/dev/shm/${hostname}/${spec//[ \/\-\=]/_}"
         mkdir -p ${prefix}
         prefix_opt="--prefix=${prefix}"
     fi
