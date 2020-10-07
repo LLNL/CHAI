@@ -42,6 +42,7 @@ CI contains jobs for quartz.
   $ git grep -h "SPEC" .gitlab/quartz-jobs.yml | grep "gcc"
       SPEC: "%gcc@4.9.3"
       SPEC: "%gcc@6.1.0"
+      SPEC: "%gcc@7.1.0"
       SPEC: "%gcc@7.3.0"
       SPEC: "%gcc@8.1.0"
 
