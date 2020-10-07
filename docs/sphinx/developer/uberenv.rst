@@ -60,7 +60,7 @@ In CHAI, the Spack configuration for MacOS contains the default compilers depend
 Using Uberenv to generate the host-config file
 ----------------------------------------------
 
-We have seen that we can safely use `gcc@8.1.0` on quartz. Let us ask for the default configuration first, and then produce static libs, have OpenMP support and run the benchmarks:
+We have seen that we can safely use `gcc@8.1.0` on quartz. Let us ask for the default configuration first, and then ask for RAJA support and link to develop version of RAJA:
 
 .. code-block:: bash
 
