@@ -1,8 +1,8 @@
 .. _ci:
 
-===========================
-CHAI Continuous Integration
-===========================
+======================
+Continuous Integration
+======================
 
 Gitlab CI
 ---------
