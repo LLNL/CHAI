@@ -173,7 +173,8 @@ public:
    */
   CHAI_HOST void registerTouch(ExecutionSpace space);
 
-  CHAI_HOST void move(ExecutionSpace space=NONE) const;
+  CHAI_HOST void move(ExecutionSpace space=NONE,
+                      bool registerTouch=!std::is_const<T>::value) const;
 
   CHAI_HOST_DEVICE ManagedArray<T> slice(size_t begin, size_t elems=(size_t)-1) const;
 
@@ -206,6 +207,15 @@ public:
    * \return Raw pointer to data in the current execution space
    */
   CHAI_HOST_DEVICE T* data() const;
+
+  /*!
+   * \brief Move data to the current execution space (actually determined
+   *        by where the code is executing) and return a raw pointer. Do
+   *        not mark data as touched since a pointer to const is returned.
+   *
+   * \return Raw pointer to data in the current execution space
+   */
+  CHAI_HOST_DEVICE const T* cdata() const;
 
   /*!
    * \brief Return the raw pointer to the data in the given execution

@@ -63,6 +63,7 @@ Any questions? Contact chai-dev@llnl.gov
 
   getting_started
   tutorial
+  user_guide
 
 .. toctree::
   :maxdepth: 2
