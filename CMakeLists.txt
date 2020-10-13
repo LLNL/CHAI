@@ -41,6 +41,12 @@ endif()
 set(ENABLE_COPY_HEADERS Off CACHE BOOL "")
 set(BLT_CXX_STD c++11 CACHE STRING "")
 
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")
+    message(STATUS "Setting CMAKE_CXX_EXTENSIONS to ON for PGI Compiler")
+    set( CMAKE_CXX_EXTENSIONS ON )
+  endif()
+endif()
+
 if (ENABLE_CUDA)
   cmake_minimum_required(VERSION 3.9)
 else ()
