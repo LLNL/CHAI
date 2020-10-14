@@ -205,6 +205,17 @@ class Chai(CMakePackage, CudaPackage):
                 cfg.write(cmake_cache_entry("BLT_EXE_LINKER_FLAGS", flags,
                                             description))
 
+        gcc_toolchain_regex = re.compile(".*gcc-toolchain.*")
+        gcc_name_regex = re.compile(".*gcc-name.*")
+
+        using_toolchain = list(filter(gcc_toolchain_regex.match, spec.compiler_flags['cxxflags']))
+        using_gcc_name = list(filter(gcc_name_regex.match, spec.compiler_flags['cxxflags']))
+        compilers_using_toolchain = ["pgi", "xl", "icpc"]
+        if any(compiler in cpp_compiler for compiler in compilers_using_toolchain):
+            if using_toolchain or using_gcc_name:
+                cfg.write(cmake_cache_entry("BLT_CMAKE_IMPLICIT_LINK_DIRECTORIES_EXCLUDE",
+                "/usr/tce/packages/gcc/gcc-4.9.3/lib64;/usr/tce/packages/gcc/gcc-4.9.3/gnu/lib64/gcc/powerpc64le-unknown-linux-gnu/4.9.3;/usr/tce/packages/gcc/gcc-4.9.3/gnu/lib64;/usr/tce/packages/gcc/gcc-4.9.3/lib64/gcc/x86_64-unknown-linux-gnu/4.9.3"))
+
         if "+cuda" in spec:
             cfg.write("#------------------{0}\n".format("-" * 60))
             cfg.write("# Cuda\n")
