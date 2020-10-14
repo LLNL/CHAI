@@ -120,7 +120,7 @@ then
 fi
 
 # Test
-if [[ "${option}" != "--build-only" ]]
+if [[ "${option}" != "--build-only" ]] && grep -q -i "ENABLE_TESTS.*ON" ${hostconfig_path}
 then
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
     echo "~~~~~ Testing CHAI"
