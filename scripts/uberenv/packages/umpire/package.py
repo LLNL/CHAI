@@ -83,7 +83,7 @@ class Umpire(CMakePackage, CudaPackage):
     patch('camp_target_umpire_3.0.0.patch', when='@3.0.0')
 
     variant('fortran', default=False, description='Build C/Fortran API')
-    variant('c', default=True, description='Build C API')
+    variant('c', default=False, description='Build C API')
     variant('numa', default=False, description='Enable NUMA support')
     variant('shared', default=True, description='Enable Shared libs')
     variant('openmp', default=False, description='Build with OpenMP support')
