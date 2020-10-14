@@ -170,6 +170,69 @@ CUDA_TEST(Chai, NestedView)
                         });
 }
 
+CUDA_TEST(Chai, NestedMultiView)
+{
+  using POLICY =
+    RAJA::KernelPolicy<
+      RAJA::statement::For<0, RAJA::seq_exec,
+        RAJA::statement::For<1, RAJA::seq_exec,
+          RAJA::statement::Lambda<0>
+        >
+      >
+    >;
+
+#if defined(RAJA_ENABLE_CUDA)
+  using POLICY_PARALLEL =
+    RAJA::KernelPolicy<
+      RAJA::statement::CudaKernel<
+        RAJA::statement::For<1, RAJA::cuda_block_x_loop,
+          RAJA::statement::For<0, RAJA::cuda_thread_x_loop,
+            RAJA::statement::Lambda<0>
+          >
+        >
+      >
+    >;
+#elif defined(RAJA_ENABLE_OPENMP)
+  using POLICY_PARALLEL =
+    RAJA::KernelPolicy<
+      RAJA::statement::For<1, RAJA::omp_parallel_for_exec,
+        RAJA::statement::For<0, RAJA::seq_exec,
+          RAJA::statement::Lambda<0>
+        >
+      >
+    >;
+#else
+  using POLICY_PARALLEL = POLICY;
+#endif
+
+  const int X = 16;
+  const int Y = 16;
+
+  chai::ManagedArray<float> v1_array(X * Y);
+  chai::ManagedArray<float> v2_array(X * Y);
+
+  chai::ManagedArray<float> all_arrays[2];
+  all_arrays[0] = v1_array;
+  all_arrays[1] = v2_array;
+
+  using view = chai::ManagedArrayMultiView<float, RAJA::Layout<2>>;
+
+  view mview(all_arrays, RAJA::Layout<2>(X*Y));
+
+  RAJA::kernel<POLICY>(RAJA::make_tuple(RangeSegment(0, Y), RangeSegment(0, X)),
+                        [=](int i, int j) { mview(0, i, j) = (i + (j * X)) * 1.0f; });
+
+  RAJA::kernel<POLICY_PARALLEL>(RAJA::make_tuple(RangeSegment(0, Y), RangeSegment(0, X)),
+                            [=] PARALLEL_RAJA_DEVICE(int i, int j) {
+                              mview(1, i, j) = mview(0, i, j) * 2.0f;
+                            });
+
+  RAJA::kernel<POLICY>(RAJA::make_tuple(RangeSegment(0, Y), RangeSegment(0, X)),
+                        [=](int i, int j) {
+                          ASSERT_FLOAT_EQ(mview(1, i, j), mview(0, i, j) * 2.0f);
+                        });
+}
+
 ///////////////////////////////////////////////////////////////////////////
 //
 // Example LTimes kernel test routines

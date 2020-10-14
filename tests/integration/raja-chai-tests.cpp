@@ -96,3 +96,40 @@ CUDA_TEST(ChaiTest, Views)
     ;
   }
 }
+
+CUDA_TEST(ChaiTest, MultiView)
+{
+  chai::ManagedArray<float> v1_array(10);
+  chai::ManagedArray<float> v2_array(10);
+
+  chai::ManagedArray<float> all_arrays[2];
+  all_arrays[0] = v1_array;
+  all_arrays[1] = v2_array;
+
+  using view = chai::ManagedArrayMultiView<float, RAJA::Layout<1> >;
+
+  view mymultiview(all_arrays, RAJA::Layout<1>(10));
+
+  RAJA::forall<RAJA::seq_exec>(RAJA::RangeSegment(0, 10), [=](int i) {
+    mymultiview(0,i) = static_cast<float>(i * 1.0f);
+  });
+
+  RAJA::forall<parallel_raja_policy>(RAJA::RangeSegment(0, 10), [=] PARALLEL_RAJA_DEVICE(int i) {
+    mymultiview(1,i) = mymultiview(0,i) * 2.0f;
+  });
+
+  RAJA::forall<RAJA::seq_exec>(RAJA::RangeSegment(0, 10), [=](int i) {
+    ASSERT_FLOAT_EQ(mymultiview(1,i), i * 2.0f);
+  });
+
+  RAJA::forall<parallel_raja_policy>(RAJA::RangeSegment(0, 10), [=] PARALLEL_RAJA_DEVICE(int i) {
+    mymultiview(1,i) *= 2.0f;
+  });
+
+  // accessing pointer to v2_array
+  float* raw_v2 = mymultiview.data[1];
+  for (int i = 0; i < 10; i++) {
+    ASSERT_FLOAT_EQ(raw_v2[i], i * 1.0f * 2.0f * 2.0f);
+    ;
+  }
+}
