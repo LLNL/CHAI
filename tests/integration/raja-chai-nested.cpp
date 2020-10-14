@@ -215,16 +215,21 @@ CUDA_TEST(Chai, NestedMultiView)
   all_arrays[0] = v1_array;
   all_arrays[1] = v2_array;
 
+  // default MultiView
   using view = chai::ManagedArrayMultiView<float, RAJA::Layout<2>>;
+  view mview(all_arrays, RAJA::Layout<2>(X, Y));
 
-  view mview(all_arrays, RAJA::Layout<2>(X*Y));
+  // MultiView with index in 1st position
+  using view1p = chai::ManagedArrayMultiView<float, RAJA::Layout<2>, 1>;
+  view1p mview1p(all_arrays, RAJA::Layout<2>(X, Y));
 
   RAJA::kernel<POLICY>(RAJA::make_tuple(RangeSegment(0, Y), RangeSegment(0, X)),
                         [=](int i, int j) { mview(0, i, j) = (i + (j * X)) * 1.0f; });
 
   RAJA::kernel<POLICY_PARALLEL>(RAJA::make_tuple(RangeSegment(0, Y), RangeSegment(0, X)),
                             [=] PARALLEL_RAJA_DEVICE(int i, int j) {
-                              mview(1, i, j) = mview(0, i, j) * 2.0f;
+                              // use both MultiViews
+                              mview(1, i, j) = mview1p(i, 0, j) * 2.0f;
                             });
 
   RAJA::kernel<POLICY>(RAJA::make_tuple(RangeSegment(0, Y), RangeSegment(0, X)),

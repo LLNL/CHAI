@@ -106,28 +106,33 @@ CUDA_TEST(ChaiTest, MultiView)
   all_arrays[0] = v1_array;
   all_arrays[1] = v2_array;
 
-  using view = chai::ManagedArrayMultiView<float, RAJA::Layout<1> >;
+  // default MultiView
+  using view = chai::ManagedArrayMultiView<float, RAJA::Layout<1>>;
+  view mview(all_arrays, RAJA::Layout<1>(10));
 
-  view mymultiview(all_arrays, RAJA::Layout<1>(10));
+  // MultiView with index in 1st position
+  using view1p = chai::ManagedArrayMultiView<float, RAJA::Layout<1>, 1>;
+  view1p mview1p(all_arrays, RAJA::Layout<1>(10));
 
   RAJA::forall<RAJA::seq_exec>(RAJA::RangeSegment(0, 10), [=](int i) {
-    mymultiview(0,i) = static_cast<float>(i * 1.0f);
+    mview(0,i) = static_cast<float>(i * 1.0f);
   });
 
   RAJA::forall<parallel_raja_policy>(RAJA::RangeSegment(0, 10), [=] PARALLEL_RAJA_DEVICE(int i) {
-    mymultiview(1,i) = mymultiview(0,i) * 2.0f;
+    // use both MultiViews
+    mview(1,i) = mview1p(i,0) * 2.0f;
   });
 
   RAJA::forall<RAJA::seq_exec>(RAJA::RangeSegment(0, 10), [=](int i) {
-    ASSERT_FLOAT_EQ(mymultiview(1,i), i * 2.0f);
+    ASSERT_FLOAT_EQ(mview(1,i), i * 2.0f);
   });
 
   RAJA::forall<parallel_raja_policy>(RAJA::RangeSegment(0, 10), [=] PARALLEL_RAJA_DEVICE(int i) {
-    mymultiview(1,i) *= 2.0f;
+    mview(1,i) *= 2.0f;
   });
 
   // accessing pointer to v2_array
-  float* raw_v2 = mymultiview.data[1];
+  float* raw_v2 = mview.data[1];
   for (int i = 0; i < 10; i++) {
     ASSERT_FLOAT_EQ(raw_v2[i], i * 1.0f * 2.0f * 2.0f);
     ;
