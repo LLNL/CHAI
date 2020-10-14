@@ -72,7 +72,7 @@ class Chai(CMakePackage, CudaPackage):
             multi=False, description='Tests to run')
 
     depends_on('cmake@3.8:', type='build')
-    depends_on('umpire')
+    depends_on('umpire@develop')
     depends_on('raja', when="+raja")
 
     depends_on('raja tests=none', when='tests=none')
