@@ -22,13 +22,25 @@ RajaExecutionSpacePlugin::preCapture(const RAJA::util::PluginContext& p)
 {
   switch (p.platform) {
     case RAJA::Platform::host:
-      m_arraymanager->setExecutionSpace(chai::CPU); break;
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+      if (m_arraymanager->getGPUSimMode()) {
+         m_arraymanager->setExecutionSpace(chai::GPU);
+      }
+      else {
+         m_arraymanager->setExecutionSpace(chai::CPU);
+      }
+#else
+      m_arraymanager->setExecutionSpace(chai::CPU);
+#endif
+      break;
 #if defined(CHAI_ENABLE_CUDA)
     case RAJA::Platform::cuda:
-      m_arraymanager->setExecutionSpace(chai::GPU); break;
+      m_arraymanager->setExecutionSpace(chai::GPU);
+      break;
 #endif
     default:
       m_arraymanager->setExecutionSpace(chai::NONE);
+      break;
   }
 }
 
