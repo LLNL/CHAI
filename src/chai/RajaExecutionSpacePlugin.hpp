@@ -24,7 +24,7 @@ class RajaExecutionSpacePlugin :
     void postCapture(const RAJA::util::PluginContext& p) override;
 
   private:
-    chai::ArrayManager* m_arraymanager;
+    chai::ArrayManager* m_arraymanager{nullptr};
 };
 
 void linkRajaPlugin();
