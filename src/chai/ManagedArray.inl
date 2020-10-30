@@ -111,7 +111,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
 #if !defined(CHAI_DEVICE_COMPILE)
   if (m_active_base_pointer || m_elems > 0 ) {
      // we only update m_elems if we are not null and we have a pointer record
-     if (m_pointer_record) {
+     if (m_pointer_record && !m_is_slice) {
         m_elems = m_pointer_record->m_size/sizeof(T);
      }
      move(m_resource_manager->getExecutionSpace());
