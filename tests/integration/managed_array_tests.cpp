@@ -85,7 +85,27 @@ TEST(ManagedArray, Slice) {
       array[i] = i;
   });
 
-  chai::ManagedArray<float> sl = array.slice(0,5);
+  const int SLICE_SZ = 5;
+  chai::ManagedArray<float> sl = array.slice(0,SLICE_SZ);
+  ASSERT_EQ(SLICE_SZ, sl.size());
+
+  sl.free();
+  array.free();
+  assert_empty_map(true);
+}
+
+TEST(ManagedArray, SliceCopyCtor) {
+  chai::ManagedArray<float> array(10);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  const int SLICE_SZ = 5;
+  chai::ManagedArray<float> sl = array.slice(0,SLICE_SZ);
+  chai::ManagedArray<float> slcopy = sl;
+  ASSERT_EQ(SLICE_SZ, slcopy.size());
+
   sl.free();
   array.free();
   assert_empty_map(true);
@@ -98,8 +118,12 @@ TEST(ManagedArray, SliceOfSlice) {
       array[i] = i;
   });
 
+  const int SLICE_SZ_1 = 6;
+  const int SLICE_SZ_2 = 3;
   chai::ManagedArray<float> sl1 = array.slice(0,6);
   chai::ManagedArray<float> sl2 = sl1.slice(3,3);
+  ASSERT_EQ(sl1.size(), SLICE_SZ_1);
+  ASSERT_EQ(sl2.size(), SLICE_SZ_2);
 
   forall(sequential(), 0, 3, [=] (int i) {
       sl1[i] = sl2[i];
@@ -111,6 +135,29 @@ TEST(ManagedArray, SliceOfSlice) {
 
   sl1.free();
   sl2.free();
+  array.free();
+  assert_empty_map(true);
+}
+
+TEST(ManagedArray, ArrayOfSlices) {
+  chai::ManagedArray<float> array(10);
+  chai::ManagedArray<chai::ManagedArray<float>> arrayOfSlices(5);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  forall(sequential(), 0, 5, [=] (int i) {
+      arrayOfSlices[i] = array.slice(2*i, 2);
+      arrayOfSlices[i][1] = arrayOfSlices[i][0];
+  });
+
+  forall(sequential(), 0, 5, [=] (int i) {
+    ASSERT_EQ(arrayOfSlices[i].size(), 2);
+    ASSERT_EQ(array[2*i], array[2*i+1]);
+  });
+
+  arrayOfSlices.free();
   array.free();
   assert_empty_map(true);
 }
@@ -531,6 +578,32 @@ GPU_TEST(ManagedArray, IncrementDecrementFromHostOnDevice)
 }
 #endif
 #endif
+
+GPU_TEST(ManagedArray, ArrayOfSlicesDevice) {
+  chai::ManagedArray<float> array(10);
+  chai::ManagedArray<chai::ManagedArray<float>> arrayOfSlices(5);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  forall(sequential(), 0, 5, [=] (int i) {
+      arrayOfSlices[i] = array.slice(2*i, 2);
+  });
+
+  forall(gpu(), 0, 5, [=] __device__ (int i) {
+      arrayOfSlices[i][1] = arrayOfSlices[i][0];
+  });
+
+  forall(sequential(), 0, 5, [=] (int i) {
+    ASSERT_EQ(arrayOfSlices[i].size(), 2);
+    ASSERT_EQ(array[2*i], array[2*i+1]);
+  });
+
+  arrayOfSlices.free();
+  array.free();
+  assert_empty_map(true);
+}
 
 GPU_TEST(ManagedArray, SliceOfSliceDevice) {
   chai::ManagedArray<float> array(10);

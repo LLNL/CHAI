@@ -399,7 +399,7 @@ public:
 #if !defined(CHAI_DEVICE_COMPILE)
   // if we can, ensure elems is based off the pointer_record size to protect against
   // casting leading to incorrect size info in m_elems.
-  if (m_pointer_record != nullptr) {
+  if (m_pointer_record != nullptr && !m_is_slice) {
      m_elems = m_pointer_record->m_size / sizeof(T);
   }
 #endif
