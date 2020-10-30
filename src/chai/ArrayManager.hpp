@@ -414,7 +414,7 @@ public:
   /*!
    * \brief synchronize the device if there hasn't been a synchronize since the last kernel
    */
-  bool syncIfNeeded();
+  CHAISHAREDDLL_API bool syncIfNeeded();
 
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
   /*!
