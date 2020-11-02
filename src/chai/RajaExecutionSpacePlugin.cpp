@@ -12,14 +12,17 @@
 
 namespace chai {
 
-RajaExecutionSpacePlugin::RajaExecutionSpacePlugin() :
-  m_arraymanager(chai::ArrayManager::getInstance())
+RajaExecutionSpacePlugin::RajaExecutionSpacePlugin()
 {
 }
 
 void
 RajaExecutionSpacePlugin::preCapture(const RAJA::util::PluginContext& p)
 {
+  if (!m_arraymanager) {
+    m_arraymanager = chai::ArrayManager::getInstance();
+  }
+
   switch (p.platform) {
     case RAJA::Platform::host:
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
