@@ -416,6 +416,18 @@ public:
    */
   CHAISHAREDDLL_API bool syncIfNeeded();
 
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+  /*!
+   * \brief Turn the GPU simulation mode on or off.
+   */
+  void setGPUSimMode(bool gpuSimMode) { m_gpu_sim_mode = gpuSimMode; }
+
+  /*!
+   * \brief Return true if GPU simulation mode is on, false otherwise.
+   */
+  bool isGPUSimMode() { return m_gpu_sim_mode; }
+#endif
+
   /*!
    * \brief Evicts the data in the given space.
    *
@@ -523,6 +535,14 @@ private:
    * GPU context
    */
   bool m_synced_since_last_kernel = false;
+
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+  /*!
+   * Used by the RAJA plugin to determine whether the execution space should be
+   * CPU or GPU.
+   */
+  bool m_gpu_sim_mode = false;
+#endif
 };
 
 }  // end of namespace chai
