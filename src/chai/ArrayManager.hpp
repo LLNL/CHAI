@@ -425,7 +425,7 @@ public:
   /*!
    * \brief Return true if GPU simulation mode is on, false otherwise.
    */
-  bool getGPUSimMode() { return m_gpu_sim_mode; }
+  bool isGPUSimMode() { return m_gpu_sim_mode; }
 #endif
 
   /*!

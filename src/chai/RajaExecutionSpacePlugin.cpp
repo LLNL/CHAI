@@ -23,7 +23,7 @@ RajaExecutionSpacePlugin::preCapture(const RAJA::util::PluginContext& p)
   switch (p.platform) {
     case RAJA::Platform::host:
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
-      if (m_arraymanager->getGPUSimMode()) {
+      if (m_arraymanager->isGPUSimMode()) {
          m_arraymanager->setExecutionSpace(chai::GPU);
       }
       else {
