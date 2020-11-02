@@ -12,38 +12,23 @@
 
 namespace chai {
 
-RajaExecutionSpacePlugin::RajaExecutionSpacePlugin()
+RajaExecutionSpacePlugin::RajaExecutionSpacePlugin() :
+  m_arraymanager(chai::ArrayManager::getInstance())
 {
 }
 
 void
 RajaExecutionSpacePlugin::preCapture(const RAJA::util::PluginContext& p)
 {
-  if (!m_arraymanager) {
-    m_arraymanager = chai::ArrayManager::getInstance();
-  }
-
   switch (p.platform) {
     case RAJA::Platform::host:
-#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
-      if (m_arraymanager->isGPUSimMode()) {
-         m_arraymanager->setExecutionSpace(chai::GPU);
-      }
-      else {
-         m_arraymanager->setExecutionSpace(chai::CPU);
-      }
-#else
-      m_arraymanager->setExecutionSpace(chai::CPU);
-#endif
-      break;
+      m_arraymanager->setExecutionSpace(chai::CPU); break;
 #if defined(CHAI_ENABLE_CUDA)
     case RAJA::Platform::cuda:
-      m_arraymanager->setExecutionSpace(chai::GPU);
-      break;
+      m_arraymanager->setExecutionSpace(chai::GPU); break;
 #endif
     default:
       m_arraymanager->setExecutionSpace(chai::NONE);
-      break;
   }
 }
 
