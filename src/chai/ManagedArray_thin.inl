@@ -143,7 +143,7 @@ CHAI_HOST void ManagedArray<T>::allocate(size_t elems,
                                          UserCallback const &) {
   if (!m_is_slice) {
     (void) space; // Quiet compiler warning when CHAI_LOG does nothing
-    CHAI_LOG(Debug, "Allocating array of size " << elems
+    CHAI_LOG_DEBUG, "Allocating array of size " << elems
                                                 << " in space "
                                                 << space);
 
@@ -155,10 +155,10 @@ CHAI_HOST void ManagedArray<T>::allocate(size_t elems,
     m_active_pointer = static_cast<T*>(malloc(sizeof(T) * elems));
   #endif
 
-    CHAI_LOG(Debug, "m_active_ptr allocated at address: " << m_active_pointer);
+    CHAI_LOG_DEBUG, "m_active_ptr allocated at address: " << m_active_pointer);
   }
   else {
-    CHAI_LOG(Debug, "Attempted to allocate slice!");
+    CHAI_LOG_DEBUG, "Attempted to allocate slice!");
   }
   m_active_base_pointer = m_active_pointer;
 }
@@ -168,7 +168,7 @@ CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::reallocate(size_t new_elems)
 {
   if (!m_is_slice) {
-    CHAI_LOG(Debug, "Reallocating array of size " << m_elems
+    CHAI_LOG_DEBUG, "Reallocating array of size " << m_elems
                                                   << " with new size"
                                                   << elems);
 
@@ -186,10 +186,10 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t new_elems)
     m_active_pointer = new_ptr;
     m_active_base_pointer = m_active_pointer;
 
-    CHAI_LOG(Debug, "m_active_ptr reallocated at address: " << m_active_pointer);
+    CHAI_LOG_DEBUG, "m_active_ptr reallocated at address: " << m_active_pointer);
   }
   else {
-    CHAI_LOG(Debug, "Attempted to realloc slice!");
+    CHAI_LOG_DEBUG, "Attempted to realloc slice!");
   }
 }
 
@@ -209,7 +209,7 @@ CHAI_INLINE CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
     }
   }
   else {
-    CHAI_LOG(Debug, "tried to free slice!");
+    CHAI_LOG_DEBUG, "tried to free slice!");
   }
 }
 

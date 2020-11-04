@@ -70,21 +70,33 @@
 
 #define CHAI_UNUSED_ARG(X)
 
-#if defined(CHAI_DEBUG)
+#if !defined(CHAI_DISABLE_ALL_LOGGING)
 #if !defined(CHAI_DISABLE_RM)
 
-#define CHAI_LOG(level, msg) \
+#define _CHAI_LOG(level, msg) \
   UMPIRE_LOG(level, msg);
 #else
 
-#define CHAI_LOG(level, msg) \
+#define _CHAI_LOG(level, msg) \
   std::cerr << "[" << __FILE__ << "] " << msg << std::endl;
 
 #endif // !CHAI_DISABLE_RM
 #else
 
-#define CHAI_LOG(level, msg)
+#define _CHAI_LOG(level, msg)
 
-#endif // CHAI_DEBUG
+#endif // CHAI_DISABLE_ALL_LOGGING
+
+#if defined(CHAI_ENABLE_DEBUG_LOGGING)
+#define CHAI_LOG_DEBUG(msg) _CHAI_LOG(Debug, msg)
+#else
+#define CHAI_LOG_DEBUG(msg)
+#endif // CHAI_DISABLE_DEBUG_LOGGING
+
+#if defined(CHAI_ENABLE_WARNING_LOGGING)
+#define CHAI_LOG_WARNING(msg) _CHAI_LOG(Warning, msg)
+#else
+#define CHAI_LOG_WARNING(msg)
+#endif // CHAI_DISABLE_WARNING_LOGGING
 
 #endif  // CHAI_ChaiMacros_HPP

@@ -554,7 +554,7 @@ CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T> ManagedArray<T>::slice( size_t offs
   }
   if (offset + elems > size()) {
 #if !defined(CHAI_DEVICE_COMPILE)
-    CHAI_LOG(Debug,
+    CHAI_LOG_DEBUG(
              "Invalid slice. No active pointer or index out of bounds");
 #endif
   } else {
