@@ -150,7 +150,7 @@ CHAI_HOST void ManagedArray<T>::allocate(
 {
   if(!m_is_slice) {
      if (elems > 0) {
-       CHAI_LOG(Debug, "Allocating array of size " << elems << " in space " << space);
+       CHAI_LOG_DEBUG( "Allocating array of size " << elems << " in space " << space);
 
        if (m_pointer_record == &ArrayManager::s_null_record) {
          // since we are about to allocate, this will get registered
@@ -199,7 +199,7 @@ CHAI_HOST void ManagedArray<T>::allocate(
 #endif
       }
 #endif
-       CHAI_LOG(Debug, "m_active_base_ptr allocated at address: " << m_active_base_pointer);
+       CHAI_LOG_DEBUG( "m_active_base_ptr allocated at address: " << m_active_base_pointer);
     }
   }
 }
@@ -216,7 +216,7 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t elems)
       if (m_elems == 0 && m_active_base_pointer == nullptr) {
         return allocate(elems, CPU);
       }
-      CHAI_LOG(Debug, "Reallocating array of size " << m_elems << " with new size" << elems);
+      CHAI_LOG_DEBUG( "Reallocating array of size " << m_elems << " with new size" << elems);
       if (m_pointer_record == &ArrayManager::s_null_record) {
          m_pointer_record = m_resource_manager->makeManaged((void *)m_active_base_pointer,m_elems*sizeof(T),CPU,true);
       }
@@ -241,7 +241,7 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t elems)
         }
       }
 
-      CHAI_LOG(Debug, "m_active_ptr reallocated at address: " << m_active_pointer);
+      CHAI_LOG_DEBUG( "m_active_ptr reallocated at address: " << m_active_pointer);
     }
     else {
       this->free();
@@ -271,7 +271,7 @@ CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
        m_pointer_record = &ArrayManager::s_null_record;
     }
   } else {
-    CHAI_LOG(Debug, "Cannot free a slice!");
+    CHAI_LOG_DEBUG( "Cannot free a slice!");
   }
 }
 
@@ -292,7 +292,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::registerTouch(ExecutionSpace space) {
   if (m_active_pointer && (m_pointer_record == nullptr || m_pointer_record == &ArrayManager::s_null_record)) {
-     CHAI_LOG(Warning,"registerTouch called on ManagedArray with nullptr pointer record.");
+     CHAI_LOG_WARNING("registerTouch called on ManagedArray with nullptr pointer record.");
      m_pointer_record = m_resource_manager->makeManaged((void *)m_active_base_pointer,m_elems*sizeof(T),space,true);
   }
   m_resource_manager->registerTouch(m_pointer_record, space);
@@ -395,11 +395,9 @@ void ManagedArray<T>::move(ExecutionSpace space, bool registerTouch) const
         // and so the meta data associated with them are updated before we move the other array down.
         moveInnerImpl();
      }
-     CHAI_LOG(Debug, "Moving " << m_active_pointer);
      m_active_base_pointer = static_cast<T*>(m_resource_manager->move((void *)m_active_base_pointer, m_pointer_record, space));
      m_active_pointer = m_active_base_pointer + m_offset;
 
-     CHAI_LOG(Debug, "Moved to " << m_active_pointer);
 #if defined(CHAI_ENABLE_UM)
     if (m_pointer_record->m_last_space == UM) {
     } else
@@ -409,7 +407,7 @@ void ManagedArray<T>::move(ExecutionSpace space, bool registerTouch) const
     } else 
 #endif
      if (registerTouch) {
-       CHAI_LOG(Debug, "T is non-const, registering touch of pointer" << m_active_pointer);
+       CHAI_LOG_DEBUG( "T is non-const, registering touch of pointer" << m_active_pointer);
        m_resource_manager->registerTouch(m_pointer_record, space);
      }
      if (space != GPU && prev_space == GPU) {
@@ -456,7 +454,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, CHAIDISAMBIGUATE, bool )
 #if !defined(CHAI_DEVICE_COMPILE)
 
    if (m_active_pointer && (m_pointer_record == &ArrayManager::s_null_record || m_active_pointer != m_pointer_record->m_pointers[CPU])) {
-      CHAI_LOG(Warning,"REINTEGRATED external pointer unknown by CHAI.");
+      CHAI_LOG_WARNING("REINTEGRATED external pointer unknown by CHAI.");
    }
 #endif
 }
@@ -483,7 +481,7 @@ T* ManagedArray<T>::data() const {
 #if !defined(CHAI_DEVICE_COMPILE)
   if (m_active_pointer) {
      if (m_pointer_record == nullptr || m_pointer_record == &ArrayManager::s_null_record) {
-        CHAI_LOG(Warning, "nullptr pointer_record associated with non-nullptr active_pointer")
+        CHAI_LOG_WARNING( "nullptr pointer_record associated with non-nullptr active_pointer")
      }
 
      move(CPU);
@@ -506,7 +504,7 @@ const T* ManagedArray<T>::cdata() const {
 #if !defined(CHAI_DEVICE_COMPILE)
   if (m_active_pointer) {
      if (m_pointer_record == nullptr || m_pointer_record == &ArrayManager::s_null_record) {
-        CHAI_LOG(Warning, "nullptr pointer_record associated with non-nullptr active_pointer")
+        CHAI_LOG_WARNING( "nullptr pointer_record associated with non-nullptr active_pointer")
      }
 
      move(CPU, false);

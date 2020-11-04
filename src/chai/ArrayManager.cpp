@@ -84,7 +84,7 @@ void ArrayManager::registerPointer(
         // if it's actually the same pointer record, then we're OK. If it's a different
         // one, delete the old one.
         if (foundRecord != record) {
-           CHAI_LOG(Warning, "ArrayManager::registerPointer found a record for " <<
+           CHAI_LOG_WARNING( "ArrayManager::registerPointer found a record for " <<
                       pointer << " already there.  Deleting abandoned pointer record.");
 
            callback(foundRecord, ACTION_FOUND_ABANDONED, space);
@@ -98,7 +98,7 @@ void ArrayManager::registerPointer(
      }
   }
 
-  CHAI_LOG(Debug, "Registering " << pointer << " in space " << space);
+  CHAI_LOG_DEBUG( "Registering " << pointer << " in space " << space);
 
   m_pointer_map.insert(pointer, record);
 
@@ -135,7 +135,7 @@ void ArrayManager::deregisterPointer(PointerRecord* record, bool deregisterFromU
        if (deregisterFromUmpire) {
           m_resource_manager.deregisterAllocation(pointer);
        }
-       CHAI_LOG(Debug, "De-registering " << pointer);
+       CHAI_LOG_DEBUG( "De-registering " << pointer);
        m_pointer_map.erase(pointer);
     }
   }
@@ -164,7 +164,7 @@ void ArrayManager::setExecutionSpace(ExecutionSpace space)
    }
 #endif
 
-  CHAI_LOG(Debug, "Setting execution space to " << space);
+  CHAI_LOG_DEBUG("Setting execution space to " << space);
 
   if (chai::GPU == space) {
     m_synced_since_last_kernel = false;
@@ -207,7 +207,7 @@ void ArrayManager::registerTouch(PointerRecord* pointer_record,
   if (pointer_record && pointer_record != &s_null_record) {
 
      if (space != NONE) {
-       CHAI_LOG(Debug, pointer_record->m_pointers[space] << " touched in space " << space);
+       CHAI_LOG_DEBUG( pointer_record->m_pointers[space] << " touched in space " << space);
        pointer_record->m_touched[space] = true;
        pointer_record->m_last_space = space;
      }
@@ -265,6 +265,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   } else if (dst_pointer != src_pointer) {
     // Exclude the copy if src and dst are the same (can happen for PINNED memory)
     {
+      CHAI_LOG_DEBUG( "Moving " << src_pointer << "to " << dst_pointer);
       m_resource_manager.copy(dst_pointer, src_pointer);
     }
 
@@ -286,7 +287,7 @@ void ArrayManager::allocate(
 
   registerPointer(pointer_record, space);
 
-  CHAI_LOG(Debug, "Allocated array at: " << pointer_record->m_pointers[space]);
+  CHAI_LOG_DEBUG( "Allocated array at: " << pointer_record->m_pointers[space]);
 }
 
 void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFree)
@@ -346,7 +347,7 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
           m_resource_manager.deregisterAllocation(space_ptr);
         }
         {
-          CHAI_LOG(Debug, "DeRegistering " << space_ptr);
+          CHAI_LOG_DEBUG( "DeRegistering " << space_ptr);
           std::lock_guard<std::mutex> lock(m_mutex);
           m_pointer_map.erase(space_ptr);
         }
@@ -423,7 +424,7 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
      }
   }
   else {
-     CHAI_LOG(Warning, "ArrayManager::makeManaged found abandoned pointer record!!!");
+     CHAI_LOG_WARNING( "ArrayManager::makeManaged found abandoned pointer record!!!");
      callback(pointer_record, ACTION_FOUND_ABANDONED, space);
   }
 
@@ -533,13 +534,13 @@ void ArrayManager::evict(ExecutionSpace space, ExecutionSpace destinationSpace) 
    if (destinationSpace == NONE) {
       // If the destination space is NONE, evicting invalidates all data and
       // leaves us in a bad state (if the last touch was in the eviction space).
-      CHAI_LOG(Warning, "evict does nothing with destinationSpace == NONE!");
+      CHAI_LOG_WARNING( "evict does nothing with destinationSpace == NONE!");
       return;
    }
 
    if (space == destinationSpace) {
       // It doesn't make sense to evict to the same space, so do nothing
-      CHAI_LOG(Warning, "evict does nothing with space == destinationSpace!");
+      CHAI_LOG_WARNING( "evict does nothing with space == destinationSpace!");
       return;
    }
 
