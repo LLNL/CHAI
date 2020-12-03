@@ -12,6 +12,7 @@
   static void gpu_test_##X_##Y()
 
 #include "chai/config.hpp"
+#include "chai/ArrayManager.hpp"
 #include "chai/ManagedArray.hpp"
 #include "chai/managed_ptr.hpp"
 
@@ -603,16 +604,16 @@ GPU_TEST(managed_ptr, gpu_new_and_delete_on_device)
 
   // Initialize device side memory to hold a pointer
   Simple** gpuPointerHolder = nullptr;
-  gpuMalloc(&gpuPointerHolder, sizeof(Simple*));
+  chai::gpuMalloc((void**)(&gpuPointerHolder), sizeof(Simple*));
 
   // Create on the device
   chai::detail::make_on_device<<<1, 1>>>(gpuPointerHolder);
 
   // Copy to the host side memory
-  gpuMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(Simple*), gpuMemcpyDeviceToHost);
+  chai::gpuMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(Simple*), gpuMemcpyDeviceToHost);
 
   // Free device side memory
-  gpuFree(gpuPointerHolder);
+  chai::gpuFree(gpuPointerHolder);
 
   // Save the pointer
   ASSERT_NE(cpuPointerHolder[0], nullptr);
@@ -632,16 +633,16 @@ GPU_TEST(managed_ptr, gpu_new_and_delete_on_device_2)
 
   // Initialize device side memory to hold a pointer
   Simple** gpuPointerHolder = nullptr;
-  gpuMalloc(&gpuPointerHolder, sizeof(Simple*));
+  chai::gpuMalloc((void**)(&gpuPointerHolder), sizeof(Simple*));
 
   // Create on the device
   chai::detail::make_on_device<<<1, 1>>>(gpuPointerHolder);
 
   // Copy to the host side memory
-  gpuMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(Simple*), gpuMemcpyDeviceToHost);
+  chai::gpuMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(Simple*), gpuMemcpyDeviceToHost);
 
   // Free device side memory
-  gpuFree(gpuPointerHolder);
+  chai::gpuFree(gpuPointerHolder);
 
   // Save the pointer
   ASSERT_NE(cpuPointerHolder[0], nullptr);
