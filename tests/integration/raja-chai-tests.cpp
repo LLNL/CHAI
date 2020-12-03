@@ -16,6 +16,7 @@
 
 #include "gtest/gtest.h"
 
+// TODO: add hip policy for these tests.
 #define CUDA_TEST(X, Y)                 \
   static void cuda_test_##X##_##Y();    \
   TEST(X, Y) { cuda_test_##X##_##Y(); } \
