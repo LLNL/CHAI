@@ -26,8 +26,9 @@ RajaExecutionSpacePlugin::preCapture(const RAJA::util::PluginContext& p)
   switch (p.platform) {
     case RAJA::Platform::host:
       m_arraymanager->setExecutionSpace(chai::CPU); break;
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
     case RAJA::Platform::cuda:
+    case RAJA::Platform::hip:
       m_arraymanager->setExecutionSpace(chai::GPU); break;
 #endif
     default:
