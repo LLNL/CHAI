@@ -25,9 +25,14 @@ set (chai_headers
   ExecutionSpaces.hpp
   ManagedArray.hpp
   ManagedArray.inl
-  managed_ptr.hpp
   PointerRecord.hpp
   Types.hpp)
+
+if (CHAI_ENABLE_MANAGED_PTR)
+  set (chai_headers
+    ${chai_headers}
+    managed_ptr.hpp)
+endif ()
 
 if(DISABLE_RM)
   set(chai_headers
