@@ -13,6 +13,7 @@ if (ENABLE_CUDA)
     ${chai_benchmark_depends}
     cuda)
 endif ()
+
 if (ENABLE_HIP)
   set (chai_benchmark_depends
     ${chai_benchmark_depends}
@@ -37,12 +38,13 @@ blt_add_benchmark(
   NAME managedarray_benchmarks
   COMMAND managedarray_benchmarks)
 
-blt_add_executable(
-  NAME managed_ptr_benchmarks
-  SOURCES chai_managed_ptr_benchmarks.cpp
-  DEPENDS_ON ${chai_benchmark_depends})
+if (CHAI_ENABLE_MANAGED_PTR)
+  blt_add_executable(
+    NAME managed_ptr_benchmarks
+    SOURCES chai_managed_ptr_benchmarks.cpp
+    DEPENDS_ON ${chai_benchmark_depends})
 
-blt_add_benchmark(
-  NAME managed_ptr_benchmarks
-  COMMAND managed_ptr_benchmarks)
-
+  blt_add_benchmark(
+    NAME managed_ptr_benchmarks
+    COMMAND managed_ptr_benchmarks)
+endif ()
