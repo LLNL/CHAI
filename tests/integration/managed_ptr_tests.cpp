@@ -124,6 +124,25 @@ class TestContainer {
       chai::managed_ptr<TestInner> m_innerType;
 };
 
+class TestOwningContainer {
+   public:
+      CHAI_HOST_DEVICE TestOwningContainer() : m_innerType(nullptr) {}
+      CHAI_HOST_DEVICE TestOwningContainer(chai::managed_ptr<TestInner> innerType) : m_innerType(innerType) {}
+
+      CHAI_HOST_DEVICE ~TestOwningContainer() {
+#if !defined(__CUDA_ARCH__)
+         m_innerType.free();
+#endif
+      }
+
+      CHAI_HOST_DEVICE int getValue() const {
+         return m_innerType->getValue();
+      }
+
+   private:
+      chai::managed_ptr<TestInner> m_innerType;
+};
+
 class MultipleRawArrayClass {
    public:
       CHAI_HOST_DEVICE MultipleRawArrayClass() : m_values1(nullptr), m_values2(nullptr) {}
@@ -256,6 +275,28 @@ TEST(managed_ptr, nested_managed_ptr)
 
   container.free();
   derived.free();
+}
+
+TEST(managed_ptr, owning_class_with_managed_ptr)
+{
+  const int expectedValue = rand();
+
+  auto derived = chai::make_managed<TestInner>(expectedValue);
+  TestOwningContainer container(derived);
+
+  ASSERT_EQ(container.getValue(), expectedValue);
+}
+
+TEST(managed_ptr, owning_nested_managed_ptr)
+{
+  const int expectedValue = rand();
+
+  auto derived = chai::make_managed<TestInner>(expectedValue);
+  auto container = chai::make_managed<TestOwningContainer>(derived);
+
+  ASSERT_EQ(container->getValue(), expectedValue);
+
+  container.free();
 }
 
 TEST(managed_ptr, array_of_managed_ptr)
@@ -615,6 +656,45 @@ GPU_TEST(managed_ptr, gpu_nested_managed_ptr)
   results.free();
   container.free();
   derived.free();
+}
+
+GPU_TEST(managed_ptr, gpu_owning_class_with_managed_ptr)
+{
+  const int expectedValue = rand();
+
+  auto derived = chai::make_managed<TestInner>(expectedValue);
+  TestOwningContainer container(derived);
+
+  chai::ManagedArray<int> results(1, chai::GPU);
+  
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
+    results[i] = container.getValue();
+  });
+
+  results.move(chai::CPU);
+  ASSERT_EQ(results[0], expectedValue);
+
+  results.free();
+}
+
+GPU_TEST(managed_ptr, gpu_owning_nested_managed_ptr)
+{
+  const int expectedValue = rand();
+
+  auto derived = chai::make_managed<TestInner>(expectedValue);
+  auto container = chai::make_managed<TestOwningContainer>(derived);
+
+  chai::ManagedArray<int> results(1, chai::GPU);
+
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
+    results[i] = container->getValue();
+  });
+
+  results.move(chai::CPU);
+  ASSERT_EQ(results[0], expectedValue);
+
+  results.free();
+  container.free();
 }
 
 GPU_TEST(managed_ptr, gpu_multiple_inheritance)
