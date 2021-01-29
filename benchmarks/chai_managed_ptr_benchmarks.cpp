@@ -9,6 +9,7 @@
 #include "benchmark/benchmark.h"
 
 #include "chai/config.hpp"
+#include "chai/ArrayManager.hpp"
 #include "chai/managed_ptr.hpp"
 
 #include "../src/util/forall.hpp"
@@ -134,8 +135,8 @@ static void benchmark_use_managed_ptr_cpu(benchmark::State& state)
      values[i] = i * i;
   }
 
-#ifdef __CUDACC__
-  cudaDeviceSynchronize();
+#ifdef CHAI_GPUCC
+  chai::synchronize();
 #endif
 
   while (state.KeepRunning()) {
@@ -145,8 +146,8 @@ static void benchmark_use_managed_ptr_cpu(benchmark::State& state)
   free(values);
   object.free();
 
-#ifdef __CUDACC__
-  cudaDeviceSynchronize();
+#ifdef CHAI_GPUCC
+  chai::synchronize();
 #endif
 }
 
@@ -209,7 +210,7 @@ static void benchmark_pass_copy_to_gpu(benchmark::State& state)
 
   while (state.KeepRunning()) {
     copy_kernel<<<1, 1>>>(helper);
-    cudaDeviceSynchronize();
+    chai::synchronize();
   }
 }
 
@@ -225,10 +226,10 @@ static void benchmark_copy_to_gpu(benchmark::State& state)
 
   while (state.KeepRunning()) {
     ClassWithSize<N>* gpuPointer;
-    cudaMalloc(&gpuPointer, sizeof(ClassWithSize<N>));
-    cudaMemcpy(gpuPointer, cpuPointer, sizeof(ClassWithSize<N>), cudaMemcpyHostToDevice);
-    cudaFree(gpuPointer);
-    cudaDeviceSynchronize();
+    chai::gpuMalloc((void**)(&gpuPointer), sizeof(ClassWithSize<N>));
+    chai::gpuMemcpy(gpuPointer, cpuPointer, sizeof(ClassWithSize<N>), gpuMemcpyHostToDevice);
+    chai::gpuFree(gpuPointer);
+    chai::synchronize();
   }
 
   delete cpuPointer;
@@ -258,11 +259,11 @@ static void benchmark_placement_new_on_gpu(benchmark::State& state)
 {
   while (state.KeepRunning()) {
     ClassWithSize<N>* address;
-    cudaMalloc(&address, sizeof(ClassWithSize<N>));
+    chai::gpuMalloc((void**)(&address), sizeof(ClassWithSize<N>));
     placement_new_kernel<<<1, 1>>>(address);
     placement_delete_kernel<<<1, 1>>>(address);
-    cudaFree(address);
-    cudaDeviceSynchronize();
+    chai::gpuFree(address);
+    chai::synchronize();
   }
 }
 
@@ -290,11 +291,11 @@ static void benchmark_new_on_gpu(benchmark::State& state)
 {
   while (state.KeepRunning()) {
     ClassWithSize<N>** buffer;
-    cudaMalloc(&buffer, sizeof(ClassWithSize<N>*));
+    chai::gpuMalloc((void**)(&buffer), sizeof(ClassWithSize<N>*));
     create_kernel<<<1, 1>>>(buffer);
     delete_kernel<<<1, 1>>>(buffer);
-    cudaFree(buffer);
-    cudaDeviceSynchronize();
+    chai::gpuFree(buffer);
+    chai::synchronize();
   }
 }
 
@@ -317,15 +318,15 @@ static void benchmark_new_on_gpu_and_copy_to_host(benchmark::State& state)
 {
   while (state.KeepRunning()) {
     ClassWithSize<N>** gpuBuffer;
-    cudaMalloc(&gpuBuffer, sizeof(ClassWithSize<N>*));
+    chai::gpuMalloc((void**)(&gpuBuffer), sizeof(ClassWithSize<N>*));
     create_kernel<<<1, 1>>>(gpuBuffer);
     ClassWithSize<N>** cpuBuffer = (ClassWithSize<N>**) malloc(sizeof(ClassWithSize<N>*));
-    cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(ClassWithSize<N>*), cudaMemcpyDeviceToHost);
-    cudaFree(gpuBuffer);
+    chai::gpuMemcpy(cpuBuffer, gpuBuffer, sizeof(ClassWithSize<N>*), gpuMemcpyDeviceToHost);
+    chai::gpuFree(gpuBuffer);
     ClassWithSize<N>* gpuPointer = cpuBuffer[0];
     free(cpuBuffer);
     delete_kernel_2<<<1, 1>>>(gpuPointer);
-    cudaDeviceSynchronize();
+    chai::synchronize();
   }
 }
 
@@ -348,7 +349,7 @@ static void benchmark_create_on_stack_on_gpu(benchmark::State& state)
 {
   while (state.KeepRunning()) {
     create_on_stack_kernel<N><<<1, 1>>>();
-    cudaDeviceSynchronize();
+    chai::synchronize();
   }
 }
 
@@ -379,19 +380,19 @@ void benchmark_use_managed_ptr_gpu(benchmark::State& state)
 
   int numValues = 100;
   int* values;
-  cudaMalloc(&values, numValues * sizeof(int));
+  chai::gpuMalloc((void**)(&values), numValues * sizeof(int));
   fill<<<1, 100>>>(numValues, values);
 
-  cudaDeviceSynchronize();
+  chai::synchronize();
 
   while (state.KeepRunning()) {
     square<<<1, 1>>>(object, numValues, values);
-    cudaDeviceSynchronize();
+    chai::synchronize();
   }
 
-  cudaFree(values);
+  chai::gpuFree(values);
   object.free();
-  cudaDeviceSynchronize();
+  chai::synchronize();
 }
 
 BENCHMARK(benchmark_use_managed_ptr_gpu);
@@ -409,19 +410,19 @@ void benchmark_curiously_recurring_template_pattern_gpu(benchmark::State& state)
 
   int numValues = 100;
   int* values;
-  cudaMalloc(&values, numValues * sizeof(int));
+  chai::gpuMalloc((void**)(&values), numValues * sizeof(int));
   fill<<<1, 100>>>(numValues, values);
 
-  cudaDeviceSynchronize();
+  chai::synchronize();
 
   while (state.KeepRunning()) {
     square<<<1, 1>>>(object, numValues, values);
-    cudaDeviceSynchronize();
+    chai::synchronize();
   }
 
-  cudaFree(values);
+  chai::gpuFree(values);
   delete derivedCRTP;
-  cudaDeviceSynchronize();
+  chai::synchronize();
 }
 
 BENCHMARK(benchmark_curiously_recurring_template_pattern_gpu);
@@ -438,19 +439,19 @@ void benchmark_no_inheritance_gpu(benchmark::State& state)
 
   int numValues = 100;
   int* values;
-  cudaMalloc(&values, numValues * sizeof(int));
+  chai::gpuMalloc((void**)(&values), numValues * sizeof(int));
   fill<<<1, 100>>>(numValues, values);
 
-  cudaDeviceSynchronize();
+  chai::synchronize();
 
   while (state.KeepRunning()) {
     square<<<1, 1>>>(object, numValues, values);
-    cudaDeviceSynchronize();
+    chai::synchronize();
   }
 
-  cudaFree(values);
+  chai::gpuFree(values);
   delete noInheritance;
-  cudaDeviceSynchronize();
+  chai::synchronize();
 }
 
 BENCHMARK(benchmark_no_inheritance_gpu);
@@ -471,19 +472,19 @@ void benchmark_bulk_use_managed_ptr_gpu(benchmark::State& state)
   chai::managed_ptr<Base> object = chai::make_managed<Derived>(2);
 
   int* values;
-  cudaMalloc(&values, N * sizeof(int));
+  chai::gpuMalloc((void**)(&values), N * sizeof(int));
   fill<<<(N+255)/256, 256>>>(N, values);
 
-  cudaDeviceSynchronize();
+  chai::synchronize();
 
   while (state.KeepRunning()) {
     square<<<(N+255)/256, 256>>>(N, values, object);
-    cudaDeviceSynchronize();
+    chai::synchronize();
   }
 
-  cudaFree(values);
+  chai::gpuFree(values);
   object.free();
-  cudaDeviceSynchronize();
+  chai::synchronize();
 }
 
 BENCHMARK_TEMPLATE(benchmark_bulk_use_managed_ptr_gpu, 1);
@@ -519,19 +520,19 @@ void benchmark_bulk_curiously_recurring_template_pattern_gpu(benchmark::State& s
   auto object = *derivedCRTP;
 
   int* values;
-  cudaMalloc(&values, N * sizeof(int));
+  chai::gpuMalloc((void**)(&values), N * sizeof(int));
   fill<<<(N+255)/256, 256>>>(N, values);
 
-  cudaDeviceSynchronize();
+  chai::synchronize();
 
   while (state.KeepRunning()) {
     square<<<(N+255)/256, 256>>>(N, values, object);
-    cudaDeviceSynchronize();
+    chai::synchronize();
   }
 
-  cudaFree(values);
+  chai::gpuFree(values);
   delete derivedCRTP;
-  cudaDeviceSynchronize();
+  chai::synchronize();
 }
 
 BENCHMARK_TEMPLATE(benchmark_bulk_curiously_recurring_template_pattern_gpu, 1);
@@ -567,19 +568,19 @@ void benchmark_bulk_no_inheritance_gpu(benchmark::State& state)
   auto object = *noInheritance;
 
   int* values;
-  cudaMalloc(&values, N * sizeof(int));
+  chai::gpuMalloc((void**)(&values), N * sizeof(int));
   fill<<<(N+255)/256, 256>>>(N, values);
 
-  cudaDeviceSynchronize();
+  chai::synchronize();
 
   while (state.KeepRunning()) {
     square<<<(N+255)/256, 256>>>(N, values, object);
-    cudaDeviceSynchronize();
+    chai::synchronize();
   }
 
-  cudaFree(values);
+  chai::gpuFree(values);
   delete noInheritance;
-  cudaDeviceSynchronize();
+  chai::synchronize();
 }
 
 BENCHMARK_TEMPLATE(benchmark_bulk_no_inheritance_gpu, 1);
@@ -612,8 +613,8 @@ static void benchmark_bulk_polymorphism_cpu(benchmark::State& state)
      values[i] = i * i;
   }
 
-#ifdef __CUDACC__
-  cudaDeviceSynchronize();
+#ifdef CHAI_GPUCC
+  chai::synchronize();
 #endif
 
   while (state.KeepRunning()) {
@@ -626,8 +627,8 @@ static void benchmark_bulk_polymorphism_cpu(benchmark::State& state)
   free(values);
   delete object;
 
-#ifdef __CUDACC__
-  cudaDeviceSynchronize();
+#ifdef CHAI_GPUCC
+  chai::synchronize();
 #endif
 }
 
@@ -659,8 +660,8 @@ static void benchmark_bulk_use_managed_ptr_cpu(benchmark::State& state)
      values[i] = i * i;
   }
 
-#ifdef __CUDACC__
-  cudaDeviceSynchronize();
+#ifdef CHAI_GPUCC
+  chai::synchronize();
 #endif
 
   while (state.KeepRunning()) {
@@ -673,8 +674,8 @@ static void benchmark_bulk_use_managed_ptr_cpu(benchmark::State& state)
   free(values);
   object.free();
 
-#ifdef __CUDACC__
-  cudaDeviceSynchronize();
+#ifdef CHAI_GPUCC
+  chai::synchronize();
 #endif
 }
 

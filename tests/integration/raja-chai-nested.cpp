@@ -27,6 +27,7 @@ using namespace std;
 
 #include "gtest/gtest.h"
 
+// TODO: add hip policy for these tests.
 #if defined(RAJA_ENABLE_CUDA)
 #define PARALLEL_RAJA_DEVICE __device__
 #elif defined(RAJA_ENABLE_OPENMP)

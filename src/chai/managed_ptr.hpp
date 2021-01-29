@@ -9,6 +9,8 @@
 
 #include "chai/config.hpp"
 
+#if defined(CHAI_ENABLE_MANAGED_PTR)
+
 #ifndef CHAI_DISABLE_RM
 #include "chai/ArrayManager.hpp"
 #endif
@@ -1317,6 +1319,13 @@ namespace chai {
       std::swap(lhs.m_pointer_record, rhs.m_pointer_record);
    }
 } // namespace chai
+
+#else // defined(CHAI_ENABLE_MANAGED_PTR)
+
+#error CHAI must be configured with -DCHAI_ENABLE_MANAGED_PTR=ON to use managed_ptr! \
+       If CHAI_ENABLE_MANAGED_PTR is defined as a macro, it is safe to include managed_ptr.hpp.
+
+#endif // defined(CHAI_ENABLE_MANAGED_PTR)
 
 #endif // MANAGED_PTR
 

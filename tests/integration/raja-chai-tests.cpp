@@ -16,6 +16,7 @@
 
 #include "gtest/gtest.h"
 
+// TODO: add hip policy for these tests.
 #define CUDA_TEST(X, Y)                 \
   static void cuda_test_##X##_##Y();    \
   TEST(X, Y) { cuda_test_##X##_##Y(); } \
@@ -57,7 +58,7 @@ CUDA_TEST(ChaiTest, Simple)
     v2[i] *= 2.0f;
   });
 
-  float* raw_v2 = v2;
+  float* raw_v2 = v2.data();
   for (int i = 0; i < 10; i++) {
     ASSERT_FLOAT_EQ(raw_v2[i], i * 2.0f * 2.0f);
     ;
@@ -90,7 +91,7 @@ CUDA_TEST(ChaiTest, Views)
     v2(i) *= 2.0f;
   });
 
-  float* raw_v2 = v2.data;
+  float* raw_v2 = v2.data.data();
   for (int i = 0; i < 10; i++) {
     ASSERT_FLOAT_EQ(raw_v2[i], i * 1.0f * 2.0f * 2.0f);
     ;
