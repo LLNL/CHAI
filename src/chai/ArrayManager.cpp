@@ -158,6 +158,12 @@ void * ArrayManager::frontOfAllocation(void * pointer) {
 
 void ArrayManager::setExecutionSpace(ExecutionSpace space)
 {
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+   if (isGPUSimMode()) {
+      space = chai::GPU;
+   }
+#endif
+
   CHAI_LOG(Debug, "Setting execution space to " << space);
 
   if (chai::GPU == space) {
@@ -443,8 +449,11 @@ PointerRecord* ArrayManager::deepCopyRecord(PointerRecord const* record)
   copy->m_user_callback = [] (const PointerRecord*, Action, ExecutionSpace) {};
 
   const ExecutionSpace last_space = record->m_last_space;
-
   copy->m_last_space = last_space;
+  for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
+    copy->m_allocators[space] = record->m_allocators[space];
+  }
+
   allocate(copy, last_space);
 
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {

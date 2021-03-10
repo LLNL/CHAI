@@ -1,10 +1,9 @@
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC
-// and RAJA project contributors. See the RAJA/COPYRIGHT file for details.
+//////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
+// project contributors. See the COPYRIGHT file for details.
 //
-// SPDX-License-Identifier: (BSD-3-Clause)
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-
+// SPDX-License-Identifier: BSD-3-Clause
+//////////////////////////////////////////////////////////////////////////////
 ///
 /// Source file containing tests for CHAI in RAJA nested loops.
 ///
@@ -28,6 +27,15 @@ using namespace std;
 
 #include "gtest/gtest.h"
 
+// TODO: add hip policy for these tests.
+#if defined(RAJA_ENABLE_CUDA)
+#define PARALLEL_RAJA_DEVICE __device__
+#elif defined(RAJA_ENABLE_OPENMP)
+#define PARALLEL_RAJA_DEVICE
+#else
+#define PARALLEL_RAJA_DEVICE
+#endif
+
 #define CUDA_TEST(X, Y)                 \
   static void cuda_test_##X##_##Y();    \
   TEST(X, Y) { cuda_test_##X##_##Y(); } \
@@ -38,15 +46,17 @@ using namespace std;
  */
 CUDA_TEST(Chai, NestedSimple)
 {
-  using POLICY = 
+  using POLICY =
     RAJA::KernelPolicy<
-      RAJA::statement::For<0, RAJA::seq_exec, 
-        RAJA::statement::For<1, RAJA::seq_exec
+      RAJA::statement::For<0, RAJA::seq_exec,
+        RAJA::statement::For<1, RAJA::seq_exec,
+          RAJA::statement::Lambda<0>
         >
       >
     >;
 
-  using POLICY_GPU = RAJA::KernelPolicy<
+#if defined(RAJA_ENABLE_CUDA)
+  using POLICY_PARALLEL = RAJA::KernelPolicy<
     RAJA::statement::CudaKernel<
       RAJA::statement::For<1, RAJA::cuda_block_x_loop,
         RAJA::statement::For<0, RAJA::cuda_thread_x_loop,
@@ -55,6 +65,17 @@ CUDA_TEST(Chai, NestedSimple)
       >
     >
   >;
+#elif defined(RAJA_ENABLE_OPENMP)
+  using POLICY_PARALLEL = RAJA::KernelPolicy<
+    RAJA::statement::For<1, RAJA::omp_parallel_for_exec,
+      RAJA::statement::For<0, RAJA::seq_exec,
+        RAJA::statement::Lambda<0>
+      >
+    >
+  >;
+#else
+  using POLICY_PARALLEL = POLICY;
+#endif
 
   const int X = 16;
   const int Y = 16;
@@ -71,15 +92,13 @@ CUDA_TEST(Chai, NestedSimple)
         v1[index] = index;
       });
 
-  RAJA::kernel<POLICY_GPU>(
+  RAJA::kernel<POLICY_PARALLEL>(
       RAJA::make_tuple(RangeSegment(0, Y), RangeSegment(0, X)),
 
-      [=] __host__ __device__(int i, int j) {
+      [=] PARALLEL_RAJA_DEVICE(int i, int j) {
         int index = j * X + i;
         v2[index] = v1[index] * 2.0f;
       });
-
-  cudaDeviceSynchronize();
 
   RAJA::kernel<POLICY>(
 
@@ -94,23 +113,38 @@ CUDA_TEST(Chai, NestedSimple)
 
 CUDA_TEST(Chai, NestedView)
 {
-  using POLICY = 
+  using POLICY =
     RAJA::KernelPolicy<
-      RAJA::statement::For<0, RAJA::seq_exec, 
-        RAJA::statement::For<1, RAJA::seq_exec
+      RAJA::statement::For<0, RAJA::seq_exec,
+        RAJA::statement::For<1, RAJA::seq_exec,
+          RAJA::statement::Lambda<0>
         >
       >
     >;
 
-  using POLICY_GPU = 
+#if defined(RAJA_ENABLE_CUDA)
+  using POLICY_PARALLEL =
     RAJA::KernelPolicy<
       RAJA::statement::CudaKernel<
         RAJA::statement::For<1, RAJA::cuda_block_x_loop,
-          RAJA::statement::For<0, RAJA::cuda_thread_x_loop
+          RAJA::statement::For<0, RAJA::cuda_thread_x_loop,
+            RAJA::statement::Lambda<0>
           >
         >
       >
     >;
+#elif defined(RAJA_ENABLE_OPENMP)
+  using POLICY_PARALLEL =
+    RAJA::KernelPolicy<
+      RAJA::statement::For<1, RAJA::omp_parallel_for_exec,
+        RAJA::statement::For<0, RAJA::seq_exec,
+          RAJA::statement::Lambda<0>
+        >
+      >
+    >;
+#else
+  using POLICY_PARALLEL = POLICY;
+#endif
 
   const int X = 16;
   const int Y = 16;
@@ -126,14 +160,82 @@ CUDA_TEST(Chai, NestedView)
   RAJA::kernel<POLICY>(RAJA::make_tuple(RangeSegment(0, Y), RangeSegment(0, X)),
                         [=](int i, int j) { v1(i, j) = (i + (j * X)) * 1.0f; });
 
-  RAJA::kernel<POLICY_GPU>(RAJA::make_tuple(RangeSegment(0, Y), RangeSegment(0, X)),
-                            [=] __device__(int i, int j) {
+  RAJA::kernel<POLICY_PARALLEL>(RAJA::make_tuple(RangeSegment(0, Y), RangeSegment(0, X)),
+                            [=] PARALLEL_RAJA_DEVICE(int i, int j) {
                               v2(i, j) = v1(i, j) * 2.0f;
                             });
 
   RAJA::kernel<POLICY>(RAJA::make_tuple(RangeSegment(0, Y), RangeSegment(0, X)),
                         [=](int i, int j) {
                           ASSERT_FLOAT_EQ(v2(i, j), v1(i, j) * 2.0f);
+                        });
+}
+
+CUDA_TEST(Chai, NestedMultiView)
+{
+  using POLICY =
+    RAJA::KernelPolicy<
+      RAJA::statement::For<0, RAJA::seq_exec,
+        RAJA::statement::For<1, RAJA::seq_exec,
+          RAJA::statement::Lambda<0>
+        >
+      >
+    >;
+
+#if defined(RAJA_ENABLE_CUDA)
+  using POLICY_PARALLEL =
+    RAJA::KernelPolicy<
+      RAJA::statement::CudaKernel<
+        RAJA::statement::For<1, RAJA::cuda_block_x_loop,
+          RAJA::statement::For<0, RAJA::cuda_thread_x_loop,
+            RAJA::statement::Lambda<0>
+          >
+        >
+      >
+    >;
+#elif defined(RAJA_ENABLE_OPENMP)
+  using POLICY_PARALLEL =
+    RAJA::KernelPolicy<
+      RAJA::statement::For<1, RAJA::omp_parallel_for_exec,
+        RAJA::statement::For<0, RAJA::seq_exec,
+          RAJA::statement::Lambda<0>
+        >
+      >
+    >;
+#else
+  using POLICY_PARALLEL = POLICY;
+#endif
+
+  const int X = 16;
+  const int Y = 16;
+
+  chai::ManagedArray<float> v1_array(X * Y);
+  chai::ManagedArray<float> v2_array(X * Y);
+
+  chai::ManagedArray<float> all_arrays[2];
+  all_arrays[0] = v1_array;
+  all_arrays[1] = v2_array;
+
+  // default MultiView
+  using view = chai::ManagedArrayMultiView<float, RAJA::Layout<2>>;
+  view mview(all_arrays, RAJA::Layout<2>(X, Y));
+
+  // MultiView with index in 1st position
+  using view1p = chai::ManagedArrayMultiView<float, RAJA::Layout<2>, 1>;
+  view1p mview1p(all_arrays, RAJA::Layout<2>(X, Y));
+
+  RAJA::kernel<POLICY>(RAJA::make_tuple(RangeSegment(0, Y), RangeSegment(0, X)),
+                        [=](int i, int j) { mview(0, i, j) = (i + (j * X)) * 1.0f; });
+
+  RAJA::kernel<POLICY_PARALLEL>(RAJA::make_tuple(RangeSegment(0, Y), RangeSegment(0, X)),
+                            [=] PARALLEL_RAJA_DEVICE(int i, int j) {
+                              // use both MultiViews
+                              mview(1, i, j) = mview1p(i, 0, j) * 2.0f;
+                            });
+
+  RAJA::kernel<POLICY>(RAJA::make_tuple(RangeSegment(0, Y), RangeSegment(0, X)),
+                        [=](int i, int j) {
+                          ASSERT_FLOAT_EQ(mview(1, i, j), mview(0, i, j) * 2.0f);
                         });
 }
 
@@ -180,10 +282,10 @@ void runLTimesTests(Index_type num_moments,
 
   using LView = chai::TypedManagedArrayView<double, Layout<2, Index_type, 1>, IM, ID>;
 
-  // psi(d, g, z) : 2 -> z is stride-1 dimension 
+  // psi(d, g, z) : 2 -> z is stride-1 dimension
   using PsiView = chai::TypedManagedArrayView<double, Layout<3, Index_type, 2>, ID, IG, IZ>;
 
-  // phi(m, g, z) : 2 -> z is stride-1 dimension 
+  // phi(m, g, z) : 2 -> z is stride-1 dimension
   using PhiView = chai::TypedManagedArrayView<double, Layout<3, Index_type, 2>, IM, IG, IZ>;
 
   std::array<RAJA::idx_t, 2> L_perm {{0, 1}};
@@ -198,9 +300,10 @@ void runLTimesTests(Index_type num_moments,
   PhiView phi(phi_data,
               RAJA::make_permuted_layout({{num_moments, num_groups, num_zones}}, phi_perm));
 
-  using EXECPOL =
+#if defined(RAJA_ENABLE_CUDA)
+  using POLICY_PARALLEL =
     RAJA::KernelPolicy<
-      statement::CudaKernelAsync<    
+      statement::CudaKernel<
         statement::For<0, cuda_block_x_loop,  // m
           statement::For<2, cuda_block_y_loop,  // g
             statement::For<3, cuda_thread_x_loop,  // z
@@ -210,23 +313,46 @@ void runLTimesTests(Index_type num_moments,
             >
           >
         >
-      >         
-    >;          
-                 
+      >
+    >;
+#elif defined(RAJA_ENABLE_OPENMP)
+  using POLICY_PARALLEL =
+    RAJA::KernelPolicy<
+      statement::For<0, omp_parallel_for_exec,  // m
+        statement::For<2, seq_exec,  // g
+          statement::For<3, seq_exec,  // z
+            statement::For<1, seq_exec,  // d
+              statement::Lambda<0>
+            >
+          >
+        >
+      >
+    >;
+#else
+  using POLICY_PARALLEL =
+    RAJA::KernelPolicy<
+      statement::For<0, seq_exec,  // m
+        statement::For<2, seq_exec,  // g
+          statement::For<3, seq_exec,  // z
+            statement::For<1, seq_exec,  // d
+              statement::Lambda<0>
+            >
+          >
+        >
+      >
+    >;
+#endif
+
   auto segments = RAJA::make_tuple(RAJA::TypedRangeSegment<IM>(0, num_moments),
                                    RAJA::TypedRangeSegment<ID>(0, num_directions),
                                    RAJA::TypedRangeSegment<IG>(0, num_groups),
                                    RAJA::TypedRangeSegment<IZ>(0, num_zones));
 
-  cudaErrchk( cudaDeviceSynchronize() );
-
-  RAJA::kernel<EXECPOL>( segments,
-    [=] RAJA_DEVICE (IM m, ID d, IG g, IZ z) {
+  RAJA::kernel<POLICY_PARALLEL>( segments,
+    [=] PARALLEL_RAJA_DEVICE (IM m, ID d, IG g, IZ z) {
        phi(m, g, z) += L(m, d) * psi(d, g, z);
     }
   );
-
-  cudaErrchk( cudaDeviceSynchronize() );
 
   RAJA::forall<RAJA::seq_exec>(
     RAJA::TypedRangeSegment<IM>(0, num_moments), [=] (IM m) {

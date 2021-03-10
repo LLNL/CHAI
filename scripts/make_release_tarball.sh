@@ -7,13 +7,13 @@
 ##############################################################################
 
 TAR_CMD=gtar
-VERSION=2.1.1
+VERSION=2.3.0
 
 git archive --prefix=chai-${VERSION}/ -o chai-${VERSION}.tar HEAD 2> /dev/null
 
 echo "Running git archive submodules..."
 
-p=`pwd` && (echo .; git submodule foreach) | while read entering path; do
+p=`pwd` && (echo .; git submodule foreach --recursive) | while read entering path; do
     temp="${path%\'}";
     temp="${temp#\'}";
     path=$temp;

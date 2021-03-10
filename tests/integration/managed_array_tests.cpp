@@ -85,7 +85,27 @@ TEST(ManagedArray, Slice) {
       array[i] = i;
   });
 
-  chai::ManagedArray<float> sl = array.slice(0,5);
+  const int SLICE_SZ = 5;
+  chai::ManagedArray<float> sl = array.slice(0,SLICE_SZ);
+  ASSERT_EQ(SLICE_SZ, sl.size());
+
+  sl.free();
+  array.free();
+  assert_empty_map(true);
+}
+
+TEST(ManagedArray, SliceCopyCtor) {
+  chai::ManagedArray<float> array(10);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  const int SLICE_SZ = 5;
+  chai::ManagedArray<float> sl = array.slice(0,SLICE_SZ);
+  chai::ManagedArray<float> slcopy = sl;
+  ASSERT_EQ(SLICE_SZ, slcopy.size());
+
   sl.free();
   array.free();
   assert_empty_map(true);
@@ -98,8 +118,12 @@ TEST(ManagedArray, SliceOfSlice) {
       array[i] = i;
   });
 
+  const int SLICE_SZ_1 = 6;
+  const int SLICE_SZ_2 = 3;
   chai::ManagedArray<float> sl1 = array.slice(0,6);
   chai::ManagedArray<float> sl2 = sl1.slice(3,3);
+  ASSERT_EQ(sl1.size(), SLICE_SZ_1);
+  ASSERT_EQ(sl2.size(), SLICE_SZ_2);
 
   forall(sequential(), 0, 3, [=] (int i) {
       sl1[i] = sl2[i];
@@ -111,6 +135,29 @@ TEST(ManagedArray, SliceOfSlice) {
 
   sl1.free();
   sl2.free();
+  array.free();
+  assert_empty_map(true);
+}
+
+TEST(ManagedArray, ArrayOfSlices) {
+  chai::ManagedArray<float> array(10);
+  chai::ManagedArray<chai::ManagedArray<float>> arrayOfSlices(5);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  forall(sequential(), 0, 5, [=] (int i) {
+      arrayOfSlices[i] = array.slice(2*i, 2);
+      arrayOfSlices[i][1] = arrayOfSlices[i][0];
+  });
+
+  forall(sequential(), 0, 5, [=] (int i) {
+    ASSERT_EQ(arrayOfSlices[i].size(), 2);
+    ASSERT_EQ(array[2*i], array[2*i+1]);
+  });
+
+  arrayOfSlices.free();
   array.free();
   assert_empty_map(true);
 }
@@ -532,6 +579,32 @@ GPU_TEST(ManagedArray, IncrementDecrementFromHostOnDevice)
 #endif
 #endif
 
+GPU_TEST(ManagedArray, ArrayOfSlicesDevice) {
+  chai::ManagedArray<float> array(10);
+  chai::ManagedArray<chai::ManagedArray<float>> arrayOfSlices(5);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  forall(sequential(), 0, 5, [=] (int i) {
+      arrayOfSlices[i] = array.slice(2*i, 2);
+  });
+
+  forall(gpu(), 0, 5, [=] __device__ (int i) {
+      arrayOfSlices[i][1] = arrayOfSlices[i][0];
+  });
+
+  forall(sequential(), 0, 5, [=] (int i) {
+    ASSERT_EQ(arrayOfSlices[i].size(), 2);
+    ASSERT_EQ(array[2*i], array[2*i+1]);
+  });
+
+  arrayOfSlices.free();
+  array.free();
+  assert_empty_map(true);
+}
+
 GPU_TEST(ManagedArray, SliceOfSliceDevice) {
   chai::ManagedArray<float> array(10);
 
@@ -753,7 +826,6 @@ GPU_TEST(ManagedArray, PodTestGPU)
 }
 #endif
 
-#ifndef CHAI_DISABLE_RM
 TEST(ManagedArray, ExternalConstructorUnowned)
 {
   float* data = static_cast<float*>(std::malloc(100 * sizeof(float)));
@@ -793,7 +865,44 @@ TEST(ManagedArray, ExternalConstructorOwned)
   array.free();
   assert_empty_map(true);
 }
+
+TEST(ManagedArray, ExternalOwnedFromManagedArray)
+{
+  chai::ManagedArray<float> array(20);
+
+  forall(sequential(), 0, 20, [=](int i) { array[i] = 1.0f * i; });
+
+  chai::ManagedArray<float> arrayCopy =
+      chai::makeManagedArray<float>(array.getPointer(chai::CPU), 20, chai::CPU, true);
+
+#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
+  ASSERT_EQ(array, arrayCopy);
+#else
+  ASSERT_EQ(array.data(), arrayCopy.data());
+#endif
+  // should be able to free through the new ManagedArray
+  arrayCopy.free();
+  assert_empty_map(true);
+}
+
+TEST(ManagedArray, ExternalUnownedFromManagedArray)
+{
+  chai::ManagedArray<float> array(20);
+
+  forall(sequential(), 0, 20, [=](int i) { array[i] = 1.0f * i; });
+
+  chai::ManagedArray<float> arrayCopy =
+      chai::makeManagedArray<float>(array.getPointer(chai::CPU), 20, chai::CPU, false);
+
+  forall(sequential(), 0, 20, [=](int i) { ASSERT_EQ(arrayCopy[i], 1.0f * i); });
+  // freeing from an unowned pointer should leave the original ManagedArray intact
+  arrayCopy.free();
+  array.free();
+  assert_empty_map(true);
+}
+
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+#ifndef CHAI_DISABLE_RM
 GPU_TEST(ManagedArray, ExternalUnownedMoveToGPU)
 {
   float data[20];
@@ -807,6 +916,213 @@ GPU_TEST(ManagedArray, ExternalUnownedMoveToGPU)
   forall(gpu(), 0, 20, [=] __device__ (int i) { array[i] = 1.0f * i; });
 
   forall(sequential(), 0, 20, [=] (int i) { ASSERT_EQ(array[i], 1.0f * i); });
+
+  array.free();
+  assert_empty_map(true);
+}
+#endif
+#endif
+
+TEST(ManagedArray, data)
+{
+  int length = 10;
+  chai::ManagedArray<int> array(length);
+
+  forall(sequential(), 0, length, [=] (int i) {
+    array[i] = i;
+  });
+
+  int* data = array.data();
+
+  for (int i = 0; i < length; ++i) {
+    EXPECT_EQ(data[i], i);
+    data[i] = length - 1 - i;
+  }
+
+  forall(sequential(), 0, length, [=] (int i) {
+    EXPECT_EQ(array[i], length - 1 - i);
+  });
+
+  array.free();
+  assert_empty_map(true);
+}
+
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+#ifndef CHAI_DISABLE_RM
+GPU_TEST(ManagedArray, dataGPU)
+{
+  // Initialize
+  int transfersH2D = 0;
+  int transfersD2H = 0;
+
+  int length = 10;
+  chai::ManagedArray<int> array;
+  array.allocate(length,
+                 chai::GPU,
+                 [&] (const chai::PointerRecord* record, chai::Action act, chai::ExecutionSpace s) {
+                   if (act == chai::ACTION_MOVE) {
+                     if (s == chai::CPU) {
+                       ++transfersD2H;
+                     }
+                     else if (s == chai::GPU) {
+                       ++transfersH2D;
+                     }
+                   }
+                 });
+
+  forall(gpu(), 0, length, [=] __device__ (int i) {
+    int* d_data = array.data();
+    d_data[i] = i;
+  });
+
+  // Move data to host with touch
+  int* data = array.data();
+
+  EXPECT_EQ(transfersD2H, 1);
+
+  for (int i = 0; i < length; ++i) {
+    EXPECT_EQ(data[i], i);
+    data[i] = length - 1 - i;
+  }
+
+  // Move data to device with touch
+  forall(gpu(), 0, length, [=] __device__ (int i) {
+    int* d_data = array.data();
+    array[i] += 1;
+  });
+
+  EXPECT_EQ(transfersH2D, 1);
+
+  // Move data to host without touch
+  chai::ManagedArray<const int> array2 = array;
+  const int* data2 = array2.data();
+
+  EXPECT_EQ(transfersD2H, 2);
+
+  for (int i = 0; i < length; ++i) {
+    EXPECT_EQ(data2[i], length - i);
+  }
+
+  // Access on device with touch (should not be moved)
+  forall(gpu(), 0, length, [=] __device__ (int i) {
+    int* d_data = array.data();
+    array[i] += i;
+  });
+
+  EXPECT_EQ(transfersH2D, 1);
+
+  // Move data to host
+  forall(sequential(), 0, length, [=] (int i) {
+    EXPECT_EQ(array[i], length);
+  });
+
+  EXPECT_EQ(transfersD2H, 3);
+  EXPECT_EQ(transfersH2D, 1);
+
+  array.free();
+  assert_empty_map(true);
+}
+#endif
+#endif
+
+TEST(ManagedArray, cdata)
+{
+  int length = 10;
+  chai::ManagedArray<int> array(length);
+
+  forall(sequential(), 0, length, [=] (int i) {
+    array[i] = i;
+  });
+
+  const int* data = array.cdata();
+
+  for (int i = 0; i < length; ++i) {
+    EXPECT_EQ(data[i], i);
+  }
+
+  array.free();
+  assert_empty_map(true);
+}
+
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+#ifndef CHAI_DISABLE_RM
+GPU_TEST(ManagedArray, cdataGPU)
+{
+  // Initialize
+  int transfersH2D = 0;
+  int transfersD2H = 0;
+
+  int length = 10;
+  chai::ManagedArray<int> array;
+  array.allocate(length,
+                 chai::GPU,
+                 [&] (const chai::PointerRecord* record, chai::Action act, chai::ExecutionSpace s) {
+                   if (act == chai::ACTION_MOVE) {
+                     if (s == chai::CPU) {
+                       ++transfersD2H;
+                     }
+                     else if (s == chai::GPU) {
+                       ++transfersH2D;
+                     }
+                   }
+                 });
+
+  forall(gpu(), 0, length, [=] __device__ (int i) {
+    const int* d_data = array.cdata();
+
+    if (d_data[i] == array[i]) {
+      array[i] = i;
+    }
+  });
+
+  // Move data to host without touch
+  const int* data = array.cdata();
+
+  EXPECT_EQ(transfersD2H, 1);
+
+  for (int i = 0; i < length; ++i) {
+    EXPECT_EQ(data[i], i);
+  }
+
+  // Access on device with touch (should not be moved)
+  forall(gpu(), 0, length, [=] __device__ (int i) {
+    const int* d_data = array.cdata();
+
+    if (d_data[i] == array[i]) {
+       array[i] += 1;
+    }
+  });
+
+  EXPECT_EQ(transfersH2D, 0);
+
+  // Move data to host without touch
+  chai::ManagedArray<const int> array2 = array;
+  const int* data2 = array2.cdata();
+
+  EXPECT_EQ(transfersD2H, 2);
+
+  for (int i = 0; i < length; ++i) {
+    EXPECT_EQ(data2[i], i + 1);
+  }
+
+  // Access on device with touch (should not be moved)
+  forall(gpu(), 0, length, [=] __device__ (int i) {
+    const int* d_data = array.cdata();
+
+    if (d_data[i] == array[i]) {
+       array[i] += 1;
+    }
+  });
+
+  EXPECT_EQ(transfersH2D, 0);
+
+  // Move data to host with touch
+  forall(sequential(), 0, length, [=] (int i) {
+    EXPECT_EQ(array[i], i + 2);
+  });
+
+  EXPECT_EQ(transfersD2H, 3);
+  EXPECT_EQ(transfersH2D, 0);
 
   array.free();
   assert_empty_map(true);

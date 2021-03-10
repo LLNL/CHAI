@@ -1,50 +1,15 @@
-// ---------------------------------------------------------------------
-// Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
-// rights reserved.
+//////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
+// project contributors. See the COPYRIGHT file for details.
 //
-// Produced at the Lawrence Livermore National Laboratory.
-//
-// This file is part of CHAI.
-//
-// LLNL-CODE-705877
-//
-// For details, see https:://github.com/LLNL/CHAI
-// Please also see the NOTICE and LICENSE files.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-//
-// - Redistributions of source code must retain the above copyright
-//   notice, this list of conditions and the following disclaimer.
-//
-// - Redistributions in binary form must reproduce the above copyright
-//   notice, this list of conditions and the following disclaimer in the
-//   documentation and/or other materials provided with the
-//   distribution.
-//
-// - Neither the name of the LLNS/LLNL nor the names of its contributors
-//   may be used to endorse or promote products derived from this
-//   software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-// OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-// AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
-// WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-// ---------------------------------------------------------------------
-
+// SPDX-License-Identifier: BSD-3-Clause
+//////////////////////////////////////////////////////////////////////////////
 #ifndef MANAGED_PTR_H_
 #define MANAGED_PTR_H_
 
 #include "chai/config.hpp"
+
+#if defined(CHAI_ENABLE_MANAGED_PTR)
 
 #ifndef CHAI_DISABLE_RM
 #include "chai/ArrayManager.hpp"
@@ -62,7 +27,7 @@
 
 namespace chai {
    namespace detail {
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
       template <typename T>
       __global__ void destroy_on_device(T* gpuPointer);
 #endif
@@ -96,8 +61,8 @@ namespace chai {
    ///    used in both contexts with a single API.
    /// The make_managed and make_managed_from_factory functions call new on both the
    ///    host and device so that polymorphism is valid in both contexts. Simply copying
-   ///    an object to the device will not copy the vtable, so new must be called on
-   ///    the device.
+   ///    the bits of an object to the device will not copy the vtable, so new must be
+   ///    called on the device.
    ///
    /// Usage Requirements:
    ///    Methods that can be called on the host and/or device must be declared
@@ -108,27 +73,30 @@ namespace chai {
    ///       is updated and vice versa. If you wish to keep both instances in sync,
    ///       you must explicitly modify the object in both the host context and the
    ///       device context.
-   ///    Raw array members of T need to be initialized correctly with a host or
-   ///       device array. If a ManagedArray is passed to the make_managed or
-   ///       make_managed_from_factory methods in place of a raw array, it will be
-   ///       cast to the appropriate host or device pointer when passed to T's
-   ///       constructor on the host and on the device. If it is desired that these
-   ///       host and device pointers be kept in sync, define a callback that maintains
-   ///       a copy of the ManagedArray and upon the ACTION_MOVE event calls the copy
-   ///       constructor of that ManagedArray.
-   ///    If a raw array is passed to make_managed, accessing that member will be
+   ///    C-style array members of T need to be initialized correctly with a host or
+   ///       device C-style array. If a ManagedArray is passed to the make_managed or
+   ///       make_managed_from_factory methods in place of a C-style array, wrap it in
+   ///       a call to chai::unpack to extract the C-style arrays contained within the
+   ///       ManagedArray. This will pass the extracted host C-style array to the host
+   ///       constructor and the extracted device C-style array to the device
+   ///       constructor. If it is desired that these host and device C-style arrays be
+   ///       kept in sync like the normal behavior of ManagedArray, define a callback
+   ///       that maintains a copy of the ManagedArray and upon the ACTION_MOVE event
+   ///       calls the copy constructor of that ManagedArray.
+   ///    If a C-style array is passed to make_managed, accessing that member will be
    ///       valid only in the correct context. To prevent the accidental use of that
    ///       member in the wrong context, any methods that access it should be __host__
-   ///       only or __device__ only. Special care should be taken when passing raw
+   ///       only or __device__ only. Special care should be taken when passing C-style
    ///       arrays as arguments to member functions.
-   ///    The same restrictions for raw array members also apply to raw pointer members.
-   ///       A managed_ptr can be passed to the make_managed or make_managed_from_factory
-   ///       methods in place of a raw pointer, and the host constructor of T will
-   ///       be given the extracted host pointer, and likewise the device constructor
-   ///       of T will be given the extracted device pointer. If it is desired that these
-   ///       host and device pointers be kept in sync, define a callback that maintains
-   ///       a copy of the managed_ptr and upon the ACTION_MOVE event calls the copy
-   ///       constructor of that managed_ptr.
+   ///    The same restrictions for C-style array members also apply to raw pointer
+   ///       members. If a managed_ptr is passed to the make_managed or
+   ///       make_managed_from_factory methods in place of a raw pointer, wrap it in
+   ///       a call to chai::unpack to extract the raw pointers contained within the
+   ///       managed_ptr. This will pass the extracted host pointer to the host
+   ///       constructor and the extracted device pointer to the device constructor.
+   ///       If it is desired that these host and device pointers be kept in sync,
+   ///       define a callback that maintains a copy of the managed_ptr and upon the
+   ///       ACTION_MOVE event call the copy constructor of that managed_ptr.
    ///    Again, if a raw pointer is passed to make_managed, accessing that member will
    ///       only be valid in the correct context. Take care when passing raw pointers
    ///       as arguments to member functions.
@@ -138,10 +106,10 @@ namespace chai {
    ///       every kernel, call ArrayManager::getInstance()->enableDeviceSynchronize().
    ///       Alternatively, call cudaDeviceSynchronize() after any call to make_managed,
    ///       make_managed_from_factory, or managed_ptr::free, and check the return code
-   ///       for errors. If your code crashes in the constructor/destructor of T, then it
-   ///       is recommended to turn on this synchronization. For example, the constructor
-   ///       of T might run out of per-thread stack space on the GPU. If that happens,
-   ///       you can increase the device limit of per-thread stack space.
+   ///       for errors. If your code crashes in the constructor/destructor of T, then
+   ///       it is recommended to turn on this synchronization. For example, the
+   ///       constructor of T might run out of per-thread stack space on the GPU. If
+   ///       that happens, you can increase the device limit of per-thread stack space.
    ///
    template <typename T>
    class managed_ptr {
@@ -195,7 +163,7 @@ namespace chai {
                   case CPU:
                      m_cpu_pointer = pointers.begin()[i++];
                      break;
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
                   case GPU:
                      m_gpu_pointer = pointers.begin()[i++];
                      break;
@@ -243,7 +211,7 @@ namespace chai {
                   case CPU:
                      m_cpu_pointer = pointers.begin()[i++];
                      break;
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
                   case GPU:
                      m_gpu_pointer = pointers.begin()[i++];
                      break;
@@ -272,7 +240,7 @@ namespace chai {
             m_gpu_pointer(other.m_gpu_pointer),
             m_pointer_record(other.m_pointer_record)
          {
-#ifndef __CUDA_ARCH__
+#if !defined(CHAI_DEVICE_COMPILE)
             move();
 #endif
          }
@@ -297,7 +265,7 @@ namespace chai {
             static_assert(std::is_convertible<U*, T*>::value,
                           "U* must be convertible to T*.");
 
-#ifndef __CUDA_ARCH__
+#if !defined(CHAI_DEVICE_COMPILE)
             move();
 #endif
          }
@@ -332,7 +300,7 @@ namespace chai {
                   case CPU:
                      m_cpu_pointer = pointers.begin()[i++];
                      break;
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
                   case GPU:
                      m_gpu_pointer = pointers.begin()[i++];
                      break;
@@ -363,7 +331,7 @@ namespace chai {
                m_gpu_pointer = other.m_gpu_pointer;
                m_pointer_record = other.m_pointer_record;
 
-#ifndef __CUDA_ARCH__
+#if !defined(CHAI_DEVICE_COMPILE)
                move();
 #endif
             }
@@ -391,7 +359,7 @@ namespace chai {
             m_gpu_pointer = other.m_gpu_pointer;
             m_pointer_record = other.m_pointer_record;
 
-#ifndef __CUDA_ARCH__
+#if !defined(CHAI_DEVICE_COMPILE)
             move();
 #endif
 
@@ -404,7 +372,7 @@ namespace chai {
          /// Returns the CPU or GPU pointer depending on the calling context.
          ///
          CHAI_HOST_DEVICE inline T* get() const {
-#ifndef __CUDA_ARCH__
+#if !defined(CHAI_DEVICE_COMPILE)
             move();
             return m_cpu_pointer;
 #else
@@ -428,7 +396,7 @@ namespace chai {
             switch (space) {
                case CPU:
                   return m_cpu_pointer;
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
                case GPU:
                   return m_gpu_pointer;
 #endif
@@ -443,7 +411,7 @@ namespace chai {
          /// Returns the CPU or GPU pointer depending on the calling context.
          ///
          CHAI_HOST_DEVICE inline T* operator->() const {
-#ifndef __CUDA_ARCH__
+#if !defined(CHAI_DEVICE_COMPILE)
             return m_cpu_pointer;
 #else
             return m_gpu_pointer;
@@ -456,7 +424,7 @@ namespace chai {
          /// Returns the CPU or GPU reference depending on the calling context.
          ///
          CHAI_HOST_DEVICE inline T& operator*() const {
-#ifndef __CUDA_ARCH__
+#if !defined(CHAI_DEVICE_COMPILE)
             return *m_cpu_pointer;
 #else
             return *m_gpu_pointer;
@@ -528,12 +496,14 @@ namespace chai {
                         switch (execSpace) {
                            case CPU:
                               delete pointer;
+                              m_cpu_pointer = nullptr;
                               break;
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
                            case GPU:
                            {
                               if (pointer) {
                                  detail::destroy_on_device<<<1, 1>>>(temp);
+                                 m_gpu_pointer = nullptr;
 
 #ifndef CHAI_DISABLE_RM
                                  if (ArrayManager::getInstance()->deviceSynchronize()) {
@@ -560,12 +530,14 @@ namespace chai {
                      switch (execSpace) {
                         case CPU:
                            delete pointer;
+                           m_cpu_pointer = nullptr;
                            break;
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
                         case GPU:
                         {
                            if (pointer) {
                               detail::destroy_on_device<<<1, 1>>>(pointer);
+                              m_gpu_pointer = nullptr;
 
 #ifndef CHAI_DISABLE_RM
                               if (ArrayManager::getInstance()->deviceSynchronize()) {
@@ -584,6 +556,7 @@ namespace chai {
                }
 
                delete m_pointer_record;
+               m_pointer_record = nullptr;
             }
          }
 
@@ -638,7 +611,84 @@ namespace chai {
          }
    };
 
+   ///
+   /// @author Alan Dayton
+   ///
+   /// A wrapper used by the make_managed family of functions to indicate when
+   /// the internal pointers contained by a ManagedArray should be extracted.
+   /// It is not intended to be used directly, but rather created by unpack.
+   ///
+   template <typename T>
+   class ManagedArrayUnpacker {
+      public:
+         CHAI_HOST ManagedArrayUnpacker() = delete;
+
+         ///
+         /// @author Alan Dayton
+         ///
+         /// Constructor
+         ///
+         /// @param[in] arg The ManagedArray to unpack
+         ///
+         /// @return a new instance of ManagedArrayUnpacker
+         ///
+         explicit CHAI_HOST ManagedArrayUnpacker(const ManagedArray<T>& arg)
+            : m_array{arg}
+         {}
+
+         ///
+         /// @author Alan Dayton
+         ///
+         /// Unpacks the data
+         ///
+         /// @return the unpacked data
+         ///
+         CHAI_HOST_DEVICE T* data() const { return m_array.data(); }
+
+      private:
+         ManagedArray<T> m_array = nullptr; //!< The ManagedArray to unpack
+   };
+
+   ///
+   /// @author Alan Dayton
+   ///
+   /// A wrapper used by the make_managed family of functions to indicate when
+   /// the internal pointers contained by a managed_ptr should be extracted.
+   /// It is not intended to be used directly, but rather created by unpack.
+   ///
+   template <typename T>
+   class managed_ptr_unpacker {
+      public:
+         CHAI_HOST managed_ptr_unpacker() = delete;
+
+         ///
+         /// @author Alan Dayton
+         ///
+         /// Constructor
+         ///
+         /// @param[in] arg The managed_ptr to unpack
+         ///
+         /// @return a new instance of managed_ptr_unpacker
+         ///
+         explicit CHAI_HOST managed_ptr_unpacker(const managed_ptr<T>& arg)
+            : m_managed_ptr{arg}
+         {}
+
+         ///
+         /// @author Alan Dayton
+         ///
+         /// Unpacks the data
+         ///
+         /// @return the unpacked data
+         ///
+         CHAI_HOST_DEVICE T* get() const { return m_managed_ptr.get(); }
+
+      private:
+         managed_ptr<T> m_managed_ptr = nullptr; //!< The managed_ptr to unpack
+   };
+
    namespace detail {
+
       ///
       /// @author Alan Dayton
       ///
@@ -649,7 +699,7 @@ namespace chai {
       /// @return arg
       ///
       template <typename T>
-      CHAI_HOST_DEVICE T getRawPointers(T arg) {
+      CHAI_HOST_DEVICE T processArguments(const T& arg) {
          return arg;
       }
 
@@ -663,7 +713,7 @@ namespace chai {
       /// @return arg cast to a raw pointer
       ///
       template <typename T>
-      CHAI_HOST_DEVICE T* getRawPointers(ManagedArray<T> arg) {
+      CHAI_HOST_DEVICE T* processArguments(const ManagedArrayUnpacker<T>& arg) {
          return arg.data();
       }
 
@@ -680,156 +730,11 @@ namespace chai {
       /// @return a raw pointer acquired from arg
       ///
       template <typename T>
-      CHAI_HOST_DEVICE T* getRawPointers(managed_ptr<T> arg) {
+      CHAI_HOST_DEVICE T* processArguments(const managed_ptr_unpacker<T>& arg) {
          return arg.get();
       }
 
-      ///
-      /// @author Alan Dayton
-      ///
-      /// Creates a new object on the host and returns a pointer to it.
-      /// This implementation of new_on_host is called when no arguments need to be
-      ///    converted to raw pointers.
-      ///
-      /// @param[in] args The arguments to T's constructor
-      ///
-      /// @return a pointer to the new object on the host
-      ///
-      template <typename T,
-                typename... Args,
-                typename std::enable_if<std::is_constructible<T, Args...>::value, int>::type = 0>
-      CHAI_HOST T* new_on_host(Args&&... args) {
-         return new T(args...);
-      }
-
-      ///
-      /// @author Alan Dayton
-      ///
-      /// Creates a new object on the host and returns a pointer to it.
-      /// This implementation of new_on_host is called when arguments do need to be
-      ///    converted to raw pointers.
-      ///
-      /// @param[in] args The arguments to T's constructor
-      ///
-      /// @return a pointer to the new object on the host
-      ///
-      template <typename T,
-                typename... Args,
-                typename std::enable_if<!std::is_constructible<T, Args...>::value, int>::type = 0>
-      CHAI_HOST T* new_on_host(Args&&... args) {
-         return new T(getRawPointers(args)...);
-      }
-
-      ///
-      /// @author Alan Dayton
-      ///
-      /// Creates a new T on the host.
-      /// Sets the execution space to the CPU so that ManagedArrays and managed_ptrs
-      ///    are moved to the host as necessary.
-      ///
-      /// @param[in]  args The arguments to T's constructor
-      ///
-      /// @return The host pointer to the new T
-      ///
-      template <typename T,
-                typename... Args>
-      CHAI_HOST T* make_on_host(Args&&... args) {
-#ifndef CHAI_DISABLE_RM
-         // Get the ArrayManager and save the current execution space
-         chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
-         ExecutionSpace currentSpace = arrayManager->getExecutionSpace();
-
-         // Set the execution space so that ManagedArrays and managed_ptrs
-         // are handled properly
-         arrayManager->setExecutionSpace(CPU);
-#endif
-
-         // Create on the host
-         T* cpuPointer = detail::new_on_host<T>(args...);
-
-#ifndef CHAI_DISABLE_RM
-         // Set the execution space back to the previous value
-         arrayManager->setExecutionSpace(currentSpace);
-#endif
-
-         // Return the CPU pointer
-         return cpuPointer;
-      }
-
-      ///
-      /// @author Alan Dayton
-      ///
-      /// Calls a factory method to create a new object on the host.
-      /// Sets the execution space to the CPU so that ManagedArrays and managed_ptrs
-      ///    are moved to the host as necessary.
-      ///
-      /// @param[in]  f    The factory method
-      /// @param[in]  args The arguments to the factory method
-      ///
-      /// @return The host pointer to the new object
-      ///
-      template <typename T,
-                typename F,
-                typename... Args>
-      CHAI_HOST T* make_on_host_from_factory(F f, Args&&... args) {
-#ifndef CHAI_DISABLE_RM
-         // Get the ArrayManager and save the current execution space
-         chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
-         ExecutionSpace currentSpace = arrayManager->getExecutionSpace();
-
-         // Set the execution space so that ManagedArrays and managed_ptrs
-         // are handled properly
-         arrayManager->setExecutionSpace(CPU);
-#endif
-
-         // Create the object on the device
-         T* cpuPointer = f(args...);
-
-#ifndef CHAI_DISABLE_RM
-         // Set the execution space back to the previous value
-         arrayManager->setExecutionSpace(currentSpace);
-#endif
-
-         // Return the GPU pointer
-         return cpuPointer;
-      }
-
-#ifdef __CUDACC__
-      ///
-      /// @author Alan Dayton
-      ///
-      /// Creates a new object on the device and returns a pointer to it.
-      /// This implementation of new_on_device is called when no arguments need to be
-      ///    converted to raw pointers.
-      ///
-      /// @param[in] args The arguments to T's constructor
-      ///
-      /// @return a pointer to the new object on the device
-      ///
-      template <typename T,
-                typename... Args,
-                typename std::enable_if<std::is_constructible<T, Args...>::value, int>::type = 0>
-      CHAI_DEVICE void new_on_device(T** gpuPointer, Args&&... args) {
-         *gpuPointer = new T(args...);
-      }
-
-      ///
-      /// @author Alan Dayton
-      ///
-      /// Creates a new object on the device and returns a pointer to it.
-      /// This implementation of new_on_device is called when arguments do need to be
-      ///    converted to raw pointers.
-      ///
-      /// @param[in] args The arguments to T's constructor
-      ///
-      /// @return a pointer to the new object on the device
-      ///
-      template <typename T,
-                typename... Args,
-                typename std::enable_if<!std::is_constructible<T, Args...>::value, int>::type = 0>
-      CHAI_DEVICE void new_on_device(T** gpuPointer, Args&&... args) {
-         *gpuPointer = new T(getRawPointers(args)...);
-      }
+#if defined(CHAI_GPUCC)
 
       ///
       /// @author Alan Dayton
@@ -846,7 +751,7 @@ namespace chai {
                 typename... Args>
       __global__ void make_on_device(T** gpuPointer, Args... args)
       {
-         new_on_device(gpuPointer, args...);
+         *gpuPointer = new T(processArguments(args)...);
       }
 
       ///
@@ -867,7 +772,7 @@ namespace chai {
                 typename... Args>
       __global__ void make_on_device_from_factory(T** gpuPointer, F f, Args... args)
       {
-         *gpuPointer = f(args...);
+         *gpuPointer = f(processArguments(args)...);
       }
 
       ///
@@ -880,123 +785,7 @@ namespace chai {
       template <typename T>
       __global__ void destroy_on_device(T* gpuPointer)
       {
-         if (gpuPointer) {
-            delete gpuPointer;
-         }
-      }
-
-      ///
-      /// @author Alan Dayton
-      ///
-      /// Creates a new T on the device.
-      ///
-      /// @param[in]  args The arguments to T's constructor
-      ///
-      /// @return The device pointer to the new T
-      ///
-      template <typename T,
-                typename... Args>
-      CHAI_HOST T* make_on_device(Args... args) {
-#ifndef CHAI_DISABLE_RM
-         // Get the ArrayManager and save the current execution space
-         chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
-         ExecutionSpace currentSpace = arrayManager->getExecutionSpace();
-
-         // Set the execution space so that ManagedArrays and managed_ptrs
-         // are handled properly
-         arrayManager->setExecutionSpace(GPU);
-#endif
-
-         // Allocate space on the GPU to hold the pointer to the new object
-         T** gpuBuffer;
-         CHAI_GPU_ERROR_CHECK(cudaMalloc(&gpuBuffer, sizeof(T*)));
-
-         // Create the object on the device
-         make_on_device<<<1, 1>>>(gpuBuffer, args...);
-
-#ifndef CHAI_DISABLE_RM
-         if (ArrayManager::getInstance()->deviceSynchronize()) {
-            synchronize();
-         }
-#endif
-
-         // Allocate space on the CPU for the pointer and copy the pointer to the CPU
-         T** cpuBuffer = (T**) malloc(sizeof(T*));
-         CHAI_GPU_ERROR_CHECK(cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(T*),
-                                    cudaMemcpyDeviceToHost));
-
-         // Get the GPU pointer
-         T* gpuPointer = cpuBuffer[0];
-
-         // Free the host and device buffers
-         free(cpuBuffer);
-         CHAI_GPU_ERROR_CHECK(cudaFree(gpuBuffer));
-
-#ifndef CHAI_DISABLE_RM
-         // Set the execution space back to the previous value
-         arrayManager->setExecutionSpace(currentSpace);
-#endif
-
-         // Return the GPU pointer
-         return gpuPointer;
-      }
-
-      ///
-      /// @author Alan Dayton
-      ///
-      /// Calls a factory method to create a new object on the device.
-      ///
-      /// @param[in]  f    The factory method
-      /// @param[in]  args The arguments to the factory method
-      ///
-      /// @return The device pointer to the new object
-      ///
-      template <typename T,
-                typename F,
-                typename... Args>
-      CHAI_HOST T* make_on_device_from_factory(F f, Args&&... args) {
-#ifndef CHAI_DISABLE_RM
-         // Get the ArrayManager and save the current execution space
-         chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
-         ExecutionSpace currentSpace = arrayManager->getExecutionSpace();
-
-         // Set the execution space so that chai::ManagedArrays and
-         // chai::managed_ptrs are handled properly
-         arrayManager->setExecutionSpace(GPU);
-#endif
-
-         // Allocate space on the GPU to hold the pointer to the new object
-         T** gpuBuffer;
-         CHAI_GPU_ERROR_CHECK(cudaMalloc(&gpuBuffer, sizeof(T*)));
-
-         // Create the object on the device
-         make_on_device_from_factory<T><<<1, 1>>>(gpuBuffer, f, args...);
-
-#ifndef CHAI_DISABLE_RM
-         if (ArrayManager::getInstance()->deviceSynchronize()) {
-            synchronize();
-         }
-#endif
-
-         // Allocate space on the CPU for the pointer and copy the pointer to the CPU
-         T** cpuBuffer = (T**) malloc(sizeof(T*));
-         CHAI_GPU_ERROR_CHECK(cudaMemcpy(cpuBuffer, gpuBuffer, sizeof(T*),
-                                    cudaMemcpyDeviceToHost));
-
-         // Get the GPU pointer
-         T* gpuPointer = cpuBuffer[0];
-
-         // Free the host and device buffers
-         free(cpuBuffer);
-         CHAI_GPU_ERROR_CHECK(cudaFree(gpuBuffer));
-
-#ifndef CHAI_DISABLE_RM
-         // Set the execution space back to the previous value
-         arrayManager->setExecutionSpace(currentSpace);
-#endif
-
-         // Return the GPU pointer
-         return gpuPointer;
+         delete gpuPointer;
       }
 
 #endif
@@ -1029,6 +818,252 @@ namespace chai {
    ///
    /// @author Alan Dayton
    ///
+   /// Unpacks the pointers contained in the ManagedArray and passes them to the
+   /// corresponding spaces.
+   ///
+   /// @param[in] arg The ManagedArray to unpack
+   ///
+   /// @return A wrapper used by make_managed for unpacking the internal pointers
+   ///         in the correct space
+   ///
+   template <typename T>
+   CHAI_HOST ManagedArrayUnpacker<T> unpack(const ManagedArray<T>& arg) {
+      return ManagedArrayUnpacker<T>(arg);
+   }
+
+   ///
+   /// @author Alan Dayton
+   ///
+   /// Unpacks the pointers contained in the managed_ptr and passes them to the
+   /// corresponding spaces.
+   ///
+   /// @param[in] arg The managed_ptr to unpack
+   ///
+   /// @return A wrapper used by make_managed for unpacking the internal pointers
+   ///         in the correct space
+   ///
+   template <typename T>
+   CHAI_HOST managed_ptr_unpacker<T> unpack(const managed_ptr<T>& arg) {
+      return managed_ptr_unpacker<T>(arg);
+   }
+
+   ///
+   /// @author Alan Dayton
+   ///
+   /// Creates a new T on the host.
+   /// Sets the execution space to the CPU so that ManagedArrays and managed_ptrs
+   ///    are moved to the host as necessary.
+   ///
+   /// @param[in]  args The arguments to T's constructor
+   ///
+   /// @return The host pointer to the new T
+   ///
+   template <typename T,
+             typename... Args>
+   CHAI_HOST T* make_on_host(Args&&... args) {
+#ifndef CHAI_DISABLE_RM
+      // Get the ArrayManager and save the current execution space
+      chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
+      ExecutionSpace currentSpace = arrayManager->getExecutionSpace();
+
+      // Set the execution space so that ManagedArrays and managed_ptrs
+      // are handled properly
+      arrayManager->setExecutionSpace(CPU);
+#endif
+
+      // Create on the host
+      T* cpuPointer = new T(detail::processArguments(args)...);
+
+#ifndef CHAI_DISABLE_RM
+      // Set the execution space back to the previous value
+      arrayManager->setExecutionSpace(currentSpace);
+#endif
+
+      // Return the CPU pointer
+      return cpuPointer;
+   }
+
+   ///
+   /// @author Alan Dayton
+   ///
+   /// Calls a factory method to create a new object on the host.
+   /// Sets the execution space to the CPU so that ManagedArrays and managed_ptrs
+   ///    are moved to the host as necessary.
+   ///
+   /// @param[in]  f    The factory method
+   /// @param[in]  args The arguments to the factory method
+   ///
+   /// @return The host pointer to the new object
+   ///
+   template <typename T,
+             typename F,
+             typename... Args>
+   CHAI_HOST T* make_on_host_from_factory(F f, Args&&... args) {
+#ifndef CHAI_DISABLE_RM
+      // Get the ArrayManager and save the current execution space
+      chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
+      ExecutionSpace currentSpace = arrayManager->getExecutionSpace();
+
+      // Set the execution space so that ManagedArrays and managed_ptrs
+      // are handled properly
+      arrayManager->setExecutionSpace(CPU);
+#endif
+
+      // Create the object on the device
+      T* cpuPointer = f(args...);
+
+#ifndef CHAI_DISABLE_RM
+      // Set the execution space back to the previous value
+      arrayManager->setExecutionSpace(currentSpace);
+#endif
+
+      // Return the GPU pointer
+      return cpuPointer;
+   }
+
+   ///
+   /// @author Alan Dayton
+   ///
+   /// Destroys the host pointer.
+   ///
+   /// @param[out] cpuPointer The host pointer to clean up
+   ///
+   template <typename T>
+   CHAI_HOST void destroy_on_host(T* cpuPointer) {
+      delete cpuPointer;
+   }
+
+#if defined(CHAI_GPUCC)
+
+   ///
+   /// @author Alan Dayton
+   ///
+   /// Creates a new T on the device.
+   ///
+   /// @param[in]  args The arguments to T's constructor
+   ///
+   /// @return The device pointer to the new T
+   ///
+   template <typename T,
+             typename... Args>
+   CHAI_HOST T* make_on_device(Args... args) {
+#ifndef CHAI_DISABLE_RM
+      // Get the ArrayManager and save the current execution space
+      chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
+      ExecutionSpace currentSpace = arrayManager->getExecutionSpace();
+
+      // Set the execution space so that ManagedArrays and managed_ptrs
+      // are handled properly
+      arrayManager->setExecutionSpace(GPU);
+#endif
+
+      // Allocate space on the GPU to hold the pointer to the new object
+      T** gpuBuffer;
+      gpuMalloc((void**)(&gpuBuffer), sizeof(T*));
+
+      // Create the object on the device
+      detail::make_on_device<<<1, 1>>>(gpuBuffer, args...);
+
+#ifndef CHAI_DISABLE_RM
+      if (ArrayManager::getInstance()->deviceSynchronize()) {
+         synchronize();
+      }
+#endif
+
+      // Allocate space on the CPU for the pointer and copy the pointer to the CPU
+      T** cpuBuffer = (T**) malloc(sizeof(T*));
+      gpuMemcpy(cpuBuffer, gpuBuffer, sizeof(T*), gpuMemcpyDeviceToHost);
+
+      // Get the GPU pointer
+      T* gpuPointer = cpuBuffer[0];
+
+      // Free the host and device buffers
+      free(cpuBuffer);
+      gpuFree(gpuBuffer);
+
+#ifndef CHAI_DISABLE_RM
+      // Set the execution space back to the previous value
+      arrayManager->setExecutionSpace(currentSpace);
+#endif
+
+      // Return the GPU pointer
+      return gpuPointer;
+   }
+
+   ///
+   /// @author Alan Dayton
+   ///
+   /// Calls a factory method to create a new object on the device.
+   ///
+   /// @param[in]  f    The factory method
+   /// @param[in]  args The arguments to the factory method
+   ///
+   /// @return The device pointer to the new object
+   ///
+   template <typename T,
+             typename F,
+             typename... Args>
+   CHAI_HOST T* make_on_device_from_factory(F f, Args&&... args) {
+#ifndef CHAI_DISABLE_RM
+      // Get the ArrayManager and save the current execution space
+      chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
+      ExecutionSpace currentSpace = arrayManager->getExecutionSpace();
+
+      // Set the execution space so that chai::ManagedArrays and
+      // chai::managed_ptrs are handled properly
+      arrayManager->setExecutionSpace(GPU);
+#endif
+
+      // Allocate space on the GPU to hold the pointer to the new object
+      T** gpuBuffer;
+      gpuMalloc((void**)(&gpuBuffer), sizeof(T*));
+
+      // Create the object on the device
+      detail::make_on_device_from_factory<T><<<1, 1>>>(gpuBuffer, f, args...);
+
+#ifndef CHAI_DISABLE_RM
+      if (ArrayManager::getInstance()->deviceSynchronize()) {
+         synchronize();
+      }
+#endif
+
+      // Allocate space on the CPU for the pointer and copy the pointer to the CPU
+      T** cpuBuffer = (T**) malloc(sizeof(T*));
+      gpuMemcpy(cpuBuffer, gpuBuffer, sizeof(T*), gpuMemcpyDeviceToHost);
+
+      // Get the GPU pointer
+      T* gpuPointer = cpuBuffer[0];
+
+      // Free the host and device buffers
+      free(cpuBuffer);
+      gpuFree(gpuBuffer);
+
+#ifndef CHAI_DISABLE_RM
+      // Set the execution space back to the previous value
+      arrayManager->setExecutionSpace(currentSpace);
+#endif
+
+      // Return the GPU pointer
+      return gpuPointer;
+   }
+
+   ///
+   /// @author Alan Dayton
+   ///
+   /// Destroys the device pointer.
+   ///
+   /// @param[out] gpuPointer The device pointer to clean up
+   ///
+   template <typename T>
+   CHAI_HOST void destroy_on_device(T* gpuPointer) {
+      detail::destroy_on_device<<<1, 1>>>(gpuPointer);
+   }
+
+#endif
+
+   ///
+   /// @author Alan Dayton
+   ///
    /// Makes a managed_ptr<T>.
    /// Factory function to create managed_ptrs.
    ///
@@ -1037,16 +1072,16 @@ namespace chai {
    template <typename T,
              typename... Args>
    CHAI_HOST managed_ptr<T> make_managed(Args... args) {
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
       // Construct on the GPU first to take advantage of asynchrony
-      T* gpuPointer = detail::make_on_device<T>(args...);
+      T* gpuPointer = make_on_device<T>(args...);
 #endif
 
       // Construct on the CPU
-      T* cpuPointer = detail::make_on_host<T>(args...);
+      T* cpuPointer = make_on_host<T>(args...);
 
       // Construct and return the managed_ptr
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
       return managed_ptr<T>({CPU, GPU}, {cpuPointer, gpuPointer});
 #else
       return managed_ptr<T>({CPU}, {cpuPointer});
@@ -1077,16 +1112,16 @@ namespace chai {
       static_assert(std::is_convertible<R*, T*>::value,
                     "F does not return a pointer that is convertible to T*.");
 
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
       // Construct on the GPU first to take advantage of asynchrony
-      T* gpuPointer = detail::make_on_device_from_factory<R>(f, args...);
+      T* gpuPointer = make_on_device_from_factory<R>(f, args...);
 #endif
 
       // Construct on the CPU
-      T* cpuPointer = detail::make_on_host_from_factory<R>(f, args...);
+      T* cpuPointer = make_on_host_from_factory<R>(f, args...);
 
       // Construct and return the managed_ptr
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
       return managed_ptr<T>({CPU, GPU}, {cpuPointer, gpuPointer});
 #else
       return managed_ptr<T>({CPU}, {cpuPointer});
@@ -1106,7 +1141,7 @@ namespace chai {
    CHAI_HOST managed_ptr<T> static_pointer_cast(const managed_ptr<U>& other) noexcept {
       T* cpuPointer = static_cast<T*>(other.get());
 
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
       T* gpuPointer = static_cast<T*>(other.get(GPU, false));
 
       return managed_ptr<T>(other, {CPU, GPU}, {cpuPointer, gpuPointer});
@@ -1128,7 +1163,7 @@ namespace chai {
    CHAI_HOST managed_ptr<T> dynamic_pointer_cast(const managed_ptr<U>& other) noexcept {
       T* cpuPointer = dynamic_cast<T*>(other.get());
 
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
       T* gpuPointer = nullptr;
 
       if (cpuPointer) {
@@ -1154,7 +1189,7 @@ namespace chai {
    CHAI_HOST managed_ptr<T> const_pointer_cast(const managed_ptr<U>& other) noexcept {
       T* cpuPointer = const_cast<T*>(other.get());
 
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
       T* gpuPointer = const_cast<T*>(other.get(GPU, false));
 
       return managed_ptr<T>(other, {CPU, GPU}, {cpuPointer, gpuPointer});
@@ -1176,7 +1211,7 @@ namespace chai {
    CHAI_HOST managed_ptr<T> reinterpret_pointer_cast(const managed_ptr<U>& other) noexcept {
       T* cpuPointer = reinterpret_cast<T*>(other.get());
 
-#ifdef __CUDACC__
+#if defined(CHAI_GPUCC)
       T* gpuPointer = reinterpret_cast<T*>(other.get(GPU, false));
 
       return managed_ptr<T>(other, {CPU, GPU}, {cpuPointer, gpuPointer});
@@ -1284,6 +1319,13 @@ namespace chai {
       std::swap(lhs.m_pointer_record, rhs.m_pointer_record);
    }
 } // namespace chai
+
+#else // defined(CHAI_ENABLE_MANAGED_PTR)
+
+#error CHAI must be configured with -DCHAI_ENABLE_MANAGED_PTR=ON to use managed_ptr! \
+       If CHAI_ENABLE_MANAGED_PTR is defined as a macro, it is safe to include managed_ptr.hpp.
+
+#endif // defined(CHAI_ENABLE_MANAGED_PTR)
 
 #endif // MANAGED_PTR
 
