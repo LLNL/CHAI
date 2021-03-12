@@ -308,8 +308,9 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
             alloc.deallocate(space_ptr);
 
             for (int space_t = CPU; space_t < NUM_EXECUTION_SPACES; ++space_t) {
-              if (space_ptr == pointer_record->m_pointers[space_t])
+              if (space_ptr == pointer_record->m_pointers[space_t]) {
                 pointer_record->m_pointers[space_t] = nullptr;
+              }
             }
           } else
 #endif
@@ -324,8 +325,9 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
             alloc.deallocate(space_ptr);
 
             for (int space_t = CPU; space_t < NUM_EXECUTION_SPACES; ++space_t) {
-              if (space_ptr == pointer_record->m_pointers[space_t])
+              if (space_ptr == pointer_record->m_pointers[space_t]) {
                 pointer_record->m_pointers[space_t] = nullptr;
+              }
             }
           } else
 #endif
