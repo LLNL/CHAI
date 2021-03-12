@@ -323,6 +323,7 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
             }
           } else
 #endif
+          {
             callback(pointer_record,
                      ACTION_FREE,
                      ExecutionSpace(space));
@@ -332,6 +333,7 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
             alloc.deallocate(space_ptr);
 
             pointer_record->m_pointers[space] = nullptr;
+          }
         }
         else
         {
