@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
-
 ##############################################################################
 # Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
 # project contributors. See the COPYRIGHT file for details.
 #
-# SPDX-License-Identifier: (MIT)
+# SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
-
-
 set -o errexit
 set -o nounset
 

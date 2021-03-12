@@ -1,45 +1,9 @@
-// ---------------------------------------------------------------------
-// Copyright (c) 2016-2018, Lawrence Livermore National Security, LLC. All
-// rights reserved.
+//////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
+// project contributors. See the COPYRIGHT file for details.
 //
-// Produced at the Lawrence Livermore National Laboratory.
-//
-// This file is part of CHAI.
-//
-// LLNL-CODE-705877
-//
-// For details, see https:://github.com/LLNL/CHAI
-// Please also see the NOTICE and LICENSE files.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-//
-// - Redistributions of source code must retain the above copyright
-//   notice, this list of conditions and the following disclaimer.
-//
-// - Redistributions in binary form must reproduce the above copyright
-//   notice, this list of conditions and the following disclaimer in the
-//   documentation and/or other materials provided with the
-//   distribution.
-//
-// - Neither the name of the LLNS/LLNL nor the names of its contributors
-//   may be used to endorse or promote products derived from this
-//   software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-// OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-// AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
-// WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-// ---------------------------------------------------------------------
+// SPDX-License-Identifier: BSD-3-Clause
+//////////////////////////////////////////////////////////////////////////////
 #include "gtest/gtest.h"
 
 #define GPU_TEST(X, Y)              \
@@ -48,6 +12,7 @@
   static void gpu_test_##X_##Y()
 
 #include "chai/config.hpp"
+#include "chai/ArrayManager.hpp"
 #include "chai/ManagedArray.hpp"
 #include "chai/managed_ptr.hpp"
 
@@ -500,7 +465,7 @@ TEST(managed_ptr, reinterpret_pointer_cast)
   derived.free();
 }
 
-#ifdef __CUDACC__
+#ifdef CHAI_GPUCC
 
 GPU_TEST(managed_ptr, gpu_default_constructor)
 {
@@ -588,7 +553,7 @@ GPU_TEST(managed_ptr, gpu_nullptr_constructor)
 
 GPU_TEST(managed_ptr, gpu_gpu_pointer_constructor)
 {
-  TestDerived* gpuPointer = chai::detail::make_on_device<TestDerived>(3);
+  TestDerived* gpuPointer = chai::make_on_device<TestDerived>(3);
   chai::managed_ptr<TestDerived> derived({chai::GPU}, {gpuPointer});
 
   EXPECT_EQ(derived.get(), nullptr);
@@ -639,16 +604,16 @@ GPU_TEST(managed_ptr, gpu_new_and_delete_on_device)
 
   // Initialize device side memory to hold a pointer
   Simple** gpuPointerHolder = nullptr;
-  cudaMalloc(&gpuPointerHolder, sizeof(Simple*));
+  chai::gpuMalloc((void**)(&gpuPointerHolder), sizeof(Simple*));
 
   // Create on the device
   chai::detail::make_on_device<<<1, 1>>>(gpuPointerHolder);
 
   // Copy to the host side memory
-  cudaMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(Simple*), cudaMemcpyDeviceToHost);
+  chai::gpuMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(Simple*), gpuMemcpyDeviceToHost);
 
   // Free device side memory
-  cudaFree(gpuPointerHolder);
+  chai::gpuFree(gpuPointerHolder);
 
   // Save the pointer
   ASSERT_NE(cpuPointerHolder[0], nullptr);
@@ -668,16 +633,16 @@ GPU_TEST(managed_ptr, gpu_new_and_delete_on_device_2)
 
   // Initialize device side memory to hold a pointer
   Simple** gpuPointerHolder = nullptr;
-  cudaMalloc(&gpuPointerHolder, sizeof(Simple*));
+  chai::gpuMalloc((void**)(&gpuPointerHolder), sizeof(Simple*));
 
   // Create on the device
   chai::detail::make_on_device<<<1, 1>>>(gpuPointerHolder);
 
   // Copy to the host side memory
-  cudaMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(Simple*), cudaMemcpyDeviceToHost);
+  chai::gpuMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(Simple*), gpuMemcpyDeviceToHost);
 
   // Free device side memory
-  cudaFree(gpuPointerHolder);
+  chai::gpuFree(gpuPointerHolder);
 
   // Save the pointer
   ASSERT_NE(cpuPointerHolder[0], nullptr);
@@ -692,7 +657,7 @@ GPU_TEST(managed_ptr, gpu_new_and_delete_on_device_2)
 
 GPU_TEST(managed_ptr, simple_gpu_cpu_and_gpu_pointer_constructor)
 {
-  Simple* gpuPointer = chai::detail::make_on_device<Simple>(3);
+  Simple* gpuPointer = chai::make_on_device<Simple>(3);
   Simple* cpuPointer = new Simple(4);
 
   chai::managed_ptr<Simple> simple({chai::GPU, chai::CPU}, {gpuPointer, cpuPointer});
@@ -716,7 +681,7 @@ GPU_TEST(managed_ptr, simple_gpu_cpu_and_gpu_pointer_constructor)
 
 GPU_TEST(managed_ptr, gpu_cpu_and_gpu_pointer_constructor)
 {
-  TestDerived* gpuPointer = chai::detail::make_on_device<TestDerived>(3);
+  TestDerived* gpuPointer = chai::make_on_device<TestDerived>(3);
   TestDerived* cpuPointer = new TestDerived(4);
 
   chai::managed_ptr<TestDerived> derived({chai::GPU, chai::CPU}, {gpuPointer, cpuPointer});
