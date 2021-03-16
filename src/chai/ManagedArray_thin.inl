@@ -142,20 +142,27 @@ CHAI_HOST void ManagedArray<T>::allocate(size_t elems,
                                          ExecutionSpace space,
                                          UserCallback const &) {
   if (!m_is_slice) {
-    (void) space; // Quiet compiler warning when CHAI_LOG does nothing
-    CHAI_LOG(Debug, "Allocating array of size " << elems
-                                                << " in space "
-                                                << space);
+     if (elems > 0) {
+       (void) space; // Quiet compiler warning when CHAI_LOG does nothing
+       CHAI_LOG(Debug, "Allocating array of size " << elems
+                                                   << " in space "
+                                                   << space);
 
-    m_elems = elems;
+       m_elems = elems;
 
-  #if defined(CHAI_ENABLE_UM)
-    gpuMallocManaged(&m_active_pointer, sizeof(T) * elems);
-  #else // not CHAI_ENABLE_UM
-    m_active_pointer = static_cast<T*>(malloc(sizeof(T) * elems));
-  #endif
+     #if defined(CHAI_ENABLE_UM)
+       gpuMallocManaged(&m_active_pointer, sizeof(T) * elems);
+     #else // not CHAI_ENABLE_UM
+       m_active_pointer = static_cast<T*>(malloc(sizeof(T) * elems));
+     #endif
 
-    CHAI_LOG(Debug, "m_active_ptr allocated at address: " << m_active_pointer);
+       CHAI_LOG(Debug, "m_active_ptr allocated at address: " << m_active_pointer);
+     
+     }
+     else {
+        m_active_pointer = nullptr;
+        m_elems = 0;
+     }
   }
   else {
     CHAI_LOG(Debug, "Attempted to allocate slice!");
