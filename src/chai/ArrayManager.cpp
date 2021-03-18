@@ -308,11 +308,13 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
             alloc.deallocate(space_ptr);
 
             for (int space_t = CPU; space_t < NUM_EXECUTION_SPACES; ++space_t) {
-              if (space_ptr == pointer_record->m_pointers[space_t])
+              if (space_ptr == pointer_record->m_pointers[space_t]) {
                 pointer_record->m_pointers[space_t] = nullptr;
+              }
             }
-          } else {
-#elif defined(CHAI_ENABLE_PINNED)
+          } else
+#endif
+#if defined(CHAI_ENABLE_PINNED)
           if (space_ptr == pointer_record->m_pointers[PINNED]) {
             callback(pointer_record,
                      ACTION_FREE,
@@ -323,11 +325,13 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
             alloc.deallocate(space_ptr);
 
             for (int space_t = CPU; space_t < NUM_EXECUTION_SPACES; ++space_t) {
-              if (space_ptr == pointer_record->m_pointers[space_t])
+              if (space_ptr == pointer_record->m_pointers[space_t]) {
                 pointer_record->m_pointers[space_t] = nullptr;
+              }
             }
-          } else {
+          } else
 #endif
+          {
             callback(pointer_record,
                      ACTION_FREE,
                      ExecutionSpace(space));
@@ -337,9 +341,7 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
             alloc.deallocate(space_ptr);
 
             pointer_record->m_pointers[space] = nullptr;
-#if defined(CHAI_ENABLE_UM) || defined(CHAI_ENABLE_PINNED)
           }
-#endif
         }
         else
         {
