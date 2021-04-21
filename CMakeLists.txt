@@ -90,3 +90,16 @@ endif ()
 if (ENABLE_DOCUMENTATION)
   add_subdirectory(docs)
 endif()
+
+if (TEST_RAW_VIEW)
+  blt_add_executable(
+    NAME view.exe
+    SOURCES view-test.cpp
+    DEPENDS_ON chai umpire RAJA)
+else ()
+  blt_add_executable(
+    NAME view.exe
+    SOURCES view-test.cpp
+    DEFINES USE_MA_VIEW=1
+    DEPENDS_ON chai umpire RAJA)
+endif ()
