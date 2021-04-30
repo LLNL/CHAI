@@ -8,22 +8,27 @@
 # CPU ONLY
 ibm_clang_9:
   variables:
-    SPEC: " %clang@9.0.0ibm"
+    SPEC: "%clang@9.0.0ibm"
   extends: .build_and_test_on_lassen
 
 ibm_clang_9_gcc_8:
   variables:
-    SPEC: " %clang@9.0.0ibm cxxflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 cflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1"
+    SPEC: "%clang@9.0.0ibm cxxflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 cflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1"
+  extends: .build_and_test_on_lassen
+
+clang_10_0_1_mpi (build and test on lassen):
+  variables:
+    SPEC: "%clang@10.0.1ibm +mpi ^spectrum-mpi"
   extends: .build_and_test_on_lassen
 
 gcc_8_3_1:
   variables:
-    SPEC: "%gcc@8.3.1"
+    SPEC: "%gcc@8.3.1 ^cmake@3.14.5"
   extends: .build_and_test_on_lassen
 
 pgi_19_10:
   variables:
-    SPEC: "%pgi@19.10 ^umpire@develop"
+    SPEC: "%pgi@19.10"
   extends: .build_and_test_on_lassen
 
 pgi_19_10_gcc_8_3_1:
@@ -82,20 +87,45 @@ pgi_20_4_gcc_8_3_1_cuda_11:
 
 xl_16_1_1_7_cuda:
   variables:
-    SPEC: "+cuda %xl@16.1.1.7 ^cuda@10.1.168"
+    SPEC: "+cuda %xl@16.1.1.7 ^cuda@10.1.168 ^cmake@3.14.5"
   extends: .build_and_test_on_lassen
 
 xl_16_1_1_7_gcc_8_3_1_cuda_11:
   variables:
-    SPEC: "+cuda %xl@16.1.1.7 cxxflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 cflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 ^cuda@11.0.2"
+    SPEC: "+cuda %xl@16.1.1.7 cxxflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 cflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 ^cuda@11.0.2 ^cmake@3.14.5"
   allow_failure: true
   extends: .build_and_test_on_lassen
 
 # EXTRAS
 
+clang_9_0_0_libcpp (build and test on lassen):
+  variables:
+    SPEC: "%clang@9.0.0+libcpp"
+  extends: .build_and_test_on_lassen
+
 clang_9_0_0_memleak (build and test on lassen):
   variables:
-    SPEC: "%clang@9.0.0 cxxflags=-fsanitize=address"
+    SPEC: "+asan +sanitizer_tests %clang@9.0.0 cxxflags=-fsanitize=address"
     ASAN_OPTIONS: "detect_leaks=1"
+  extends: .build_and_test_on_lassen
+
+clang_9_0_0_datarace (build and test on lassen):
+  variables:
+    SPEC: "%clang@9.0.0 cxxflags=-fsanitize=thread"
   allow_failure: true
+  extends: .build_and_test_on_lassen
+
+gcc_8_3_1_dev_benchmarks:
+  variables:
+    SPEC: "+dev_benchmarks %gcc@8.3.1 build_type=Release ^cmake@3.14.5"
+  extends: .build_and_test_on_lassen
+
+xl_default_omp_target (build and test on lassen):
+  variables:
+    SPEC: "%xl@default+openmp+openmp_target ^cmake@3.14.5"
+  extends: .build_and_test_on_lassen
+
+gcc_8_3_1_numa:
+  variables:
+    SPEC: "+numa%gcc@8.3.1"
   extends: .build_and_test_on_lassen
