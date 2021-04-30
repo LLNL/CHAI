@@ -68,8 +68,8 @@ class Chai(CMakePackage, CudaPackage):
     version('1.1.0', tag='v1.1.0', submodules='True')
     version('1.0', tag='v1.0', submodules='True')
 
-    variant('shared', default=True, description='Build Shared Libs')
-    variant('raja', default=False, description='Build plugin for RAJA')
+    variant('shared', default=False, description='Build Shared Libs')
+    variant('raja', default=True, description='Build plugin for RAJA')
     variant('tests', default='basic', values=('none', 'basic', 'benchmarks'),
             multi=False, description='Tests to run')
 
