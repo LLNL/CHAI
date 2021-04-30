@@ -71,9 +71,9 @@ class Raja(CMakePackage, CudaPackage):
     version('0.4.1', tag='v0.4.1', submodules="True")
     version('0.4.0', tag='v0.4.0', submodules="True")
 
-    variant('openmp', default=True, description='Build OpenMP backend')
-    variant('shared', default=True, description='Build Shared Libs')
-    variant('tests', default='basic', values=('none', 'basic', 'benchmarks'),
+    variant('openmp', default=False, description='Build OpenMP backend')
+    variant('shared', default=False, description='Build Shared Libs')
+    variant('tests', default='none', values=('none', 'basic', 'benchmarks'),
             multi=False, description='Tests to run')
 
     depends_on('cmake@3.8:', type='build')
