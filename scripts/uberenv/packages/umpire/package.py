@@ -84,6 +84,7 @@ class Umpire(CMakePackage, CudaPackage):
 
     variant('fortran', default=False, description='Build C/Fortran API')
     variant('c', default=False, description='Build C API')
+    variant('mpi', default=False, description='Enable MPI support')
     variant('numa', default=False, description='Enable NUMA support')
     variant('shared', default=False, description='Enable Shared libs')
     variant('openmp', default=False, description='Build with OpenMP support')
@@ -94,13 +95,26 @@ class Umpire(CMakePackage, CudaPackage):
             multi=False, description='Tests to run')
 
     variant('libcpp', default=False, description='Uses libc++ instead of libstdc++')
+    variant('hip', default=False, description='Build with HIP support')
+    variant('tools', default=False, description='Enable tools')
+    variant('dev_benchmarks', default=False, description='Enable Developer Benchmarks')
+    variant('werror', default=False, description='Enable warnings as errors')
+    variant('asan', default=False, description='Enable ASAN')
+    variant('sanitizer_tests', default=False, description='Enable address sanitizer tests')
 
     depends_on('cmake@3.8:', type='build')
     depends_on('cmake@3.9:', when='+cuda', type='build')
+    depends_on('mpi', when='+mpi')
+    depends_on('hip', when='+hip')
 
     conflicts('+numa', when='@:0.3.2')
     conflicts('~c', when='+fortran', msg='Fortran API requires C API')
     conflicts('~openmp', when='+openmp_target', msg='OpenMP target requires OpenMP')
+    conflicts('+cuda', when='+hip')
+    conflicts('+openmp', when='+hip')
+    conflicts('+openmp_target', when='+hip')
+    conflicts('+deviceconst', when='~hip~cuda')
+    conflicts('+sanitizer_tests', when='~asan')
 
     phases = ['hostconfig', 'cmake', 'build', 'install']
 
@@ -266,6 +280,19 @@ class Umpire(CMakePackage, CudaPackage):
             cfg.write(cmake_cache_entry("CMAKE_CXX_FLAGS_RELWITHDEBINFO", reldebinf_flags))
             cfg.write(cmake_cache_entry("CMAKE_CXX_FLAGS_DEBUG", debug_flags))
 
+        #Configuration to enable developer benchmarks (i.e. No-Op)
+        if "+dev_benchmarks" in spec:
+            cfg.write("#------------------{0}\n".format("-" * 60))
+            cfg.write("# Developer Benchmarks\n")
+            cfg.write("#------------------{0}\n\n".format("-" * 60))
+            
+            cfg.write(cmake_cache_option("ENABLE_DEVELOPER_BENCHMARKS", True))
+            cfg.write(cmake_cache_option("ENABLE_BENCHMARKS", True)) #Enable BLT GoogleBenchmark support
+        else:
+            cfg.write(cmake_cache_option("ENABLE_DEVELOPER_BENCHMARKS", False))
+            cfg.write(cmake_cache_option("ENABLE_BENCHMARKS", False))
+
+
         if "+cuda" in spec:
             cfg.write("#------------------{0}\n".format("-" * 60))
             cfg.write("# Cuda\n")
@@ -297,8 +324,46 @@ class Umpire(CMakePackage, CudaPackage):
         else:
             cfg.write(cmake_cache_option("ENABLE_CUDA", False))
 
+        if "+hip" in spec:
+            cfg.write("#------------------{0}\n".format("-" * 60))
+            cfg.write("# HIP\n")
+            cfg.write("#------------------{0}\n\n".format("-" * 60))
+
+            cfg.write(cmake_cache_option("ENABLE_HIP", True))
+
+#            -DHIP_ROOT_DIR=/opt/rocm-3.6.0/hip -DHIP_CLANG_PATH=/opt/rocm-3.6.0/llvm/bin
+
+            hip_root = spec['hip'].prefix
+            rocm_root = hip_root + "/.."
+            cfg.write(cmake_cache_entry("HIP_ROOT_DIR",
+                                        hip_root))
+            cfg.write(cmake_cache_entry("HIP_CLANG_PATH",
+                                        rocm_root + '/llvm/bin'))
+            cfg.write(cmake_cache_entry("HIP_HIPCC_FLAGS",
+                                        '--amdgpu-target=gfx906'))
+            cfg.write(cmake_cache_entry("HIP_RUNTIME_INCLUDE_DIRS",
+                                        "{0}/include;{0}/../hsa/include".format(hip_root)))
+            if '%gcc' in spec:
+                gcc_bin = os.path.dirname(self.compiler.cxx)
+                gcc_prefix = join_path(gcc_bin, '..')
+                cfg.write(cmake_cache_entry("HIP_CLANG_FLAGS",
+                "--gcc-toolchain={0}".format(gcc_prefix))) 
+                cfg.write(cmake_cache_entry("CMAKE_EXE_LINKER_FLAGS",
+                "-Wl,-rpath {}/lib64".format(gcc_prefix)))
+
+            if '+deviceconst' in spec:
+                cfg.write(cmake_cache_option("ENABLE_DEVICE_CONST", True))
+
+        else:
+            cfg.write(cmake_cache_option("ENABLE_HIP", False))
+
         cfg.write(cmake_cache_option("ENABLE_C", '+c' in spec))
         cfg.write(cmake_cache_option("ENABLE_FORTRAN", '+fortran' in spec))
+
+        if "+mpi" in spec:
+            cfg.write(cmake_cache_option("ENABLE_MPI", '+mpi' in spec))
+            cfg.write(cmake_cache_entry("MPI_CXX_COMPILER", spec['mpi'].mpicxx))
+
         cfg.write(cmake_cache_option("ENABLE_NUMA", '+numa' in spec))
         cfg.write(cmake_cache_option("ENABLE_OPENMP", '+openmp' in spec))
         if "+openmp_target" in spec:
@@ -308,6 +373,10 @@ class Umpire(CMakePackage, CudaPackage):
 
         cfg.write(cmake_cache_option("ENABLE_BENCHMARKS", 'tests=benchmarks' in spec))
         cfg.write(cmake_cache_option("ENABLE_TESTS", not 'tests=none' in spec))
+        cfg.write(cmake_cache_option("ENABLE_TOOLS", '+tools' in spec))
+        cfg.write(cmake_cache_option("ENABLE_WARNINGS_AS_ERRORS", '+werror' in spec))
+        cfg.write(cmake_cache_option("ENABLE_ASAN", '+asan' in spec))
+        cfg.write(cmake_cache_option("ENABLE_SANITIZER_TESTS", '+sanitizer_tests' in spec))
 
         #######################
         # Close and save
