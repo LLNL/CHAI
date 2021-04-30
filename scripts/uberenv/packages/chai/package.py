@@ -76,9 +76,8 @@ class Chai(CMakePackage, CudaPackage):
     depends_on('cmake@3.8:', type='build')
     depends_on('umpire@develop')
     depends_on('raja@main', when="+raja")
-
-    depends_on('raja tests=none', when='tests=none')
-    depends_on('umpire tests=none', when='tests=none')
+    depends_on('raja tests=none')
+    depends_on('umpire tests=none')
 
     depends_on('cmake@3.9:', type='build', when="+cuda")
     depends_on('umpire+cuda', when="+cuda")
