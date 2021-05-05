@@ -72,6 +72,7 @@ class Chai(CMakePackage, CudaPackage):
     variant('raja', default=True, description='Build plugin for RAJA')
     variant('tests', default='basic', values=('none', 'basic', 'benchmarks'),
             multi=False, description='Tests to run')
+    variant('libcpp', default=False, description='Use libc++')
 
     depends_on('cmake@3.8:', type='build')
     depends_on('umpire@main')
@@ -189,6 +190,8 @@ class Chai(CMakePackage, CudaPackage):
             cfg.write(cmake_cache_entry("CMAKE_C_FLAGS", cflags))
 
         cxxflags = ' '.join(spec.compiler_flags['cxxflags'])
+        if "+libcpp" in spec:
+            cxxflags += ' '.join([cxxflags,"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0"])
         if cxxflags:
             cfg.write(cmake_cache_entry("CMAKE_CXX_FLAGS", cxxflags))
 
