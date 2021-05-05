@@ -83,6 +83,7 @@ class Chai(CMakePackage, CudaPackage):
     depends_on('raja+cuda', when="+raja+cuda")
     depends_on('umpire+cuda+allow-untested-versions', when="+cuda+allow-untested-versions")
     depends_on('raja+cuda+allow-untested-versions', when="+raja+cuda+allow-untested-versions")
+    depends_on('umpire+libcpp', when='+libcpp')
 
     phases = ['hostconfig', 'cmake', 'build', 'install']
 
