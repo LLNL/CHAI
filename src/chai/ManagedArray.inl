@@ -268,11 +268,16 @@ CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
     m_offset = 0;
     // The call to m_resource_manager::free, above, has deallocated m_pointer_record if space == NONE.
     if (space == NONE) {
-       delete m_pointer_record;
        m_pointer_record = &ArrayManager::s_null_record;
     }
   } else {
-    CHAI_LOG(Debug, "Cannot free a slice!");
+    // Clean up if pointer record exists but this array has length 0
+    if (m_pointer_record != &ArrayManager::s_null_record && (*this == nullptr)) {
+      delete m_pointer_record;
+      m_pointer_record = &ArrayManager::s_null_record;
+    } else {
+      CHAI_LOG(Debug, "Cannot free a slice!");
+    }
   }
 }
 
