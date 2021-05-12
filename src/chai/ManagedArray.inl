@@ -268,6 +268,7 @@ CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
     m_offset = 0;
     // The call to m_resource_manager::free, above, has deallocated m_pointer_record if space == NONE.
     if (space == NONE) {
+       delete m_pointer_record;
        m_pointer_record = &ArrayManager::s_null_record;
     }
   } else {
