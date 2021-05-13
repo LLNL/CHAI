@@ -63,6 +63,9 @@ CUDA_TEST(ChaiTest, Simple)
     ASSERT_FLOAT_EQ(raw_v2[i], i * 2.0f * 2.0f);
     ;
   }
+  
+  v1.free();
+  v2.free();
 }
 
 CUDA_TEST(ChaiTest, Views)
@@ -96,6 +99,9 @@ CUDA_TEST(ChaiTest, Views)
     ASSERT_FLOAT_EQ(raw_v2[i], i * 1.0f * 2.0f * 2.0f);
     ;
   }
+
+  v1_array.free();
+  v2_array.free();
 }
 
 CUDA_TEST(ChaiTest, MultiView)
@@ -138,4 +144,7 @@ CUDA_TEST(ChaiTest, MultiView)
     ASSERT_FLOAT_EQ(raw_v2[i], i * 1.0f * 2.0f * 2.0f);
     ;
   }
+
+  v1_array.free();
+  v2_array.free();
 }

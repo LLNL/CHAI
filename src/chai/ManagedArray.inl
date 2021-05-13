@@ -253,7 +253,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
 {
-  if(!m_is_slice && *this != nullptr) {
+  if(!m_is_slice) {
     if (m_resource_manager == nullptr) {
        m_resource_manager = ArrayManager::getInstance();
     }
@@ -271,13 +271,7 @@ CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
        m_pointer_record = &ArrayManager::s_null_record;
     }
   } else {
-    // Clean up if pointer record exists but this array has length 0
-    if (m_pointer_record != &ArrayManager::s_null_record && (*this == nullptr)) {
-      delete m_pointer_record;
-      m_pointer_record = &ArrayManager::s_null_record;
-    } else {
-      CHAI_LOG(Debug, "Cannot free a slice!");
-    }
+    CHAI_LOG(Debug, "Cannot free a slice!");
   }
 }
 

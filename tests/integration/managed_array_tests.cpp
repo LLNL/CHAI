@@ -1941,6 +1941,8 @@ TEST(ManagedArray, NoAllocation)
   });
 
   forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
+
+  array.free();
 }
 
 TEST(ManagedArray, NoAllocationNull)
@@ -1953,6 +1955,8 @@ TEST(ManagedArray, NoAllocationNull)
   });
 
   forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
+
+  array.free();
 }
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
@@ -1965,6 +1969,8 @@ GPU_TEST(ManagedArray, NoAllocationGPU)
   });
 
   forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
+
+  array.free();
 }
 
 GPU_TEST(ManagedArray, NoAllocationNullGPU)
@@ -1977,5 +1983,7 @@ GPU_TEST(ManagedArray, NoAllocationNullGPU)
   });
 
   forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
+
+  array.free();
 }
 #endif
