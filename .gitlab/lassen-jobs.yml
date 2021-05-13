@@ -5,62 +5,76 @@
 # SPDX-License-Identifier: (MIT)
 ##############################################################################
 
-####
-# All lassen build jobs
-
-clang_default (build and test on lassen):
+# CPU ONLY
+ibm_clang_9:
   variables:
-    SPEC: "%clang@default"
+    SPEC: "%clang@9.0.0ibm"
   extends: .build_and_test_on_lassen
 
-gcc_default (build and test on lassen):
+ibm_clang_9_gcc_8:
   variables:
-    SPEC: "%gcc@default"
+    SPEC: "%clang@9.0.0ibm cxxflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 cflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1"
   extends: .build_and_test_on_lassen
 
-xl_default (build and test on lassen):
+gcc_8_3_1:
   variables:
-    SPEC: "%xl@default"
+    SPEC: "%gcc@8.3.1 ^cmake@3.14.5"
   extends: .build_and_test_on_lassen
 
-pgi_default (build and test on lassen):
+xl_16_1_1_7:
   variables:
-    SPEC: "%pgi@default"
+    SPEC: "%xl@16.1.1.7"
   extends: .build_and_test_on_lassen
+
+xl_16_1_1_7_gcc_8_3_1:
+  variables:
+    SPEC: "%xl@16.1.1.7 cxxflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 cflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1"
+  extends: .build_and_test_on_lassen
+
+# CUDA
+
+ibm_clang_9_cuda:
+  variables:
+    SPEC: "+cuda+allow-untested-versions %clang@9.0.0ibm ^cuda@10.1.168"
+  extends: .build_and_test_on_lassen
+
+ibm_clang_9_gcc_8_cuda:
+  variables:
+    SPEC: "+cuda %clang@9.0.0ibm +allow-untested-versions cxxflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 cflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 ^cuda@10.1.168"
   allow_failure: true
-
-gcc_8_3_1 (build and test on lassen):
-  variables:
-    SPEC: "%gcc@8.3.1"
   extends: .build_and_test_on_lassen
 
-clang_3_9_1 (build and test on lassen):
+gcc_8_3_1_cuda:
   variables:
-    SPEC: "%clang@3.9.1"
-  extends: .build_and_test_on_lassen_advanced
-
-clang_4_0_0 (build and test on lassen):
-  variables:
-    SPEC: "%clang@4.0.0"
-  extends: .build_and_test_on_lassen_advanced
-
-clang_9_0_0 (build and test on lassen):
-  variables:
-    SPEC: "%clang@9.0.0"
+    SPEC: "+cuda %gcc@8.3.1 ^cuda@10.1.168"
   extends: .build_and_test_on_lassen
 
-nvcc_gcc_4_9_3 (build and test on lassen):
+xl_16_1_1_7_cuda:
   variables:
-    SPEC: "%gcc@4.9.3+cuda"
+    SPEC: "+cuda %xl@16.1.1.7 ^cuda@10.1.168 ^cmake@3.14.5"
   extends: .build_and_test_on_lassen
 
-nvcc_gcc_4_9_3_raja (build and test on lassen):
+xl_16_1_1_7_gcc_8_3_1_cuda_11:
   variables:
-    SPEC: "%gcc@4.9.3+cuda+raja"
-  extends: .build_and_test_on_lassen
+    SPEC: "+cuda %xl@16.1.1.7 cxxflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 cflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 ^cuda@11.0.2 ^cmake@3.14.5"
   allow_failure: true
+  extends: .build_and_test_on_lassen
 
-nvcc_xl-beta-2019.06.20 (build and test on lassen):
+# EXTRAS
+
+clang_9_0_0_libcpp (build and test on lassen):
   variables:
-    SPEC: "%xl@beta2019.06.20+cuda"
+    SPEC: "%clang@9.0.0+libcpp"
+  extends: .build_and_test_on_lassen
+
+clang_9_0_0_memleak (build and test on lassen):
+  variables:
+    SPEC: "%clang@9.0.0 cxxflags=-fsanitize=address"
+    ASAN_OPTIONS: "detect_leaks=1"
+  extends: .build_and_test_on_lassen
+
+clang_9_0_0_datarace (build and test on lassen):
+  variables:
+    SPEC: "%clang@9.0.0 cxxflags=-fsanitize=thread"
+  allow_failure: true
   extends: .build_and_test_on_lassen

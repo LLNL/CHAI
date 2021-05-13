@@ -53,7 +53,7 @@ then
 
     if [[ -d /dev/shm ]]
     then
-        prefix="/dev/shm/${hostname}/${spec// /_}"
+        prefix="/dev/shm/${hostname}/${spec//[ \/\-\=]/_}"
         mkdir -p ${prefix}
         prefix_opt="--prefix=${prefix}"
     fi
@@ -120,7 +120,7 @@ then
 fi
 
 # Test
-if [[ "${option}" != "--build-only" ]]
+if [[ "${option}" != "--build-only" ]] && grep -q -i "ENABLE_TESTS.*ON" ${hostconfig_path}
 then
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
     echo "~~~~~ Testing CHAI"

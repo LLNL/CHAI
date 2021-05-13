@@ -253,7 +253,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
 {
-  if(!m_is_slice && *this != nullptr) {
+  if(!m_is_slice) {
     if (m_resource_manager == nullptr) {
        m_resource_manager = ArrayManager::getInstance();
     }
