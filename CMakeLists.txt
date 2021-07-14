@@ -6,6 +6,7 @@
 ##############################################################################
 cmake_policy(SET CMP0057 NEW)
 cmake_policy(SET CMP0048 NEW)
+cmake_policy(SET CMP0025 NEW)
 
 project(Chai LANGUAGES CXX VERSION 2.3.0)
 
