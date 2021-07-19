@@ -241,6 +241,26 @@ public:
   CHAI_HOST T* getPointer(ExecutionSpace space, bool do_move = true) const;
 
   /*!
+   * \brief Move data to the current execution space (actually determined
+   *        by where the code is executing) and return an iterator to the
+   *        beginning of the array.
+   *
+   * \return Iterator (as raw pointer) to the start of the array in the
+   *         current execution space
+   */
+  CHAI_HOST_DEVICE T* begin() const;
+
+  /*!
+   * \brief Move data to the current execution space (actually determined
+   *        by where the code is executing) and return an iterator to
+   *        one past the end of the array.
+   *
+   * \return Iterator (as raw pointer) to the element after the last element
+   *         of the array in the current execution space
+   */
+  CHAI_HOST_DEVICE T* end() const;
+
+  /*!
    * \brief
    *
    */

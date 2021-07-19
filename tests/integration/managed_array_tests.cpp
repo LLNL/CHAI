@@ -1130,6 +1130,40 @@ GPU_TEST(ManagedArray, cdataGPU)
 #endif
 #endif
 
+TEST(ManagedArray, Iterators)
+{
+  int length = 10;
+  chai::ManagedArray<int> array(length);
+
+  forall(sequential(), 0, length, [=] (int i) {
+    array[i] = i;
+  });
+
+  // Make sure the iterator distance is the size of the array
+  EXPECT_EQ(std::distance(array.begin(), array.end()), length);
+
+  // Double each element with a range-based for loop
+  for (int& val : array)
+  {
+    val *= 2;
+  }
+
+  // Double each element again with an <algorithm>
+  std::for_each(array.begin(), array.end(), [](int& val) { val *= 2; });
+
+  // Make sure a reference to a const array can be iterated over
+  const chai::ManagedArray<int>& const_array = array;
+  int i = 0;
+  for (const int val : const_array)
+  {
+    EXPECT_EQ(val, i * 4);
+    i++;
+  }
+
+  array.free();
+  assert_empty_map(true);
+}
+
 TEST(ManagedArray, Reset)
 {
   chai::ManagedArray<float> array(20);
