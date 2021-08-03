@@ -51,7 +51,7 @@ def get_spec_path(spec, package_name, path_replacements = {}, use_bin = False) :
     return path
 
 
-class Chai(CMakePackage, CudaPackage):
+class Chai(CMakePackage, CudaPackage, ROCmPackage):
     """
     Copy-hiding array interface for data migration between memory spaces
     """
@@ -75,8 +75,11 @@ class Chai(CMakePackage, CudaPackage):
     variant('libcpp', default=False, description='Use libc++')
 
     depends_on('cmake@3.8:', type='build')
-    depends_on('umpire@main')
-    depends_on('raja@main', when="+raja")
+
+    depends_on('umpire@main', when='@main')
+    depends_on('raja@main', when="@main+raja")
+    depends_on('umpire@develop', when='@develop')
+    depends_on('raja@develop', when="@develop+raja")
 
     depends_on('cmake@3.9:', type='build', when="+cuda")
     depends_on('umpire+cuda', when="+cuda")
@@ -84,6 +87,18 @@ class Chai(CMakePackage, CudaPackage):
     depends_on('umpire+cuda+allow-untested-versions', when="+cuda+allow-untested-versions")
     depends_on('raja+cuda+allow-untested-versions', when="+raja+cuda+allow-untested-versions")
     depends_on('umpire+libcpp', when='+libcpp')
+
+    depends_on('camp+rocm', when='+rocm')
+    for val in ROCmPackage.amdgpu_targets:
+        depends_on('camp amdgpu_target=%s' % val, when='amdgpu_target=%s' % val)
+
+    depends_on('camp+cuda', when='+cuda')
+    for sm_ in CudaPackage.cuda_arch_values:
+        depends_on('camp cuda_arch={0}'.format(sm_),
+                   when='cuda_arch={0}'.format(sm_))
+
+    depends_on('camp@master', when='@develop')
+    depends_on('camp@0.1.0', when='@main')
 
     phases = ['hostconfig', 'cmake', 'build', 'install']
 
@@ -259,6 +274,9 @@ class Chai(CMakePackage, CudaPackage):
 
         umpire_conf_path = spec['umpire'].prefix + "/share/umpire/cmake"
         cfg.write(cmake_cache_entry("umpire_DIR",umpire_conf_path))
+
+        camp_conf_path = spec['camp'].prefix + "/lib/camp/cmake"
+        cfg.write(cmake_cache_entry("camp_DIR",camp_conf_path))
 
         cfg.write(cmake_cache_option("ENABLE_BENCHMARKS", 'tests=benchmarks' in spec))
         cfg.write(cmake_cache_option("ENABLE_TESTS", not 'tests=none' in spec))
