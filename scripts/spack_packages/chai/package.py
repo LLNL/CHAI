@@ -74,14 +74,13 @@ class Chai(CMakePackage, CudaPackage, ROCmPackage):
             multi=False, description='Tests to run')
     variant('libcpp', default=False, description='Use libc++')
 
-    depends_on('cmake@3.8:', type='build')
+    depends_on('umpire')
+    depends_on('raja', when="+raja")
 
     depends_on('umpire@main', when='@main')
     depends_on('raja@main', when="@main+raja")
-    depends_on('umpire@develop', when='@develop')
-    depends_on('raja@develop', when="@develop+raja")
 
-    depends_on('cmake@3.9:', type='build', when="+cuda")
+    depends_on('cmake@3.14:', type='build')
     depends_on('umpire+cuda', when="+cuda")
     depends_on('raja+cuda', when="+raja+cuda")
     depends_on('umpire+cuda+allow-untested-versions', when="+cuda+allow-untested-versions")
@@ -97,8 +96,8 @@ class Chai(CMakePackage, CudaPackage, ROCmPackage):
         depends_on('camp cuda_arch={0}'.format(sm_),
                    when='cuda_arch={0}'.format(sm_))
 
-    depends_on('camp@master', when='@develop')
     depends_on('camp@0.1.0', when='@main')
+    depends_on('camp')
 
     phases = ['hostconfig', 'cmake', 'build', 'install']
 
