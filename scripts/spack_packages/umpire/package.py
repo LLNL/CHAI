@@ -29,7 +29,7 @@ class Umpire(CachedCMakePackage, CudaPackage):
     version('4.1.1', tag='v4.1.1', submodules='True')
     version('4.1.0', tag='v4.1.0', submodules='True')
     version('4.0.1', tag='v4.0.1', submodules='True')
-    version('4.0.0', tag='v4.0.0', submodules='True'
+    version('4.0.0', tag='v4.0.0', submodules='True')
     version('3.0.0', tag='v3.0.0', submodules='True')
     version('2.1.0', tag='v2.1.0', submodules='True')
     version('2.0.0', tag='v2.0.0', submodules='True')
