@@ -87,17 +87,15 @@ class Chai(CMakePackage, CudaPackage, ROCmPackage):
     depends_on('raja+cuda+allow-untested-versions', when="+raja+cuda+allow-untested-versions")
     depends_on('umpire+libcpp', when='+libcpp')
 
-    depends_on('camp+rocm', when='+rocm')
     for val in ROCmPackage.amdgpu_targets:
-        depends_on('camp amdgpu_target=%s' % val, when='amdgpu_target=%s' % val)
+        depends_on('raja amdgpu_target=%s' % val, when='amdgpu_target=%s' % val)
+        depends_on('umpire amdgpu_target=%s' % val, when='amdgpu_target=%s' % val)
 
-    depends_on('camp+cuda', when='+cuda')
     for sm_ in CudaPackage.cuda_arch_values:
-        depends_on('camp cuda_arch={0}'.format(sm_),
+        depends_on('raja cuda_arch={0}'.format(sm_),
                    when='cuda_arch={0}'.format(sm_))
-
-    depends_on('camp@0.1.0', when='@main')
-    depends_on('camp')
+        depends_on('umpire cuda_arch={0}'.format(sm_),
+                   when='cuda_arch={0}'.format(sm_))
 
     phases = ['hostconfig', 'cmake', 'build', 'install']
 
@@ -273,9 +271,6 @@ class Chai(CMakePackage, CudaPackage, ROCmPackage):
 
         umpire_conf_path = spec['umpire'].prefix + "/share/umpire/cmake"
         cfg.write(cmake_cache_entry("umpire_DIR",umpire_conf_path))
-
-        camp_conf_path = spec['camp'].prefix + "/lib/camp/cmake"
-        cfg.write(cmake_cache_entry("camp_DIR",camp_conf_path))
 
         cfg.write(cmake_cache_option("ENABLE_BENCHMARKS", 'tests=benchmarks' in spec))
         cfg.write(cmake_cache_option("ENABLE_TESTS", not 'tests=none' in spec))
