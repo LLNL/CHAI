@@ -39,6 +39,10 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
 #if !defined(CHAI_DEVICE_COMPILE)
   m_pointer_record = new PointerRecord();
   int i = 0;
+  for (int s = CPU; s < NUM_EXECUTION_SPACES; ++s) {
+    m_pointer_record->m_allocators[s] = m_resource_manager->getAllocatorId(ExecutionSpace(s));
+  }
+
   for (const auto& space : spaces) {
     m_pointer_record->m_allocators[space] = allocators.begin()[i++].getId();
   }
@@ -546,6 +550,18 @@ T* ManagedArray<T>::data(ExecutionSpace space, bool do_move) const {
 template<typename T>
 T* ManagedArray<T>::getPointer(ExecutionSpace space, bool do_move) const {
    return data(space, do_move);
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE T* ManagedArray<T>::begin() const {
+   return data();
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE T* ManagedArray<T>::end() const {
+   return data() + size();
 }
 
 //template<typename T>
