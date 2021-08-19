@@ -72,7 +72,6 @@ class Chai(CMakePackage, CudaPackage, ROCmPackage):
     variant('raja', default=True, description='Build plugin for RAJA')
     variant('tests', default='basic', values=('none', 'basic', 'benchmarks'),
             multi=False, description='Tests to run')
-    variant('libcpp', default=False, description='Use libc++')
 
     depends_on('umpire')
     depends_on('raja', when="+raja")
@@ -85,7 +84,6 @@ class Chai(CMakePackage, CudaPackage, ROCmPackage):
     depends_on('raja+cuda', when="+raja+cuda")
     depends_on('umpire+cuda+allow-untested-versions', when="+cuda+allow-untested-versions")
     depends_on('raja+cuda+allow-untested-versions', when="+raja+cuda+allow-untested-versions")
-    depends_on('umpire+libcpp', when='+libcpp')
 
     for val in ROCmPackage.amdgpu_targets:
         depends_on('raja amdgpu_target=%s' % val, when='amdgpu_target=%s' % val)
@@ -203,8 +201,6 @@ class Chai(CMakePackage, CudaPackage, ROCmPackage):
             cfg.write(cmake_cache_entry("CMAKE_C_FLAGS", cflags))
 
         cxxflags = ' '.join(spec.compiler_flags['cxxflags'])
-        if "+libcpp" in spec:
-            cxxflags += ' '.join([cxxflags,"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0"])
         if cxxflags:
             cfg.write(cmake_cache_entry("CMAKE_CXX_FLAGS", cxxflags))
 

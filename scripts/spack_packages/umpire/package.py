@@ -65,7 +65,6 @@ class Umpire(CachedCMakePackage, CudaPackage, ROCmPackage):
     variant('tests', default='basic', values=('none', 'basic', 'benchmarks'),
             multi=False, description='Tests to run')
 
-    variant('libcpp', default=False, description='Uses libc++ instead of libstdc++')
     variant('tools', default=True, description='Enable tools')
     variant('dev_benchmarks', default=False, description='Enable Developer Benchmarks')
     variant('werror', default=True, description='Enable warnings as errors')
