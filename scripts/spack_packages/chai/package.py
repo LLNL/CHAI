@@ -251,6 +251,28 @@ class Chai(CMakePackage, CudaPackage, ROCmPackage):
         else:
             cfg.write(cmake_cache_option("ENABLE_CUDA", False))
 
+        
+        cfg.write(cmake_cache_option("ENABLE_HIP", "+rocm" in spec))
+        if "+rocm" in spec:
+            hip_root = spec['hip'].prefix
+            rocm_root = hip_root + "/.."
+            cfg.write(cmake_cache_path("HIP_ROOT_DIR",
+                                        hip_root))
+            cfg.write(cmake_cache_path("HIP_CLANG_PATH",
+                                        rocm_root + '/llvm/bin'))
+            cfg.write(cmake_cache_string("HIP_HIPCC_FLAGS",
+                                        '--amdgpu-target=gfx906'))
+            cfg.write(cmake_cache_string("HIP_RUNTIME_INCLUDE_DIRS",
+                                        "{0}/include;{0}/../hsa/include".format(hip_root)))
+            hip_link_flags = "-Wl,--disable-new-dtags -L{0}/lib -L{0}/../lib64 -L{0}/../lib -Wl,-rpath,{0}/lib:{0}/../lib:{0}/../lib64 -lamdhip64 -lhsakmt -lhsa-runtime64".format(hip_root)
+            if '%gcc' in spec:
+                gcc_bin = os.path.dirname(self.compiler.cxx)
+                gcc_prefix = join_path(gcc_bin, '..')
+                cfg.write(cmake_cache_string("HIP_CLANG_FLAGS", "--gcc-toolchain={0}".format(gcc_prefix))) 
+                cfg.write(cmake_cache_string("CMAKE_EXE_LINKER_FLAGS", hip_link_flags + " -Wl,-rpath {}/lib64".format(gcc_prefix)))
+            else:
+                cfg.write(cmake_cache_string("CMAKE_EXE_LINKER_FLAGS", hip_link_flags))
+
         if "+raja" in spec:
             cfg.write("#------------------{0}\n".format("-" * 60))
             cfg.write("# RAJA\n")

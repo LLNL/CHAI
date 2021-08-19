@@ -51,7 +51,7 @@ def get_spec_path(spec, package_name, path_replacements = {}, use_bin = False) :
     return path
 
 
-class Raja(CMakePackage, CudaPackage):
+class Raja(CMakePackage, CudaPackage, ROCmPackage):
     """RAJA Parallel Framework."""
 
     homepage = "http://software.llnl.gov/RAJA/"
@@ -262,7 +262,7 @@ class Raja(CMakePackage, CudaPackage):
         else:
             cfg.write(cmake_cache_option("ENABLE_CUDA", False))
 
-        if "+hip" in spec:
+        if "+rocm" in spec:
             cfg.write("#------------------{0}\n".format("-" * 60))
             cfg.write("# HIP\n")
             cfg.write("#------------------{0}\n\n".format("-" * 60))
