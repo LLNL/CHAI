@@ -26,7 +26,7 @@ template <typename ValueType, typename LayoutType, typename... IndexTypes>
 using TypedManagedArrayView = RAJA::internal::TypedViewBase<ValueType,
                                             chai::ManagedArray<ValueType>,
                                             LayoutType,
-                                            IndexTypes...>;
+                                            camp::list<IndexTypes...> >;
 
 template <typename ValueType, typename LayoutType, RAJA::Index_type P2Pidx = 0>
 using ManagedArrayMultiView =
