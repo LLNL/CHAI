@@ -29,6 +29,8 @@
 
 #include "chai/ManagedArray.hpp"
 
+#include "umpire/ResourceManager.hpp"
+
 
 struct my_point {
   double x;
@@ -1963,6 +1965,23 @@ TEST(ManagedArray, NoAllocationNull)
 GPU_TEST(ManagedArray, NoAllocationGPU)
 {
   chai::ManagedArray<double> array(10, chai::NONE);
+
+  forall(gpu(), 0, 10, [=] __device__ (int i) {
+    array[i] = i;
+  });
+
+  forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
+
+  array.free();
+}
+
+GPU_TEST(ManagedArray, NoAllocationGPUList)
+{
+  auto& rm = umpire::ResourceManager::getInstance();
+  chai::ManagedArray<double> array(10,
+      std::initializer_list<chai::ExecutionSpace>{chai::CPU},
+      std::initializer_list<umpire::Allocator>{rm.getAllocator("HOST")}
+  );
 
   forall(gpu(), 0, 10, [=] __device__ (int i) {
     array[i] = i;
