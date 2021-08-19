@@ -138,6 +138,18 @@ T* ManagedArray<T>::getPointer(ExecutionSpace space, bool do_move) const
 
 template<typename T>
 CHAI_INLINE
+CHAI_HOST_DEVICE T* ManagedArray<T>::begin() const {
+   return data();
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE T* ManagedArray<T>::end() const {
+   return data() + size();
+}
+
+template<typename T>
+CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::allocate(size_t elems,
                                          ExecutionSpace space,
                                          UserCallback const &) {
