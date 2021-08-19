@@ -51,7 +51,7 @@ def get_spec_path(spec, package_name, path_replacements = {}, use_bin = False) :
     return path
 
 
-class Chai(CMakePackage, CudaPackage):
+class Chai(CMakePackage, CudaPackage, ROCmPackage):
     """
     Copy-hiding array interface for data migration between memory spaces
     """
@@ -72,18 +72,28 @@ class Chai(CMakePackage, CudaPackage):
     variant('raja', default=True, description='Build plugin for RAJA')
     variant('tests', default='basic', values=('none', 'basic', 'benchmarks'),
             multi=False, description='Tests to run')
-    variant('libcpp', default=False, description='Use libc++')
 
-    depends_on('cmake@3.8:', type='build')
-    depends_on('umpire@main')
-    depends_on('raja@main', when="+raja")
+    depends_on('umpire')
+    depends_on('raja', when="+raja")
 
-    depends_on('cmake@3.9:', type='build', when="+cuda")
+    depends_on('umpire@main', when='@main')
+    depends_on('raja@main', when="@main+raja")
+
+    depends_on('cmake@3.14:', type='build')
     depends_on('umpire+cuda', when="+cuda")
     depends_on('raja+cuda', when="+raja+cuda")
     depends_on('umpire+cuda+allow-untested-versions', when="+cuda+allow-untested-versions")
     depends_on('raja+cuda+allow-untested-versions', when="+raja+cuda+allow-untested-versions")
-    depends_on('umpire+libcpp', when='+libcpp')
+
+    for val in ROCmPackage.amdgpu_targets:
+        depends_on('raja amdgpu_target=%s' % val, when='amdgpu_target=%s' % val)
+        depends_on('umpire amdgpu_target=%s' % val, when='amdgpu_target=%s' % val)
+
+    for sm_ in CudaPackage.cuda_arch_values:
+        depends_on('raja cuda_arch={0}'.format(sm_),
+                   when='cuda_arch={0}'.format(sm_))
+        depends_on('umpire cuda_arch={0}'.format(sm_),
+                   when='cuda_arch={0}'.format(sm_))
 
     phases = ['hostconfig', 'cmake', 'build', 'install']
 
@@ -191,8 +201,6 @@ class Chai(CMakePackage, CudaPackage):
             cfg.write(cmake_cache_entry("CMAKE_C_FLAGS", cflags))
 
         cxxflags = ' '.join(spec.compiler_flags['cxxflags'])
-        if "+libcpp" in spec:
-            cxxflags += ' '.join([cxxflags,"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0"])
         if cxxflags:
             cfg.write(cmake_cache_entry("CMAKE_CXX_FLAGS", cxxflags))
 
