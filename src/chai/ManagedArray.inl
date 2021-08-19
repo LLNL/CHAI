@@ -552,6 +552,18 @@ T* ManagedArray<T>::getPointer(ExecutionSpace space, bool do_move) const {
    return data(space, do_move);
 }
 
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE T* ManagedArray<T>::begin() const {
+   return data();
+}
+
+template<typename T>
+CHAI_INLINE
+CHAI_HOST_DEVICE T* ManagedArray<T>::end() const {
+   return data() + size();
+}
+
 //template<typename T>
 //ManagedArray<T>::operator ManagedArray<
 //  typename std::conditional<!std::is_const<T>::value, 
