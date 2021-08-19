@@ -30,6 +30,10 @@ RajaExecutionSpacePlugin::preCapture(const RAJA::util::PluginContext& p)
     case RAJA::Platform::cuda:
       m_arraymanager->setExecutionSpace(chai::GPU); break;
 #endif
+#if defined(CHAI_ENABLE_HIP)
+    case RAJA::Platform::hip:
+      m_arraymanager->setExecutionSpace(chai::GPU); break;
+#endif
     default:
       m_arraymanager->setExecutionSpace(chai::NONE);
   }

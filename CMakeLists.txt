@@ -6,8 +6,9 @@
 ##############################################################################
 cmake_policy(SET CMP0057 NEW)
 cmake_policy(SET CMP0048 NEW)
+cmake_policy(SET CMP0025 NEW)
 
-project(Chai LANGUAGES CXX VERSION 2.3.0)
+project(Chai LANGUAGES CXX VERSION 2.4.0)
 
 set(ENABLE_CUDA Off CACHE BOOL "Enable CUDA")
 set(ENABLE_HIP Off CACHE BOOL "Enable HIP")
@@ -22,6 +23,7 @@ option(ENABLE_UM "Use CUDA unified (managed) memory" Off)
 option(ENABLE_PINNED "Use pinned host memory" Off)
 option(ENABLE_RAJA_PLUGIN "Build plugin to set RAJA execution spaces" Off)
 option(CHAI_ENABLE_GPU_ERROR_CHECKING "Enable GPU error checking" On)
+option(CHAI_ENABLE_MANAGED_PTR "Enable managed_ptr" On)
 option(CHAI_DEBUG "Enable Debug Logging.")
 set(ENABLE_RAJA_NESTED_TEST ON CACHE BOOL "Enable raja-chai-nested-tests, which fails to build on Debug CUDA builds.")
 
@@ -40,6 +42,11 @@ endif()
 
 set(ENABLE_COPY_HEADERS Off CACHE BOOL "")
 set(BLT_CXX_STD c++11 CACHE STRING "")
+
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")
+  message(STATUS "Setting CMAKE_CXX_EXTENSIONS to ON for PGI Compiler")
+  set( CMAKE_CXX_EXTENSIONS ON )
+endif()
 
 if (ENABLE_CUDA)
   cmake_minimum_required(VERSION 3.9)

@@ -27,6 +27,7 @@ using namespace std;
 
 #include "gtest/gtest.h"
 
+// TODO: add hip policy for these tests.
 #if defined(RAJA_ENABLE_CUDA)
 #define PARALLEL_RAJA_DEVICE __device__
 #elif defined(RAJA_ENABLE_OPENMP)
@@ -108,6 +109,9 @@ CUDA_TEST(Chai, NestedSimple)
         ASSERT_FLOAT_EQ(v1[index], index * 1.0f);
         ASSERT_FLOAT_EQ(v2[index], index * 2.0f);
       });
+
+  v1.free();
+  v2.free();
 }
 
 CUDA_TEST(Chai, NestedView)
@@ -168,6 +172,9 @@ CUDA_TEST(Chai, NestedView)
                         [=](int i, int j) {
                           ASSERT_FLOAT_EQ(v2(i, j), v1(i, j) * 2.0f);
                         });
+
+  v1_array.free();
+  v2_array.free();
 }
 
 CUDA_TEST(Chai, NestedMultiView)
@@ -236,6 +243,8 @@ CUDA_TEST(Chai, NestedMultiView)
                         [=](int i, int j) {
                           ASSERT_FLOAT_EQ(mview(1, i, j), mview(0, i, j) * 2.0f);
                         });
+  v1_array.free();
+  v2_array.free();
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -367,7 +376,9 @@ void runLTimesTests(Index_type num_moments,
     }
   });
 
-  //rm->setExecutionSpace(chai::NONE);
+  L_data.free();
+  psi_data.free();
+  phi_data.free();
 }
 
 TEST(Chai, LTimes)

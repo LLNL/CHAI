@@ -12,6 +12,8 @@ import os
 from os import environ as env
 from os.path import join as pjoin
 
+import re
+
 def cmake_cache_entry(name, value, comment=""):
     """Generate a string for a cmake cache variable"""
 
@@ -66,18 +68,22 @@ class Chai(CMakePackage, CudaPackage):
     version('1.1.0', tag='v1.1.0', submodules='True')
     version('1.0', tag='v1.0', submodules='True')
 
-    variant('shared', default=True, description='Build Shared Libs')
-    variant('raja', default=False, description='Build plugin for RAJA')
+    variant('shared', default=False, description='Build Shared Libs')
+    variant('raja', default=True, description='Build plugin for RAJA')
     variant('tests', default='basic', values=('none', 'basic', 'benchmarks'),
             multi=False, description='Tests to run')
+    variant('libcpp', default=False, description='Use libc++')
 
     depends_on('cmake@3.8:', type='build')
-    depends_on('umpire')
-    depends_on('raja', when="+raja")
+    depends_on('umpire@main')
+    depends_on('raja@main', when="+raja")
 
     depends_on('cmake@3.9:', type='build', when="+cuda")
     depends_on('umpire+cuda', when="+cuda")
     depends_on('raja+cuda', when="+raja+cuda")
+    depends_on('umpire+cuda+allow-untested-versions', when="+cuda+allow-untested-versions")
+    depends_on('raja+cuda+allow-untested-versions', when="+raja+cuda+allow-untested-versions")
+    depends_on('umpire+libcpp', when='+libcpp')
 
     phases = ['hostconfig', 'cmake', 'build', 'install']
 
@@ -185,6 +191,8 @@ class Chai(CMakePackage, CudaPackage):
             cfg.write(cmake_cache_entry("CMAKE_C_FLAGS", cflags))
 
         cxxflags = ' '.join(spec.compiler_flags['cxxflags'])
+        if "+libcpp" in spec:
+            cxxflags += ' '.join([cxxflags,"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0"])
         if cxxflags:
             cfg.write(cmake_cache_entry("CMAKE_CXX_FLAGS", cxxflags))
 
@@ -199,6 +207,17 @@ class Chai(CMakePackage, CudaPackage):
             if flags:
                 cfg.write(cmake_cache_entry("BLT_EXE_LINKER_FLAGS", flags,
                                             description))
+
+        gcc_toolchain_regex = re.compile(".*gcc-toolchain.*")
+        gcc_name_regex = re.compile(".*gcc-name.*")
+
+        using_toolchain = list(filter(gcc_toolchain_regex.match, spec.compiler_flags['cxxflags']))
+        using_gcc_name = list(filter(gcc_name_regex.match, spec.compiler_flags['cxxflags']))
+        compilers_using_toolchain = ["pgi", "xl", "icpc"]
+        if any(compiler in cpp_compiler for compiler in compilers_using_toolchain):
+            if using_toolchain or using_gcc_name:
+                cfg.write(cmake_cache_entry("BLT_CMAKE_IMPLICIT_LINK_DIRECTORIES_EXCLUDE",
+                "/usr/tce/packages/gcc/gcc-4.9.3/lib64;/usr/tce/packages/gcc/gcc-4.9.3/gnu/lib64/gcc/powerpc64le-unknown-linux-gnu/4.9.3;/usr/tce/packages/gcc/gcc-4.9.3/gnu/lib64;/usr/tce/packages/gcc/gcc-4.9.3/lib64/gcc/x86_64-unknown-linux-gnu/4.9.3"))
 
         if "+cuda" in spec:
             cfg.write("#------------------{0}\n".format("-" * 60))

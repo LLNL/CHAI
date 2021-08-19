@@ -15,6 +15,7 @@ project_dir="$(pwd)"
 build_root=${BUILD_ROOT:-""}
 hostconfig=${HOST_CONFIG:-""}
 spec=${SPEC:-""}
+job_unique_id=${CI_JOB_ID:-""}
 
 raja_version=${UPDATE_RAJA:-""}
 umpire_version=${UPDATE_UMPIRE:-""}
@@ -53,7 +54,16 @@ then
 
     if [[ -d /dev/shm ]]
     then
-        prefix="/dev/shm/${hostname}/${spec// /_}"
+        prefix="/dev/shm/${hostname}"
+        if [[ -z ${job_unique_id} ]]; then
+          job_unique_id=manual_job_$(date +%s)
+          while [[ -d ${prefix}/${job_unique_id} ]] ; do
+              sleep 1
+              job_unique_id=manual_job_$(date +%s)
+          done
+        fi
+
+        prefix="${prefix}/${job_unique_id}"
         mkdir -p ${prefix}
         prefix_opt="--prefix=${prefix}"
     fi
@@ -120,7 +130,7 @@ then
 fi
 
 # Test
-if [[ "${option}" != "--build-only" ]]
+if [[ "${option}" != "--build-only" ]] && grep -q -i "ENABLE_TESTS.*ON" ${hostconfig_path}
 then
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
     echo "~~~~~ Testing CHAI"
