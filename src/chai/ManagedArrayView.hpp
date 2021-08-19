@@ -23,7 +23,7 @@ using ManagedArrayView =
 
 
 template <typename ValueType, typename LayoutType, typename... IndexTypes>
-using TypedManagedArrayView = RAJA::TypedViewBase<ValueType,
+using TypedManagedArrayView = RAJA::internal::TypedViewBase<ValueType,
                                             chai::ManagedArray<ValueType>,
                                             LayoutType,
                                             IndexTypes...>;
