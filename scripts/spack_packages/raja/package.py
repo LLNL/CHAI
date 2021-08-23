@@ -80,13 +80,11 @@ class Raja(CMakePackage, CudaPackage, ROCmPackage):
     variant('openmp', default=False, description='Build OpenMP backend')
     variant('shared', default=False, description='Build Shared Libs')
     variant('libcpp', default=False, description='Uses libc++ instead of libstdc++')
-    variant('hip', default=False, description='Build with HIP support')
     variant('tests', default='none', values=('none', 'basic', 'benchmarks'),
             multi=False, description='Tests to run')
 
     depends_on('cmake@3.8:', type='build')
     depends_on('cmake@3.9:', when='+cuda', type='build')
-    depends_on('hip', when='+hip')
 
     conflicts('+openmp', when='+hip')
 
