@@ -8,6 +8,8 @@ cmake_policy(SET CMP0057 NEW)
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0025 NEW)
 
+include(CMakeDependentOption)
+
 project(Chai LANGUAGES CXX VERSION 2.4.0)
 
 set(ENABLE_CUDA Off CACHE BOOL "Enable CUDA")
@@ -15,7 +17,6 @@ set(ENABLE_HIP Off CACHE BOOL "Enable HIP")
 set(ENABLE_GPU_SIMULATION_MODE Off CACHE BOOL "Enable GPU Simulation Mode")
 set(ENABLE_OPENMP OFF CACHE BOOL "Enable OpenMP")
 set(ENABLE_MPI Off CACHE BOOL "Enable MPI (for umpire replay only)")
-set(ENABLE_BENCHMARKS On CACHE BOOL "Enable benchmarks")
 option(ENABLE_IMPLICIT_CONVERSIONS "Enable implicit conversions to-from raw pointers" On)
 option(DISABLE_RM "Make ManagedArray a thin wrapper" Off)
 mark_as_advanced(DISABLE_RM)
@@ -28,6 +29,7 @@ option(CHAI_DEBUG "Enable Debug Logging.")
 set(ENABLE_RAJA_NESTED_TEST ON CACHE BOOL "Enable raja-chai-nested-tests, which fails to build on Debug CUDA builds.")
 
 set(ENABLE_TESTS On CACHE BOOL "")
+set(ENABLE_BENCHMARKS On CACHE BOOL "Enable benchmarks")
 set(ENABLE_EXAMPLES On CACHE BOOL "")
 set(ENABLE_DOCS Off CACHE BOOL "")
 
@@ -77,22 +79,34 @@ if (NOT BLT_LOADED)
   include(${BLT_SOURCE_DIR}/SetupBLT.cmake)
 endif()
 
+#######################################
+# Options that depend on BLT Options
+#######################################
+cmake_dependent_option(CHAI_ENABLE_TESTS "Build CHAI tests" On
+                       "ENABLE_TESTS" Off)
+cmake_dependent_option(CHAI_ENABLE_BENCHMARKS "Build CHAI benchmarks" On
+                       "ENABLE_BENCHMARKS" Off)
+cmake_dependent_option(CHAI_ENABLE_EXAMPLES "Build CHAI examples" On
+                       "ENABLE_EXAMPLES" Off )
+cmake_dependent_option(CHAI_ENABLE_DOCS "Build CHAI docs" On
+                       "ENABLE_DOCS" Off)
+
 include(cmake/ChaiBasics.cmake)
 
 add_subdirectory(src)
 
-if (ENABLE_TESTS)
+if (CHAI_ENABLE_TESTS)
   add_subdirectory(tests)
 endif()
 
-if (ENABLE_BENCHMARKS)
+if (CHAI_ENABLE_BENCHMARKS)
   add_subdirectory(benchmarks)
 endif()
 
-if (ENABLE_EXAMPLES)
+if (CHAI_ENABLE_EXAMPLES)
   add_subdirectory(examples)
 endif ()
 
-if (ENABLE_DOCUMENTATION)
+if (CHAI_ENABLE_DOCS)
   add_subdirectory(docs)
 endif()
