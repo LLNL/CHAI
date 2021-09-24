@@ -31,6 +31,7 @@ set(ENABLE_RAJA_NESTED_TEST ON CACHE BOOL "Enable raja-chai-nested-tests, which 
 set(ENABLE_TESTS On CACHE BOOL "")
 set(ENABLE_BENCHMARKS On CACHE BOOL "Enable benchmarks")
 set(ENABLE_EXAMPLES On CACHE BOOL "")
+set(ENABLE_REPRODUCERS Off CACHE BOOL "")
 set(ENABLE_DOCS Off CACHE BOOL "")
 
 # options for Umpire as TPL
@@ -90,6 +91,8 @@ cmake_dependent_option(CHAI_ENABLE_EXAMPLES "Build CHAI examples" On
                        "ENABLE_EXAMPLES" Off )
 cmake_dependent_option(CHAI_ENABLE_DOCS "Build CHAI docs" On
                        "ENABLE_DOCS" Off)
+cmake_dependent_option(CHAI_ENABLE_REPRODUCERS "Build CHAI reproducers" On
+                       "ENABLE_REPRODUCERS" Off)
 
 include(cmake/ChaiBasics.cmake)
 
@@ -105,8 +108,12 @@ endif()
 
 if (CHAI_ENABLE_EXAMPLES)
   add_subdirectory(examples)
-endif ()
+endif()
 
 if (CHAI_ENABLE_DOCS)
   add_subdirectory(docs)
+endif()
+
+if (CHAI_ENABLE_REPRODUCERS)
+  add_subdirectory(reproducers)
 endif()
