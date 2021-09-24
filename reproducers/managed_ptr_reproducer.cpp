@@ -33,22 +33,22 @@ __global__ void callDeviceVirtualFunction(int* d_result,
 }
 
 int main(int, char**) {
-  chai::managed_ptr<TestBase> derived = chai::make_managed<TestDerived>(42);
+   chai::managed_ptr<TestBase> derived = chai::make_managed<TestDerived>(42);
 
-  int* d_result;
-  hipMalloc(&d_result, sizeof(int));
+   int* d_result;
+   hipMalloc(&d_result, sizeof(int));
 
-  hipLaunchKernelGGL(callDeviceVirtualFunction, 1, 1, 0, 0, d_result, derived);
+   hipLaunchKernelGGL(callDeviceVirtualFunction, 1, 1, 0, 0, d_result, derived);
 
-  int* h_result = (int*) malloc(sizeof(int));
-  hipMemcpyDtoH(h_result, d_result, sizeof(int));
+   int* h_result = (int*) malloc(sizeof(int));
+   hipMemcpyDtoH(h_result, d_result, sizeof(int));
 
-  printf("Result: %d\n", *h_result);
+   printf("Result: %d\n", *h_result);
 
-  free(h_result);
-  hipFree(d_result);
-  derived.free();
+   free(h_result);
+   hipFree(d_result);
+   derived.free();
 
-  return 0;
+   return 0;
 }
 
