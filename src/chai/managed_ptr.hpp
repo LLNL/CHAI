@@ -26,8 +26,10 @@
 
 
 namespace chai {
+#if defined(CHAI_GPUCC)
    template <typename T>
    CHAI_HOST void destroy_on_device(T* gpuPointer);
+#endif
 
    struct managed_ptr_record {
       managed_ptr_record() = default;
