@@ -36,7 +36,7 @@ int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv))
     printf("Result of virtual function call on host: %d\n", derived->getValue());
   });
 
-#if defined(CARE_GPUCC)
+#if defined(CHAI_GPUCC)
   // chai::managed_ptr can be accessed on the device
   forall(gpu(), 0, 1, [=] CHAI_DEVICE (int i) {
     printf("Result of virtual function call on device: %d\n", derived->getValue());
