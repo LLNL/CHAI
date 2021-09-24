@@ -16,8 +16,13 @@ endif ()
 
 if (CHAI_ENABLE_MANAGED_PTR AND ENABLE_HIP)
   blt_add_executable(
-    NAME virtual_device_reproducer.exe
-    SOURCES virtual_device_reproducer.cpp
+    NAME virtual_function_simple_reproducer.exe
+    SOURCES virtual_function_simple_reproducer.cpp
+    DEPENDS_ON ${chai_reproducer_depends})
+
+  blt_add_executable(
+    NAME virtual_function_complex_reproducer.exe
+    SOURCES virtual_function_complex_reproducer.cpp
     DEPENDS_ON ${chai_reproducer_depends})
 
   blt_add_executable(
