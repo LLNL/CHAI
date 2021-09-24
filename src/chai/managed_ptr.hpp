@@ -961,7 +961,7 @@ namespace chai {
 #if defined(__CUDACC__)
       detail::make_on_device<<<1, 1>>>(gpuBuffer, args...);
 #elif defined(__HIPCC__)
-      hipLaunchKernelGGL(detail::make_on_device, 0, 0, 0, 0, gpuBuffer, args...);
+      hipLaunchKernelGGL(detail::make_on_device, 1, 1, 0, 0, gpuBuffer, args...);
 #endif
 
 #ifndef CHAI_DISABLE_RM
@@ -1022,7 +1022,7 @@ namespace chai {
 #if defined(__CUDACC__)
       detail::make_on_device_from_factory<T><<<1, 1>>>(gpuBuffer, f, args...);
 #elif defined(__HIPCC__)
-      hipLaunchKernelGGL(detail::make_on_device_from_factory, 0, 0, 0, 0, gpuBuffer, f, args...);
+      hipLaunchKernelGGL(detail::make_on_device_from_factory, 1, 1, 0, 0, gpuBuffer, f, args...);
 #endif
 
 #ifndef CHAI_DISABLE_RM
@@ -1063,7 +1063,7 @@ namespace chai {
 #if defined(__CUDACC__)
       detail::destroy_on_device<<<1, 1>>>(gpuPointer);
 #elif defined(__HIPCC__)
-      hipLaunchKernelGGL(detail::destroy_on_device, 0, 0, 0, 0, gpuPointer);
+      hipLaunchKernelGGL(detail::destroy_on_device, 1, 1, 0, 0, gpuPointer);
 #endif
    }
 
