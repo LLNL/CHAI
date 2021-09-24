@@ -26,13 +26,6 @@
 
 
 namespace chai {
-   namespace detail {
-#if defined(CHAI_GPUCC)
-      template <typename T>
-      __global__ void destroy_on_device(T* gpuPointer);
-#endif
-   }
-
    template <typename T>
    CHAI_HOST void destroy_on_device(T* gpuPointer);
 
