@@ -346,6 +346,7 @@ GPU_TEST(managed_ptr, pass_object_to_kernel)
   chai::ArrayManager* manager = chai::ArrayManager::getInstance();
   manager->setExecutionSpace(chai::GPU);
   passObjectToKernel<<<1, 1>>>(array);
+  manager->setExecutionSpace(chai::NONE);
   array.move(chai::CPU);
   ASSERT_EQ(array[0], -1);
 

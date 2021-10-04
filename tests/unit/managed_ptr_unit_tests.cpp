@@ -12,7 +12,6 @@
   static void gpu_test_##X_##Y()
 
 #include "chai/config.hpp"
-#include "chai/ArrayManager.hpp"
 #include "chai/ManagedArray.hpp"
 #include "chai/managed_ptr.hpp"
 
