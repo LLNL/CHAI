@@ -16,13 +16,18 @@ endif ()
 
 if (CHAI_ENABLE_MANAGED_PTR AND ENABLE_HIP)
   blt_add_executable(
-    NAME virtual_function_simple_reproducer.exe
+    NAME virtual_function_simple_reproducer
     SOURCES virtual_function_simple_reproducer.cpp
     DEPENDS_ON ${chai_reproducer_depends})
 
   blt_add_executable(
-    NAME virtual_function_complex_reproducer.exe
+    NAME virtual_function_complex_reproducer
     SOURCES virtual_function_complex_reproducer.cpp
+    DEPENDS_ON ${chai_reproducer_depends})
+
+  blt_add_executable(
+    NAME multiple_inheritance_reproducer
+    SOURCES multiple_inheritance_reproducer.cpp
     DEPENDS_ON ${chai_reproducer_depends})
 
   blt_add_executable(
