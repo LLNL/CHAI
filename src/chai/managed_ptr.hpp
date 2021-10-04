@@ -892,11 +892,15 @@ namespace chai {
       // Set the execution space so that ManagedArrays and managed_ptrs
       // are handled properly
       arrayManager->setExecutionSpace(GPU);
-#endif
 
+      // Allocate memory on the GPU
+      umpire::Allocator allocator = arrayManager->getAllocator(GPU);
+      T* gpuPointer = (T*) allocator.allocate(sizeof(T));
+#else
       // Allocate space on the GPU to hold the new object
       T* gpuPointer;
       gpuMalloc((void**) (&gpuPointer), sizeof(T));
+#endif
 
       // Create the object on the device
 #if defined(__CUDACC__)
@@ -935,7 +939,13 @@ namespace chai {
       hipLaunchKernelGGL(detail::destroy_on_device, 1, 1, 0, 0, gpuPointer);
 #endif
 
+#ifndef CHAI_DISABLE_RM
+      chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
+      umpire::Allocator allocator = arrayManager->getAllocator(GPU);
+      allocator.deallocate((void*) gpuPointer);
+#else
       gpuFree((void*) gpuPointer);
+#endif
    }
 
 #endif
