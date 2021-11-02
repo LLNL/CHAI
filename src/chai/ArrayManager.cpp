@@ -547,21 +547,23 @@ void ArrayManager::evict(ExecutionSpace space, ExecutionSpace destinationSpace) 
 
    // Now move and evict
    std::vector<PointerRecord*> pointersToEvict;
-   std::lock_guard<std::mutex> lock(m_mutex);
-   for (const auto& entry : m_pointer_map) {
-      // Get the pointer record
-      auto record = *entry.second;
+   {
+      std::lock_guard<std::mutex> lock(m_mutex);
+      for (const auto& entry : m_pointer_map) {
+         // Get the pointer record
+         auto record = *entry.second;
 
-      // Move the data and register the touches
-      move(record, destinationSpace);
-      registerTouch(record, destinationSpace);
+         // Move the data and register the touches
+         move(record, destinationSpace);
+         registerTouch(record, destinationSpace);
 
-      // If the destinationSpace is ever allowed to be NONE, then we will need to
-      // update the touch in the eviction space and make sure the last space is not
-      // the eviction space.
+         // If the destinationSpace is ever allowed to be NONE, then we will need to
+         // update the touch in the eviction space and make sure the last space is not
+         // the eviction space.
 
-      // Mark record for eviction later in this routine
-      pointersToEvict.push_back(record);
+         // Mark record for eviction later in this routine
+         pointersToEvict.push_back(record);
+      }
    }
 
    // This must be done in a second pass because free erases from m_pointer_map,
