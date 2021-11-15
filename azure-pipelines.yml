@@ -24,6 +24,8 @@ steps:
 - checkout: self
   clean: boolean
   submodules: recursive
+- pool:
+    vmImage: ubuntu-latest
 - task: Docker@1
   inputs:
     command: build
