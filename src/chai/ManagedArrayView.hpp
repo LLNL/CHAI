@@ -23,10 +23,18 @@ using ManagedArrayView =
 
 
 template <typename ValueType, typename LayoutType, typename... IndexTypes>
-using TypedManagedArrayView = RAJA::TypedViewBase<ValueType,
+using TypedManagedArrayView = RAJA::internal::TypedViewBase<ValueType,
                                             chai::ManagedArray<ValueType>,
                                             LayoutType,
-                                            IndexTypes...>;
+                                            camp::list<IndexTypes...> >;
+
+template <typename ValueType, typename LayoutType, RAJA::Index_type P2Pidx = 0>
+using ManagedArrayMultiView =
+    RAJA::MultiView<ValueType,
+                    LayoutType,
+                    P2Pidx,
+                    chai::ManagedArray<ValueType> *,
+                    chai::ManagedArray<camp::type::cv::rem<ValueType>> *>;
 
 } // end of namespace chai
 

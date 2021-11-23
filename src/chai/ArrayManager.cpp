@@ -163,6 +163,12 @@ void * ArrayManager::frontOfAllocation(void * pointer) {
 
 void ArrayManager::setExecutionSpace(ExecutionSpace space)
 {
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+   if (isGPUSimMode()) {
+      space = chai::GPU;
+   }
+#endif
+
   CHAI_LOG(Debug, "Setting execution space to " << space);
 
   if (chai::GPU == space) {
@@ -391,11 +397,13 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
             alloc.deallocate(space_ptr);
 
             for (int space_t = CPU; space_t < NUM_EXECUTION_SPACES; ++space_t) {
-              if (space_ptr == pointer_record->m_pointers[space_t])
+              if (space_ptr == pointer_record->m_pointers[space_t]) {
                 pointer_record->m_pointers[space_t] = nullptr;
+              }
             }
-          } else {
-#elif defined(CHAI_ENABLE_PINNED)
+          } else
+#endif
+#if defined(CHAI_ENABLE_PINNED)
           if (space_ptr == pointer_record->m_pointers[PINNED]) {
             callback(pointer_record,
                      ACTION_FREE,
@@ -406,11 +414,13 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
             alloc.deallocate(space_ptr);
 
             for (int space_t = CPU; space_t < NUM_EXECUTION_SPACES; ++space_t) {
-              if (space_ptr == pointer_record->m_pointers[space_t])
+              if (space_ptr == pointer_record->m_pointers[space_t]) {
                 pointer_record->m_pointers[space_t] = nullptr;
+              }
             }
-          } else {
+          } else
 #endif
+          {
             callback(pointer_record,
                      ACTION_FREE,
                      ExecutionSpace(space));
@@ -420,9 +430,7 @@ void ArrayManager::free(PointerRecord* pointer_record, ExecutionSpace spaceToFre
             alloc.deallocate(space_ptr);
 
             pointer_record->m_pointers[space] = nullptr;
-#if defined(CHAI_ENABLE_UM) || defined(CHAI_ENABLE_PINNED)
           }
-#endif
         }
         else
         {
@@ -534,8 +542,11 @@ PointerRecord* ArrayManager::deepCopyRecord(PointerRecord const* record)
   copy->m_user_callback = [] (const PointerRecord*, Action, ExecutionSpace) {};
 
   const ExecutionSpace last_space = record->m_last_space;
-
   copy->m_last_space = last_space;
+  for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
+    copy->m_allocators[space] = record->m_allocators[space];
+  }
+
   allocate(copy, last_space);
 
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
@@ -625,21 +636,23 @@ void ArrayManager::evict(ExecutionSpace space, ExecutionSpace destinationSpace) 
 
    // Now move and evict
    std::vector<PointerRecord*> pointersToEvict;
-   std::lock_guard<std::mutex> lock(m_mutex);
-   for (const auto& entry : m_pointer_map) {
-      // Get the pointer record
-      auto record = *entry.second;
+   {
+      std::lock_guard<std::mutex> lock(m_mutex);
+      for (const auto& entry : m_pointer_map) {
+         // Get the pointer record
+         auto record = *entry.second;
 
-      // Move the data and register the touches
-      move(record, destinationSpace);
-      registerTouch(record, destinationSpace);
+         // Move the data and register the touches
+         move(record, destinationSpace);
+         registerTouch(record, destinationSpace);
 
-      // If the destinationSpace is ever allowed to be NONE, then we will need to
-      // update the touch in the eviction space and make sure the last space is not
-      // the eviction space.
+         // If the destinationSpace is ever allowed to be NONE, then we will need to
+         // update the touch in the eviction space and make sure the last space is not
+         // the eviction space.
 
-      // Mark record for eviction later in this routine
-      pointersToEvict.push_back(record);
+         // Mark record for eviction later in this routine
+         pointersToEvict.push_back(record);
+      }
    }
 
    // This must be done in a second pass because free erases from m_pointer_map,

@@ -29,6 +29,8 @@
 
 #include "chai/ManagedArray.hpp"
 
+#include "umpire/ResourceManager.hpp"
+
 
 struct my_point {
   double x;
@@ -85,7 +87,27 @@ TEST(ManagedArray, Slice) {
       array[i] = i;
   });
 
-  chai::ManagedArray<float> sl = array.slice(0,5);
+  const int SLICE_SZ = 5;
+  chai::ManagedArray<float> sl = array.slice(0,SLICE_SZ);
+  ASSERT_EQ(SLICE_SZ, sl.size());
+
+  sl.free();
+  array.free();
+  assert_empty_map(true);
+}
+
+TEST(ManagedArray, SliceCopyCtor) {
+  chai::ManagedArray<float> array(10);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  const int SLICE_SZ = 5;
+  chai::ManagedArray<float> sl = array.slice(0,SLICE_SZ);
+  chai::ManagedArray<float> slcopy = sl;
+  ASSERT_EQ(SLICE_SZ, slcopy.size());
+
   sl.free();
   array.free();
   assert_empty_map(true);
@@ -98,8 +120,12 @@ TEST(ManagedArray, SliceOfSlice) {
       array[i] = i;
   });
 
+  const int SLICE_SZ_1 = 6;
+  const int SLICE_SZ_2 = 3;
   chai::ManagedArray<float> sl1 = array.slice(0,6);
   chai::ManagedArray<float> sl2 = sl1.slice(3,3);
+  ASSERT_EQ(sl1.size(), SLICE_SZ_1);
+  ASSERT_EQ(sl2.size(), SLICE_SZ_2);
 
   forall(sequential(), 0, 3, [=] (int i) {
       sl1[i] = sl2[i];
@@ -111,6 +137,29 @@ TEST(ManagedArray, SliceOfSlice) {
 
   sl1.free();
   sl2.free();
+  array.free();
+  assert_empty_map(true);
+}
+
+TEST(ManagedArray, ArrayOfSlices) {
+  chai::ManagedArray<float> array(10);
+  chai::ManagedArray<chai::ManagedArray<float>> arrayOfSlices(5);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  forall(sequential(), 0, 5, [=] (int i) {
+      arrayOfSlices[i] = array.slice(2*i, 2);
+      arrayOfSlices[i][1] = arrayOfSlices[i][0];
+  });
+
+  forall(sequential(), 0, 5, [=] (int i) {
+    ASSERT_EQ(arrayOfSlices[i].size(), 2);
+    ASSERT_EQ(array[2*i], array[2*i+1]);
+  });
+
+  arrayOfSlices.free();
   array.free();
   assert_empty_map(true);
 }
@@ -531,6 +580,32 @@ GPU_TEST(ManagedArray, IncrementDecrementFromHostOnDevice)
 }
 #endif
 #endif
+
+GPU_TEST(ManagedArray, ArrayOfSlicesDevice) {
+  chai::ManagedArray<float> array(10);
+  chai::ManagedArray<chai::ManagedArray<float>> arrayOfSlices(5);
+
+  forall(sequential(), 0, 10, [=] (int i) {
+      array[i] = i;
+  });
+
+  forall(sequential(), 0, 5, [=] (int i) {
+      arrayOfSlices[i] = array.slice(2*i, 2);
+  });
+
+  forall(gpu(), 0, 5, [=] __device__ (int i) {
+      arrayOfSlices[i][1] = arrayOfSlices[i][0];
+  });
+
+  forall(sequential(), 0, 5, [=] (int i) {
+    ASSERT_EQ(arrayOfSlices[i].size(), 2);
+    ASSERT_EQ(array[2*i], array[2*i+1]);
+  });
+
+  arrayOfSlices.free();
+  array.free();
+  assert_empty_map(true);
+}
 
 GPU_TEST(ManagedArray, SliceOfSliceDevice) {
   chai::ManagedArray<float> array(10);
@@ -1010,6 +1085,40 @@ GPU_TEST(ManagedArray, cdataGPU)
 }
 #endif
 #endif
+
+TEST(ManagedArray, Iterators)
+{
+  int length = 10;
+  chai::ManagedArray<int> array(length);
+
+  forall(sequential(), 0, length, [=] (int i) {
+    array[i] = i;
+  });
+
+  // Make sure the iterator distance is the size of the array
+  EXPECT_EQ(std::distance(array.begin(), array.end()), length);
+
+  // Double each element with a range-based for loop
+  for (int& val : array)
+  {
+    val *= 2;
+  }
+
+  // Double each element again with an <algorithm>
+  std::for_each(array.begin(), array.end(), [](int& val) { val *= 2; });
+
+  // Make sure a reference to a const array can be iterated over
+  const chai::ManagedArray<int>& const_array = array;
+  int i = 0;
+  for (const int val : const_array)
+  {
+    EXPECT_EQ(val, i * 4);
+    i++;
+  }
+
+  array.free();
+  assert_empty_map(true);
+}
 
 TEST(ManagedArray, Reset)
 {
@@ -1822,6 +1931,8 @@ TEST(ManagedArray, NoAllocation)
   });
 
   forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
+
+  array.free();
 }
 
 TEST(ManagedArray, NoAllocationNull)
@@ -1834,6 +1945,8 @@ TEST(ManagedArray, NoAllocationNull)
   });
 
   forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
+
+  array.free();
 }
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
@@ -1846,6 +1959,25 @@ GPU_TEST(ManagedArray, NoAllocationGPU)
   });
 
   forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
+
+  array.free();
+}
+
+GPU_TEST(ManagedArray, NoAllocationGPUList)
+{
+  auto& rm = umpire::ResourceManager::getInstance();
+  chai::ManagedArray<double> array(10,
+      std::initializer_list<chai::ExecutionSpace>{chai::CPU},
+      std::initializer_list<umpire::Allocator>{rm.getAllocator("HOST")}
+  );
+
+  forall(gpu(), 0, 10, [=] __device__ (int i) {
+    array[i] = i;
+  });
+
+  forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
+
+  array.free();
 }
 
 GPU_TEST(ManagedArray, NoAllocationNullGPU)
@@ -1858,5 +1990,7 @@ GPU_TEST(ManagedArray, NoAllocationNullGPU)
   });
 
   forall(sequential(), 0, 10, [=](int i) { ASSERT_EQ(array[i], i); });
+
+  array.free();
 }
 #endif

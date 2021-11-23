@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
 #include "umpire/ResourceManager.hpp"
-#include "umpire/strategy/DynamicPool.hpp"
+#include "umpire/strategy/QuickPool.hpp"
 
 #include "chai/ManagedArray.hpp"
 #include "../src/util/forall.hpp"
@@ -18,12 +18,12 @@ int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv))
   auto& rm = umpire::ResourceManager::getInstance();
 
   auto cpu_pool =
-      rm.makeAllocator<umpire::strategy::DynamicPool>("cpu_pool",
+      rm.makeAllocator<umpire::strategy::QuickPool>("cpu_pool",
                                                       rm.getAllocator("HOST"));
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
   auto gpu_pool =
-      rm.makeAllocator<umpire::strategy::DynamicPool>("gpu_pool",
+      rm.makeAllocator<umpire::strategy::QuickPool>("gpu_pool",
                                                       rm.getAllocator("DEVICE"));
 #endif
 

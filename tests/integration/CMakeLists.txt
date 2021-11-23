@@ -40,18 +40,20 @@ if (ENABLE_CUDA)
     COMMAND managed_array_resource_tests)
 endif()
 
-blt_add_executable(
-  NAME managed_ptr_tests
-  SOURCES managed_ptr_tests.cpp
-  DEPENDS_ON ${chai_integration_test_depends})
+if (CHAI_ENABLE_MANAGED_PTR)
+  blt_add_executable(
+    NAME managed_ptr_tests
+    SOURCES managed_ptr_tests.cpp
+    DEPENDS_ON ${chai_integration_test_depends})
 
-target_include_directories(
-  managed_ptr_tests
-  PUBLIC ${PROJECT_BINARY_DIR}/include)
+  target_include_directories(
+    managed_ptr_tests
+    PUBLIC ${PROJECT_BINARY_DIR}/include)
 
-blt_add_test(
-  NAME managed_ptr_test
-  COMMAND managed_ptr_tests)
+  blt_add_test(
+    NAME managed_ptr_test
+    COMMAND managed_ptr_tests)
+endif ()
   
 if (ENABLE_RAJA_PLUGIN)
   set(raja_test_depends

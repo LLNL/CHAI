@@ -9,6 +9,8 @@
 
 #include "chai/config.hpp"
 
+#if defined(CHAI_ENABLE_MANAGED_PTR)
+
 #ifndef CHAI_DISABLE_RM
 #include "chai/ArrayManager.hpp"
 #endif
@@ -24,12 +26,10 @@
 
 
 namespace chai {
-   namespace detail {
 #if defined(CHAI_GPUCC)
-      template <typename T>
-      __global__ void destroy_on_device(T* gpuPointer);
+   template <typename T>
+   CHAI_HOST void destroy_on_device(T* gpuPointer);
 #endif
-   }
 
    struct managed_ptr_record {
       managed_ptr_record() = default;
@@ -500,9 +500,8 @@ namespace chai {
                            case GPU:
                            {
                               if (pointer) {
-                                 detail::destroy_on_device<<<1, 1>>>(temp);
+                                 destroy_on_device(temp);
                                  m_gpu_pointer = nullptr;
-
 #ifndef CHAI_DISABLE_RM
                                  if (ArrayManager::getInstance()->deviceSynchronize()) {
                                     synchronize();
@@ -534,9 +533,8 @@ namespace chai {
                         case GPU:
                         {
                            if (pointer) {
-                              detail::destroy_on_device<<<1, 1>>>(pointer);
+                              destroy_on_device(pointer);
                               m_gpu_pointer = nullptr;
-
 #ifndef CHAI_DISABLE_RM
                               if (ArrayManager::getInstance()->deviceSynchronize()) {
                                  synchronize();
@@ -960,7 +958,11 @@ namespace chai {
       gpuMalloc((void**)(&gpuBuffer), sizeof(T*));
 
       // Create the object on the device
+#if defined(__CUDACC__)
       detail::make_on_device<<<1, 1>>>(gpuBuffer, args...);
+#elif defined(__HIPCC__)
+      hipLaunchKernelGGL(detail::make_on_device, 1, 1, 0, 0, gpuBuffer, args...);
+#endif
 
 #ifndef CHAI_DISABLE_RM
       if (ArrayManager::getInstance()->deviceSynchronize()) {
@@ -1017,7 +1019,11 @@ namespace chai {
       gpuMalloc((void**)(&gpuBuffer), sizeof(T*));
 
       // Create the object on the device
+#if defined(__CUDACC__)
       detail::make_on_device_from_factory<T><<<1, 1>>>(gpuBuffer, f, args...);
+#elif defined(__HIPCC__)
+      hipLaunchKernelGGL(detail::make_on_device_from_factory, 1, 1, 0, 0, gpuBuffer, f, args...);
+#endif
 
 #ifndef CHAI_DISABLE_RM
       if (ArrayManager::getInstance()->deviceSynchronize()) {
@@ -1054,7 +1060,11 @@ namespace chai {
    ///
    template <typename T>
    CHAI_HOST void destroy_on_device(T* gpuPointer) {
+#if defined(__CUDACC__)
       detail::destroy_on_device<<<1, 1>>>(gpuPointer);
+#elif defined(__HIPCC__)
+      hipLaunchKernelGGL(detail::destroy_on_device, 1, 1, 0, 0, gpuPointer);
+#endif
    }
 
 #endif
@@ -1317,6 +1327,13 @@ namespace chai {
       std::swap(lhs.m_pointer_record, rhs.m_pointer_record);
    }
 } // namespace chai
+
+#else // defined(CHAI_ENABLE_MANAGED_PTR)
+
+#error CHAI must be configured with -DCHAI_ENABLE_MANAGED_PTR=ON to use managed_ptr! \
+       If CHAI_ENABLE_MANAGED_PTR is defined as a macro, it is safe to include managed_ptr.hpp.
+
+#endif // defined(CHAI_ENABLE_MANAGED_PTR)
 
 #endif // MANAGED_PTR
 

@@ -83,15 +83,17 @@ blt_add_test(
   NAME array_manager_unit_test
   COMMAND array_manager_unit_tests)
 
-blt_add_executable(
-  NAME managed_ptr_unit_tests
-  SOURCES managed_ptr_unit_tests.cpp
-  DEPENDS_ON ${chai_unit_test_depends})
+if (CHAI_ENABLE_MANAGED_PTR)
+  blt_add_executable(
+    NAME managed_ptr_unit_tests
+    SOURCES managed_ptr_unit_tests.cpp
+    DEPENDS_ON ${chai_unit_test_depends})
 
-target_include_directories(
-  managed_ptr_unit_tests
-  PUBLIC ${PROJECT_BINARY_DIR}/include)
+  target_include_directories(
+    managed_ptr_unit_tests
+    PUBLIC ${PROJECT_BINARY_DIR}/include)
 
-blt_add_test(
-  NAME managed_ptr_unit_test
-  COMMAND managed_ptr_unit_tests)
+  blt_add_test(
+    NAME managed_ptr_unit_test
+    COMMAND managed_ptr_unit_tests)
+endif ()

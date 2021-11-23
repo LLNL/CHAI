@@ -12,6 +12,8 @@ import os
 from os import environ as env
 from os.path import join as pjoin
 
+import re
+
 def cmake_cache_entry(name, value, comment=""):
     """Generate a string for a cmake cache variable"""
 
@@ -49,35 +51,44 @@ def get_spec_path(spec, package_name, path_replacements = {}, use_bin = False) :
     return path
 
 
-class Chai(CMakePackage, CudaPackage):
-    """
-    Copy-hiding array interface for data migration between memory spaces
-    """
+class Raja(CMakePackage, CudaPackage):
+    """RAJA Parallel Framework."""
 
-    homepage = "https://github.com/LLNL/CHAI"
-    git      = "https://github.com/LLNL/CHAI.git"
+    homepage = "http://software.llnl.gov/RAJA/"
+    git      = "https://github.com/LLNL/RAJA.git"
 
     version('develop', branch='develop', submodules='True')
-    version('master', branch='main', submodules='True')
-    version('2.1.1', tag='v2.1.1', submodules='True')
-    version('2.1.0', tag='v2.1.0', submodules='True')
-    version('2.0.0', tag='v2.0.0', submodules='True')
-    version('1.2.0', tag='v1.2.0', submodules='True')
-    version('1.1.0', tag='v1.1.0', submodules='True')
-    version('1.0', tag='v1.0', submodules='True')
+    version('main',  branch='main',  submodules='True')
+    version('0.14.0', tag='v0.14.0', submodules='True')
+    version('0.13.0', tag='v0.13.0', submodules='True')
+    version('0.12.1', tag='v0.12.1', submodules="True")
+    version('0.12.0', tag='v0.12.0', submodules="True")
+    version('0.11.0', tag='v0.11.0', submodules="True")
+    version('0.10.1', tag='v0.10.1', submodules="True")
+    version('0.10.0', tag='v0.10.0', submodules="True")
+    version('0.9.0', tag='v0.9.0', submodules="True")
+    version('0.8.0', tag='v0.8.0', submodules="True")
+    version('0.7.0', tag='v0.7.0', submodules="True")
+    version('0.6.0', tag='v0.6.0', submodules="True")
+    version('0.5.3', tag='v0.5.3', submodules="True")
+    version('0.5.2', tag='v0.5.2', submodules="True")
+    version('0.5.1', tag='v0.5.1', submodules="True")
+    version('0.5.0', tag='v0.5.0', submodules="True")
+    version('0.4.1', tag='v0.4.1', submodules="True")
+    version('0.4.0', tag='v0.4.0', submodules="True")
 
-    variant('shared', default=True, description='Build Shared Libs')
-    variant('raja', default=False, description='Build plugin for RAJA')
-    variant('tests', default='basic', values=('none', 'basic', 'benchmarks'),
+    variant('openmp', default=False, description='Build OpenMP backend')
+    variant('shared', default=False, description='Build Shared Libs')
+    variant('libcpp', default=False, description='Uses libc++ instead of libstdc++')
+    variant('hip', default=False, description='Build with HIP support')
+    variant('tests', default='none', values=('none', 'basic', 'benchmarks'),
             multi=False, description='Tests to run')
 
     depends_on('cmake@3.8:', type='build')
-    depends_on('umpire')
-    depends_on('raja', when="+raja")
+    depends_on('cmake@3.9:', when='+cuda', type='build')
+    depends_on('hip', when='+hip')
 
-    depends_on('cmake@3.9:', type='build', when="+cuda")
-    depends_on('umpire+cuda', when="+cuda")
-    depends_on('raja+cuda', when="+raja+cuda")
+    conflicts('+openmp', when='+hip')
 
     phases = ['hostconfig', 'cmake', 'build', 'install']
 
@@ -92,6 +103,8 @@ class Chai(CMakePackage, CudaPackage):
         var=''
         if '+cuda' in spec:
             var= '-'.join([var,'cuda'])
+        if '+libcpp' in spec:
+            var='-'.join([var,'libcpp'])
 
         host_config_path = "hc-%s-%s-%s%s-%s.cmake" % (socket.gethostname().rstrip('1234567890'),
                                                self._get_sys_type(spec),
@@ -105,7 +118,7 @@ class Chai(CMakePackage, CudaPackage):
     def hostconfig(self, spec, prefix, py_site_pkgs_dir=None):
         """
         This method creates a 'host-config' file that specifies
-        all of the options used to configure and build CHAI.
+        all of the options used to configure and build Umpire.
 
         For more details about 'host-config' files see:
             http://software.llnl.gov/conduit/building.html
@@ -157,7 +170,7 @@ class Chai(CMakePackage, CudaPackage):
         cfg.write("# Generated host-config - Edit at own risk!\n")
         cfg.write("###################\n".format("#" * 60))
         cfg.write("# Copyright (c) 2020, Lawrence Livermore National Security, LLC and\n")
-        cfg.write("# other CHAI Project Developers. See the top-level LICENSE file for\n")
+        cfg.write("# other Umpire Project Developers. See the top-level LICENSE file for\n")
         cfg.write("# details.\n")
         cfg.write("#\n")
         cfg.write("# SPDX-License-Identifier: (BSD-3-Clause) \n")
@@ -168,6 +181,8 @@ class Chai(CMakePackage, CudaPackage):
         cfg.write("# Compiler Spec: {0}\n".format(spec.compiler))
         cfg.write("# CMake executable path: %s\n" % cmake_exe)
         cfg.write("#------------------\n\n".format("-" * 60))
+
+        cfg.write(cmake_cache_string("CMAKE_BUILD_TYPE", spec.variants['build_type'].value))
 
         #######################
         # Compiler Settings
@@ -181,13 +196,18 @@ class Chai(CMakePackage, CudaPackage):
 
         # use global spack compiler flags
         cflags = ' '.join(spec.compiler_flags['cflags'])
+        if "+libcpp" in spec:
+            cflags += ' '.join([cflags,"-DGTEST_HAS_CXXABI_H_=0"])
         if cflags:
             cfg.write(cmake_cache_entry("CMAKE_C_FLAGS", cflags))
 
         cxxflags = ' '.join(spec.compiler_flags['cxxflags'])
+        if "+libcpp" in spec:
+            cxxflags += ' '.join([cxxflags,"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0"])
         if cxxflags:
             cfg.write(cmake_cache_entry("CMAKE_CXX_FLAGS", cxxflags))
 
+        # TODO (bernede1@llnl.gov): Is this useful for RAJA?
         if ("gfortran" in f_compiler) and ("clang" in cpp_compiler):
             libdir = pjoin(os.path.dirname(
                            os.path.dirname(f_compiler)), "lib")
@@ -197,8 +217,21 @@ class Chai(CMakePackage, CudaPackage):
                     flags += " -Wl,-rpath,{0}".format(_libpath)
             description = ("Adds a missing libstdc++ rpath")
             if flags:
-                cfg.write(cmake_cache_entry("BLT_EXE_LINKER_FLAGS", flags,
+                cfg.write(cmake_cache_string("BLT_EXE_LINKER_FLAGS", flags,
                                             description))
+
+        gcc_toolchain_regex = re.compile("--gcc-toolchain=(.*)")
+        gcc_name_regex = re.compile(".*gcc-name.*")
+
+        using_toolchain = list(filter(gcc_toolchain_regex.match, spec.compiler_flags['cxxflags']))
+        if(using_toolchain):
+          gcc_toolchain_path = gcc_toolchain_regex.match(using_toolchain[0])
+        using_gcc_name = list(filter(gcc_name_regex.match, spec.compiler_flags['cxxflags']))
+        compilers_using_toolchain = ["pgi", "xl", "icpc"]
+        if any(compiler in cpp_compiler for compiler in compilers_using_toolchain):
+            if using_toolchain or using_gcc_name:
+                cfg.write(cmake_cache_entry("BLT_CMAKE_IMPLICIT_LINK_DIRECTORIES_EXCLUDE",
+                "/usr/tce/packages/gcc/gcc-4.9.3/lib64;/usr/tce/packages/gcc/gcc-4.9.3/gnu/lib64/gcc/powerpc64le-unknown-linux-gnu/4.9.3;/usr/tce/packages/gcc/gcc-4.9.3/gnu/lib64;/usr/tce/packages/gcc/gcc-4.9.3/lib64/gcc/x86_64-unknown-linux-gnu/4.9.3"))
 
         if "+cuda" in spec:
             cfg.write("#------------------{0}\n".format("-" * 60))
@@ -214,35 +247,78 @@ class Chai(CMakePackage, CudaPackage):
             cfg.write(cmake_cache_entry("CMAKE_CUDA_COMPILER",
                                         cudacompiler))
 
+            cuda_release_flags = "-O3 -Xcompiler -Ofast -Xcompiler -finline-functions -Xcompiler -finline-limit=20000"
+            cuda_reldebinf_flags = "-O3 -g -Xcompiler -Ofast -Xcompiler -finline-functions -Xcompiler -finline-limit=20000"
+            cuda_debug_flags = "-O0 -g -Xcompiler -O0 -Xcompiler -finline-functions -Xcompiler -finline-limit=20000"
+   
+            cfg.write(cmake_cache_string("CMAKE_CUDA_FLAGS_RELEASE", cuda_release_flags))
+            cfg.write(cmake_cache_string("CMAKE_CUDA_FLAGS_RELWITHDEBINFO", cuda_reldebinf_flags))
+            cfg.write(cmake_cache_string("CMAKE_CUDA_FLAGS_DEBUG", cuda_debug_flags))
+
             if not spec.satisfies('cuda_arch=none'):
                 cuda_arch = spec.variants['cuda_arch'].value
-                cuda_arch = "sm_{0}".format(cuda_arch[0])
-                flag = '-arch {0}'.format(cuda_arch)
-                cfg.write(cmake_cache_string("CUDA_ARCH",cuda_arch))
-                cfg.write(cmake_cache_string("CMAKE_CUDA_FLAGS", flag))
+                cfg.write(cmake_cache_string("CUDA_ARCH", 'sm_{0}'.format(cuda_arch[0])))
 
         else:
             cfg.write(cmake_cache_option("ENABLE_CUDA", False))
 
-        if "+raja" in spec:
+        if "+hip" in spec:
             cfg.write("#------------------{0}\n".format("-" * 60))
-            cfg.write("# RAJA\n")
+            cfg.write("# HIP\n")
             cfg.write("#------------------{0}\n\n".format("-" * 60))
 
-            cfg.write(cmake_cache_option("ENABLE_RAJA_PLUGIN", True))
-            raja_dir = spec['raja'].prefix
-            cfg.write(cmake_cache_entry("RAJA_DIR", raja_dir))
+            cfg.write(cmake_cache_option("ENABLE_HIP", True))
+
+            hip_root = spec['hip'].prefix
+            rocm_root = hip_root + "/.."
+            cfg.write(cmake_cache_entry("HIP_ROOT_DIR",
+                                        hip_root))
+            cfg.write(cmake_cache_entry("HIP_CLANG_PATH",
+                                        rocm_root + '/llvm/bin'))
+            cfg.write(cmake_cache_entry("HIP_HIPCC_FLAGS",
+                                        '--amdgpu-target=gfx906'))
+            cfg.write(cmake_cache_entry("HIP_RUNTIME_INCLUDE_DIRS",
+                                        "{0}/include;{0}/../hsa/include".format(hip_root)))
+            if ('%gcc' in spec) or (using_toolchain):
+                if ('%gcc' in spec):
+                    gcc_bin = os.path.dirname(self.compiler.cxx)
+                    gcc_prefix = join_path(gcc_bin, '..')
+                else:
+                    gcc_prefix = gcc_toolchain_path.group(1)
+                cfg.write(cmake_cache_entry("HIP_CLANG_FLAGS",
+                "--gcc-toolchain={0}".format(gcc_prefix))) 
+                cfg.write(cmake_cache_entry("CMAKE_EXE_LINKER_FLAGS",
+                "-Wl,-rpath {}/lib64".format(gcc_prefix)))
+
         else:
-            cfg.write(cmake_cache_option("ENABLE_RAJA_PLUGIN", False))
+            cfg.write(cmake_cache_option("ENABLE_HIP", False))
+
+        cfg.write("#------------------{0}\n".format("-" * 60))
+        cfg.write("# Other\n")
+        cfg.write("#------------------{0}\n\n".format("-" * 60))
+
+        cfg.write(cmake_cache_string("RAJA_RANGE_ALIGN", "4"))
+        cfg.write(cmake_cache_string("RAJA_RANGE_MIN_LENGTH", "32"))
+        cfg.write(cmake_cache_string("RAJA_DATA_ALIGN", "64"))
+
+        cfg.write(cmake_cache_option("RAJA_HOST_CONFIG_LOADED", True))
 
         # shared vs static libs
         cfg.write(cmake_cache_option("BUILD_SHARED_LIBS","+shared" in spec))
+        cfg.write(cmake_cache_option("ENABLE_OPENMP","+openmp" in spec))
 
-        umpire_conf_path = spec['umpire'].prefix + "/share/umpire/cmake"
-        cfg.write(cmake_cache_entry("umpire_DIR",umpire_conf_path))
-
-        cfg.write(cmake_cache_option("ENABLE_BENCHMARKS", 'tests=benchmarks' in spec))
-        cfg.write(cmake_cache_option("ENABLE_TESTS", not 'tests=none' in spec))
+        # Note 1: Work around spack adding -march=ppc64le to SPACK_TARGET_ARGS
+        # which is used by the spack compiler wrapper.  This can go away when
+        # BLT removes -Werror from GTest flags
+        # Note 2: Tests are either built if variant is set, or if run-tests
+        # option is passed.
+        if self.spec.satisfies('%clang target=ppc64le:'):
+            cfg.write(cmake_cache_option("ENABLE_TESTS",False))
+            if 'tests=benchmarks' in spec or not 'tests=none' in spec:
+                print("MSG: no testing supported on %clang target=ppc64le:")
+        else:
+            cfg.write(cmake_cache_option("ENABLE_BENCHMARKS", 'tests=benchmarks' in spec))
+            cfg.write(cmake_cache_option("ENABLE_TESTS", not 'tests=none' in spec or self.run_tests))
 
         #######################
         # Close and save

@@ -12,6 +12,7 @@
   static void gpu_test_##X##Y()
 
 #include "chai/config.hpp"
+#include "chai/ArrayManager.hpp"
 #include "chai/ManagedArray.hpp"
 #include "chai/managed_ptr.hpp"
 
@@ -326,7 +327,7 @@ TEST(managed_ptr, managed_array_of_managed_ptr)
   delete[] expectedValues;
 }
 
-#ifdef __CUDACC__
+#ifdef CHAI_GPUCC
 
 template <typename T>
 __global__ void deviceNew(T** arr) {
@@ -348,21 +349,21 @@ GPU_TEST(managed_ptr, make_on_device)
   hostArray[0] = nullptr;
 
   int** deviceArray = nullptr;
-  cudaMalloc(&deviceArray, sizeof(int*));
+  chai::gpuMalloc((void**)(&deviceArray), sizeof(int*));
 
   int** deviceArray2 = nullptr;
-  cudaMalloc(&deviceArray2, sizeof(int*));
+  chai::gpuMalloc((void**)(&deviceArray2), sizeof(int*));
 
   deviceNew<<<1, 1>>>(deviceArray);
 
-  cudaMemcpy(hostArray, deviceArray, sizeof(int*), cudaMemcpyDeviceToHost);
-  cudaMemcpy(deviceArray2, hostArray, sizeof(int*), cudaMemcpyHostToDevice);
+  chai::gpuMemcpy(hostArray, deviceArray, sizeof(int*), gpuMemcpyDeviceToHost);
+  chai::gpuMemcpy(deviceArray2, hostArray, sizeof(int*), gpuMemcpyHostToDevice);
   ASSERT_NE(hostArray[0], nullptr);
 
   deviceDelete<<<1, 1>>>(deviceArray2);
   free(hostArray);
-  cudaFree(deviceArray);
-  cudaFree(deviceArray2);
+  chai::gpuFree(deviceArray);
+  chai::gpuFree(deviceArray2);
 }
 
 GPU_TEST(managed_ptr, gpu_new_and_delete_on_device)
@@ -373,16 +374,16 @@ GPU_TEST(managed_ptr, gpu_new_and_delete_on_device)
 
   // Initialize device side memory to hold a pointer
   RawArrayClass** gpuPointerHolder = nullptr;
-  cudaMalloc(&gpuPointerHolder, sizeof(RawArrayClass*));
+  chai::gpuMalloc((void**)(&gpuPointerHolder), sizeof(RawArrayClass*));
 
   // Create on the device
   chai::detail::make_on_device<<<1, 1>>>(gpuPointerHolder);
 
   // Copy to the host side memory
-  cudaMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(RawArrayClass*), cudaMemcpyDeviceToHost);
+  chai::gpuMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(RawArrayClass*), gpuMemcpyDeviceToHost);
 
   // Free device side memory
-  cudaFree(gpuPointerHolder);
+  chai::gpuFree(gpuPointerHolder);
 
   // Save the pointer
   ASSERT_NE(cpuPointerHolder[0], nullptr);
@@ -402,16 +403,16 @@ GPU_TEST(managed_ptr, gpu_build_managed_ptr)
 
   // Initialize device side memory to hold a pointer
   RawArrayClass** gpuPointerHolder = nullptr;
-  cudaMalloc(&gpuPointerHolder, sizeof(RawArrayClass*));
+  chai::gpuMalloc((void**)(&gpuPointerHolder), sizeof(RawArrayClass*));
 
   // Create on the device
   chai::detail::make_on_device<<<1, 1>>>(gpuPointerHolder);
 
   // Copy to the host side memory
-  cudaMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(RawArrayClass*), cudaMemcpyDeviceToHost);
+  chai::gpuMemcpy(cpuPointerHolder, gpuPointerHolder, sizeof(RawArrayClass*), gpuMemcpyDeviceToHost);
 
   // Free device side memory
-  cudaFree(gpuPointerHolder);
+  chai::gpuFree(gpuPointerHolder);
 
   // Save the pointer
   ASSERT_NE(cpuPointerHolder[0], nullptr);
