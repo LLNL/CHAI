@@ -7,12 +7,12 @@
 set (chai_umpire_example_depends
   chai)
 
-if (ENABLE_CUDA)
+if (CHAI_ENABLE_CUDA)
   set (chai_umpire_example_depends
     ${chai_umpire_example_depends}
     cuda)
 endif()
-if (ENABLE_HIP)
+if (CHAI_ENABLE_HIP)
   set (chai_umpire_example_depends
     ${chai_umpire_example_depends}
     hip)
@@ -23,7 +23,7 @@ blt_add_executable(
   SOURCES chai-umpire-allocators.cpp
   DEPENDS_ON ${chai_umpire_example_depends})
 
-if (ENABLE_CUDA OR ENABLE_HIP)
+if (CHAI_ENABLE_CUDA OR CHAI_ENABLE_HIP)
   blt_add_executable(
     NAME chai-example.exe
     SOURCES example.cpp

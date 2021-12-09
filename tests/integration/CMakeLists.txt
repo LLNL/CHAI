@@ -7,9 +7,9 @@
 set (chai_integration_test_depends
      chai umpire gtest)
 
-blt_list_append(TO chai_integration_test_depends ELEMENTS cuda IF ${ENABLE_CUDA})
-blt_list_append(TO chai_integration_test_depends ELEMENTS hip IF ${ENABLE_HIP})
-blt_list_append(TO chai_integration_test_depends ELEMENTS openmp IF ${ENABLE_OPENMP})
+blt_list_append(TO chai_integration_test_depends ELEMENTS cuda IF ${CHAI_ENABLE_CUDA})
+blt_list_append(TO chai_integration_test_depends ELEMENTS hip IF ${CHAI_ENABLE_HIP})
+blt_list_append(TO chai_integration_test_depends ELEMENTS openmp IF ${CHAI_ENABLE_OPENMP})
 
 # ManagedArray tests
 blt_add_executable(
@@ -55,7 +55,7 @@ if (CHAI_ENABLE_MANAGED_PTR)
     COMMAND managed_ptr_tests)
 endif ()
   
-if (ENABLE_RAJA_PLUGIN)
+if (CHAI_ENABLE_RAJA_PLUGIN)
   set(raja_test_depends
     ${chai_integration_test_depends}
     RAJA)
@@ -73,7 +73,7 @@ if (ENABLE_RAJA_PLUGIN)
     raja-chai-tests
     PUBLIC ${PROJECT_BINARY_DIR}/include)
 
-  if (ENABLE_RAJA_NESTED_TEST)
+  if (CHAI_ENABLE_RAJA_NESTED_TEST)
     blt_add_executable(
       NAME raja-chai-nested-tests 
       SOURCES raja-chai-nested.cpp

@@ -6,15 +6,15 @@
 ##############################################################################
 set (chai_reproducer_depends chai)
 
-if (ENABLE_CUDA)
+if (CHAI_ENABLE_CUDA)
   list(APPEND chai_reproducer_depends cuda)
 endif ()
 
-if (ENABLE_HIP)
+if (CHAI_ENABLE_HIP)
   list(APPEND chai_reproducer_depends hip)
 endif ()
 
-if (CHAI_ENABLE_MANAGED_PTR AND ENABLE_HIP)
+if (CHAI_ENABLE_MANAGED_PTR AND CHAI_ENABLE_HIP)
   blt_add_executable(
     NAME virtual_function_simple_reproducer.exe
     SOURCES virtual_function_simple_reproducer.cpp
