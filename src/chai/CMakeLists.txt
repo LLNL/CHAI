@@ -4,16 +4,6 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
-set(CHAI_ENABLE_PICK ${ENABLE_PICK})
-set(CHAI_ENABLE_CUDA ${ENABLE_CUDA})
-set(CHAI_ENABLE_HIP ${ENABLE_HIP})
-set(CHAI_ENABLE_IMPLICIT_CONVERSIONS ${ENABLE_IMPLICIT_CONVERSIONS})
-set(CHAI_DISABLE_RM ${DISABLE_RM})
-set(CHAI_ENABLE_UM ${ENABLE_UM})
-set(CHAI_ENABLE_RAJA_PLUGIN ${ENABLE_RAJA_PLUGIN})
-set(CHAI_ENABLE_GPU_SIMULATION_MODE ${ENABLE_GPU_SIMULATION_MODE})
-set(CHAI_ENABLE_PINNED ${ENABLE_PINNED})
-
 configure_file(
   ${PROJECT_SOURCE_DIR}/src/chai/config.hpp.in
   ${PROJECT_BINARY_DIR}/include/chai/config.hpp)
@@ -29,7 +19,7 @@ set (chai_headers
   PointerRecord.hpp
   Types.hpp)
 
-if(DISABLE_RM)
+if(CHAI_DISABLE_RM)
   set(chai_headers
     ${chai_headers}
     ManagedArray_thin.inl)
@@ -41,18 +31,18 @@ set (chai_sources
 set (chai_depends
   umpire)
 
-if (ENABLE_CUDA)
+if (CHAI_ENABLE_CUDA)
   set (chai_depends
     ${chai_depends}
     cuda_runtime)
 endif ()
-if (ENABLE_HIP)
+if (CHAI_ENABLE_HIP)
   set (chai_depends
     ${chai_depends}
     hip_runtime)
 endif ()
 
-if (ENABLE_RAJA_PLUGIN)
+if (CHAI_ENABLE_RAJA_PLUGIN)
   set (chai_headers
     ${chai_headers}
     pluginLinker.hpp
@@ -67,7 +57,7 @@ if (ENABLE_RAJA_PLUGIN)
     ${chai_depends}
     RAJA)
 
-  if (ENABLE_CUDA)
+  if (CHAI_ENABLE_CUDA)
     set (chai_depends
       ${chai_depends}
       cuda)

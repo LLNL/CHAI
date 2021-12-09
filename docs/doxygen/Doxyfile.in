@@ -338,10 +338,10 @@ GENERATE_BUGLIST       = YES
 
 GENERATE_DEPRECATEDLIST= YES
 
-# The ENABLED_SECTIONS tag can be used to enable conditional 
+# The CHAI_ENABLED_SECTIONS tag can be used to enable conditional 
 # documentation sections, marked by \if sectionname ... \endif.
 
-ENABLED_SECTIONS       = 
+CHAI_ENABLED_SECTIONS       = 
 
 # The MAX_INITIALIZER_LINES tag determines the maximum number of lines 
 # the initial value of a variable or define consists of for it to appear in 
@@ -973,11 +973,11 @@ PERLMOD_MAKEVAR_PREFIX =
 # Configuration options related to the preprocessor   
 #---------------------------------------------------------------------------
 
-# If the ENABLE_PREPROCESSING tag is set to YES (the default) Doxygen will 
+# If the CHAI_ENABLE_PREPROCESSING tag is set to YES (the default) Doxygen will 
 # evaluate all C-preprocessor directives found in the sources and include 
 # files.
 
-ENABLE_PREPROCESSING   = YES
+CHAI_ENABLE_PREPROCESSING   = YES
 
 # If the MACRO_EXPANSION tag is set to YES Doxygen will expand all macro 
 # names in the source code. If set to NO (the default) only conditional 
@@ -1139,14 +1139,14 @@ UML_LOOK               = NO
 
 TEMPLATE_RELATIONS     = YES
 
-# If the ENABLE_PREPROCESSING, SEARCH_INCLUDES, INCLUDE_GRAPH, and HAVE_DOT 
+# If the CHAI_ENABLE_PREPROCESSING, SEARCH_INCLUDES, INCLUDE_GRAPH, and HAVE_DOT 
 # tags are set to YES then doxygen will generate a graph for each documented 
 # file showing the direct and indirect include dependencies of the file with 
 # other documented files.
 
 INCLUDE_GRAPH          = NO
 
-# If the ENABLE_PREPROCESSING, SEARCH_INCLUDES, INCLUDED_BY_GRAPH, and 
+# If the CHAI_ENABLE_PREPROCESSING, SEARCH_INCLUDES, INCLUDED_BY_GRAPH, and 
 # HAVE_DOT tags are set to YES then doxygen will generate a graph for each 
 # documented header file showing the documented files that directly or 
 # indirectly include this file.

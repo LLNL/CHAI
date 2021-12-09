@@ -47,7 +47,7 @@ if (NOT TARGET umpire)
   endif ()
 endif()
 
-if (ENABLE_RAJA_PLUGIN)
+if (CHAI_ENABLE_RAJA_PLUGIN)
   if (NOT TARGET RAJA)
     if (DEFINED RAJA_DIR)
       # this allows RAJA_DIR to be the install prefix if we are relying on RAJA's
