@@ -8,13 +8,13 @@ set (chai_benchmark_depends
   chai
   gbenchmark)
 
-if (ENABLE_CUDA)
+if (CHAI_ENABLE_CUDA)
   set (chai_benchmark_depends
     ${chai_benchmark_depends}
     cuda)
 endif ()
 
-if (ENABLE_HIP)
+if (CHAI_ENABLE_HIP)
   set (chai_benchmark_depends
     ${chai_benchmark_depends}
     hip)
