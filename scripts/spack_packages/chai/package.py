@@ -74,9 +74,12 @@ class Chai(CMakePackage, CudaPackage, ROCmPackage):
             multi=False, description='Tests to run')
 
     depends_on('umpire')
-    depends_on('raja', when="+raja")
-
     depends_on('umpire@main', when='@main')
+    
+    depends_on('camp')
+    depends_on('camp@0.3.0')
+
+    depends_on('raja', when="+raja")
     depends_on('raja@main', when="@main+raja")
 
     depends_on('cmake@3.14:', type='build')
