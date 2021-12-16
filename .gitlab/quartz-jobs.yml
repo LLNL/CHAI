@@ -38,5 +38,5 @@ gcc_4_9_3:
 
 clang_10_develop_tpls:
   variables:
-    SPEC: " %clang@10.0.1 ^umpire@develop ^raja@develop ^camp@main"
+    SPEC: " %clang@10.0.1 ^umpire@develop ^raja@develop ^camp@0.2.2"
   extends: .build_and_test_on_quartz
