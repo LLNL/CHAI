@@ -17,7 +17,7 @@ endif ()
 if (CHAI_ENABLE_HIP)
   set (chai_benchmark_depends
     ${chai_benchmark_depends}
-    hip)
+    blt::hip)
 endif ()
 
 blt_add_executable(
