@@ -3,22 +3,28 @@ jobs:
   timeoutInMinutes: 360
   strategy:
     matrix: 
-      gcc5: 
-        docker_target: gcc5
-      gcc6:
-        docker_target: gcc6
-      gcc7:
+      gcc7: 
         docker_target: gcc7
-      gcc8:
+      gcc8: 
         docker_target: gcc8
-      clang4:
-        docker_target: clang4
-      clang5:
-        docker_target: clang5
-      clang7:
-        docker_target: clang6
-      nvcc:
-        docker_target: nvcc
+      gcc9: 
+        docker_target: gcc9
+      gcc11: 
+        docker_target: gcc11
+      clang10: 
+        docker_target: clang10
+      clang11: 
+        docker_target: clang11
+      clang12: 
+        docker_target: clang12
+      clang13: 
+        docker_target: clang13
+      nvcc10:
+        docker_target: nvcc10
+      nvcc11:
+        docker_target: nvcc11
+      hip:
+        docker_target: hip
   pool:
     vmImage: 'ubuntu-latest'
   variables:
