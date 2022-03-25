@@ -282,6 +282,11 @@ void ArrayManager::allocate(
   auto alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[space]);
 
   pointer_record->m_pointers[space] = alloc.allocate(size);
+
+#if CHAI_ENABLE_ZERO_INITIALIZED_MEMORY
+  m_resource_manager.memset(new_ptr, 0, new_size);
+#endif
+
   callback(pointer_record, ACTION_ALLOC, space);
 
   registerPointer(pointer_record, space);

@@ -19,6 +19,7 @@ option(CHAI_ENABLE_RAJA_PLUGIN "Build plugin to set RAJA execution spaces" Off)
 option(CHAI_ENABLE_GPU_ERROR_CHECKING "Enable GPU error checking" On)
 option(CHAI_ENABLE_MANAGED_PTR "Enable managed_ptr" On)
 option(CHAI_DEBUG "Enable Debug Logging." Off)
+option(CHAI_ENABLE_ZERO_INITIALIZED_MEMORY "Initialize allocations to 0" Off)
 option(CHAI_ENABLE_RAJA_NESTED_TEST "Enable raja-chai-nested-tests, which fails to build on Debug CUDA builds." On)
 
 option(CHAI_ENABLE_TESTS "Enable CHAI tests" On)
