@@ -11,12 +11,12 @@ cmake_policy(SET CMP0025 NEW)
 include(CMakeDependentOption)
 include(CMakePackageConfigHelpers)
 
-project(Chai LANGUAGES CXX VERSION 2.4.0)
-cmake_minimum_required(VERSION 3.9)
+project(Chai LANGUAGES C CXX VERSION 2022.03.0)
+cmake_minimum_required(VERSION 3.14)
 
 include(cmake/SetupChaiOptions.cmake)
 
-set(BLT_CXX_STD c++11 CACHE STRING "")
+set(BLT_CXX_STD c++14 CACHE STRING "")
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")
   message(STATUS "Setting CMAKE_CXX_EXTENSIONS to ON for PGI Compiler")

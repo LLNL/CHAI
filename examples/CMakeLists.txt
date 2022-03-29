@@ -15,7 +15,7 @@ endif()
 if (CHAI_ENABLE_HIP)
   set (chai_umpire_example_depends
     ${chai_umpire_example_depends}
-    hip)
+    blt::hip)
 endif()
 
 blt_add_executable(
