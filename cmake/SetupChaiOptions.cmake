@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ############################################################################
-option(CHAI_ENABLE_HIP "Enable HIP" Off)
 option(CHAI_ENABLE_GPU_SIMULATION_MODE "Enable GPU Simulation Mode" Off)
 option(CHAI_ENABLE_OPENMP "Enable OpenMP" Off)
 option(CHAI_ENABLE_MPI "Enable MPI (for umpire replay only)" Off)

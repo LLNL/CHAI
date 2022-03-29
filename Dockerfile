@@ -84,5 +84,5 @@ ENV HCC_AMDGPU_TARGET=gfx900
 COPY . /home/chai/workspace
 WORKDIR /home/chai/workspace/build
 RUN . /opt/spack/share/spack/setup-env.sh && spack load hip llvm-amdgpu && \
-    cmake -DBLT_EXPORT_THIRDPARTY=On -DENABLE_WARNINGS_AS_ERRORS=Off -DCMAKE_CXX_COMPILER=amdclang++ -DENABLE_HIP=On .. && \
+    cmake -DBLT_EXPORT_THIRDPARTY=On -DENABLE_WARNINGS_AS_ERRORS=Off -DCHAI_ENABLE_MANAGED_PTR=Off -DCMAKE_CXX_COMPILER=amdclang++ -DCMAKE_C_COMPILER=amdclang -DENABLE_HIP=On .. && \
     make -j 16 VERBOSE=1
