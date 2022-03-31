@@ -265,8 +265,8 @@ class Chai(CMakePackage, CudaPackage, ROCmPackage):
         # shared vs static libs
         cfg.write(cmake_cache_option("BUILD_SHARED_LIBS","+shared" in spec))
 
-        umpire_conf_path = spec['umpire'].prefix + "/share/umpire/cmake"
-        cfg.write(cmake_cache_entry("umpire_DIR",umpire_conf_path))
+        cfg.write(cmake_cache_entry("umpire_DIR",spec['umpire'].prefix))
+        cfg.write(cmake_cache_entry("camp_DIR",spec['camp'].prefix))
 
         cfg.write(cmake_cache_option("ENABLE_BENCHMARKS", 'tests=benchmarks' in spec))
         cfg.write(cmake_cache_option("ENABLE_TESTS", not 'tests=none' in spec))
