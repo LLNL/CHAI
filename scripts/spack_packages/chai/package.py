@@ -266,7 +266,8 @@ class Chai(CMakePackage, CudaPackage, ROCmPackage):
         cfg.write(cmake_cache_option("BUILD_SHARED_LIBS","+shared" in spec))
 
         cfg.write(cmake_cache_entry("umpire_DIR",spec['umpire'].prefix))
-        cfg.write(cmake_cache_entry("camp_DIR",spec['camp'].prefix))
+        camp_conf_path = spec['camp'].prefix + "/lib/cmake/camp"
+        cfg.write(cmake_cache_entry("camp_DIR",camp_conf_path))
 
         cfg.write(cmake_cache_option("ENABLE_BENCHMARKS", 'tests=benchmarks' in spec))
         cfg.write(cmake_cache_option("ENABLE_TESTS", not 'tests=none' in spec))
