@@ -19,7 +19,7 @@ gcc_8_1_0:
     SPEC: "%gcc@8.1.0"
   extends: .build_and_test_on_ruby
 
- icpc_18_0_2:
+icpc_18_0_2:
    variables:
      SPEC: " tests=none %intel@18.0.2"
    extends: .build_and_test_on_ruby
