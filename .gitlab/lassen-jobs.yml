@@ -21,26 +21,26 @@ gcc_8_3_1:
     SPEC: "%gcc@8.3.1 ^cmake@3.14.5"
   extends: .build_and_test_on_lassen
 
-xl_16_1_1_7:
+xl_16_1_1_11:
   variables:
-    SPEC: "%xl@16.1.1.7"
+    SPEC: "%xl@16.1.1.11"
   extends: .build_and_test_on_lassen
 
-xl_16_1_1_7_gcc_8_3_1:
+xl_16_1_1_11_gcc_8_3_1:
   variables:
-    SPEC: "%xl@16.1.1.7 cxxflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 cflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1"
+    SPEC: "%xl@16.1.1.11 cxxflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 cflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1"
   extends: .build_and_test_on_lassen
 
 # CUDA
 
 ibm_clang_9_cuda:
   variables:
-    SPEC: "+cuda %clang@9.0.0ibm ^cuda@10.1.168"
+    SPEC: "+cuda %clang@ibm.9.0.0 ^cuda@10.1.168"
   extends: .build_and_test_on_lassen
 
 ibm_clang_9_gcc_8_cuda:
   variables:
-    SPEC: "+cuda %clang@9.0.0ibm cxxflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 cflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 ^cuda@10.1.168"
+    SPEC: "+cuda %clang@ibm.9.0.0 cxxflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 cflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 ^cuda@10.1.168"
   allow_failure: true
   extends: .build_and_test_on_lassen
 
@@ -49,14 +49,14 @@ gcc_8_3_1_cuda:
     SPEC: "+cuda %gcc@8.3.1 ^cuda@10.1.168"
   extends: .build_and_test_on_lassen
 
-xl_16_1_1_7_cuda:
+xl_16_1_1_11_cuda:
   variables:
-    SPEC: "+cuda %xl@16.1.1.7 ^cuda@10.1.168 ^cmake@3.14.5"
+    SPEC: "+cuda %xl@16.1.1.11 ^cuda@10.1.168 ^cmake@3.14.5"
   extends: .build_and_test_on_lassen
 
-xl_16_1_1_7_gcc_8_3_1_cuda_11:
+xl_16_1_1_11_gcc_8_3_1_cuda_11:
   variables:
-    SPEC: "+cuda %xl@16.1.1.7 cxxflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 cflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 ^cuda@11.0.2 ^cmake@3.14.5"
+    SPEC: "+cuda %xl@16.1.1.11 cxxflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 cflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 ^cuda@11.0.2 ^cmake@3.14.5"
   allow_failure: true
   extends: .build_and_test_on_lassen
 
