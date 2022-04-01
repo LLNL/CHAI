@@ -62,6 +62,16 @@ stages:
     - srun $( [[ -n "${JOBID}" ]] && echo "--jobid=${JOBID}" ) -t 10 -N 1 scripts/gitlab/build_and_test.sh
   variables:
     SLURM_OVERLAP: 1
+  artifacts:
+    reports:
+      junit: junit.xml
+
+.build_toss_4_x86_64_ib_corona_script:
+  script:
+    - srun -p pbatch -t 30 -N 1 scripts/gitlab/build_and_test.sh
+  artifacts:
+    reports:
+      junit: junit.xml
 
 # Lassen and Butte use a different job scheduler (spectrum lsf) that does not
 # allow pre-allocation the same way slurm does.
