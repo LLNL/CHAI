@@ -68,7 +68,7 @@ then
         prefix_opt="--prefix=${prefix}"
     fi
 
-    python scripts/uberenv/uberenv.py --spec="${spec}" ${prefix_opt}
+    python3 scripts/uberenv/uberenv.py --spec="${spec}" ${prefix_opt}
 
 fi
 
@@ -123,10 +123,17 @@ then
     rm -rf ${build_dir} 2>/dev/null
     mkdir -p ${build_dir} && cd ${build_dir}
 
+    date
     cmake \
       -C ${hostconfig_path} \
       ${project_dir}
-    cmake --build . -j
+    if ! cmake --build . -j; then
+      echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+      echo "Compilation failed, running make VERBOSE=1"
+      echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+      $cmake_exe --build . --verbose -j 1
+    fi
+    date
 fi
 
 # Test
