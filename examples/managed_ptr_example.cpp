@@ -32,13 +32,13 @@ int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv))
   chai::managed_ptr<TestBase> derived = chai::make_managed<TestDerived>(42);
 
   // chai::managed_ptr can be accessed on the host
-  forall(sequential(), 0, 1, [=] CHAI_HOST (int i) {
+  forall(sequential(), 0, 1, [=] CHAI_HOST (int /*i*/) {
     printf("Result of virtual function call on host: %d\n", derived->getValue());
   });
 
 #if defined(CHAI_GPUCC)
   // chai::managed_ptr can be accessed on the device
-  forall(gpu(), 0, 1, [=] CHAI_DEVICE (int i) {
+  forall(gpu(), 0, 1, [=] CHAI_DEVICE (int /*i*/) {
     printf("Result of virtual function call on device: %d\n", derived->getValue());
   });
 #endif
