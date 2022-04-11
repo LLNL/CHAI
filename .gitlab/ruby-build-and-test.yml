@@ -1,0 +1,74 @@
+##############################################################################
+# Copyright (c) 2016-22, Lawrence Livermore National Security, LLC and Umpire
+# project contributors. See the COPYRIGHT file for details.
+#
+# SPDX-License-Identifier: (MIT)
+##############################################################################
+
+stages:
+  - allocate_resources
+  - build_and_test
+  - release_resources
+
+# In pre-build phase, allocate a node for builds.
+# TODO: make the resource configurable, not all projects will want the same.
+allocate_resources (on ruby):
+  variables:
+    GIT_STRATEGY: none
+  extends: .on_ruby
+  stage: allocate_resources
+  script:
+    - salloc -N 1 -c 36 -p pdebug -t 20 --no-shell --job-name=${ALLOC_NAME}
+
+# Gitlab jobs for the Ruby machine at LLNL.
+clang_10:
+  variables:
+    SPEC: " %clang@10.0.1"
+  extends: .build_and_test_on_ruby
+
+clang_9:
+  variables:
+    SPEC: " %clang@9.0.0"
+  extends: .build_and_test_on_ruby
+
+gcc_8_1_0:
+  variables:
+    SPEC: "%gcc@8.1.0"
+  extends: .build_and_test_on_ruby
+
+# icpc_18_0_2:
+#   variables:
+#     SPEC: " tests=none %intel@18.0.2"
+#   extends: .build_and_test_on_ruby
+
+icpc_19_1_0:
+  variables:
+    SPEC: "%intel@19.1.0"
+  extends: .build_and_test_on_ruby
+
+# Extras jobs.
+gcc_4_9_3:
+  variables:
+    SPEC: "%gcc@4.9.3"
+  extends: .build_and_test_on_ruby
+
+#clang_10_develop_tpls:
+#  variables:
+#    SPEC: " %clang@10.0.1 ^umpire@develop ^raja@develop ^camp@main"
+#  extends: .build_and_test_on_ruby
+
+# In post-build phase, deallocate resources.
+# Note : we make sure this is run even on build phase failure using a specific
+# rule in the template ".on_ruby".
+release_resources (on ruby):
+  variables:
+    GIT_STRATEGY: none
+  extends: .on_ruby
+  stage: release_resources
+  script:
+    - export JOBID=$(squeue -h --name=${ALLOC_NAME} --format=%A)
+    - ([[ -n "${JOBID}" ]] && scancel ${JOBID})
+
+include:
+  - local: .gitlab/configs/common.yml
+  - local: .gitlab/configs/ruby-config.yml

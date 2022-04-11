@@ -1,0 +1,24 @@
+###############################################################################
+# Copyright (c) 2016-22, Lawrence Livermore National Security, LLC and CHAI
+# project contributors. See the COPYRIGHT file for details.
+#
+# SPDX-License-Identifier: (MIT)
+###############################################################################
+
+# We define the following GitLab pipeline variables:
+variables:
+
+# Note: Compared to Umpire CI, CHAI is not using service users or a custom build
+# directory.
+
+# Tells Gitlab to recursively update the submodules when cloning the project.
+  GIT_SUBMODULE_STRATEGY: recursive
+
+# We build the projects in the CI clone directory.
+# TODO: add a clean-up mechanism
+  BUILD_ROOT: ${CI_PROJECT_DIR}
+
+# On LLNL's ruby, this pipeline creates only one allocation shared among jobs
+# in order to save time and resources. This allocation has to be uniquely named
+# so that we are sure to retrieve it and avoid collisions.
+  ALLOC_NAME: ${CI_PROJECT_NAME}_ci_${CI_PIPELINE_ID}

@@ -1,11 +1,15 @@
 ##############################################################################
-# Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and Umpire
+# Copyright (c) 2016-22, Lawrence Livermore National Security, LLC and CHAI
 # project contributors. See the COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (MIT)
 ##############################################################################
 
-# CPU ONLY
+stages:
+  - build_and_test
+
+# Gitlab jobs for the lassen machine at LLNL.
+# CPU only.
 ibm_clang_9:
   variables:
     SPEC: "%clang@9.0.0ibm"
@@ -31,8 +35,7 @@ xl_16_1_1_7_gcc_8_3_1:
     SPEC: "%xl@16.1.1.7 cxxflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1 cflags=--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1"
   extends: .build_and_test_on_lassen
 
-# CUDA
-
+# CUDA.
 ibm_clang_9_cuda:
   variables:
     SPEC: "+cuda %clang@9.0.0ibm ^cuda@10.1.168"
@@ -60,8 +63,7 @@ xl_16_1_1_7_gcc_8_3_1_cuda_11:
   allow_failure: true
   extends: .build_and_test_on_lassen
 
-# EXTRAS
-
+# Extras.
 clang_9_0_0_libcpp (build and test on lassen):
   variables:
     SPEC: "%clang@9.0.0 cxxflags='-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0' cflags='-DGTEST_HAS_CXXABI_H_=0'"
@@ -78,3 +80,7 @@ clang_9_0_0_datarace (build and test on lassen):
     SPEC: "%clang@9.0.0 cxxflags=-fsanitize=thread"
   allow_failure: true
   extends: .build_and_test_on_lassen
+
+include:
+  - local: .gitlab/configs/common.yml
+  - local: .gitlab/configs/lassen-config.yml
