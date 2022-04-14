@@ -30,7 +30,7 @@
 # Note: compared to Umpire CI, CHAI does not use junit reports.
 .build_blueos_3_ppc64le_ib_p9_script:
   script:
-    - lalloc 1 -W 20 scripts/gitlab/build_and_test.sh
+    - lalloc 1 -W 30 scripts/gitlab/build_and_test.sh
 
 .build_and_test_on_lassen:
   extends: [.build_blueos_3_ppc64le_ib_p9_script, .on_lassen]
