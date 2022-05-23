@@ -81,13 +81,16 @@ target_include_directories(
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-configure_file(
-  ${PROJECT_SOURCE_DIR}/src/chai/chai-config.cmake.in
-  ${PROJECT_BINARY_DIR}/share/chai/cmake/chai-config.cmake)
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+  "${PROJECT_SOURCE_DIR}/src/chai/chai-config.cmake.in"
+  "${PROJECT_BINARY_DIR}/chai-config.cmake"
+  PATH_VARS CMAKE_INSTALL_PREFIX
+  INSTALL_DESTINATION lib/cmake/chai)
 
 install(
-  FILES ${PROJECT_BINARY_DIR}/share/chai/cmake/chai-config.cmake
-  DESTINATION share/chai/cmake/)
+  FILES ${PROJECT_BINARY_DIR}/chai-config.cmake
+  DESTINATION lib/cmake/chai)
 
 install(
   FILES ${PROJECT_BINARY_DIR}/include/chai/config.hpp

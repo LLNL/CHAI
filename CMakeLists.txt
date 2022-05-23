@@ -17,6 +17,7 @@ cmake_minimum_required(VERSION 3.14)
 include(cmake/SetupChaiOptions.cmake)
 
 set(BLT_CXX_STD c++14 CACHE STRING "")
+set(BLT_EXPORT_THIRDPARTY On CACHE BOOL "")
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")
   message(STATUS "Setting CMAKE_CXX_EXTENSIONS to ON for PGI Compiler")

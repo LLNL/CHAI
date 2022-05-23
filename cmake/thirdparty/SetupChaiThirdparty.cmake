@@ -68,3 +68,13 @@ if (CHAI_ENABLE_RAJA_PLUGIN)
     message(STATUS "CHAI: using existing RAJA target")
   endif()
 endif ()
+
+set(CHAI_NEEDS_BLT_TPLS False) 
+ if (CHAI_ENABLE_MPI OR CHAI_ENABLE_HIP OR CHAI_ENABLE_OPENMP OR CHAI_ENABLE_CUDA)
+   set(CHAI_NEEDS_BLT_TPLS True)
+ endif ()
+
+ if (CHAI_NEEDS_BLT_TPLS)
+   blt_export_tpl_targets(EXPORT chai-blt-targets NAMESPACE chai)
+   install(EXPORT chai-blt-targets DESTINATION lib/cmake/chai)
+ endif()
