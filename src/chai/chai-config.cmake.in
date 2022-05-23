@@ -17,19 +17,6 @@ if (@CHAI_NEEDS_BLT_TPLS@)
   endif ()
 endif()
 
-if (NOT TARGET camp)
-  set(CHAI_CAMP_DIR "@camp_DIR@")
-  if(NOT camp_DIR) 
-    set(camp_DIR ${CHAI_CAMP_DIR}) 
-  endif()
-
-  find_dependency(camp CONFIG NO_DEFAULT_PATH PATHS 
-    ${camp_DIR}
-    ${camp_DIR}/lib/cmake/camp
-    @PACKAGE_CMAKE_INSTALL_PREFIX@
-    @PACKAGE_CMAKE_INSTALL_PREFIX@/lib/cmake/camp)
-endif ()
-
 if (NOT TARGET umpire)
   set(CHAI_UMPIRE_DIR "@umpire_DIR@")
   if(NOT umpire_DIR) 
@@ -49,7 +36,7 @@ if (NOT TARGET RAJA)
     set(RAJA_DIR ${CHAI_UMPIRE_DIR}) 
   endif()
 
-  find_dependency(raja CONFIG NO_DEFAULT_PATH PATHS 
+  find_dependency(RAJA CONFIG NO_DEFAULT_PATH PATHS 
     ${RAJA_DIR}
     ${RAJA_DIR}/lib/cmake/raja
     @PACKAGE_CMAKE_INSTALL_PREFIX@
