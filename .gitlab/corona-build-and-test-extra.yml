@@ -5,4 +5,5 @@
 # SPDX-License-Identifier: (MIT)
 ##############################################################################
 
-# No extra jobs on corona
+variables:
+  INCLUDED_FILE_CANNOT_BE_EMPTY: "True"

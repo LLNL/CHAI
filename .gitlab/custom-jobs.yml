@@ -10,4 +10,4 @@
 # CI behavior.
 .custom_build_and_test:
   variables:
-    JOB_TEMPLATE_CANNOT_BE_EMPTY: True
+    JOB_TEMPLATE_CANNOT_BE_EMPTY: "True"
