@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016-22, Lawrence Livermore National Security, LLC and CHAI
+# Copyright (c) 2022, Lawrence Livermore National Security, LLC and RADIUSS
 # project contributors. See the COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (MIT)
@@ -16,6 +16,10 @@
 # to a test phase on a given machine. This design is simpler and more scalable
 # than doing the same with stages.
 
+# We start with custom configuration, local to the project.
+include:
+  - local: .gitlab/custom-variables.yml
+
 # The stages in the top-level pipeline described here correspond to high level
 # steps in the testing workflow.
 # TODO: rehabilitate multi-project and branch radiuss-spack-testing.
@@ -24,35 +28,50 @@ stages:
   - multi-project # unused so far
   - radiuss-spack-testing # unused so far
 
-# Note: Compared to Umpire CI, CHAI is not using service users or a custom build
-# directory.
-
 # Trigger sub-pipelines:
 ruby-build-and-test:
   stage: build-and-test
-  variables:
-    # Explicitly pass down variables that we want to be able to set when
-    # triggering pipelines manually or using scheduling.
-    ALL_TARGETS: "${ALL_TARGETS}"
-    ON_RUBY: "${ON_RUBY}"
   trigger:
-    include: .gitlab/ruby-build-and-test.yml
+    include:
+      - local: .gitlab/custom-jobs.yml
+      - remote: 'https://raw.githubusercontent.com/LLNL/radiuss-shared-ci/main/ruby-build-and-test.yml'
+      - local: .gitlab/ruby-build-and-test-extra.yml
     strategy: depend
+    forward:
+      pipeline_variables: true
 
-#corona-build-and-test:
-#  stage: build-and-test
-#  variables:
-#    ALL_TARGETS: "${ALL_TARGETS}"
-#    ON_CORONA: "${ON_CORONA}"
-#  trigger:
-#    include: .gitlab/corona-build-and-test.yml
-#    strategy: depend
+corona-build-and-test:
+  stage: build-and-test
+  trigger:
+    include:
+      - local: .gitlab/custom-jobs.yml
+      - remote: 'https://raw.githubusercontent.com/LLNL/radiuss-shared-ci/main/corona-build-and-test.yml'
+      - local: .gitlab/corona-build-and-test-extra.yml
+    strategy: depend
+    forward:
+      pipeline_variables: true
 
 lassen-build-and-test:
   stage: build-and-test
-  variables:
-    ALL_TARGETS: "${ALL_TARGETS}"
-    ON_LASSEN: "${ON_LASSEN}"
   trigger:
-    include: .gitlab/lassen-build-and-test.yml
+    include:
+      - local: .gitlab/custom-jobs.yml
+      - remote: 'https://raw.githubusercontent.com/LLNL/radiuss-shared-ci/main/lassen-build-and-test.yml'
+      - local: .gitlab/lassen-build-and-test-extra.yml
     strategy: depend
+    forward:
+      pipeline_variables: true
+
+# If testing develop branch, trigger CHAI pipeline with this version of Umpire.
+# TODO: Once Spack allows to clone a specific commit on demand, then point to the exact commit.
+#       This will prevent from sticking to a branch (here develop).
+# trigger-chai:
+#  stage: multi-project
+#  rules:
+#    - if: '$CI_COMMIT_BRANCH == "develop" || $MULTI_PROJECT == "ON"' #run only if ...
+#  variables:
+#    UPDATE_UMPIRE: develop
+#  trigger:
+#    project: radiuss/chai
+#    branch: develop
+#    strategy: depend
