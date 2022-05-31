@@ -82,8 +82,6 @@ class Chai(CMakePackage, CudaPackage, ROCmPackage):
     depends_on('cmake@3.14:', type='build')
     depends_on('umpire+cuda', when="+cuda")
     depends_on('raja+cuda', when="+raja+cuda")
-    depends_on('umpire+cuda+allow-untested-versions', when="+cuda+allow-untested-versions")
-    depends_on('raja+cuda+allow-untested-versions', when="+raja+cuda+allow-untested-versions")
 
     for val in ROCmPackage.amdgpu_targets:
         depends_on('raja amdgpu_target=%s' % val, when='amdgpu_target=%s' % val)
