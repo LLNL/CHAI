@@ -52,21 +52,21 @@ then
 
     prefix_opt=""
 
-    if [[ -d /dev/shm ]]
-    then
-        prefix="/dev/shm/${hostname}"
-        if [[ -z ${job_unique_id} ]]; then
-          job_unique_id=manual_job_$(date +%s)
-          while [[ -d ${prefix}/${job_unique_id} ]] ; do
-              sleep 1
-              job_unique_id=manual_job_$(date +%s)
-          done
-        fi
+    #if [[ -d /dev/shm ]]
+    #then
+    #    prefix="/dev/shm/${hostname}"
+    #    if [[ -z ${job_unique_id} ]]; then
+    #      job_unique_id=manual_job_$(date +%s)
+    #      while [[ -d ${prefix}/${job_unique_id} ]] ; do
+    #          sleep 1
+    #          job_unique_id=manual_job_$(date +%s)
+    #      done
+    #    fi
 
-        prefix="${prefix}/${job_unique_id}"
-        mkdir -p ${prefix}
-        prefix_opt="--prefix=${prefix}"
-    fi
+    #    prefix="${prefix}/${job_unique_id}"
+    #    mkdir -p ${prefix}
+    #    prefix_opt="--prefix=${prefix}"
+    #fi
 
     python scripts/uberenv/uberenv.py --spec="${spec}" ${prefix_opt}
 
