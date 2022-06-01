@@ -7,7 +7,7 @@
 
 ibm_clang_9_cuda:
   variables:
-    SPEC: "+cuda %clang@9.0.0ibm ^cuda@10.1.168"
+    SPEC: "+cuda %clang@ibm.9.0.0 ^cuda@10.1.168"
   extends: .build_and_test_on_lassen
 
 clang_9_0_0_libcpp (build and test on lassen):
