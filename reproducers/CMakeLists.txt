@@ -11,7 +11,7 @@ if (CHAI_ENABLE_CUDA)
 endif ()
 
 if (CHAI_ENABLE_HIP)
-  list(APPEND chai_reproducer_depends hip)
+  list(APPEND chai_reproducer_depends blt::hip)
 endif ()
 
 if (CHAI_ENABLE_MANAGED_PTR AND CHAI_ENABLE_HIP)

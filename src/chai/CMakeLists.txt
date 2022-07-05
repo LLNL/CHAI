@@ -40,7 +40,7 @@ endif ()
 if (CHAI_ENABLE_HIP)
   set (chai_depends
     ${chai_depends}
-    hip_runtime)
+    blt::hip_runtime)
 endif ()
 
 if (CHAI_ENABLE_RAJA_PLUGIN)

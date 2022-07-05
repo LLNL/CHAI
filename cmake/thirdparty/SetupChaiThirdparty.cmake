@@ -23,10 +23,11 @@ if (NOT TARGET umpire)
       LIBRARIES umpire
       DEPENDS_ON ${UMPIRE_DEPENDS})
   else ()
-    set(OLD_ENABLE_FORTRAN ${ENABLE_FORTRAN})
-    set(ENABLE_FORTRAN Off CACHE BOOL "Enable Fortran in Umpire")
+    set(UMPIRE_ENABLE_FORTRAN Off CACHE BOOL "Enable Fortran in Umpire")
+    set(UMPIRE_ENABLE_C Off CACHE BOOL "Enable Fortran in Umpire")
+    set(UMPIRE_ENABLE_TESTS Off CACHE BOOL "")
+    set(UMPIRE_ENABLE_TOOLS Off CACHE BOOL "")
     add_subdirectory(${PROJECT_SOURCE_DIR}/src/tpl/umpire)
-    set(ENABLE_FORTRAN ${OLD_ENABLE_FORTRAN})
   endif()
 
   # Umpire depends on camp

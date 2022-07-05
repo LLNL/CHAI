@@ -7,36 +7,36 @@
 clang_10:
   variables:
     SPEC: " %clang@10.0.1"
-  extends: .build_and_test_on_quartz
+  extends: .build_and_test_on_ruby
 
 clang_9:
   variables:
     SPEC: " %clang@9.0.0"
-  extends: .build_and_test_on_quartz
+  extends: .build_and_test_on_ruby
 
 gcc_8_1_0:
   variables:
     SPEC: "%gcc@8.1.0"
-  extends: .build_and_test_on_quartz
+  extends: .build_and_test_on_ruby
 
 # icpc_18_0_2:
 #   variables:
 #     SPEC: " tests=none %intel@18.0.2"
-#   extends: .build_and_test_on_quartz
+#   extends: .build_and_test_on_ruby
 
 icpc_19_1_0:
   variables:
     SPEC: "%intel@19.1.0"
-  extends: .build_and_test_on_quartz
+  extends: .build_and_test_on_ruby
 
 # EXTRAS
 
 gcc_4_9_3:
   variables:
     SPEC: "%gcc@4.9.3"
-  extends: .build_and_test_on_quartz
+  extends: .build_and_test_on_ruby
 
 #clang_10_develop_tpls:
 #  variables:
-#    SPEC: " %clang@10.0.1 ^umpire@develop ^raja@develop ^camp@0.2.2"
-#  extends: .build_and_test_on_quartz
+#    SPEC: " %clang@10.0.1 ^umpire@develop ^raja@develop ^camp@main"
+#  extends: .build_and_test_on_ruby

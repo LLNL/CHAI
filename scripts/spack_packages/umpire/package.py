@@ -24,6 +24,7 @@ class Umpire(CachedCMakePackage, CudaPackage, ROCmPackage):
 
     version('develop', branch='develop', submodules='True')
     version('main', branch='main', submodules='True')
+    version('2022.03.0', tag='v2022.03.0', submodules=True)
     version('6.0.0', tag='v6.0.0', submodules=True)
     version('5.0.1', tag='v5.0.1', submodules=True)
     version('5.0.0', tag='v5.0.0', submodules=True)
@@ -88,7 +89,7 @@ class Umpire(CachedCMakePackage, CudaPackage, ROCmPackage):
         depends_on('camp cuda_arch={0}'.format(sm_),
                    when='cuda_arch={0}'.format(sm_))
 
-    depends_on('camp@0.2.2')
+    depends_on('camp')
 
     conflicts('+numa', when='@:0.3.2')
     conflicts('~c', when='+fortran', msg='Fortran API requires C API')
