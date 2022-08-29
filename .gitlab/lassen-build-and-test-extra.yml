@@ -12,7 +12,7 @@ ibm_clang_9_cuda:
 
 clang_9_0_0_libcpp (build and test on lassen):
   variables:
-    SPEC: "%clang@9.0.0 cxxflags='-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0' cflags='-DGTEST_HAS_CXXABI_H_=0'"
+    SPEC: "%clang@9.0.0 cxxflags=\"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0\" cflags=\"-DGTEST_HAS_CXXABI_H_=0\""
   extends: .build_and_test_on_lassen
 
 clang_9_0_0_memleak (build and test on lassen):
