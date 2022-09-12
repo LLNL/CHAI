@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
+
 ##############################################################################
-# Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
+# Copyright (c) 2016-22, Lawrence Livermore National Security, LLC and CHAI
 # project contributors. See the COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
+
+
+# set -x
 set -o errexit
 set -o nounset
 
 option=${1:-""}
 hostname="$(hostname)"
+truehostname=${hostname//[0-9]/}
 project_dir="$(pwd)"
 
 build_root=${BUILD_ROOT:-""}
@@ -21,6 +26,10 @@ raja_version=${UPDATE_RAJA:-""}
 umpire_version=${UPDATE_UMPIRE:-""}
 
 # Dependencies
+date
+echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+echo "~~~~~ Build and test started"
+echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 if [[ "${option}" != "--build-only" && "${option}" != "--test-only" ]]
 then
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
@@ -66,29 +75,41 @@ then
         prefix="${prefix}/${job_unique_id}"
         mkdir -p ${prefix}
         prefix_opt="--prefix=${prefix}"
+
+        # We force Spack to put all generated files (cache and configuration of
+        # all sorts) in a unique location so that there can be no collision
+        # with existing or concurrent Spack.
+        spack_user_cache="${prefix}/spack-user-cache"
+        export SPACK_DISABLE_LOCAL_CONFIG=""
+        export SPACK_USER_CACHE_PATH="${spack_user_cache}"
+        mkdir -p ${spack_user_cache}
     fi
 
     ./scripts/uberenv/uberenv.py --spec="${spec}" ${prefix_opt}
 
 fi
+  echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+  echo "~~~~~ Dependencies Built"
+  echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+date
 
 # Host config file
 if [[ -z ${hostconfig} ]]
 then
     # If no host config file was provided, we assume it was generated.
     # This means we are looking of a unique one in project dir.
-    hostconfigs=( $( ls "${project_dir}/"hc-*.cmake ) )
+    hostconfigs=( $( ls "${project_dir}/"*.cmake ) )
     if [[ ${#hostconfigs[@]} == 1 ]]
     then
         hostconfig_path=${hostconfigs[0]}
         echo "Found host config file: ${hostconfig_path}"
     elif [[ ${#hostconfigs[@]} == 0 ]]
     then
-        echo "No result for: ${project_dir}/hc-*.cmake"
+        echo "No result for: ${project_dir}/*.cmake"
         echo "Spack generated host-config not found."
         exit 1
     else
-        echo "More than one result for: ${project_dir}/hc-*.cmake"
+        echo "More than one result for: ${project_dir}/*.cmake"
         echo "${hostconfigs[@]}"
         echo "Please specify one with HOST_CONFIG variable"
         exit 1
@@ -98,23 +119,31 @@ else
     hostconfig_path="${project_dir}/host-configs/${hostconfig}"
 fi
 
+hostconfig=$(basename ${hostconfig_path})
+
 # Build Directory
 if [[ -z ${build_root} ]]
 then
-    build_root=$(pwd)
+    build_root="/dev/shm$(pwd)"
+else
+    build_root="/dev/shm${build_root}"
 fi
 
-build_dir="${build_root}/build_${hostconfig//.cmake/}"
+build_dir="${build_root}/build_${job_unique_id}_${hostconfig//.cmake/}"
+install_dir="${build_root}/install_${job_unique_id}_${hostconfig//.cmake/}"
 
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo "~~~~~ Host-config: ${hostconfig_path}"
-echo "~~~~~ Build Dir:   ${build_dir}"
-echo "~~~~~ Project Dir: ${project_dir}"
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+cmake_exe=`grep 'CMake executable' ${hostconfig_path} | cut -d ':' -f 2 | xargs`
 
 # Build
 if [[ "${option}" != "--deps-only" && "${option}" != "--test-only" ]]
 then
+    date
+    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    echo "~~~~~ Host-config: ${hostconfig_path}"
+    echo "~~~~~ Build Dir:   ${build_dir}"
+    echo "~~~~~ Project Dir: ${project_dir}"
+    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    echo ""
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
     echo "~~~~~ Building CHAI"
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
@@ -123,15 +152,34 @@ then
     rm -rf ${build_dir} 2>/dev/null
     mkdir -p ${build_dir} && cd ${build_dir}
 
-    cmake \
+    if [[ "${truehostname}" == "corona" ]]
+    then
+        module unload rocm
+    fi
+    $cmake_exe \
       -C ${hostconfig_path} \
+      -DCMAKE_INSTALL_PREFIX=${install_dir} \
       ${project_dir}
-    cmake --build . -j
+    if ! $cmake_exe --build . -j; then
+      echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+      echo "Compilation failed, running make VERBOSE=1"
+      echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+      $cmake_exe --build . --verbose -j 1
+    else
+      # todo this should use cmake --install once we use CMake 3.15+ everywhere
+      make install
+    fi
+
+    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    echo "~~~~~ CHAI Built"
+    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    date
 fi
 
 # Test
 if [[ "${option}" != "--build-only" ]] && grep -q -i "ENABLE_TESTS.*ON" ${hostconfig_path}
 then
+    date
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
     echo "~~~~~ Testing CHAI"
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
@@ -143,7 +191,7 @@ then
 
     cd ${build_dir}
 
-    ctest --output-on-failure -T test 2>&1 | tee tests_output.txt
+    ctest --output-on-failure --no-compress-output -T test -VV 2>&1 | tee tests_output.txt
 
     no_test_str="No tests were found!!!"
     if [[ "$(tail -n 1 tests_output.txt)" == "${no_test_str}" ]]
@@ -153,10 +201,27 @@ then
 
     echo "Copying Testing xml reports for export"
     tree Testing
-    cp Testing/*/Test.xml ${project_dir}
+    xsltproc -o junit.xml ${project_dir}/blt/tests/ctest-to-junit.xsl Testing/*/Test.xml
+    mv junit.xml ${project_dir}/junit.xml
 
     if grep -q "Errors while running CTest" ./tests_output.txt
     then
         echo "ERROR: failure(s) while running CTest" && exit 1
     fi
+
+    if [[ ! -d ${install_dir} ]]
+    then
+        echo "ERROR: install directory not found : ${install_dir}" && exit 1
+    fi
+
+    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    echo "~~~~~ CHAI Tests Complete"
+    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    date
+
 fi
+
+echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+echo "~~~~~ Build and test completed"
+echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+date
