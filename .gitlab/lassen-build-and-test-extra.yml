@@ -5,6 +5,35 @@
 # SPDX-License-Identifier: (MIT)
 ##############################################################################
 
+########################
+# Overridden shared jobs
+########################
+# We duplicate the shared jobs description and add necessary changes for RAJA.
+# We keep ${PROJECT_<MACHINE>_VARIANTS} and ${PROJECT_<MACHINE>_DEPS} So that
+# the comparison with the original job is easier.
+
+# Overriding shared spec: Longer allocation + Allow failures : known to fail at raja install
+pgi_20_4_gcc_8_3_1:
+  extends: .build_and_test_on_lassen
+  variables:
+    SPEC: "${PROJECT_LASSEN_VARIANTS} %pgi@20.4 cxxflags=\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" cflags=\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" ${PROJECT_LASSEN_DEPS}"
+  allow_failure: true
+
+# Overriding shared spec: Allow failures : known to fail at raja install
+ibm_clang_9_0_0_gcc_8_3_1_cuda_10_1_168:
+  extends: .build_and_test_on_lassen
+  variables:
+    SPEC: " ${PROJECT_LASSEN_VARIANTS} +cuda %clang@ibm.9.0.0 cxxflags=\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" cflags=\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" ^cuda@10.1.168 ${PROJECT_LASSEN_DEPS}"
+  allow_failure: true
+
+
+############
+# Extra jobs
+############
+# We do not recommend using ${PROJECT_<MACHINE>_VARIANTS} and
+# ${PROJECT_<MACHINE>_DEPS} in the extra jobs. There is no reason not to fully
+# describe the spec here.
+
 # In RAJA, this spec has an updated cuda (11.0.2), with cuda_arch=70 set.
 ibm_clang_9_0_0_cuda_10_1_168:
   variables:
@@ -28,11 +57,3 @@ clang_9_0_0_datarace (build and test on lassen):
   allow_failure: true
   extends: .build_and_test_on_lassen
 
-# Overridden jobs
-
-# Overriding shared spec: Longer allocation + Allow failures
-pgi_20_4_gcc_8_3_1:
-  extends: .build_and_test_on_lassen
-  variables:
-    SPEC: "${PROJECT_LASSEN_VARIANTS} %pgi@20.4 cxxflags=\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" cflags=\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" ${PROJECT_LASSEN_DEPS}"
-  allow_failure: true
