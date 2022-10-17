@@ -19,5 +19,6 @@
 #cmakedefine CHAI_ENABLE_RAJA_PLUGIN
 #cmakedefine CHAI_ENABLE_GPU_SIMULATION_MODE
 #cmakedefine CHAI_ENABLE_PINNED
+#cmakedefine CHAI_ENABLE_COMPILE_TIME_CHECKS
 
 #endif // CHAI_config_HPP

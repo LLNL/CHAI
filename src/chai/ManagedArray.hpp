@@ -178,6 +178,19 @@ public:
 
   CHAI_HOST_DEVICE ManagedArray<T> slice(size_t begin, size_t elems=(size_t)-1) const;
 
+#if defined(CHAI_ENABLE_COMPILE_TIME_CHECKS)
+  /*!
+   * This is a way to detect at compile time if a ManagedArray is used outside of a
+   * lambda capture (i.e. outside of a RAJA loop where the data might not have been
+   * moved to the correct execution space). It is not a perfect check, but may prove
+   * useful.
+   */
+  template <typename Idx>
+  CHAI_HOST_DEVICE T& operator[](const Idx i) {
+     static_assert(false, "Use of non-const operator[] is not allowed!");
+  }
+#endif
+
   /*!
    * \brief Return reference to i-th element of the ManagedArray.
    *
