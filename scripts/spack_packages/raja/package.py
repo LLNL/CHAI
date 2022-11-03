@@ -91,7 +91,10 @@ class Raja(CMakePackage, CudaPackage, ROCmPackage):
             multi=False, description='Tests to run')
     variant('desul', default=False, description='Build Desul Atomics backend')
 
-    depends_on('cmake@3.9:', type='build')
+    depends_on("cmake@3.20:", when="@2022.10.0:", type="build")
+    depends_on("cmake@3.23:", when="@2022.10.0: +rocm", type="build")
+    depends_on("cmake@3.14:", when="@2022.03.0:", type="build")
+    depends_on("cmake@:3.20", when="@2022.03.0:2022.03 +rocm", type="build")
 
     depends_on('blt@0.4.1', type='build', when='@main')
     depends_on('blt@0.4.1:', type='build')
@@ -296,7 +299,7 @@ class Raja(CMakePackage, CudaPackage, ROCmPackage):
 
             if not spec.satisfies('cuda_arch=none'):
                 cuda_arch = spec.variants['cuda_arch'].value
-                cfg.write(cmake_cache_string("CUDA_ARCH", 'sm_{0}'.format(cuda_arch[0])))
+                cfg.write(cmake_cache_string("CMAKE_CUDA_ARCHITECTURES", '{0}'.format(cuda_arch[0])))
 
         else:
             cfg.write(cmake_cache_option("ENABLE_CUDA", False))
