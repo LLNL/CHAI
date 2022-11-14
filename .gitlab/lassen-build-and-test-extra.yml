@@ -37,23 +37,23 @@ ibm_clang_9_0_0_gcc_8_3_1_cuda_10_1_168:
 # In RAJA, this spec has an updated cuda (11.0.2), with cuda_arch=70 set.
 ibm_clang_9_0_0_cuda_10_1_168:
   variables:
-    SPEC: "+cuda %clang@ibm.9.0.0 ^cuda@10.1.168"
+    SPEC: "~shared +raja tests=basic +cuda %clang@ibm.9.0.0 ^cuda@10.1.168"
   extends: .build_and_test_on_lassen
 
 clang_9_0_0_libcpp (build and test on lassen):
   variables:
-    SPEC: "%clang@9.0.0 cxxflags=\"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0\" cflags=\"-DGTEST_HAS_CXXABI_H_=0\""
+    SPEC: "~shared +raja tests=basic %clang@9.0.0 cxxflags=\"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0\" cflags=\"-DGTEST_HAS_CXXABI_H_=0\""
   extends: .build_and_test_on_lassen
 
 clang_9_0_0_memleak (build and test on lassen):
   variables:
-    SPEC: "%clang@9.0.0 cxxflags=-fsanitize=address"
+    SPEC: "~shared +raja tests=basic %clang@9.0.0 cxxflags=-fsanitize=address"
     ASAN_OPTIONS: "detect_leaks=1"
   extends: .build_and_test_on_lassen
 
 clang_9_0_0_datarace (build and test on lassen):
   variables:
-    SPEC: "%clang@9.0.0 cxxflags=-fsanitize=thread"
+    SPEC: "~shared +raja tests=basic %clang@9.0.0 cxxflags=-fsanitize=thread"
   allow_failure: true
   extends: .build_and_test_on_lassen
 
