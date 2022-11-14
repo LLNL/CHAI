@@ -42,13 +42,17 @@ class Chai(CachedCMakePackage, CudaPackage, ROCmPackage):
     variant("enable_pick", default=False, description="Enable pick method")
     variant("shared", default=True, description="Build Shared Libs")
     variant("raja", default=False, description="Build plugin for RAJA")
-    variant("benchmarks", default=False, description="Build benchmarks.")
     variant("examples", default=True, description="Build examples.")
     variant("openmp", default=False, description="Build using OpenMP")
     # TODO: figure out gtest dependency and then set this default True
     # and remove the +tests conflict below.
-    variant("tests", default="none", values=("none", "basic", "benchmarks"),
-            multi=False, description="Tests to run")
+    variant(
+        "tests",
+        default="none",
+        values=("none", "basic", "benchmarks"),
+        multi=False,
+        description="Tests to run",
+    )
 
     depends_on("cmake@3.8:", type="build")
     depends_on("cmake@3.9:", type="build", when="+cuda")
@@ -100,8 +104,6 @@ class Chai(CachedCMakePackage, CudaPackage, ROCmPackage):
                     "raja+rocm amdgpu_target={0}".format(arch),
                     when="amdgpu_target={0}".format(arch),
                 )
-
-    conflicts("+benchmarks", when="~tests")
 
     def _get_sys_type(self, spec):
         sys_type = spec.architecture
@@ -175,8 +177,6 @@ class Chai(CachedCMakePackage, CudaPackage, ROCmPackage):
         spec = self.spec
         entries = super(Chai, self).initconfig_hardware_entries()
 
-        entries.append(cmake_cache_option("ENABLE_OPENMP", "+openmp" in spec))
-
         if "+cuda" in spec:
             entries.append(cmake_cache_option("ENABLE_CUDA", True))
             entries.append(cmake_cache_option("CMAKE_CUDA_SEPARABLE_COMPILATION", True))
@@ -238,19 +238,32 @@ class Chai(CachedCMakePackage, CudaPackage, ROCmPackage):
         entries.append("# Build Options")
         entries.append("#------------------{0}\n".format("-" * 60))
 
+        # Build options
         entries.append(cmake_cache_string(
             "CMAKE_BUILD_TYPE", spec.variants["build_type"].value))
         entries.append(cmake_cache_option(
             "BUILD_SHARED_LIBS", "+shared" in spec))
 
+        # Generic options that have a prefixed equivalent in CHAI CMake
+        entries.append(cmake_cache_option(
+            "ENABLE_OPENMP", "+openmp" in spec))
+        entries.append(cmake_cache_option(
+            "ENABLE_EXAMPLES", "+examples" in spec))
+        entries.append(cmake_cache_option(
+            "ENABLE_DOCS", False))
+        if "tests=benchmarks" in spec:
+            # BLT requires ENABLE_TESTS=True to enable benchmarks
+            entries.append(cmake_cache_option(
+                "ENABLE_BENCHMARKS", True))
+            entries.append(cmake_cache_option(
+                "ENABLE_TESTS", True))
+        else:
+            entries.append(cmake_cache_option(
+                "ENABLE_TESTS", "tests=none" not in spec))
+
+        # Prefixed options that used to be name without one
         entries.append(cmake_cache_option(
             "{}ENABLE_PICK".format(option_prefix), "+enable_pick" in spec))
-        entries.append(cmake_cache_option(
-            "ENABLE_TESTS", "+tests" in spec))
-        entries.append(cmake_cache_option(
-            "ENABLE_BENCHMARKS", "+benchmarks" in spec))
-        entries.append(cmake_cache_option(
-            "{}ENABLE_EXAMPLES".format(option_prefix), "+examples" in spec))
 
         return entries
 
