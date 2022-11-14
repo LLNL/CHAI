@@ -8,7 +8,7 @@ set (chai_unit_test_depends
      chai umpire gtest)
      
 blt_list_append(TO chai_unit_test_depends ELEMENTS cuda IF ${CHAI_ENABLE_CUDA})
-blt_list_append(TO chai_unit_test_depends ELEMENTS hip IF ${CHAI_ENABLE_HIP})
+blt_list_append(TO chai_unit_test_depends ELEMENTS blt::hip IF ${CHAI_ENABLE_HIP})
 
 blt_add_executable(
   NAME managed_array_unit_tests
