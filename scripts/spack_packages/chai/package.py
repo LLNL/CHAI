@@ -231,7 +231,7 @@ class Chai(CachedCMakePackage, CudaPackage, ROCmPackage):
             entries.append(cmake_cache_path(
                 "RAJA_DIR", spec["raja"].prefix))
         entries.append(cmake_cache_path(
-            "umpire_DIR", spec["umpire"].prefix.share.umpire.cmake))
+            "umpire_DIR", spec["umpire"].prefix))
 
         # Build options
         entries.append("#------------------{0}".format("-" * 60))
