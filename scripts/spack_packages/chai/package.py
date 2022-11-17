@@ -77,7 +77,7 @@ class Chai(CMakePackage, CudaPackage, ROCmPackage):
     depends_on('umpire@main', when='@main')
     
     depends_on('camp')
-    depends_on('camp@0.2.2')
+    depends_on('camp@main', when='@main')
 
     depends_on('raja', when="+raja")
     depends_on('raja@main', when="@main+raja")
