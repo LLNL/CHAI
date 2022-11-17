@@ -9,6 +9,8 @@ configure_file(
   ${PROJECT_BINARY_DIR}/include/chai/config.hpp)
 
 set (chai_headers
+  ActiveResourceManager.hpp
+  ActiveResourceManager.inl
   ArrayManager.hpp
   ArrayManager.inl
   ChaiMacros.hpp
