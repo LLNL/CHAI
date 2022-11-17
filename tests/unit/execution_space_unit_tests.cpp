@@ -77,4 +77,4 @@ TEST(ExecutionSpace, Hip)
   camp::resources::Resource res{camp::resources::Hip()};
   ASSERT_TRUE( chai::GPU == res.get<camp::resources::Hip>().get_platform() );
 }
-#endif // #if defined(CHAI_ENABLE_CUDA)
+#endif // #if defined(CHAI_ENABLE_HIP)
