@@ -141,11 +141,19 @@ class Chai(CachedCMakePackage, CudaPackage, ROCmPackage):
         entries = super(Chai, self).initconfig_compiler_entries()
 
         # adrienbernede-22-11:
-        #   This was only done in upstream Spack raja package.
-        #   I could not find the equivalent logic in Spack source, so sharing it.
-        if "+rocm" in spec:
-            entries.insert(0, cmake_cache_path("CMAKE_CXX_COMPILER", spec["hip"].hipcc))
-        return entries
+        #   This was in upstream Spack raja package, but it’s causing the follwing failure Umpire:
+        #     CMake Error in src/umpire/CMakeLists.txt:
+        #     No known features for CXX compiler
+        #
+        #   In CHAI, we see another error:
+        #       [ 15%] Linking C executable ../../../tests/blt_hip_runtime_c_smoke
+        #       clang (LLVM option parsing): for the --amdgpu-early-inline-all option: may only occur zero or one times!
+        #       clang (LLVM option parsing): for the --amdgpu-function-calls option: may only occur zero or one times!
+        #   We suspect this error comes from the use of hip compiler here, so we comment it:
+        #
+        #if "+rocm" in spec:
+        #    entries.insert(0, cmake_cache_path("CMAKE_CXX_COMPILER", spec["hip"].hipcc))
+        #return entries
 
         ### From local package:
         fortran_compilers = ["gfortran", "xlf"]
