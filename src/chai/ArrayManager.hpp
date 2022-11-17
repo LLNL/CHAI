@@ -161,10 +161,12 @@ public:
    * \param space The space to set as current.
    */
   CHAISHAREDDLL_API void setExecutionSpace(ExecutionSpace space);
+
   /*!
    * \brief Set the current execution space.
    *
    * \param space The space to set as current.
+   * \param resource The resource to set as current.
    */
   CHAISHAREDDLL_API void setExecutionSpace(ExecutionSpace space, camp::resources::Resource *resource);
 
