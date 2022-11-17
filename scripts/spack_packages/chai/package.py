@@ -153,7 +153,8 @@ class Chai(CachedCMakePackage, CudaPackage, ROCmPackage):
         #
         #if "+rocm" in spec:
         #    entries.insert(0, cmake_cache_path("CMAKE_CXX_COMPILER", spec["hip"].hipcc))
-        #return entries
+
+        return entries
 
         ### From local package:
         fortran_compilers = ["gfortran", "xlf"]
