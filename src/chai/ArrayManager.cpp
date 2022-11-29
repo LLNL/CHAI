@@ -37,7 +37,7 @@ ArrayManager::ArrayManager() :
   m_default_allocation_space = CPU;
 
   m_allocators[CPU] =
-#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+#if (defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)) && !defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
       new umpire::Allocator(m_resource_manager.getAllocator("PINNED"));
 #else
       new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
@@ -164,9 +164,9 @@ void * ArrayManager::frontOfAllocation(void * pointer) {
 void ArrayManager::setExecutionSpace(ExecutionSpace space)
 {
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
-   if (isGPUSimMode()) {
-      space = chai::GPU;
-   }
+  if (isGPUSimMode()) {
+    space = chai::GPU;
+  }
 #endif
 
   CHAI_LOG(Debug, "Setting execution space to " << space);
@@ -180,7 +180,14 @@ void ArrayManager::setExecutionSpace(ExecutionSpace space)
 
 void ArrayManager::setExecutionSpace(ExecutionSpace space, camp::resources::Resource* resource)
 {
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+  if (isGPUSimMode()) {
+    space = chai::GPU;
+  }
+#endif
+
   CHAI_LOG(Debug, "Setting execution space to " << space);
+
   std::lock_guard<std::mutex> lock(m_mutex);
 
   m_current_execution_space = space;
