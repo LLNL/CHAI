@@ -16,21 +16,21 @@
 pgi_20_4_gcc_8_3_1:
   extends: .build_and_test_on_lassen
   variables:
-    SPEC: "${PROJECT_LASSEN_VARIANTS} %pgi@20.4 cxxflags=\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" cflags=\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" ${PROJECT_LASSEN_DEPS}"
+    SPEC: "${PROJECT_LASSEN_VARIANTS} %pgi@20.4 cxxflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" cflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" ${PROJECT_LASSEN_DEPS}"
   allow_failure: true
 
 # Overriding shared spec: Allow failures : known to fail at raja install
 ibm_clang_9_0_0_gcc_8_3_1_cuda_10_1_168:
   extends: .build_and_test_on_lassen
   variables:
-    SPEC: " ${PROJECT_LASSEN_VARIANTS} +cuda %clang@ibm.9.0.0 cxxflags=\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" cflags=\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" ^cuda@10.1.168 ${PROJECT_LASSEN_DEPS}"
+    SPEC: " ${PROJECT_LASSEN_VARIANTS} +cuda %clang@ibm.9.0.0 cxxflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" cflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" ^cuda@10.1.168 ${PROJECT_LASSEN_DEPS}"
   allow_failure: true
 
 # Spec has test disabled in shared CI, conflicting with default test setting in Umpire
 # TODO: This is likely an issue in RADIUSS Shared CI: why disable tests ?.
 xl_16_1_1_12_gcc_8_3_1_cuda_11_0_2:
   variables:
-    SPEC: "~shared +raja +cuda tests=none %xl@16.1.1.12 cxxflags=\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" cflags=\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" ^cuda@11.0.2 ${PROJECT_LASSEN_DEPS}"
+    SPEC: "~shared +raja +cuda tests=none %xl@16.1.1.12 cxxflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" cflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" ^cuda@11.0.2 ${PROJECT_LASSEN_DEPS}"
   extends: .build_and_test_on_lassen
 
 
@@ -49,18 +49,18 @@ ibm_clang_9_0_0_cuda_10_1_168:
 
 clang_9_0_0_libcpp (build and test on lassen):
   variables:
-    SPEC: "~shared +raja tests=basic %clang@9.0.0 cxxflags=\"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0\" cflags=\"-DGTEST_HAS_CXXABI_H_=0\""
+    SPEC: "~shared +raja tests=basic %clang@9.0.0 cxxflags==\"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0\" cflags==\"-DGTEST_HAS_CXXABI_H_=0\""
   extends: .build_and_test_on_lassen
 
 clang_9_0_0_memleak (build and test on lassen):
   variables:
-    SPEC: "~shared +raja tests=basic %clang@9.0.0 cxxflags=\"-fsanitize=address\""
+    SPEC: "~shared +raja tests=basic %clang@9.0.0 cxxflags==\"-fsanitize=address\""
     ASAN_OPTIONS: "detect_leaks=1"
   extends: .build_and_test_on_lassen
 
 clang_9_0_0_datarace (build and test on lassen):
   variables:
-    SPEC: "~shared +raja tests=basic %clang@9.0.0 cxxflags=\"-fsanitize=thread\""
+    SPEC: "~shared +raja tests=basic %clang@9.0.0 cxxflags==\"-fsanitize=thread\""
   allow_failure: true
   extends: .build_and_test_on_lassen
 
