@@ -23,14 +23,14 @@ pgi_20_4_gcc_8_3_1:
 ibm_clang_9_0_0_gcc_8_3_1_cuda_10_1_168:
   extends: .build_and_test_on_lassen
   variables:
-    SPEC: " ${PROJECT_LASSEN_VARIANTS} +cuda %clang@ibm.9.0.0 cxxflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" cflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" ^cuda@10.1.168 ${PROJECT_LASSEN_DEPS}"
+    SPEC: " ${PROJECT_LASSEN_VARIANTS} +cuda %clang@ibm.9.0.0 cxxflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" cflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" cuda_arch=70 ^cuda@10.1.168 ^raja + ${PROJECT_LASSEN_DEPS}"
   allow_failure: true
 
 # Spec has test disabled in shared CI, conflicting with default test setting in Umpire
 # TODO: This is likely an issue in RADIUSS Shared CI: why disable tests ?.
 xl_16_1_1_12_gcc_8_3_1_cuda_11_0_2:
   variables:
-    SPEC: "~shared +raja +cuda tests=none %xl@16.1.1.12 cxxflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" cflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" ^cuda@11.0.2 ${PROJECT_LASSEN_DEPS}"
+    SPEC: "~shared +raja +cuda tests=none %xl@16.1.1.12 cxxflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" cflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" cuda_arch=70 ^cuda@11.0.2 ${PROJECT_LASSEN_DEPS}"
   extends: .build_and_test_on_lassen
 
 
@@ -41,10 +41,9 @@ xl_16_1_1_12_gcc_8_3_1_cuda_11_0_2:
 # ${PROJECT_<MACHINE>_DEPS} in the extra jobs. There is no reason not to fully
 # describe the spec here.
 
-# In RAJA, this spec has an updated cuda (11.0.2), with cuda_arch=70 set.
-ibm_clang_9_0_0_cuda_10_1_168:
+ibm_clang_9_0_0_gcc_8_3_1_cuda_11_0_2:
   variables:
-    SPEC: "~shared +raja tests=basic +cuda %clang@ibm.9.0.0 ^cuda@10.1.168"
+    SPEC: "~shared +raja tests=basic +cuda %clang@ibm.9.0.0 cxxflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" cflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" cuda_arch=70 ^cuda@10.1.168"
   extends: .build_and_test_on_lassen
 
 clang_9_0_0_libcpp (build and test on lassen):
