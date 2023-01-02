@@ -19,7 +19,7 @@ pgi_20_4_gcc_8_3_1:
     SPEC: "${PROJECT_LASSEN_VARIANTS} %pgi@20.4 cxxflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" cflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" ${PROJECT_LASSEN_DEPS}"
   allow_failure: true
 
-# Overriding shared spec: Allow failures : known to fail at raja install
+# Overriding shared spec: Cuda Arch + Deactivated spec: known to fail at RAJA install.
 ibm_clang_9_0_0_gcc_8_3_1_cuda_10_1_168:
   extends: .build_and_test_on_lassen
   variables:
@@ -32,6 +32,20 @@ ibm_clang_9_0_0_gcc_8_3_1_cuda_10_1_168:
     - exit 1
   allow_failure: true
 
+# Overriding shared spec: Cuda Arch + Deactivated spec: known to fail at RAJA install.
+xl_16_1_1_12_gcc_7_3_1_cuda_10_1_168:
+  extends: .build_and_test_on_lassen
+  variables:
+    SPEC: "${PROJECT_LASSEN_VARIANTS} +cuda %xl@16.1.1.12 cxxflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-7.3.1\" cflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-7.3.1\" cuda_arch=70 ^cuda@10.1.168 ${PROJECT_LASSEN_DEPS}"
+  script:
+    - |
+      echo -e "\e[31mDeactivated spec !\e[0m"
+      echo -e "\e[31m${SPEC}\e[0m"
+      echo -e "\e[31mRAJA won’t build with Cuda < 11.1.0 due to a known issue.\e[0m"
+    - exit 1
+  allow_failure: true
+
+# Overriding shared spec: Cuda Arch + Deactivated spec: known to fail at RAJA install.
 xl_16_1_1_12_gcc_8_3_1_cuda_11_0_2:
   extends: .build_and_test_on_lassen
   variables:
@@ -52,6 +66,7 @@ xl_16_1_1_12_gcc_8_3_1_cuda_11_0_2:
 # ${PROJECT_<MACHINE>_DEPS} in the extra jobs. There is no reason not to fully
 # describe the spec here.
 
+# Overriding shared spec: Cuda Arch + Deactivated spec: known to fail at RAJA install.
 ibm_clang_9_0_0_gcc_8_3_1_cuda_11_0_2:
   extends: .build_and_test_on_lassen
   variables:
