@@ -98,11 +98,11 @@ clang_9_0_0_datarace:
 
 clang_12_0_1_cuda_11_5_0:
   variables:
-    SPEC: " ~shared +raja tests=basic %clang@12.0.1 cuda_arch=70 ^cuda@11.5.0"
+    SPEC: " ~shared +raja tests=basic %clang@12.0.1 cxxflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\" cflags==\"--gcc-toolchain=/usr/tce/packages/gcc/gcc-8.3.1\"  cuda_arch=70 ^cuda@11.5.0"
   extends: .build_and_test_on_lassen
 
 gcc_8_3_1_cuda_11_1_0:
   variables:
-    SPEC: " ~shared +raja test=basic %gcc@8.3.1 cuda_arch=70 ^cuda@11.1.0"
+    SPEC: " ~shared +raja tests=basic %gcc@8.3.1 cuda_arch=70 ^cuda@11.1.0"
   extends: .build_and_test_on_lassen
 
