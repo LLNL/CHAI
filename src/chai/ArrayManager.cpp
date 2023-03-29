@@ -188,8 +188,11 @@ void ArrayManager::setExecutionSpace(ExecutionSpace space, camp::resources::Reso
 
   CHAI_LOG(Debug, "Setting execution space to " << space);
 
-  std::lock_guard<std::mutex> lock(m_mutex);
+  if (chai::GPU == space) {
+    m_synced_since_last_kernel = false;
+  }
 
+  std::lock_guard<std::mutex> lock(m_mutex);
   m_current_execution_space = space;
   m_current_resource = resource;
 }
