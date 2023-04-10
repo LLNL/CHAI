@@ -412,7 +412,7 @@ void ManagedArray<T>::move(ExecutionSpace space, bool registerTouch) const
 #endif
 #if defined(CHAI_ENABLE_PINNED)
     if (m_pointer_record->m_last_space == PINNED) {
-       // just because we were allocated in PINNED doesn't mean our CHAICopyable array valueswere
+       // just because we were allocated in PINNED doesn't mean our CHAICopyable array values were
        moveInnerImpl();
     } else 
 #endif
