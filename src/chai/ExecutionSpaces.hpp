@@ -46,14 +46,23 @@ enum ExecutionSpace {
 };
 
 
-inline bool operator==(const ExecutionSpace& s, const camp::resources::Platform& p) {
-  if(s == chai::CPU && p == camp::resources::Platform::host) return true;
-#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-  /*! Execution in GPU space */
-  if (s == chai::GPU && (p == camp::resources::Platform::cuda ||
-                         p == camp::resources::Platform::hip)) return true;
+inline bool operator==(const ExecutionSpace& s,
+                       const camp::resources::Platform& p) {
+  if (s == chai::CPU && p == camp::resources::Platform::host) {
+    return true;
+  }
+#if defined(CHAI_ENABLE_CUDA)
+  else if (s == chai::GPU && p == camp::resources::Platform::cuda) {
+    return true;
+  }
+#elif defined(CHAI_ENABLE_HIP)
+  else if (s == chai::GPU && p == camp::resources::Platform::hip) {
+    return true;
+  }
 #endif
-  return false;
+  else {
+     return false;
+  }
 }
 
 }  // end of namespace chai
