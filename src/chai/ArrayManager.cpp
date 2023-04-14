@@ -254,24 +254,25 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   move(record, space, nullptr);
 }
 
-void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resources::Resource* resource)
+void ArrayManager::move(PointerRecord* record,
+                        ExecutionSpace space,
+                        camp::resources::Resource* resource)
 {
-
   if (space == NONE) {
     return;
   }
 
   callback(record, ACTION_CAPTURED, space);
 
+  if (space == record->m_last_space && !record->transfer_pending) {
+    return;
+  }
+
 #if defined(CHAI_ENABLE_UM)
   if (record->m_last_space == UM) {
     return;
   }
 #endif
-
-  if (space == record->m_last_space && !record->transfer_pending) {
-    return;
-  }
 
 #if defined(CHAI_ENABLE_PINNED)
   if (record->m_last_space == PINNED) {
