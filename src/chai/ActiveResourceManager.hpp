@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-19, Lawrence Livermore National Security, LLC and CHAI
+// Copyright (c) 2016-23, Lawrence Livermore National Security, LLC and CHAI
 // project contributors. See the COPYRIGHT file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
@@ -42,15 +42,22 @@ class ActiveResourceManager {
   int m_size = 0;
 
 public:
+  /*!
+   * Default constructor.
+   */
   ActiveResourceManager() = default;
 
   /*!
-   * Retrun current size of the resource list. 
+   * Return current size of the resource list.
+   *
+   * \return The current size of the resource list.
    */
   int size();
 
   /*!
    * Push a new resource onto the list. 
+   *
+   * \param res The resource to add.
    */
   void push_back(camp::resources::Resource* res);
 
@@ -61,11 +68,17 @@ public:
 
   /*!
    * Check if empty.
+   *
+   * \return Whether or not the resource manager is empty.
    */
   bool is_empty() const;
 
   /*!
    * Get resource at given index. 
+   *
+   * \param i The index at which to get a resource.
+   *
+   * \return The resource at the given index.
    */
   camp::resources::Resource* operator [](int i) const;
 };
