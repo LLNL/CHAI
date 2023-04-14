@@ -54,14 +54,14 @@ if (CHAI_ENABLE_MANAGED_PTR)
     NAME managed_ptr_test
     COMMAND managed_ptr_tests)
 endif ()
-  
+
 if (CHAI_ENABLE_RAJA_PLUGIN)
   set(raja_test_depends
     ${chai_integration_test_depends}
     RAJA)
 
   blt_add_executable(
-    NAME raja-chai-tests 
+    NAME raja-chai-tests
     SOURCES raja-chai-tests.cpp
     DEPENDS_ON ${raja_test_depends})
 
@@ -74,8 +74,9 @@ if (CHAI_ENABLE_RAJA_PLUGIN)
     PUBLIC ${PROJECT_BINARY_DIR}/include)
 
   if (CHAI_ENABLE_RAJA_NESTED_TEST)
+#raja kernel tests
     blt_add_executable(
-      NAME raja-chai-nested-tests 
+      NAME raja-chai-nested-tests
       SOURCES raja-chai-nested.cpp
       DEPENDS_ON ${raja_test_depends})
 
@@ -86,5 +87,21 @@ if (CHAI_ENABLE_RAJA_PLUGIN)
     target_include_directories(
       raja-chai-nested-tests
       PUBLIC ${PROJECT_BINARY_DIR}/include)
+
+#raja launch tests
+    blt_add_executable(
+      NAME raja-chai-launch-tests
+      SOURCES raja-chai-launch.cpp
+      DEPENDS_ON ${raja_test_depends})
+
+    blt_add_test(
+      NAME raja-chai-launch-tests
+      COMMAND raja-chai-launch-tests)
+
+    target_include_directories(
+      raja-chai-launch-tests
+      PUBLIC ${PROJECT_BINARY_DIR}/include)
+
   endif ()
+
 endif ()

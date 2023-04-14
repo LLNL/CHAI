@@ -285,11 +285,11 @@ public:
   CHAI_HOST_DEVICE ManagedArray<T>& operator=(std::nullptr_t);
 
 
-  CHAI_HOST_DEVICE bool operator==(ManagedArray<T>& rhs) const;
-  CHAI_HOST_DEVICE bool operator!=(ManagedArray<T>& from) const;
+  CHAI_HOST_DEVICE bool operator==(const ManagedArray<T>& rhs) const;
+  CHAI_HOST_DEVICE bool operator!=(const ManagedArray<T>& from) const;
 
-  CHAI_HOST_DEVICE bool operator==(T* from) const;
-  CHAI_HOST_DEVICE bool operator!=(T* from) const;
+  CHAI_HOST_DEVICE bool operator==(const T* from) const;
+  CHAI_HOST_DEVICE bool operator!=(const T* from) const;
 
   CHAI_HOST_DEVICE bool operator==(std::nullptr_t from) const;
   CHAI_HOST_DEVICE bool operator!=(std::nullptr_t from) const;
