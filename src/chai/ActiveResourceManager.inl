@@ -47,13 +47,13 @@ void ActiveResourceManager::clear() {
 
 CHAI_INLINE
 bool ActiveResourceManager::is_empty() const {
-  return m_size < 1;
+  return m_size == 0;
 }
 
 
 CHAI_INLINE
 camp::resources::Resource* ActiveResourceManager::operator[](int i) const {
-  if (i >= m_size) {
+  if (i < 0 || i >= m_size) {
     return nullptr;
   }
   else {
