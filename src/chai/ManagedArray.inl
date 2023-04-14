@@ -392,78 +392,67 @@ CHAI_INLINE
 CHAI_HOST
 void ManagedArray<T>::move(ExecutionSpace space, bool registerTouch) const
 {
-  if (m_pointer_record != &ArrayManager::s_null_record) {
-     ExecutionSpace prev_space = m_pointer_record->m_last_space;
-     if (prev_space == CPU || prev_space == NONE) {
-        /// Move nested ManagedArrays first, so they are working with a valid m_active_pointer for the host,
-        // and so the meta data associated with them are updated before we move the other array down.
-        moveInnerImpl();
-     }
-     CHAI_LOG(Debug, "Moving " << m_active_pointer);
-     m_active_base_pointer = static_cast<T*>(m_resource_manager->move((void *)m_active_base_pointer, m_pointer_record, space));
-     m_active_pointer = m_active_base_pointer + m_offset;
+  move(space, nullptr, registerTouch);
+}
 
-     CHAI_LOG(Debug, "Moved to " << m_active_pointer);
+template <typename T>
+CHAI_INLINE
+CHAI_HOST
+void ManagedArray<T>::move(ExecutionSpace space,
+                           camp::resources::Resource* resource,
+                           bool registerTouch) const
+{
+  if (m_pointer_record != &ArrayManager::s_null_record) {
+    ExecutionSpace prev_space = m_pointer_record->m_last_space;
+
+    if (prev_space == CPU || prev_space == NONE) {
+      // Move nested ManagedArrays first, so they are working with a valid
+      // m_active_pointer for the host, and so the meta data associated with
+      // them are updated before we move the other array down.
+      moveInnerImpl();
+    }
+
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+    if (resource != nullptr &&
+        space == GPU &&
+        m_pointer_record->m_last_resource != resource) {
+      m_pointer_record->m_res_manager.push_back(resource);
+    }
+#endif
+
+    CHAI_LOG(Debug, "Moving " << m_active_pointer);
+    m_active_base_pointer = static_cast<T*>(m_resource_manager->move(const_cast<T_non_const*>(m_active_base_pointer), m_pointer_record, resource, space));
+    m_active_pointer = m_active_base_pointer + m_offset;
+    CHAI_LOG(Debug, "Moved to " << m_active_pointer);
+
 #if defined(CHAI_ENABLE_UM)
     if (m_pointer_record->m_last_space == UM) {
-       // just because we were allocated in UM doesn't mean our CHAICopyable array values were
-       moveInnerImpl();
+      // Just because we were allocated in UM doesn't mean our CHAICopyable
+      // array values were
+      moveInnerImpl();
     } else
 #endif
 #if defined(CHAI_ENABLE_PINNED)
     if (m_pointer_record->m_last_space == PINNED) {
-       // just because we were allocated in PINNED doesn't mean our CHAICopyable array values were
-       moveInnerImpl();
-    } else 
+      // Just because we were allocated in PINNED doesn't mean our CHAICopyable
+      // array values were
+      moveInnerImpl();
+    } else
 #endif
-     if (registerTouch) {
-       CHAI_LOG(Debug, "T is non-const, registering touch of pointer" << m_active_pointer);
-       m_resource_manager->registerTouch(m_pointer_record, space);
-     }
-     if (space != GPU && prev_space == GPU) {
-        /// Move nested ManagedArrays after the move, so they are working with a valid m_active_pointer for the host,
-        // and so the meta data associated with them are updated with live GPU data
-        moveInnerImpl();
-     }
-   }
-}
-template <typename T>
-CHAI_INLINE
-CHAI_HOST
-void ManagedArray<T>::move(ExecutionSpace space, camp::resources::Resource* resource)
-{
-  ExecutionSpace prev_space = m_pointer_record->m_last_space;
+    if (registerTouch) {
+      CHAI_LOG(Debug, "Registering touch of pointer " << m_active_pointer);
+      m_resource_manager->registerTouch(m_pointer_record, space);
+    }
 
-  /* When moving from CPU to GPU we need to move the inner arrays before the outer array. */
-  if (prev_space == CPU) {
-    moveInnerImpl();
-    //moveInnerImpl(space);
-  }
-
-#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-  if (space == GPU && m_pointer_record->m_last_resource != resource ){
-    m_pointer_record->m_res_manager.push_back(resource);
-  }
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+    if (space != GPU && prev_space == GPU) {
+      // Move nested ManagedArrays after the move, so they are working with a
+      // valid m_active_pointer for the host, and so the meta data associated
+      // with them are updated with live GPU data
+      moveInnerImpl();
+    }
 #endif
-
-  m_active_base_pointer = static_cast<T*>(m_resource_manager->move(const_cast<T_non_const*>(m_active_base_pointer), m_pointer_record, resource, space));
-  m_active_pointer = m_active_base_pointer + m_offset;
-
-  if (!std::is_const<T>::value) {
-    CHAI_LOG(Debug, "T is non-const, registering touch of pointer" << m_active_pointer);
-    m_resource_manager->registerTouch(m_pointer_record, space);
   }
-
-  if (space != NONE) m_pointer_record->m_last_space = space;
-  if (space != NONE) m_pointer_record->m_last_resource = resource;
-
-  /* When moving from GPU to CPU we need to move the inner arrays after the outer array. */
-#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-  if (prev_space == GPU) {
-    moveInnerImpl();
-    //moveInnerImpl(space);
-  }
-#endif
 }
 
 template<typename T>
