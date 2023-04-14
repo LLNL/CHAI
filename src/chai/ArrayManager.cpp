@@ -189,19 +189,9 @@ void* ArrayManager::move(void* pointer,
                          PointerRecord* pointer_record,
                          ExecutionSpace space)
 {
-  // Check for default arg (NONE)
-  if (space == NONE) {
-    space = m_current_execution_space;
-  }
-
-  if (space == NONE) {
-    return pointer;
-  }
-
-  move(pointer_record, space);
-
-  return pointer_record->m_pointers[space];
+  return move(pointer, pointer_record, nullptr, space);
 }
+
 void* ArrayManager::move(void* pointer,
                          PointerRecord* pointer_record,
                          camp::resources::Resource* resource,
@@ -220,7 +210,6 @@ void* ArrayManager::move(void* pointer,
 
   return pointer_record->m_pointers[space];
 }
-
 
 ExecutionSpace ArrayManager::getExecutionSpace()
 {
@@ -262,7 +251,7 @@ void ArrayManager::resetTouch(PointerRecord* pointer_record)
 
 void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 {
-  move(record,space,nullptr);
+  move(record, space, nullptr);
 }
 
 void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resources::Resource* resource)
