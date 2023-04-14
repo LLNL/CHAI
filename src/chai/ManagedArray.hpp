@@ -173,11 +173,32 @@ public:
    */
   CHAI_HOST void registerTouch(ExecutionSpace space);
 
-  //CHAI_HOST void move(ExecutionSpace space=NONE) const;
-  CHAI_HOST void move(ExecutionSpace space, camp::resources::Resource* resource);
+  /*!
+   * \brief Move the underlying data to the given execution space using the given resource.
+   *
+   * \param space The space to which to move the underlying data.
+   * \param resource The resource to use to move the underlying data.
+   */
+  CHAI_HOST void move(ExecutionSpace space,
+                      camp::resources::Resource* resource);
+
+  /*!
+   * \brief Move the underlying data to the given execution space.
+   *
+   * \param space The space to which to move the underlying data.
+   * \param registerTouch Whether to mark the data as touched in the given space.
+   */
   CHAI_HOST void move(ExecutionSpace space=NONE,
                       bool registerTouch=!std::is_const<T>::value) const;
 
+  /*!
+   * \brief Get a slice of the ManagedArray.
+   *
+   * \param begin The start of the slice.
+   * \param elems The number of elements in the slice (-1 means use all remaining elements)
+   *
+   * \return A slice of the ManagedArray.
+   */
   CHAI_HOST_DEVICE ManagedArray<T> slice(size_t begin, size_t elems=(size_t)-1) const;
 
   /*!

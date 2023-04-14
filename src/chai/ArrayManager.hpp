@@ -173,12 +173,16 @@ public:
   /*!
    * \brief Get the current execution space.
    *
-   * \return The current execution space.jo
+   * \return The current execution space.
    */
   CHAISHAREDDLL_API ExecutionSpace getExecutionSpace();
 
-  
-  camp::resources::Resource* getResource();
+  /*!
+   * \brief Get the current resource.
+   *
+   * \return The current resource.
+   */
+  CHAISHAREDDLL_API camp::resources::Resource* getResource();
 
   /*!
    * \brief Move data in pointer to the current execution space.

@@ -232,7 +232,6 @@ camp::resources::Resource* ArrayManager::getResource()
   return m_current_resource;
 }
 
-
 void ArrayManager::registerTouch(PointerRecord* pointer_record)
 {
   registerTouch(pointer_record, m_current_execution_space);
