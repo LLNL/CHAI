@@ -359,7 +359,6 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space, camp::resou
   resetTouch(record);
 }
 
-
 void ArrayManager::allocate(
     PointerRecord* pointer_record,
            ExecutionSpace space)

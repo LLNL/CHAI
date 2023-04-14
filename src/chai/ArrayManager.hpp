@@ -488,7 +488,7 @@ private:
 
 
   /*!
-   * \brief Move data in PointerRecord to the corresponding ExecutionSpace.
+   * \brief Move data in the pointer record to the corresponding execution space.
    *
    * \param record The pointer record.
    * \param space The execution space to which to move the data.
@@ -496,7 +496,7 @@ private:
   void move(PointerRecord* record, ExecutionSpace space);
 
   /*!
-   * \brief Move data in PointerRecord to the corresponding ExecutionSpace.
+   * \brief Move data in the pointer record to the corresponding execution space.
    *
    * \param record The pointer record.
    * \param space The execution space to which to move the data.
@@ -537,7 +537,6 @@ private:
    * Current resource.
    */
   camp::resources::Resource* m_current_resource;
-
 
   /**
    * Default space for new allocations.
