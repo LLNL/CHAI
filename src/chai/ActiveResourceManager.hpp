@@ -32,7 +32,7 @@ class ActiveResourceManager {
   std::array<camp::resources::Resource*, BASE_SIZE> m_res_base;
 
   /*!
-   * Heap containter for extra resources if more than BASE_SIZE pushed.
+   * Heap container for extra resources if more than BASE_SIZE pushed.
    */
   std::vector<camp::resources::Resource*> m_res_overflow;
 
