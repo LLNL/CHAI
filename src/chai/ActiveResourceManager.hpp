@@ -42,7 +42,7 @@ class ActiveResourceManager {
   int m_size = 0;
 
 public:
-  ActiveResourceManager();
+  ActiveResourceManager() = default;
 
   /*!
    * Retrun current size of the resource list. 

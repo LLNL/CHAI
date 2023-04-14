@@ -13,13 +13,6 @@ namespace chai
 {
 
 CHAI_INLINE
-ActiveResourceManager::ActiveResourceManager():
-  m_size(0)
-{
-}
-
-
-CHAI_INLINE
 int ActiveResourceManager::size() {
   return m_size;
 }
