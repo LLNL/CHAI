@@ -163,19 +163,7 @@ void * ArrayManager::frontOfAllocation(void * pointer) {
 
 void ArrayManager::setExecutionSpace(ExecutionSpace space)
 {
-#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
-  if (isGPUSimMode()) {
-    space = chai::GPU;
-  }
-#endif
-
-  CHAI_LOG(Debug, "Setting execution space to " << space);
-
-  if (chai::GPU == space) {
-    m_synced_since_last_kernel = false;
-  }
-
-  m_current_execution_space = space;
+  setExecutionSpace(space, nullptr);
 }
 
 void ArrayManager::setExecutionSpace(ExecutionSpace space, camp::resources::Resource* resource)
