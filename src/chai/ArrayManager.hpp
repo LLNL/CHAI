@@ -185,18 +185,32 @@ public:
   CHAISHAREDDLL_API camp::resources::Resource* getResource();
 
   /*!
-   * \brief Move data in pointer to the current execution space.
+   * \brief Move data in pointer to the given execution space.
    *
    * \param pointer Pointer to data in any execution space.
+   * \param pointer_record The pointer record.
+   * \param space The execution space to which to move the data.
+   *
    * \return Pointer to data in the current execution space.
    */
   CHAISHAREDDLL_API void* move(void* pointer,
                                PointerRecord* pointer_record,
-                               ExecutionSpace = NONE);
+                               ExecutionSpace space = NONE);
+
+  /*!
+   * \brief Move data in pointer to the given execution space.
+   *
+   * \param pointer Pointer to data in any execution space.
+   * \param pointer_record The pointer record.
+   * \param resource The resource to use to move the data.
+   * \param space The execution space to which to move the data.
+   *
+   * \return Pointer to data in the current execution space.
+   */
   CHAISHAREDDLL_API void* move(void* pointer,
                                PointerRecord* pointer_record,
                                camp::resources::Resource* resource,
-                               ExecutionSpace = NONE);
+                               ExecutionSpace space = NONE);
 
   /*!
    * \brief Register a touch of the pointer in the current execution space.
@@ -476,10 +490,18 @@ private:
   /*!
    * \brief Move data in PointerRecord to the corresponding ExecutionSpace.
    *
-   * \param record
-   * \param space
+   * \param record The pointer record.
+   * \param space The execution space to which to move the data.
    */
   void move(PointerRecord* record, ExecutionSpace space);
+
+  /*!
+   * \brief Move data in PointerRecord to the corresponding ExecutionSpace.
+   *
+   * \param record The pointer record.
+   * \param space The execution space to which to move the data.
+   * \param resource The resource to use to move the data.
+   */
   void move(PointerRecord* record, ExecutionSpace space, camp::resources::Resource* resource);
 
   /*!
