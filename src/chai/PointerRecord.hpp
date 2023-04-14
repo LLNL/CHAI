@@ -15,7 +15,6 @@
 
 #include <cstddef>
 #include <functional>
-#include <array>
 
 namespace chai
 {
