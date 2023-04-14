@@ -93,7 +93,6 @@ struct PointerRecord {
         m_allocators[space] = 0;
      }
   }
-
 };
 
 }  // end of namespace chai
