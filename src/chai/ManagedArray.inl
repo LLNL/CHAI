@@ -406,10 +406,14 @@ void ManagedArray<T>::move(ExecutionSpace space, bool registerTouch) const
      CHAI_LOG(Debug, "Moved to " << m_active_pointer);
 #if defined(CHAI_ENABLE_UM)
     if (m_pointer_record->m_last_space == UM) {
+       // just because we were allocated in UM doesn't mean our CHAICopyable array values were
+       moveInnerImpl();
     } else
 #endif
 #if defined(CHAI_ENABLE_PINNED)
     if (m_pointer_record->m_last_space == PINNED) {
+       // just because we were allocated in PINNED doesn't mean our CHAICopyable array values were
+       moveInnerImpl();
     } else 
 #endif
      if (registerTouch) {
@@ -613,7 +617,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE
 bool
-ManagedArray<T>::operator== (ManagedArray<T>& rhs) const
+ManagedArray<T>::operator== (const ManagedArray<T>& rhs) const
 {
   return (m_active_pointer ==  rhs.m_active_pointer);
 }
@@ -622,7 +626,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE
 bool
-ManagedArray<T>::operator!= (ManagedArray<T>& rhs) const
+ManagedArray<T>::operator!= (const ManagedArray<T>& rhs) const
 {
   return (m_active_pointer !=  rhs.m_active_pointer);
 }
@@ -632,7 +636,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE
 bool
-ManagedArray<T>::operator== (T * from) const {
+ManagedArray<T>::operator== (const T * from) const {
    return m_active_pointer == from;
 }
 
@@ -640,7 +644,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE
 bool
-ManagedArray<T>::operator!= (T * from) const {
+ManagedArray<T>::operator!= (const T * from) const {
    return m_active_pointer != from;
 }
 

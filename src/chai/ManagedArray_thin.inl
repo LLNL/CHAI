@@ -358,27 +358,27 @@ CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>& ManagedArray<T>::operator=(std::nu
 
 template <typename T>
 CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator==(
-    ManagedArray<T>& rhs) const
+    const ManagedArray<T>& rhs) const
 {
   return (m_active_pointer == rhs.m_active_pointer);
 }
 
 template <typename T>
 CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator!=(
-    ManagedArray<T>& rhs) const
+    const ManagedArray<T>& rhs) const
 {
   return (m_active_pointer != rhs.m_active_pointer);
 }
 
 
 template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator==(T* from) const
+CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator==(const T* from) const
 {
   return m_active_pointer == from;
 }
 
 template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator!=(T* from) const
+CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator!=(const T* from) const
 {
   return m_active_pointer != from;
 }
