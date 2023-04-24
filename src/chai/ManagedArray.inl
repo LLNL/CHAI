@@ -392,14 +392,14 @@ CHAI_INLINE
 CHAI_HOST
 void ManagedArray<T>::move(ExecutionSpace space, bool registerTouch) const
 {
-  move(nullptr, space, registerTouch);
+  move(space, nullptr, registerTouch);
 }
 
 template <typename T>
 CHAI_INLINE
 CHAI_HOST
-void ManagedArray<T>::move(camp::resources::Resource* resource,
-                           ExecutionSpace space,
+void ManagedArray<T>::move(ExecutionSpace space,
+                           camp::resources::Resource* resource,
                            bool registerTouch) const
 {
   if (m_pointer_record != &ArrayManager::s_null_record) {

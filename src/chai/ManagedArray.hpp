@@ -176,12 +176,12 @@ public:
   /*!
    * \brief Move the underlying data to the given execution space using the given resource.
    *
-   * \param resource The resource to use to move the underlying data.
    * \param space The space to which to move the underlying data.
+   * \param resource The resource to use to move the underlying data.
    * \param registerTouch Whether to mark the data as touched in the given space.
    */
-  CHAI_HOST void move(camp::resources::Resource* resource,
-                      ExecutionSpace space = NONE,
+  CHAI_HOST void move(ExecutionSpace space,
+                      camp::resources::Resource* resource,
                       bool registerTouch = !std::is_const<T>::value) const;
 
   /*!
