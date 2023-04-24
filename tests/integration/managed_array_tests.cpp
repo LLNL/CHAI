@@ -830,7 +830,9 @@ GPU_TEST(ManagedArray, PodTestGPU)
 
 TEST(ManagedArray, ExternalConstructorUnowned)
 {
-  float* data = static_cast<float*>(std::malloc(100 * sizeof(float)));
+  // The CPU space could be host memory or host pinned memory
+  auto allocator = chai::ArrayManager::getInstance()->getAllocator(chai::CPU);
+  float* data = static_cast<float*>(allocator.allocate(100 * sizeof(float)));
 
   for (int i = 0; i < 100; i++) {
     data[i] = 1.0f * i;
@@ -839,7 +841,9 @@ TEST(ManagedArray, ExternalConstructorUnowned)
   chai::ManagedArray<float> array =
       chai::makeManagedArray<float>(data, 100, chai::CPU, false);
 
-  forall(sequential(), 0, 20, [=](int i) { ASSERT_EQ(data[i], array[i]); });
+  forall(sequential(), 0, 100, [=] (int i) {
+    ASSERT_EQ(data[i], array[i]);
+  });
 
   array.free();
 
@@ -847,7 +851,7 @@ TEST(ManagedArray, ExternalConstructorUnowned)
     ASSERT_EQ(data[i], 1.0f * i);
   }
 
-  std::free(data);
+  allocator.deallocate(data);
   assert_empty_map(true);
 }
 

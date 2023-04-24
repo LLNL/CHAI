@@ -28,7 +28,22 @@ if (CHAI_ENABLE_CUDA OR CHAI_ENABLE_HIP)
     NAME chai-example.exe
     SOURCES example.cpp
     DEPENDS_ON ${chai_umpire_example_depends})
-
+  blt_add_executable(
+    NAME resource-depends.exe
+    SOURCES resource-depends.cpp
+    DEPENDS_ON ${chai_umpire_example_depends})
+  blt_add_executable(
+    NAME resource-simple.exe
+    SOURCES resource-simple.cpp
+    DEPENDS_ON ${chai_umpire_example_depends})
+  blt_add_executable(
+    NAME resource-not-managed.exe
+    SOURCES resource-not-managed.cpp
+    DEPENDS_ON ${chai_umpire_example_depends})
+  blt_add_executable(
+    NAME resource-multi-array.exe
+    SOURCES resource-multi-array.cpp
+    DEPENDS_ON ${chai_umpire_example_depends})
   blt_add_executable(
     NAME pinned.exe
     SOURCES pinned.cpp

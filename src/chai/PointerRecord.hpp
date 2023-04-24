@@ -7,8 +7,11 @@
 #ifndef CHAI_PointerRecord_HPP
 #define CHAI_PointerRecord_HPP
 
+#include "chai/ActiveResourceManager.hpp"
 #include "chai/ExecutionSpaces.hpp"
 #include "chai/Types.hpp"
+
+#include "camp/resource.hpp"
 
 #include <cstddef>
 #include <functional>
@@ -45,7 +48,6 @@ struct PointerRecord {
    */
   bool m_owned[NUM_EXECUTION_SPACES];
 
-
   /*!
    * User defined callback triggered on memory operations.
    *
@@ -54,11 +56,33 @@ struct PointerRecord {
    */
   UserCallback m_user_callback;
 
+  /*!
+   * Array holding Umpire allocator IDs in each execution space.
+   */
   int m_allocators[NUM_EXECUTION_SPACES];
 
   /*!
+   * Whether or not a transfer is pending.
+   */
+  bool transfer_pending{false};
+
+  /*!
+   * An event that can be used to control asynchronous flow.
+   */
+  camp::resources::Event m_event{};
+
+  /*!
+   * Last resource used by this array.
+   */
+  camp::resources::Resource* m_last_resource{nullptr};
+
+  /*!
+   * The resource manager.
+   */
+  ActiveResourceManager m_res_manager;
+
+  /*!
    * \brief Default constructor
-   *
    */
   PointerRecord() : m_size(0), m_last_space(NONE) { 
      m_user_callback = [] (const PointerRecord*, Action, ExecutionSpace) {};

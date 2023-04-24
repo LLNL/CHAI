@@ -33,10 +33,15 @@ ArrayManager::ArrayManager() :
 {
   m_pointer_map.clear();
   m_current_execution_space = NONE;
+  m_current_resource = nullptr;
   m_default_allocation_space = CPU;
 
   m_allocators[CPU] =
+#if (defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)) && !defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+      new umpire::Allocator(m_resource_manager.getAllocator("PINNED"));
+#else
       new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
+#endif
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
@@ -158,10 +163,15 @@ void * ArrayManager::frontOfAllocation(void * pointer) {
 
 void ArrayManager::setExecutionSpace(ExecutionSpace space)
 {
+  setExecutionSpace(space, nullptr);
+}
+
+void ArrayManager::setExecutionSpace(ExecutionSpace space, camp::resources::Resource* resource)
+{
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
-   if (isGPUSimMode()) {
-      space = chai::GPU;
-   }
+  if (isGPUSimMode()) {
+    space = chai::GPU;
+  }
 #endif
 
   CHAI_LOG(Debug, "Setting execution space to " << space);
@@ -170,11 +180,21 @@ void ArrayManager::setExecutionSpace(ExecutionSpace space)
     m_synced_since_last_kernel = false;
   }
 
+  std::lock_guard<std::mutex> lock(m_mutex);
   m_current_execution_space = space;
+  m_current_resource = resource;
 }
 
 void* ArrayManager::move(void* pointer,
                          PointerRecord* pointer_record,
+                         ExecutionSpace space)
+{
+  return move(pointer, pointer_record, nullptr, space);
+}
+
+void* ArrayManager::move(void* pointer,
+                         PointerRecord* pointer_record,
+                         camp::resources::Resource* resource,
                          ExecutionSpace space)
 {
   // Check for default arg (NONE)
@@ -186,7 +206,7 @@ void* ArrayManager::move(void* pointer,
     return pointer;
   }
 
-  move(pointer_record, space);
+  move(pointer_record, space, resource);
 
   return pointer_record->m_pointers[space];
 }
@@ -194,6 +214,11 @@ void* ArrayManager::move(void* pointer,
 ExecutionSpace ArrayManager::getExecutionSpace()
 {
   return m_current_execution_space;
+}
+
+camp::resources::Resource* ArrayManager::getResource()
+{
+  return m_current_resource;
 }
 
 void ArrayManager::registerTouch(PointerRecord* pointer_record)
@@ -226,13 +251,20 @@ void ArrayManager::resetTouch(PointerRecord* pointer_record)
 
 void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 {
+  move(record, space, nullptr);
+}
+
+void ArrayManager::move(PointerRecord* record,
+                        ExecutionSpace space,
+                        camp::resources::Resource* resource)
+{
   if (space == NONE) {
     return;
   }
 
   callback(record, ACTION_CAPTURED, space);
 
-  if (space == record->m_last_space) {
+  if (space == record->m_last_space && !record->transfer_pending) {
     return;
   }
 
@@ -262,13 +294,56 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 
   if ( (!record->m_touched[record->m_last_space]) || (! src_pointer )) {
     return;
-  } else if (dst_pointer != src_pointer) {
-    // Exclude the copy if src and dst are the same (can happen for PINNED memory)
-    {
-      m_resource_manager.copy(dst_pointer, src_pointer);
-    }
+  } else {
+    // Logical flow for when we are using resources.
+    if (resource){
+      std::lock_guard<std::mutex> lock(m_mutex);
 
-    callback(record, ACTION_MOVE, space);
+      if (record->transfer_pending) {
+        resource->wait_for(&record->m_event);
+        record->m_res_manager.clear();
+        record->transfer_pending = false;
+        return;
+      }
+
+      camp::resources::Resource* res;
+      if (space == chai::CPU){
+        res = record->m_last_resource;
+      }else{
+        res = resource;
+      }
+
+      if (res == nullptr){
+        m_resource_manager.copy(dst_pointer, src_pointer);
+        callback(record, ACTION_MOVE, space);
+        return;
+      }
+
+      if (!record->m_res_manager.is_empty()) {
+        for (int i = 0; i < record->m_res_manager.size(); i++) {
+          auto c_event = record->m_res_manager[i]->get_event();
+          res->wait_for(&c_event);
+        }
+      }
+
+      auto e = m_resource_manager.copy(dst_pointer, src_pointer, *res);
+      callback(record, ACTION_MOVE, space);
+      record->transfer_pending = true;
+      record->m_event = e;
+
+    // Default logical flow when not using non resource move.
+    } else {
+
+      if (dst_pointer != src_pointer) {
+        // Exclude the copy if src and dst are the same (can happen for PINNED memory)
+        {
+          std::lock_guard<std::mutex> lock(m_mutex);
+          m_resource_manager.copy(dst_pointer, src_pointer);
+        }
+
+        callback(record, ACTION_MOVE, space);
+      }
+    }
   }
 
   resetTouch(record);

@@ -8,6 +8,7 @@
 #define CHAI_ExecutionSpaces_HPP
 
 #include "chai/config.hpp"
+#include "camp/resource.hpp"
 
 namespace chai
 {
@@ -43,6 +44,26 @@ enum ExecutionSpace {
   ,PINNED
 #endif
 };
+
+
+inline bool operator==(const ExecutionSpace& s,
+                       const camp::resources::Platform& p) {
+  if (s == chai::CPU && p == camp::resources::Platform::host) {
+    return true;
+  }
+#if defined(CHAI_ENABLE_CUDA)
+  else if (s == chai::GPU && p == camp::resources::Platform::cuda) {
+    return true;
+  }
+#elif defined(CHAI_ENABLE_HIP)
+  else if (s == chai::GPU && p == camp::resources::Platform::hip) {
+    return true;
+  }
+#endif
+  else {
+     return false;
+  }
+}
 
 }  // end of namespace chai
 
