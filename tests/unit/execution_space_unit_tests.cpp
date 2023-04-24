@@ -51,8 +51,11 @@ TEST(ExecutionSpace, Platforms)
   ASSERT_TRUE(chai::CPU == camp::resources::Platform::host);
   ASSERT_FALSE(chai::CPU == camp::resources::Platform::undefined);
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+#if defined(CHAI_ENABLE_CUDA)
   ASSERT_TRUE(chai::GPU == camp::resources::Platform::cuda);
+#else
   ASSERT_TRUE(chai::GPU == camp::resources::Platform::hip);
+#endif
   ASSERT_FALSE(chai::GPU == camp::resources::Platform::undefined);
 #endif
 }
