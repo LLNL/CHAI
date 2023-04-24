@@ -851,17 +851,63 @@ TEST(ManagedArray, ExternalConstructorUnowned)
   assert_empty_map(true);
 }
 
+TEST(ManagedArray, ExternalConstructorOwned)
+{
+  float* data = static_cast<float*>(std::malloc(20 * sizeof(float)));
+
+  for (int i = 0; i < 20; i++) {
+    data[i] = 1.0f * i;
+  }
+
+  chai::ManagedArray<float> array =
+      chai::makeManagedArray<float>(data, 20, chai::CPU, true);
+
+  forall(sequential(), 0, 20, [=](int i) { ASSERT_EQ(data[i], array[i]); });
+
+  array.free();
+  assert_empty_map(true);
+}
+
+TEST(ManagedArray, ExternalOwnedFromManagedArray)
+{
+  chai::ManagedArray<float> array(20);
+
+  forall(sequential(), 0, 20, [=](int i) { array[i] = 1.0f * i; });
+
+  chai::ManagedArray<float> arrayCopy =
+      chai::makeManagedArray<float>(array.getPointer(chai::CPU), 20, chai::CPU, true);
+
+#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
+  ASSERT_EQ(array, arrayCopy);
+#else
+  ASSERT_EQ(array.data(), arrayCopy.data());
+#endif
+  // should be able to free through the new ManagedArray
+  arrayCopy.free();
+  assert_empty_map(true);
+}
+
+TEST(ManagedArray, ExternalUnownedFromManagedArray)
+{
+  chai::ManagedArray<float> array(20);
+
+  forall(sequential(), 0, 20, [=](int i) { array[i] = 1.0f * i; });
+
+  chai::ManagedArray<float> arrayCopy =
+      chai::makeManagedArray<float>(array.getPointer(chai::CPU), 20, chai::CPU, false);
+
+  forall(sequential(), 0, 20, [=](int i) { ASSERT_EQ(arrayCopy[i], 1.0f * i); });
+  // freeing from an unowned pointer should leave the original ManagedArray intact
+  arrayCopy.free();
+  array.free();
+  assert_empty_map(true);
+}
+
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 #ifndef CHAI_DISABLE_RM
 GPU_TEST(ManagedArray, ExternalUnownedMoveToGPU)
 {
-  float* data;
-#if defined(CHAI_ENABLE_CUDA)
-  cudaMallocHost(&data, 20*sizeof(float));
-#elif defined(CHAI_ENABLE_HIP)
-  hipMallocHost(&data, 20*sizeof(float));
-#endif
-
+  float data[20];
   for (int i = 0; i < 20; i++) {
     data[i] = 0.;
   }
