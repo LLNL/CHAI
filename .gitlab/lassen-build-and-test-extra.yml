@@ -24,17 +24,17 @@
 clang_12_0_1_libcpp:
   extends: .build_and_test_on_lassen
   variables:
-    SPEC: "~shared +raja +libcpp cuda_arch=70 tests=basic %clang@12.0.1"
+    SPEC: "~shared +raja +libcpp tests=basic %clang@12.0.1"
 
 clang_12_0_1_gcc_8_3_1_memleak:
   extends: .build_and_test_on_lassen
   variables:
-    SPEC: "~shared +raja cuda_arch=70 tests=basic %clang@12.0.1.gcc.8.3.1 cxxflags==\"-fsanitize=address\""
+    SPEC: "~shared +raja tests=basic %clang@12.0.1.gcc.8.3.1 cxxflags==\"-fsanitize=address\""
     ASAN_OPTIONS: "detect_leaks=1"
 
 clang_12_0_1_datarace:
   extends: .build_and_test_on_lassen
   variables:
-    SPEC: "~shared +raja cuda_arch=70 tests=basic %clang@12.0.1 cxxflags==\"-fsanitize=thread\""
-  allow_failure: true
+    SPEC: "~shared +raja tests=basic %clang@12.0.1 cxxflags==\"-fsanitize=thread\""
+  allow_failure: tru
 
