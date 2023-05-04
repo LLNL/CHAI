@@ -12,7 +12,13 @@
 # We keep ${PROJECT_<MACHINE>_VARIANTS} and ${PROJECT_<MACHINE>_DEPS} So that
 # the comparison with the original job is easier.
 
-# No overridden jobs so far.
+# Override job with old cuda to allow it to fail.
+clang_12_0_1_gcc_8_3_1_cuda_10_1_243:
+  variables:
+    SPEC: "${PROJECT_LASSEN_VARIANTS} +cuda %clang@12.0.1.gcc.8.3.1 ^cuda@10.1.243+allow-unsupported-compilers ${PROJECT_LASSEN_DEPS}"
+  extends: .build_and_test_on_lassen
+  allow_failure: true
+
 
 ############
 # Extra jobs
