@@ -399,11 +399,13 @@ public:
   /*!
    * \brief Turn on device synchronization after every kernel.
    */
+  [[deprecated("Set the CUDA_LAUNCH_BLOCKING or HIP_LAUNCH_BLOCKING environment variable instead")]]
   void enableDeviceSynchronize() { m_device_synchronize = true; }
 
   /*!
    * \brief Turn off device synchronization after every kernel.
    */
+  [[deprecated("Set the CUDA_LAUNCH_BLOCKING or HIP_LAUNCH_BLOCKING environment variable instead")]]
   void disableDeviceSynchronize() { m_device_synchronize = false; }
 
   /*!
