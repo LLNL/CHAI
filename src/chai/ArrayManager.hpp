@@ -411,7 +411,6 @@ public:
   /*!
    * \brief Turn on device synchronization after every kernel.
    */
-  [[deprecated("Set the CUDA_LAUNCH_BLOCKING or HIP_LAUNCH_BLOCKING environment variable instead")]]
   bool deviceSynchronize() { return m_device_synchronize; }
 
   /*!
