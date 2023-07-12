@@ -101,7 +101,7 @@ namespace chai {
    ///    Be aware that CHAI checks every CUDA API call for GPU errors by default. To
    ///       turn off GPU error checking, pass -DCHAI_ENABLE_GPU_ERROR_CHECKING=OFF as
    ///       an argument to cmake when building CHAI. To turn on synchronization after
-   ///       every kernel, call ArrayManager::getInstance()->enableDeviceSynchronize().
+   ///       every kernel, set the appropriate environment variable (e.g. CUDA_LAUNCH_BLOCKING or HIP_LAUNCH_BLOCKING).
    ///       Alternatively, call cudaDeviceSynchronize() after any call to make_managed,
    ///       make_managed_from_factory, or managed_ptr::free, and check the return code
    ///       for errors. If your code crashes in the constructor/destructor of T, then
@@ -502,11 +502,6 @@ namespace chai {
                               if (pointer) {
                                  destroy_on_device(temp);
                                  m_gpu_pointer = nullptr;
-#ifndef CHAI_DISABLE_RM
-                                 if (ArrayManager::getInstance()->deviceSynchronize()) {
-                                    synchronize();
-                                 }
-#endif
                               }
 
                               break;
@@ -535,11 +530,6 @@ namespace chai {
                            if (pointer) {
                               destroy_on_device(pointer);
                               m_gpu_pointer = nullptr;
-#ifndef CHAI_DISABLE_RM
-                              if (ArrayManager::getInstance()->deviceSynchronize()) {
-                                 synchronize();
-                              }
-#endif
                            }
 
                            break;
@@ -964,12 +954,6 @@ namespace chai {
       hipLaunchKernelGGL(detail::make_on_device, 1, 1, 0, 0, gpuBuffer, args...);
 #endif
 
-#ifndef CHAI_DISABLE_RM
-      if (ArrayManager::getInstance()->deviceSynchronize()) {
-         synchronize();
-      }
-#endif
-
       // Allocate space on the CPU for the pointer and copy the pointer to the CPU
       T** cpuBuffer = (T**) malloc(sizeof(T*));
       gpuMemcpy(cpuBuffer, gpuBuffer, sizeof(T*), gpuMemcpyDeviceToHost);
@@ -1023,12 +1007,6 @@ namespace chai {
       detail::make_on_device_from_factory<T><<<1, 1>>>(gpuBuffer, f, args...);
 #elif defined(__HIPCC__)
       hipLaunchKernelGGL(detail::make_on_device_from_factory, 1, 1, 0, 0, gpuBuffer, f, args...);
-#endif
-
-#ifndef CHAI_DISABLE_RM
-      if (ArrayManager::getInstance()->deviceSynchronize()) {
-         synchronize();
-      }
 #endif
 
       // Allocate space on the CPU for the pointer and copy the pointer to the CPU
