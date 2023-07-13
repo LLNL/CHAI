@@ -17,7 +17,7 @@
 namespace chai
 {
 thread_local ExecutionSpace ArrayManager::m_current_execution_space;
-thread_local bool ArrayManager::m_synced_since_last_kernel;
+thread_local bool ArrayManager::m_synced_since_last_kernel = false;
 
 PointerRecord ArrayManager::s_null_record = PointerRecord();
 
