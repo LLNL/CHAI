@@ -16,6 +16,8 @@
 
 namespace chai
 {
+thread_local ExecutionSpace ArrayManager::m_current_execution_space;
+thread_local bool ArrayManager::m_synced_since_last_kernel;
 
 PointerRecord ArrayManager::s_null_record = PointerRecord();
 
@@ -32,7 +34,7 @@ ArrayManager::ArrayManager() :
   m_callbacks_active{true}
 {
   m_pointer_map.clear();
-  m_current_execution_space = NONE;
+  ArrayManager::m_current_execution_space = NONE;
   m_default_allocation_space = CPU;
 
   m_allocators[CPU] =
@@ -167,10 +169,10 @@ void ArrayManager::setExecutionSpace(ExecutionSpace space)
   CHAI_LOG(Debug, "Setting execution space to " << space);
 
   if (chai::GPU == space) {
-    m_synced_since_last_kernel = false;
+    ArrayManager::m_synced_since_last_kernel = false;
   }
 
-  m_current_execution_space = space;
+  ArrayManager::m_current_execution_space = space;
 }
 
 void* ArrayManager::move(void* pointer,
@@ -179,7 +181,7 @@ void* ArrayManager::move(void* pointer,
 {
   // Check for default arg (NONE)
   if (space == NONE) {
-    space = m_current_execution_space;
+    space = ArrayManager::m_current_execution_space;
   }
 
   if (space == NONE) {
@@ -193,12 +195,12 @@ void* ArrayManager::move(void* pointer,
 
 ExecutionSpace ArrayManager::getExecutionSpace()
 {
-  return m_current_execution_space;
+  return ArrayManager::m_current_execution_space;
 }
 
 void ArrayManager::registerTouch(PointerRecord* pointer_record)
 {
-  registerTouch(pointer_record, m_current_execution_space);
+  registerTouch(pointer_record, ArrayManager::m_current_execution_space);
 }
 
 void ArrayManager::registerTouch(PointerRecord* pointer_record,

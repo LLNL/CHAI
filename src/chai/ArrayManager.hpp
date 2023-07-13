@@ -489,7 +489,7 @@ private:
   /*!
    * Current execution space.
    */
-  ExecutionSpace m_current_execution_space;
+  static thread_local ExecutionSpace m_current_execution_space;
 
   /**
    * Default space for new allocations.
@@ -536,7 +536,7 @@ private:
    * Whether or not a synchronize has been performed since the launch of the last
    * GPU context
    */
-  bool m_synced_since_last_kernel = false;
+  static thread_local bool m_synced_since_last_kernel;
 
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
   /*!
