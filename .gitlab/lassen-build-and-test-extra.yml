@@ -1,0 +1,46 @@
+##############################################################################
+# Copyright (c) 2022, Lawrence Livermore National Security, LLC and RADIUSS
+# project contributors. See the COPYRIGHT file for details.
+#
+# SPDX-License-Identifier: (MIT)
+##############################################################################
+
+########################
+# Overridden shared jobs
+########################
+# We duplicate the shared jobs description and add necessary changes for RAJA.
+# We keep ${PROJECT_<MACHINE>_VARIANTS} and ${PROJECT_<MACHINE>_DEPS} So that
+# the comparison with the original job is easier.
+
+# Override job with old cuda to allow it to fail.
+clang_12_0_1_gcc_8_3_1_cuda_10_1_243:
+  variables:
+    SPEC: "${PROJECT_LASSEN_VARIANTS} +cuda %clang@12.0.1.gcc.8.3.1 ^cuda@10.1.243+allow-unsupported-compilers ${PROJECT_LASSEN_DEPS}"
+  extends: .build_and_test_on_lassen
+  allow_failure: true
+
+
+############
+# Extra jobs
+############
+# We do not recommend using ${PROJECT_<MACHINE>_VARIANTS} and
+# ${PROJECT_<MACHINE>_DEPS} in the extra jobs. There is no reason not to fully
+# describe the spec here.
+
+clang_12_0_1_libcpp:
+  extends: .build_and_test_on_lassen
+  variables:
+    SPEC: "~shared +raja tests=basic %clang@12.0.1 cflags==\"-DGTEST_HAS_CXXABI_H_=0\" cxxflags==\"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0\""
+
+clang_12_0_1_gcc_8_3_1_memleak:
+  extends: .build_and_test_on_lassen
+  variables:
+    SPEC: "~shared +raja tests=basic %clang@12.0.1.gcc.8.3.1 cxxflags==\"-fsanitize=address\""
+    ASAN_OPTIONS: "detect_leaks=1"
+
+clang_12_0_1_datarace:
+  extends: .build_and_test_on_lassen
+  variables:
+    SPEC: "~shared +raja tests=basic %clang@12.0.1 cxxflags==\"-fsanitize=thread\""
+  allow_failure: true
+
