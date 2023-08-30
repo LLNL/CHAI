@@ -70,7 +70,7 @@ RUN . /opt/spack/share/spack/setup-env.sh && spack load cuda && \
     cmake -DCMAKE_CXX_COMPILER=g++ -DENABLE_CUDA=On .. && \
     make -j 16
 
-FROM ghcr.io/rse-ops/cuda:cuda-11.1.1-ubuntu-20.04 AS nvcc11
+FROM ghcr.io/rse-ops/cuda-ubuntu-20.04:cuda-11.1.1 AS nvcc11
 ENV GTEST_COLOR=1
 COPY . /home/chai/workspace
 WORKDIR /home/chai/workspace/build

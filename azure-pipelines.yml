@@ -19,8 +19,6 @@ jobs:
         docker_target: clang13
       nvcc10:
         docker_target: nvcc10
-      nvcc11:
-        docker_target: nvcc11
       hip:
         docker_target: hip
   pool:
