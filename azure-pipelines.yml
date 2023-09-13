@@ -2,25 +2,23 @@ jobs:
 - job: Docker
   timeoutInMinutes: 360
   strategy:
-    matrix: 
-      gcc7: 
+    matrix:
+      gcc7:
         docker_target: gcc7
-      gcc8: 
+      gcc8:
         docker_target: gcc8
-      gcc9: 
+      gcc9:
         docker_target: gcc9
-      clang10: 
+      clang10:
         docker_target: clang10
-      clang11: 
+      clang11:
         docker_target: clang11
-      clang12: 
+      clang12:
         docker_target: clang12
-      clang13: 
+      clang13:
         docker_target: clang13
       nvcc10:
         docker_target: nvcc10
-      nvcc11:
-        docker_target: nvcc11
       hip:
         docker_target: hip
   pool:
