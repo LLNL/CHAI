@@ -194,16 +194,29 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t new_elems)
     T* new_ptr;
 
   #if defined(CHAI_ENABLE_UM)
-    gpuMallocManaged(&new_ptr, sizeof(T) * new_elems);
-    gpuMemcpy(new_ptr, m_active_pointer, sizeof(T) * m_elems, gpuMemcpyDefault);
+    if (new_elems > 0) {
+       gpuMallocManaged(&new_ptr, sizeof(T) * new_elems);
+       gpuMemcpy(new_ptr, m_active_pointer, sizeof(T) * m_elems, gpuMemcpyDefault);
+    }
     gpuFree(m_active_pointer);
   #else  // not CHAI_ENABLE_UM
-    new_ptr = static_cast<T*>(realloc(m_active_pointer, sizeof(T) * new_elems));
+    if (new_elems > 0) {
+       new_ptr = static_cast<T*>(realloc(m_active_pointer, sizeof(T) * new_elems));
+    }
+    else {
+       ::free((void *)m_active_pointer);
+    }
   #endif
 
     m_elems = new_elems;
-    m_active_pointer = new_ptr;
-    m_active_base_pointer = m_active_pointer;
+    if (new_elems > 0) {
+       m_active_pointer = new_ptr;
+       m_active_base_pointer = m_active_pointer;
+    }
+    else {
+       m_active_pointer = nullptr;
+       m_active_base_pointer = nullptr;
+    }
 
     CHAI_LOG(Debug, "m_active_ptr reallocated at address: " << m_active_pointer);
   }
