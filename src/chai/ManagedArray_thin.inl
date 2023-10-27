@@ -191,7 +191,7 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t new_elems)
                                                   << " with new size"
                                                   << elems);
 
-    T* new_ptr;
+    T* new_ptr = nullptr;
 
   #if defined(CHAI_ENABLE_UM)
     if (new_elems > 0) {
@@ -209,14 +209,8 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t new_elems)
   #endif
 
     m_elems = new_elems;
-    if (new_elems > 0) {
-       m_active_pointer = new_ptr;
-       m_active_base_pointer = m_active_pointer;
-    }
-    else {
-       m_active_pointer = nullptr;
-       m_active_base_pointer = nullptr;
-    }
+    m_active_pointer = new_ptr;
+    m_active_base_pointer = m_active_pointer;
 
     CHAI_LOG(Debug, "m_active_ptr reallocated at address: " << m_active_pointer);
   }
