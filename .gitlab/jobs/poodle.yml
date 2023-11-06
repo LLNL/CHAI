@@ -24,4 +24,4 @@
 clang_14_0_6_develop_tpls:
   variables:
     SPEC: " %clang@14.0.6 ^umpire@develop ^raja@develop ^camp@main"
-  extends: .job_on_ruby
+  extends: .job_on_poodle
