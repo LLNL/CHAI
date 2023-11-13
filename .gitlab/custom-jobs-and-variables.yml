@@ -16,7 +16,8 @@ variables:
 # Arguments for top level allocation
   RUBY_SHARED_ALLOC: "--exclusive --reservation=ci --qos=ci_ruby --time=7 --nodes=1"
 # Arguments for job level allocation
-  RUBY_JOB_ALLOC: "--overlap --reservation=ci --time=5 --nodes=1"
+# Note: We repeat the reservation, necessary when jobs are manually re-triggered.
+  RUBY_JOB_ALLOC: "--overlap --reservation=ci --qos=ci_ruby --time=5 --nodes=1"
 # Project specific variants for ruby
   PROJECT_RUBY_VARIANTS: "~shared +raja tests=basic "
 # Project specific deps for ruby
