@@ -9,7 +9,9 @@
 #include "chai/config.hpp"
 
 #if defined(CHAI_ENABLE_CUDA)
+#if !defined(CHAI_THIN_GPU_ALLOCATE)
 #include "cuda_runtime_api.h"
+#endif
 #endif
 
 #include "umpire/ResourceManager.hpp"
@@ -172,6 +174,12 @@ void ArrayManager::setExecutionSpace(ExecutionSpace space)
     m_synced_since_last_kernel = false;
   }
 
+#if defined(CHAI_THIN_GPU_ALLOCATE)
+ if (chai::CPU == space) {
+    syncIfNeeded();
+ }
+#endif
+
   m_current_execution_space = space;
 }
 
@@ -226,6 +234,34 @@ void ArrayManager::resetTouch(PointerRecord* pointer_record)
   }
 }
 
+
+/* Not all GPU platform runtimes (notably HIP), will give you asynchronous copies to the device by default, so we leverage
+ * umpire's API for asynchronous copies using camp resources in this method, based off of the CHAI destination space
+ * */
+static void copy(void * dst_pointer, void * src_pointer, umpire::ResourceManager & manager, ExecutionSpace dst_space, ExecutionSpace src_space) {
+
+#ifdef CHAI_ENABLE_CUDA
+   camp::resources::Resource device_resource(camp::resources::Cuda::get_default());
+#elif defined(CHAI_ENABLE_HIP)
+   camp::resources::Resource device_resource(camp::resources::Hip::get_default());
+#else
+   camp::resources::Resource device_resource(camp::resources::Host::get_default());
+#endif
+
+   camp::resources::Resource host_resource(camp::resources::Host::get_default());
+   if (dst_space == GPU || src_space == GPU) {
+      // Do the copy using the device resource
+      manager.copy(dst_pointer, src_pointer, device_resource);
+   } else {
+      // Do the copy using the host resource
+      manager.copy(dst_pointer, src_pointer, host_resource);
+   }
+   // Ensure device to host copies are synchronous
+   if (dst_space == CPU && src_space == GPU) {
+      device_resource.wait();
+   }
+}
+
 void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 {
   if (space == NONE) {
@@ -253,7 +289,9 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   }
 #endif
 
-  void* src_pointer = record->m_pointers[record->m_last_space];
+  ExecutionSpace prev_space = record->m_last_space;
+
+  void* src_pointer = record->m_pointers[prev_space];
   void* dst_pointer = record->m_pointers[space];
 
   if (!dst_pointer) {
@@ -267,7 +305,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
   } else if (dst_pointer != src_pointer) {
     // Exclude the copy if src and dst are the same (can happen for PINNED memory)
     {
-      m_resource_manager.copy(dst_pointer, src_pointer);
+      chai::copy(dst_pointer, src_pointer, m_resource_manager, space, prev_space);
     }
 
     callback(record, ACTION_MOVE, space);
@@ -284,6 +322,11 @@ void ArrayManager::allocate(
   auto alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[space]);
 
   pointer_record->m_pointers[space] = alloc.allocate(size);
+
+#if CHAI_ENABLE_ZERO_INITIALIZED_MEMORY
+  m_resource_manager.memset(new_ptr, 0, new_size);
+#endif
+
   callback(pointer_record, ACTION_ALLOC, space);
 
   registerPointer(pointer_record, space);
@@ -449,32 +492,32 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
 
 PointerRecord* ArrayManager::deepCopyRecord(PointerRecord const* record)
 {
-  PointerRecord* copy = new PointerRecord{};
+  PointerRecord* new_record = new PointerRecord{};
   const size_t size = record->m_size;
-  copy->m_size = size;
-  copy->m_user_callback = [] (const PointerRecord*, Action, ExecutionSpace) {};
+  new_record->m_size = size;
+  new_record->m_user_callback = [] (const PointerRecord*, Action, ExecutionSpace) {};
 
   const ExecutionSpace last_space = record->m_last_space;
-  copy->m_last_space = last_space;
+  new_record->m_last_space = last_space;
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
-    copy->m_allocators[space] = record->m_allocators[space];
+    new_record->m_allocators[space] = record->m_allocators[space];
   }
 
-  allocate(copy, last_space);
+  allocate(new_record, last_space);
 
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
-    copy->m_owned[space] = true;
-    copy->m_touched[space] = false;
+    new_record->m_owned[space] = true;
+    new_record->m_touched[space] = false;
   }
 
-  copy->m_touched[last_space] = true;
+  new_record->m_touched[last_space] = true;
 
-  void* dst_pointer = copy->m_pointers[last_space];
+  void* dst_pointer = new_record->m_pointers[last_space];
   void* src_pointer = record->m_pointers[last_space];
 
-  m_resource_manager.copy(dst_pointer, src_pointer);
+  chai::copy(dst_pointer, src_pointer, m_resource_manager, last_space, last_space);
 
-  return copy;
+  return new_record;
 }
 
 std::unordered_map<void*, const PointerRecord*>

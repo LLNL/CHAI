@@ -81,7 +81,7 @@ public:
   /*!
    * \brief Default constructor creates a ManagedArray with no allocations.
    */
-  CHAI_HOST_DEVICE ManagedArray(
+  ManagedArray(
       std::initializer_list<chai::ExecutionSpace> spaces,
       std::initializer_list<umpire::Allocator> allocators);
 
@@ -98,7 +98,7 @@ public:
    */
   CHAI_HOST_DEVICE ManagedArray(size_t elems, ExecutionSpace space = get_default_space());
 
-  CHAI_HOST_DEVICE ManagedArray(
+  ManagedArray(
       size_t elems,
       std::initializer_list<chai::ExecutionSpace> spaces,
       std::initializer_list<umpire::Allocator> allocators,
@@ -273,7 +273,7 @@ public:
 
   CHAI_HOST_DEVICE ManagedArray(T* data,
                                 ArrayManager* array_manager,
-                                size_t m_elems,
+                                size_t elems,
                                 PointerRecord* pointer_record);
 
   ManagedArray<T>& operator=(ManagedArray const & other) = default;
@@ -411,16 +411,15 @@ public:
     m_active_pointer = other.m_active_pointer;
     m_active_base_pointer = other.m_active_base_pointer;
     m_resource_manager = other.m_resource_manager;
-    m_elems = other.m_elems;
+    m_size = other.m_size;
     m_offset = other.m_offset;
     m_pointer_record = other.m_pointer_record;
     m_is_slice = other.m_is_slice;
 #ifndef CHAI_DISABLE_RM
 #if !defined(CHAI_DEVICE_COMPILE)
-  // if we can, ensure elems is based off the pointer_record size to protect against
-  // casting leading to incorrect size info in m_elems.
+  // if we can, ensure elems is based off the pointer_record size out of paranoia
   if (m_pointer_record != nullptr && !m_is_slice) {
-     m_elems = m_pointer_record->m_size / sizeof(T);
+     m_size = m_pointer_record->m_size;
   }
 #endif
 #endif
@@ -444,7 +443,7 @@ private:
             typename std::enable_if<B, int>::type = 0>
   CHAI_HOST bool initInner(size_t start = 0)
   {
-    for (size_t i = start; i < m_elems; ++i) {
+    for (size_t i = start; i < m_size/sizeof(T); ++i) {
       m_active_base_pointer[i] = nullptr;
     }
     return true;
@@ -473,7 +472,7 @@ protected:
   /*!
    * Number of elements in the ManagedArray.
    */
-  mutable size_t m_elems = 0;
+  mutable size_t m_size = 0;
   mutable size_t m_offset = 0;
 
   /*!
@@ -582,7 +581,7 @@ CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T> ManagedArray<T>::slice( size_t offs
     slice.m_active_base_pointer = m_active_base_pointer;
     slice.m_offset = offset + m_offset;
     slice.m_active_pointer = m_active_base_pointer + slice.m_offset;
-    slice.m_elems = elems;
+    slice.m_size = elems*sizeof(T);
     slice.m_is_slice = true;
   }
   return slice;

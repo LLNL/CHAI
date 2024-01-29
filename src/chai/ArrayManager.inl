@@ -17,7 +17,9 @@
 #include "umpire/ResourceManager.hpp"
 
 #if defined(CHAI_ENABLE_UM)
+#if !defined(CHAI_THIN_GPU_ALLOCATE)
 #include <cuda_runtime_api.h>
+#endif
 #endif
 
 namespace chai {
@@ -62,6 +64,9 @@ void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* point
 
     if (old_ptr) {
       void* new_ptr = m_allocators[space]->allocate(new_size);
+#if CHAI_ENABLE_ZERO_INITIALIZED_MEMORY
+      m_resource_manager.memset(new_ptr, 0, new_size);
+#endif
       m_resource_manager.copy(new_ptr, old_ptr, num_bytes_to_copy);
       m_allocators[space]->deallocate(old_ptr);
 
