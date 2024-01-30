@@ -21,6 +21,5 @@
 #cmakedefine CHAI_ENABLE_RAJA_PLUGIN
 #cmakedefine CHAI_ENABLE_GPU_SIMULATION_MODE
 #cmakedefine CHAI_ENABLE_PINNED
-#cmakedefine CHAI_ENABLE_ZERO_INITIALIZED_MEMORY
 
 #endif // CHAI_config_HPP

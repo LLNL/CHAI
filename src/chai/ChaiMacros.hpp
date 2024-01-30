@@ -70,21 +70,23 @@
 
 #define CHAI_UNUSED_ARG(X)
 
-#if defined(CHAI_DEBUG)
 #if !defined(CHAI_DISABLE_RM)
 
 #define CHAI_LOG(level, msg) \
   UMPIRE_LOG(level, msg);
+
 #else
+
+#if defined(CHAI_DEBUG)
 
 #define CHAI_LOG(level, msg) \
   std::cerr << "[" << __FILE__ << "] " << msg << std::endl;
 
-#endif // !CHAI_DISABLE_RM
 #else
 
 #define CHAI_LOG(level, msg)
 
-#endif // CHAI_DEBUG
+#endif
+#endif
 
 #endif  // CHAI_ChaiMacros_HPP
