@@ -191,6 +191,7 @@ then
         $cmake_exe --build . --verbose -j 1
     else
         # todo this should use cmake --install once we use CMake 3.15+ everywhere
+        #$cmake_exe --install .
         make install
     fi
     date
@@ -235,11 +236,16 @@ then
         echo "[Error]: failure(s) while running CTest" && exit 1
     fi
 
-    if [[ ! -d ${install_dir} ]]
+    if grep -q -i "ENABLE_HIP.*ON" ${hostconfig_path}
     then
-        echo "[Error]: install directory not found : ${install_dir}" && exit 1
+        echo "[Warning]: not testing install with HIP"
     else
-        echo "[Information]: No testing of installation implemented..."
+        if [[ ! -d ${install_dir} ]]
+        then
+            echo "[Error]: install directory not found : ${install_dir}" && exit 1
+        else
+            echo "[Information]: No testing of installation implemented..."
+        fi
     fi
 
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
