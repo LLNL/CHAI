@@ -105,3 +105,5 @@ install(
   ARCHIVE DESTINATION lib)
 
 install(EXPORT chai-targets DESTINATION share/chai/cmake/)
+
+blt_install_tpl_setups(DESTINATION share/chai/cmake/)
