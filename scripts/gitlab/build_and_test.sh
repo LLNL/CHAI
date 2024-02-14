@@ -236,16 +236,11 @@ then
         echo "[Error]: failure(s) while running CTest" && exit 1
     fi
 
-    if grep -q -i "ENABLE_HIP.*ON" ${hostconfig_path}
+    if [[ ! -d ${install_dir} ]]
     then
-        echo "[Warning]: not testing install with HIP"
+        echo "[Error]: install directory not found : ${install_dir}" && exit 1
     else
-        if [[ ! -d ${install_dir} ]]
-        then
-            echo "[Error]: install directory not found : ${install_dir}" && exit 1
-        else
-            echo "[Information]: No testing of installation implemented..."
-        fi
+        echo "[Information]: No testing of installation implemented..."
     fi
 
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
