@@ -191,6 +191,7 @@ then
         $cmake_exe --build . --verbose -j 1
     else
         # todo this should use cmake --install once we use CMake 3.15+ everywhere
+        #$cmake_exe --install .
         make install
     fi
     date
