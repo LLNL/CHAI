@@ -1,12 +1,12 @@
-##############################################################################
+###############################################################################
 # Copyright (c) 2022-23, Lawrence Livermore National Security, LLC and RADIUSS
 # project contributors. See the COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (MIT)
-##############################################################################
+###############################################################################
 
-# Override reproducer section to define project specific variables.
-.tioga_reproducer_vars: &tioga_reproducer_vars
+# Override reproducer section to define projet specific variables.
+.poodle_reproducer_vars: &poodle_reproducer_vars
     - |
       echo -e "export MODULE_LIST=\"${MODULE_LIST}\""
       echo -e "export SPEC=\"${SPEC//\"/\\\"}\""
@@ -26,3 +26,8 @@
 # We do not recommend using ${PROJECT_<MACHINE>_VARIANTS} and
 # ${PROJECT_<MACHINE>_DEPS} in the extra jobs. There is no reason not to fully
 # describe the spec here.
+
+clang_14_0_6_develop_tpls:
+  variables:
+    SPEC: " %clang@14.0.6 ^umpire@develop ^raja@develop ^camp@main"
+  extends: .job_on_poodle
