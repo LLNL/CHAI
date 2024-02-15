@@ -45,17 +45,17 @@ clang_12_0_1_ibm_gcc_8_3_1_cuda_10_1_243:
 clang_12_0_1_libcpp:
   extends: .job_on_lassen
   variables:
-    SPEC: "~shared +raja tests=basic %clang@12.0.1 cflags==\"-DGTEST_HAS_CXXABI_H_=0\" cxxflags==\"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0\" ^blt@0.5.3"
+    SPEC: "~shared +raja tests=basic %clang@12.0.1 cflags==\"-DGTEST_HAS_CXXABI_H_=0\" cxxflags==\"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0\""
 
 clang_12_0_1_gcc_8_3_1_memleak:
   extends: .job_on_lassen
   variables:
-    SPEC: "~shared +raja tests=basic %clang@12.0.1.gcc.8.3.1 cxxflags==\"-fsanitize=address\" ^blt@0.5.3"
+    SPEC: "~shared +raja tests=basic %clang@12.0.1.gcc.8.3.1 cxxflags==\"-fsanitize=address\""
     ASAN_OPTIONS: "detect_leaks=1"
 
 clang_12_0_1_datarace:
   extends: .job_on_lassen
   variables:
-    SPEC: "~shared +raja tests=basic %clang@12.0.1 cxxflags==\"-fsanitize=thread\" ^blt@0.5.3"
+    SPEC: "~shared +raja tests=basic %clang@12.0.1 cxxflags==\"-fsanitize=thread\""
   allow_failure: true
 
