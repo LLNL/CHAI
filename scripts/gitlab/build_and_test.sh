@@ -238,9 +238,17 @@ then
 
     if [[ ! -d ${install_dir} ]]
     then
-        echo "[Error]: install directory not found : ${install_dir}" && exit 1
-    else
-        echo "[Information]: No testing of installation implemented..."
+        echo "[Error]: Install directory not found : ${install_dir}" && exit 1
+    fi
+
+    cd ${install_dir}/examples/chai/using-with-cmake
+    mkdir build && cd build
+    if ! $cmake_exe -C ../host-config.cmake ..; then
+    echo "ERROR: running $cmake_exe for using-with-cmake test" && exit 1
+    fi
+
+    if ! make; then
+    echo "ERROR: running make for using-with-cmake test" && exit 1
     fi
 
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
