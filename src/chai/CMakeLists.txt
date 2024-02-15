@@ -4,6 +4,9 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
+
+include(CMakePackageConfigHelpers)
+
 configure_file(
   ${PROJECT_SOURCE_DIR}/src/chai/config.hpp.in
   ${PROJECT_BINARY_DIR}/include/chai/config.hpp)
@@ -81,13 +84,23 @@ target_include_directories(
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-configure_file(
-  ${PROJECT_SOURCE_DIR}/src/chai/chai-config.cmake.in
-  ${PROJECT_BINARY_DIR}/share/chai/cmake/chai-config.cmake)
+configure_package_config_file(
+  ${PROJECT_SOURCE_DIR}/cmake/chai-config.cmake.in
+  ${PROJECT_BINARY_DIR}/lib/cmake/chai/chai-config.cmake
+  PATH_VARS CMAKE_INSTALL_PREFIX
+  INSTALL_DESTINATION lib/cmake/chai)
 
 install(
-  FILES ${PROJECT_BINARY_DIR}/share/chai/cmake/chai-config.cmake
-  DESTINATION share/chai/cmake/)
+  FILES ${PROJECT_BINARY_DIR}/lib/cmake/chai/chai-config.cmake
+  DESTINATION lib/cmake/chai)
+
+write_basic_package_version_file(
+  ${PROJECT_BINARY_DIR}/lib/cmake/chai/chai-config-version.cmake
+  COMPATIBILITY SameMajorVersion)
+
+install(FILES
+  ${PROJECT_BINARY_DIR}/lib/cmake/chai/chai-config-version.cmake
+  DESTINATION lib/cmake/chai)
 
 install(
   FILES ${PROJECT_BINARY_DIR}/include/chai/config.hpp
@@ -104,6 +117,6 @@ install(
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
 
-install(EXPORT chai-targets DESTINATION share/chai/cmake/)
+install(EXPORT chai-targets DESTINATION lib/cmake/chai)
 
-blt_install_tpl_setups(DESTINATION share/chai/cmake/)
+blt_install_tpl_setups(DESTINATION lib/cmake/chai)
