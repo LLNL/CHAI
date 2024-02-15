@@ -18,7 +18,7 @@ if (NOT TARGET umpire)
     @PACKAGE_CMAKE_INSTALL_PREFIX@)
 endif ()
 
-if (NOT TARGET RAJA)
+if (@CHAI_ENABLE_RAJA_PLUGIN@ AND NOT TARGET RAJA)
   find_dependency(raja CONFIG NO_DEFAULT_PATH PATHS
     ${raja_DIR}
     @raja_DIR@
