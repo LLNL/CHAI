@@ -68,5 +68,6 @@ variables:
 # CI behavior.
 # See Umpire for an example (export junit test reports).
 .custom_job:
-  variables:
-    JOB_TEMPLATE_CANNOT_BE_EMPTY: "True"
+  artifacts:
+    reports:
+      junit: junit.xml

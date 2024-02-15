@@ -12,7 +12,9 @@
 #include "chai/config.hpp"
 
 #if defined(CHAI_ENABLE_UM)
+#if !defined(CHAI_THIN_GPU_ALLOCATE)
 #include <cuda_runtime_api.h>
+#endif
 #endif
 
 struct sequential {
@@ -41,7 +43,9 @@ void forall(sequential, int begin, int end, LOOP_BODY body)
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
 
 #if defined(CHAI_ENABLE_UM)
+#if !defined(CHAI_THIN_GPU_ALLOCATE)
   cudaDeviceSynchronize();
+#endif
 #endif
 
   rm->setExecutionSpace(chai::CPU);
