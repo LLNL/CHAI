@@ -21,7 +21,7 @@ variables:
 # Project specific variants for ruby
   PROJECT_RUBY_VARIANTS: "~shared +raja tests=basic "
 # Project specific deps for ruby
-  PROJECT_RUBY_DEPS: ""
+  PROJECT_RUBY_DEPS: "^blt@5.3.0"
 
 # Poodle
 # Arguments for top level allocation
@@ -32,7 +32,7 @@ variables:
 # Project specific variants for poodle
   PROJECT_POODLE_VARIANTS: "~shared +raja tests=basic "
 # Project specific deps for poodle
-  PROJECT_POODLE_DEPS: ""
+  PROJECT_POODLE_DEPS: "^blt@5.3.0"
 
 # Corona
 # Arguments for top level allocation
@@ -42,7 +42,7 @@ variables:
 # Project specific variants for corona
   PROJECT_CORONA_VARIANTS: "~shared +raja tests=basic "
 # Project specific deps for corona
-  PROJECT_CORONA_DEPS: ""
+  PROJECT_CORONA_DEPS: "^blt@5.3.0"
 
 # Tioga
 # Arguments for top level allocation
@@ -52,7 +52,7 @@ variables:
 # Project specific variants for tioga
   PROJECT_TIOGA_VARIANTS: "~shared +raja tests=basic "
 # Project specific deps for tioga
-  PROJECT_TIOGA_DEPS: ""
+  PROJECT_TIOGA_DEPS: "^blt@5.3.0"
 
 # Lassen and Butte use a different job scheduler (spectrum lsf) that does not
 # allow pre-allocation the same way slurm does.
@@ -61,7 +61,7 @@ variables:
 # Project specific variants for lassen
   PROJECT_LASSEN_VARIANTS: "~shared +raja cuda_arch=70 tests=basic"
 # Project specific deps for lassen
-  PROJECT_LASSEN_DEPS: ""
+  PROJECT_LASSEN_DEPS: "^blt@5.3.0"
 
 # Configuration shared by build and test jobs specific to this project.
 # Not all configuration can be shared. Here projects can fine tune the
