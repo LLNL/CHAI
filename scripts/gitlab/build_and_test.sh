@@ -7,7 +7,7 @@ then
 fi
 
 ##############################################################################
-# Copyright (c) 2016-23, Lawrence Livermore National Security, LLC and CHAI
+# Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
 # project contributors. See the COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
