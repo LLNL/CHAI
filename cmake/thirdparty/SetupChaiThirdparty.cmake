@@ -6,9 +6,9 @@
 ##############################################################################
 
 if (NOT TARGET umpire)
-  if (DEFINED umpire_DIR)
+  if (DEFINED umpire_DIR OR DEFINED UMPIRE_DIR)
     message(STATUS "[CHAI] Using external Umpire")
-    find_package(umpire CONFIG REQUIRED NO_DEFAULT_PATH PATHS ${umpire_DIR})
+    find_package(umpire CONFIG REQUIRED NO_DEFAULT_PATH PATHS ${umpire_DIR} ${UMPIRE_DIR})
   else ()
     if (NOT EXISTS ${PROJECT_SOURCE_DIR}/src/tpl/umpire/CMakeLists.txt)
       message(FATAL_ERROR "[CHAI] Umpire not found! Set umpire_DIR to the install location of Umpire or run 'git submodule update --init --recursive' in the CHAI repository, then try building again.")
@@ -27,9 +27,9 @@ endif ()
 
 if (CHAI_ENABLE_RAJA_PLUGIN)
   if (NOT TARGET RAJA)
-    if (DEFINED raja_DIR)
+    if (DEFINED raja_DIR OR DEFINED RAJA_DIR)
       message(STATUS "[CHAI] Using external RAJA")
-      find_package(raja CONFIG REQUIRED NO_DEFAULT_PATH PATHS ${raja_DIR})
+      find_package(raja CONFIG REQUIRED NO_DEFAULT_PATH PATHS ${raja_DIR} ${RAJA_DIR})
     else ()
       if (NOT EXISTS ${PROJECT_SOURCE_DIR}/src/tpl/raja/CMakeLists.txt)
         message(FATAL_ERROR "[CHAI] RAJA not found! Set raja_DIR to the install location of RAJA or run 'git submodule update --init --recursive' in the CHAI repository, then try building again.")
