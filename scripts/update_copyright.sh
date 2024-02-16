@@ -46,18 +46,18 @@ for i in `cat files2change`
 do
     echo $i
     cp $i $i.sed.bak
-    sed "s/Copyright (c) 2016-[0-9][0-9]/Copyright (c) 2016-24/" $i.sed.bak > $i
+    sed "s/Copyright (c) \([0-9]\{4\}\)-[0-9]\{2\},/Copyright (c) \1-24,/" $i.sed.bak > $i
 done
 
 echo LICENSE
 cp LICENSE LICENSE.sed.bak
-sed "s/Copyright (c) 2016-[0-9][0-9][0-9][0-9]/Copyright (c) 2016-2424/" LICENSE.sed.bak > LICENSE
+sed "s/Copyright (c) \([0-9]\{4\}\)-[0-9]\{4\}/Copyright (c) \1-2024/" LICENSE.sed.bak > LICENSE
 
 for i in README.md CONTRIBUTING.md
 do 
     echo $i
     cp $i $i.sed.bak
-    sed "s/2016-[0-9][0-9]/2016-24/" $i.sed.bak > $i
+    sed "s/\([0-9]\{4\}\)-[0-9]\{2\}/\1-24/" $i.sed.bak > $i
 done
 
 #=============================================================================
