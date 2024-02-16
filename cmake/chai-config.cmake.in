@@ -16,14 +16,14 @@ if (NOT TARGET umpire)
   find_dependency(umpire CONFIG NO_DEFAULT_PATH PATHS
     ${umpire_DIR}
     @umpire_DIR@
-    @CHAI_PACKAGE_PREFIX_DIR@)
+    ${CHAI_PACKAGE_PREFIX_DIR})
 endif ()
 
 if (@CHAI_ENABLE_RAJA_PLUGIN@ AND NOT TARGET RAJA)
   find_dependency(raja CONFIG NO_DEFAULT_PATH PATHS
     ${raja_DIR}
     @raja_DIR@
-    @CHAI_PACKAGE_PREFIX_DIR@)
+    ${CHAI_PACKAGE_PREFIX_DIR})
 endif ()
 
 include("${CMAKE_CURRENT_LIST_DIR}/chai-targets.cmake")
