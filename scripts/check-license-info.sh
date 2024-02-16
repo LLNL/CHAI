@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 ##############################################################################
 # Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
-# project contributors. See the COPYRIGHT file for details.
+# project contributors. See the CHAI LICENSE file for details.
 #
 # SPDX-License-Identifier: (MIT)
 ##############################################################################
@@ -15,7 +15,7 @@ RED="\033[1;31m"
 GREEN="\033[1;32m"
 NOCOLOR="\033[0m"
 
-files_no_license=$(grep -rL "the COPYRIGHT file" . \
+files_no_license=$(grep -rL "the CHAI LICENSE file" . \
    --exclude-dir=.git \
    --exclude-dir=blt \
    --exclude-dir=umpire \

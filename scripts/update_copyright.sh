@@ -37,7 +37,7 @@
 #=============================================================================
 # First find all the files we want to modify
 #=============================================================================
-grep -rl "the COPYRIGHT file" . --exclude-dir=.git --exclude-dir=blt --exclude-dir=umpire --exclude-dir=raja --exclude-dir=radiuss-spack-configs --exclude-dir=uberenv > files2change
+grep -rl "the CHAI LICENSE file" . --exclude-dir=.git --exclude-dir=blt --exclude-dir=umpire --exclude-dir=raja --exclude-dir=radiuss-spack-configs --exclude-dir=uberenv > files2change
 
 #=============================================================================
 # Replace the old copyright dates with new dates
