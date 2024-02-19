@@ -1,6 +1,6 @@
 ##############################################################################
-# Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
-# project contributors. See the COPYRIGHT file for details.
+# Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+# project contributors. See the CHAI LICENSE file for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
@@ -86,20 +86,19 @@ target_include_directories(
 
 configure_package_config_file(
   ${PROJECT_SOURCE_DIR}/cmake/chai-config.cmake.in
-  ${PROJECT_BINARY_DIR}/lib/cmake/chai/chai-config.cmake
-  PATH_VARS CMAKE_INSTALL_PREFIX
+  ${PROJECT_BINARY_DIR}/chai-config.cmake
   INSTALL_DESTINATION lib/cmake/chai)
 
 install(
-  FILES ${PROJECT_BINARY_DIR}/lib/cmake/chai/chai-config.cmake
+  FILES ${PROJECT_BINARY_DIR}/chai-config.cmake
   DESTINATION lib/cmake/chai)
 
 write_basic_package_version_file(
-  ${PROJECT_BINARY_DIR}/lib/cmake/chai/chai-config-version.cmake
+  ${PROJECT_BINARY_DIR}/chai-config-version.cmake
   COMPATIBILITY SameMajorVersion)
 
 install(FILES
-  ${PROJECT_BINARY_DIR}/lib/cmake/chai/chai-config-version.cmake
+  ${PROJECT_BINARY_DIR}/chai-config-version.cmake
   DESTINATION lib/cmake/chai)
 
 install(
