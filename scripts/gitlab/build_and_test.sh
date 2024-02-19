@@ -243,6 +243,7 @@ then
 
     cd ${install_dir}/examples/chai/using-with-cmake
     mkdir build && cd build
+
     if ! $cmake_exe -C ../host-config.cmake ..; then
     echo "ERROR: running $cmake_exe for using-with-cmake test" && exit 1
     fi
