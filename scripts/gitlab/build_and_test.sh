@@ -178,6 +178,8 @@ then
     then
         module unload rocm
     fi
+
+    # TODO: Remove BLT_EXPORT_THIRDPARTY after updating to BLT v0.6.1
     $cmake_exe \
       -C ${hostconfig_path} \
       -DCMAKE_INSTALL_PREFIX=${install_dir} \
