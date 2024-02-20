@@ -181,6 +181,7 @@ then
     $cmake_exe \
       -C ${hostconfig_path} \
       -DCMAKE_INSTALL_PREFIX=${install_dir} \
+      -DBLT_EXPORT_THIRDPARTY=ON \
       ${project_dir}
     if ! $cmake_exe --build . -j ${core_counts[$truehostname]}
     then
