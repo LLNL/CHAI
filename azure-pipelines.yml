@@ -19,8 +19,6 @@ jobs:
         docker_target: clang13
       nvcc10:
         docker_target: nvcc10
-      hip:
-        docker_target: hip
   pool:
     vmImage: 'ubuntu-latest'
   variables:
