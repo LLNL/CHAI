@@ -237,25 +237,20 @@ then
         echo "[Error]: failure(s) while running CTest" && exit 1
     fi
 
-    if grep -q -i "ENABLE_HIP.*ON" ${hostconfig_path}
+    if [[ ! -d ${install_dir} ]]
     then
-        echo "[Warning]: No install test with HIP"
-    else
-        if [[ ! -d ${install_dir} ]]
-        then
-            echo "[Error]: Install directory not found : ${install_dir}" && exit 1
-        fi
+        echo "[Error]: Install directory not found : ${install_dir}" && exit 1
+    fi
 
-        cd ${install_dir}/examples/chai/using-with-cmake
-        mkdir build && cd build
+    cd ${install_dir}/examples/chai/using-with-cmake
+    mkdir build && cd build
 
-        if ! $cmake_exe -C ../host-config.cmake ..; then
-            echo "[Error]: Running $cmake_exe for using-with-cmake test" && exit 1
-        fi
+    if ! $cmake_exe -C ../host-config.cmake ..; then
+        echo "[Error]: Running $cmake_exe for using-with-cmake test" && exit 1
+    fi
 
-        if ! make; then
-            echo "[Error]: Running make for using-with-cmake test" && exit 1
-        fi
+    if ! make; then
+        echo "[Error]: Running make for using-with-cmake test" && exit 1
     fi
 
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
