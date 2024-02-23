@@ -61,7 +61,7 @@ variables:
 # Project specific variants for lassen
   PROJECT_LASSEN_VARIANTS: "~shared +raja cuda_arch=70 tests=basic"
 # Project specific deps for lassen
-  PROJECT_LASSEN_DEPS: "^umpire@git.f2ae5edd1e49e7fa18656203d742de3bd9490961=develop"
+  PROJECT_LASSEN_DEPS: ""
 
 # Configuration shared by build and test jobs specific to this project.
 # Not all configuration can be shared. Here projects can fine tune the
