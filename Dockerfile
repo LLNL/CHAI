@@ -78,11 +78,11 @@ RUN . /opt/spack/share/spack/setup-env.sh && spack load cuda && \
     cmake -DCMAKE_CXX_COMPILER=g++ -DENABLE_CUDA=On .. && \
     make -j 16
 
-FROM ghcr.io/rse-ops/hip-ubuntu-22.04:hip-4.3.1 AS hip
+FROM ghcr.io/rse-ops/hip-ubuntu-22.04:hip-5.1.3 AS hip
 ENV GTEST_COLOR=1
 ENV HCC_AMDGPU_TARGET=gfx900
 COPY . /home/chai/workspace
 WORKDIR /home/chai/workspace/build
 RUN . /opt/spack/share/spack/setup-env.sh && spack load hip llvm-amdgpu && \
-    cmake -DBLT_EXPORT_THIRDPARTY=On -DENABLE_WARNINGS_AS_ERRORS=Off -DCHAI_ENABLE_MANAGED_PTR=Off -DCMAKE_CXX_COMPILER=amdclang++ -DCMAKE_C_COMPILER=amdclang -DENABLE_HIP=On .. && \
+    cmake -DENABLE_WARNINGS_AS_ERRORS=Off -DCHAI_ENABLE_MANAGED_PTR=Off -DCMAKE_CXX_COMPILER=amdclang++ -DCMAKE_C_COMPILER=amdclang -DENABLE_HIP=On .. && \
     make -j 16 VERBOSE=1

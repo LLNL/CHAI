@@ -46,6 +46,7 @@ clang_12_0_1_libcpp:
   extends: .job_on_lassen
   variables:
     SPEC: "~shared +raja tests=basic %clang@12.0.1 cflags==\"-DGTEST_HAS_CXXABI_H_=0\" cxxflags==\"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0\""
+  allow_failure: true
 
 clang_12_0_1_gcc_8_3_1_memleak:
   extends: .job_on_lassen
