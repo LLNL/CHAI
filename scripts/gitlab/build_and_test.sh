@@ -248,11 +248,11 @@ then
     mkdir build && cd build
 
     if ! $cmake_exe -C ../host-config.cmake ..; then
-    echo "[Error]: Running $cmake_exe for using-with-cmake test" && exit 1
+        echo "[Error]: Running $cmake_exe for using-with-cmake test" && exit 1
     fi
 
     if ! make; then
-    echo "[Error]: Running make for using-with-cmake test" && exit 1
+        echo "[Error]: Running make for using-with-cmake test" && exit 1
     fi
 
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"

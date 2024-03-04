@@ -117,3 +117,5 @@ install(
   ARCHIVE DESTINATION lib)
 
 install(EXPORT chai-targets DESTINATION lib/cmake/chai)
+
+blt_install_tpl_setups(DESTINATION lib/cmake/chai)
