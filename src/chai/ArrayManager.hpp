@@ -511,11 +511,6 @@ private:
   bool m_callbacks_active;
 
   /*!
-   * Whether or not to synchronize on device after every CHAI kernel.
-   */
-  bool m_device_synchronize = false;
-
-  /*!
    * Whether or not a synchronize has been performed since the launch of the last
    * GPU context
    */

@@ -72,7 +72,7 @@ then
 
     if [[ -z ${spec} ]]
     then
-        echo "SPEC is undefined, aborting..."
+        echo "[Error]: SPEC is undefined, aborting..."
         exit 1
     fi
 
@@ -178,6 +178,7 @@ then
     then
         module unload rocm
     fi
+
     $cmake_exe \
       -C ${hostconfig_path} \
       -DCMAKE_INSTALL_PREFIX=${install_dir} \
@@ -238,9 +239,18 @@ then
 
     if [[ ! -d ${install_dir} ]]
     then
-        echo "[Error]: install directory not found : ${install_dir}" && exit 1
-    else
-        echo "[Information]: No testing of installation implemented..."
+        echo "[Error]: Install directory not found : ${install_dir}" && exit 1
+    fi
+
+    cd ${install_dir}/examples/chai/using-with-cmake
+    mkdir build && cd build
+
+    if ! $cmake_exe -C ../host-config.cmake ..; then
+        echo "[Error]: Running $cmake_exe for using-with-cmake test" && exit 1
+    fi
+
+    if ! make; then
+        echo "[Error]: Running make for using-with-cmake test" && exit 1
     fi
 
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
