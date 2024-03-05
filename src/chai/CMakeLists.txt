@@ -1,18 +1,11 @@
 ##############################################################################
-# Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
-# project contributors. See the COPYRIGHT file for details.
+# Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+# project contributors. See the CHAI LICENSE file for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
-set(CHAI_ENABLE_PICK ${ENABLE_PICK})
-set(CHAI_ENABLE_CUDA ${ENABLE_CUDA})
-set(CHAI_ENABLE_HIP ${ENABLE_HIP})
-set(CHAI_ENABLE_IMPLICIT_CONVERSIONS ${ENABLE_IMPLICIT_CONVERSIONS})
-set(CHAI_DISABLE_RM ${DISABLE_RM})
-set(CHAI_ENABLE_UM ${ENABLE_UM})
-set(CHAI_ENABLE_RAJA_PLUGIN ${ENABLE_RAJA_PLUGIN})
-set(CHAI_ENABLE_GPU_SIMULATION_MODE ${ENABLE_GPU_SIMULATION_MODE})
-set(CHAI_ENABLE_PINNED ${ENABLE_PINNED})
+
+include(CMakePackageConfigHelpers)
 
 configure_file(
   ${PROJECT_SOURCE_DIR}/src/chai/config.hpp.in
@@ -29,7 +22,7 @@ set (chai_headers
   PointerRecord.hpp
   Types.hpp)
 
-if(DISABLE_RM)
+if(CHAI_DISABLE_RM)
   set(chai_headers
     ${chai_headers}
     ManagedArray_thin.inl)
@@ -41,18 +34,18 @@ set (chai_sources
 set (chai_depends
   umpire)
 
-if (ENABLE_CUDA)
+if (CHAI_ENABLE_CUDA)
   set (chai_depends
     ${chai_depends}
     cuda_runtime)
 endif ()
-if (ENABLE_HIP)
+if (CHAI_ENABLE_HIP)
   set (chai_depends
     ${chai_depends}
-    hip_runtime)
+    blt::hip_runtime)
 endif ()
 
-if (ENABLE_RAJA_PLUGIN)
+if (CHAI_ENABLE_RAJA_PLUGIN)
   set (chai_headers
     ${chai_headers}
     pluginLinker.hpp
@@ -67,7 +60,7 @@ if (ENABLE_RAJA_PLUGIN)
     ${chai_depends}
     RAJA)
 
-  if (ENABLE_CUDA)
+  if (CHAI_ENABLE_CUDA)
     set (chai_depends
       ${chai_depends}
       cuda)
@@ -91,13 +84,22 @@ target_include_directories(
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-configure_file(
-  ${PROJECT_SOURCE_DIR}/src/chai/chai-config.cmake.in
-  ${PROJECT_BINARY_DIR}/share/chai/cmake/chai-config.cmake)
+configure_package_config_file(
+  ${PROJECT_SOURCE_DIR}/cmake/chai-config.cmake.in
+  ${PROJECT_BINARY_DIR}/chai-config.cmake
+  INSTALL_DESTINATION lib/cmake/chai)
 
 install(
-  FILES ${PROJECT_BINARY_DIR}/share/chai/cmake/chai-config.cmake
-  DESTINATION share/chai/cmake/)
+  FILES ${PROJECT_BINARY_DIR}/chai-config.cmake
+  DESTINATION lib/cmake/chai)
+
+write_basic_package_version_file(
+  ${PROJECT_BINARY_DIR}/chai-config-version.cmake
+  COMPATIBILITY SameMajorVersion)
+
+install(FILES
+  ${PROJECT_BINARY_DIR}/chai-config-version.cmake
+  DESTINATION lib/cmake/chai)
 
 install(
   FILES ${PROJECT_BINARY_DIR}/include/chai/config.hpp
@@ -114,4 +116,6 @@ install(
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
 
-install(EXPORT chai-targets DESTINATION share/chai/cmake/)
+install(EXPORT chai-targets DESTINATION lib/cmake/chai)
+
+blt_install_tpl_setups(DESTINATION lib/cmake/chai)

@@ -1,3 +1,9 @@
+..
+    # Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+    # project contributors. See the CHAI LICENSE file for details.
+    #
+    # SPDX-License-Identifier: BSD-3-Clause
+
 .. _developer_guide:
 
 ===============
@@ -33,20 +39,20 @@ Vetted specs
 
   $ ls -c1 .gitlab/*jobs.yml
   .gitlab/lassen-jobs.yml
-  .gitlab/quartz-jobs.yml
+  .gitlab/ruby-jobs.yml
 
-CI contains jobs for quartz.
+CI contains jobs for ruby.
 
 .. code-block:: bash
 
-  $ git grep -h "SPEC" .gitlab/quartz-jobs.yml | grep "gcc"
+  $ git grep -h "SPEC" .gitlab/ruby-jobs.yml | grep "gcc"
       SPEC: "%gcc@4.9.3"
       SPEC: "%gcc@6.1.0"
       SPEC: "%gcc@7.1.0"
       SPEC: "%gcc@7.3.0"
       SPEC: "%gcc@8.1.0"
 
-We now have a list of the specs vetted on ``quartz``/``toss_3_x86_64_ib``.
+We now have a list of the specs vetted on ``ruby``/``toss_3_x86_64_ib``.
 
 .. note::
   In practice, one should check if the job is not *allowed to fail*, or even deactivated.
@@ -60,7 +66,7 @@ In CHAI, the Spack configuration for MacOS contains the default compilers depend
 Using Uberenv to generate the host-config file
 ----------------------------------------------
 
-We have seen that we can safely use `gcc@8.1.0` on quartz. Let us ask for the default configuration first, and then ask for RAJA support and link to develop version of RAJA:
+We have seen that we can safely use `gcc@8.1.0` on ruby. Let us ask for the default configuration first, and then ask for RAJA support and link to develop version of RAJA:
 
 .. code-block:: bash
 
@@ -71,7 +77,7 @@ Each will generate a CMake cache file, e.g.:
 
 .. code-block:: bash
 
-  hc-quartz-toss_3_x86_64_ib-clang@9.0.0-fjcjwd6ec3uen5rh6msdqujydsj74ubf.cmake
+  hc-ruby-toss_3_x86_64_ib-clang@9.0.0-fjcjwd6ec3uen5rh6msdqujydsj74ubf.cmake
 
 Using host-config files to build CHAI
 -------------------------------------

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
-// project contributors. See the COPYRIGHT file for details.
+// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+// project contributors. See the CHAI LICENSE file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
@@ -397,21 +397,6 @@ public:
   void disableCallbacks() { m_callbacks_active = false; }
 
   /*!
-   * \brief Turn on device synchronization after every kernel.
-   */
-  void enableDeviceSynchronize() { m_device_synchronize = true; }
-
-  /*!
-   * \brief Turn off device synchronization after every kernel.
-   */
-  void disableDeviceSynchronize() { m_device_synchronize = false; }
-
-  /*!
-   * \brief Turn on device synchronization after every kernel.
-   */
-  bool deviceSynchronize() { return m_device_synchronize; }
-
-  /*!
    * \brief synchronize the device if there hasn't been a synchronize since the last kernel
    */
   CHAISHAREDDLL_API bool syncIfNeeded();
@@ -487,7 +472,7 @@ private:
   /*!
    * Current execution space.
    */
-  ExecutionSpace m_current_execution_space;
+  static thread_local ExecutionSpace m_current_execution_space;
 
   /**
    * Default space for new allocations.
@@ -526,15 +511,10 @@ private:
   bool m_callbacks_active;
 
   /*!
-   * Whether or not to synchronize on device after every CHAI kernel.
-   */
-  bool m_device_synchronize = false;
-
-  /*!
    * Whether or not a synchronize has been performed since the launch of the last
    * GPU context
    */
-  bool m_synced_since_last_kernel = false;
+  static thread_local bool m_synced_since_last_kernel;
 
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
   /*!

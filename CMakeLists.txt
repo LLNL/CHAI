@@ -1,6 +1,6 @@
 ##############################################################################
-# Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
-# project contributors. See the COPYRIGHT file for details.
+# Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+# project contributors. See the CHAI LICENSE file for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
@@ -8,51 +8,22 @@ cmake_policy(SET CMP0057 NEW)
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0025 NEW)
 
-project(Chai LANGUAGES CXX VERSION 2.4.0)
+include(CMakeDependentOption)
+include(CMakePackageConfigHelpers)
 
-set(ENABLE_CUDA Off CACHE BOOL "Enable CUDA")
-set(ENABLE_HIP Off CACHE BOOL "Enable HIP")
-set(ENABLE_GPU_SIMULATION_MODE Off CACHE BOOL "Enable GPU Simulation Mode")
-set(ENABLE_OPENMP OFF CACHE BOOL "Enable OpenMP")
-set(ENABLE_MPI Off CACHE BOOL "Enable MPI (for umpire replay only)")
-set(ENABLE_BENCHMARKS On CACHE BOOL "Enable benchmarks")
-option(ENABLE_IMPLICIT_CONVERSIONS "Enable implicit conversions to-from raw pointers" On)
-option(DISABLE_RM "Make ManagedArray a thin wrapper" Off)
-mark_as_advanced(DISABLE_RM)
-option(ENABLE_UM "Use CUDA unified (managed) memory" Off)
-option(ENABLE_PINNED "Use pinned host memory" Off)
-option(ENABLE_RAJA_PLUGIN "Build plugin to set RAJA execution spaces" Off)
-option(CHAI_ENABLE_GPU_ERROR_CHECKING "Enable GPU error checking" On)
-option(CHAI_ENABLE_MANAGED_PTR "Enable managed_ptr" On)
-option(CHAI_DEBUG "Enable Debug Logging.")
-set(ENABLE_RAJA_NESTED_TEST ON CACHE BOOL "Enable raja-chai-nested-tests, which fails to build on Debug CUDA builds.")
+project(Chai LANGUAGES C CXX VERSION 2024.02.0)
+cmake_minimum_required(VERSION 3.14)
 
-set(ENABLE_TESTS On CACHE BOOL "")
-set(ENABLE_EXAMPLES On CACHE BOOL "")
-set(ENABLE_DOCS Off CACHE BOOL "")
+include(cmake/SetupChaiOptions.cmake)
 
-# options for Umpire as TPL
-set(ENABLE_GMOCK On CACHE BOOL "")
-set(ENABLE_ASSERTS "Build Umpire with assert() enabled" On)
-set(ENABLE_GTEST_DEATH_TESTS ${ENABLE_ASSERTS} CACHE BOOL "")
-
-if (ENABLE_UM AND NOT ENABLE_CUDA)
-  message(FATAL_ERROR "Option ENABLE_UM requires ENABLE_CUDA")
-endif()
-
-set(ENABLE_COPY_HEADERS Off CACHE BOOL "")
-set(BLT_CXX_STD c++11 CACHE STRING "")
+set(BLT_CXX_STD c++14 CACHE STRING "")
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")
   message(STATUS "Setting CMAKE_CXX_EXTENSIONS to ON for PGI Compiler")
   set( CMAKE_CXX_EXTENSIONS ON )
 endif()
 
-if (ENABLE_CUDA)
-  cmake_minimum_required(VERSION 3.9)
-else ()
-  cmake_minimum_required(VERSION 3.8)
-endif()
+message(STATUS "Using CMake version ${CMAKE_VERSION}")
 
 ################################
 # BLT
@@ -77,22 +48,52 @@ if (NOT BLT_LOADED)
   include(${BLT_SOURCE_DIR}/SetupBLT.cmake)
 endif()
 
+#######################################
+# Options that depend on BLT Options
+#######################################
+cmake_dependent_option( CHAI_ENABLE_CUDA "Build CHAI with CUDA support" On
+                        "ENABLE_CUDA" Off )
+cmake_dependent_option( CHAI_ENABLE_HIP "Build CHAI with HIP" On
+                       "ENABLE_HIP" Off )
+cmake_dependent_option( CHAI_ENABLE_OPENMP "Build CHAI with OpenMP" On
+                       "ENABLE_OPENMP" Off )
+cmake_dependent_option( CHAI_ENABLE_MPI "Build CHAI with MPI" On
+                       "ENABLE_MPI" Off )
+
+cmake_dependent_option(CHAI_ENABLE_TESTS "Build CHAI tests" On
+                       "ENABLE_TESTS" Off)
+cmake_dependent_option(CHAI_ENABLE_BENCHMARKS "Build CHAI benchmarks" On
+                       "ENABLE_BENCHMARKS" Off)
+cmake_dependent_option(CHAI_ENABLE_EXAMPLES "Build CHAI examples" On
+                       "ENABLE_EXAMPLES" Off )
+
+cmake_dependent_option(CHAI_ENABLE_DOCS "Build CHAI docs" On
+                       "ENABLE_DOCS" Off)
+cmake_dependent_option( CHAI_ENABLE_GMOCK "Build CHAI with gmock" On
+                        "ENABLE_GMOCK" Off )
+cmake_dependent_option(CHAI_ENABLE_REPRODUCERS "Build CHAI reproducers" On
+                       "ENABLE_REPRODUCERS" Off)
+
 include(cmake/ChaiBasics.cmake)
 
 add_subdirectory(src)
 
-if (ENABLE_TESTS)
+if (CHAI_ENABLE_TESTS)
   add_subdirectory(tests)
 endif()
 
-if (ENABLE_BENCHMARKS)
+if (CHAI_ENABLE_BENCHMARKS)
   add_subdirectory(benchmarks)
 endif()
 
-if (ENABLE_EXAMPLES)
+if (CHAI_ENABLE_EXAMPLES)
   add_subdirectory(examples)
-endif ()
+endif()
 
-if (ENABLE_DOCUMENTATION)
+if (CHAI_ENABLE_DOCS)
   add_subdirectory(docs)
+endif()
+
+if (CHAI_ENABLE_REPRODUCERS)
+  add_subdirectory(reproducers)
 endif()

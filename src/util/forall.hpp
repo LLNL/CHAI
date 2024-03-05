@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
-// project contributors. See the COPYRIGHT file for details.
+// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+// project contributors. See the CHAI LICENSE file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
@@ -12,7 +12,9 @@
 #include "chai/config.hpp"
 
 #if defined(CHAI_ENABLE_UM)
+#if !defined(CHAI_THIN_GPU_ALLOCATE)
 #include <cuda_runtime_api.h>
+#endif
 #endif
 
 struct sequential {
@@ -41,7 +43,9 @@ void forall(sequential, int begin, int end, LOOP_BODY body)
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
 
 #if defined(CHAI_ENABLE_UM)
+#if !defined(CHAI_THIN_GPU_ALLOCATE)
   cudaDeviceSynchronize();
+#endif
 #endif
 
   rm->setExecutionSpace(chai::CPU);
@@ -69,14 +73,20 @@ void forall(gpu_async, int begin, int end, LOOP_BODY&& body)
 
   rm->setExecutionSpace(chai::GPU);
 
+#if defined(CHAI_ENABLE_CUDA)
   size_t blockSize = 32;
+#elif defined(CHAI_ENABLE_HIP)
+  size_t blockSize = 64;
+#endif
+
   size_t gridSize = (end - begin + blockSize - 1) / blockSize;
+
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
   forall_kernel_cpu(begin, end, body);
 #elif defined(CHAI_ENABLE_CUDA)
   forall_kernel_gpu<<<gridSize, blockSize>>>(begin, end - begin, body);
 #elif defined(CHAI_ENABLE_HIP)
-  hipLaunchKernelGGL(forall_kernel_gpu, dim3(gridSize), dim3(blockSize), 0,0,
+  hipLaunchKernelGGL(forall_kernel_gpu, dim3(gridSize), dim3(blockSize), 0, 0,
                      begin, end - begin, body);
 #endif
   rm->setExecutionSpace(chai::NONE);
@@ -92,7 +102,12 @@ void forall(gpu, int begin, int end, LOOP_BODY&& body)
 
   rm->setExecutionSpace(chai::GPU);
 
+#if defined(CHAI_ENABLE_CUDA)
   size_t blockSize = 32;
+#elif defined(CHAI_ENABLE_HIP)
+  size_t blockSize = 64;
+#endif
+
   size_t gridSize = (end - begin + blockSize - 1) / blockSize;
 
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
@@ -101,7 +116,7 @@ void forall(gpu, int begin, int end, LOOP_BODY&& body)
   forall_kernel_gpu<<<gridSize, blockSize>>>(begin, end - begin, body);
   cudaDeviceSynchronize();
 #elif defined(CHAI_ENABLE_HIP)
-  hipLaunchKernelGGL(forall_kernel_gpu, dim3(gridSize), dim3(blockSize), 0,0,
+  hipLaunchKernelGGL(forall_kernel_gpu, dim3(gridSize), dim3(blockSize), 0, 0,
                      begin, end - begin, body);
   hipDeviceSynchronize();
 #endif

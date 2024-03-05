@@ -1,6 +1,6 @@
 ##############################################################################
-# Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
-# project contributors. See the COPYRIGHT file for details.
+# Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+# project contributors. See the CHAI LICENSE file for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
@@ -8,16 +8,16 @@ set (chai_benchmark_depends
   chai
   gbenchmark)
 
-if (ENABLE_CUDA)
+if (CHAI_ENABLE_CUDA)
   set (chai_benchmark_depends
     ${chai_benchmark_depends}
     cuda)
 endif ()
 
-if (ENABLE_HIP)
+if (CHAI_ENABLE_HIP)
   set (chai_benchmark_depends
     ${chai_benchmark_depends}
-    hip)
+    blt::hip)
 endif ()
 
 blt_add_executable(

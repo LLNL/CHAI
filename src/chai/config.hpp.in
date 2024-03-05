@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
-// project contributors. See the COPYRIGHT file for details.
+// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+// project contributors. See the CHAI LICENSE file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
@@ -12,10 +12,12 @@
 #cmakedefine CHAI_ENABLE_HIP 
 #cmakedefine CHAI_ENABLE_IMPLICIT_CONVERSIONS
 #cmakedefine CHAI_DISABLE_RM
+#cmakedefine CHAI_THIN_GPU_ALLOCATE
 #cmakedefine CHAI_ENABLE_UM
 #cmakedefine CHAI_DEBUG
 #cmakedefine CHAI_ENABLE_GPU_ERROR_CHECKING
 #cmakedefine CHAI_ENABLE_MANAGED_PTR
+#cmakedefine CHAI_ENABLE_MANAGED_PTR_ON_GPU
 #cmakedefine CHAI_ENABLE_RAJA_PLUGIN
 #cmakedefine CHAI_ENABLE_GPU_SIMULATION_MODE
 #cmakedefine CHAI_ENABLE_PINNED
