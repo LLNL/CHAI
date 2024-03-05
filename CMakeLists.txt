@@ -11,7 +11,7 @@ cmake_policy(SET CMP0025 NEW)
 include(CMakeDependentOption)
 include(CMakePackageConfigHelpers)
 
-project(Chai LANGUAGES C CXX VERSION 2023.06.0)
+project(Chai LANGUAGES C CXX VERSION 2024.02.0)
 cmake_minimum_required(VERSION 3.14)
 
 include(cmake/SetupChaiOptions.cmake)

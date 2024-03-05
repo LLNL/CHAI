@@ -13,7 +13,7 @@ in this file.
 
 The format of this file is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased] - Release date yyyy-mm-dd
+## [Version 2024.02.0] - Release date 2024-03-04
 
 ### Added
 - Support for APUs with a single memory space. To use, configure with -DCHAI\_DISABLE\_RM=ON -DCHAI\_GPU\_THIN\_ALLOCATE=ON.
