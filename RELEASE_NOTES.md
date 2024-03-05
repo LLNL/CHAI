@@ -21,6 +21,7 @@ The format of this file is based on [Keep a Changelog](http://keepachangelog.com
 ### Changed
 - Moved installed CMake targets from share/chai/cmake to lib/cmake/chai to be consistent with other libraries in the RAJA Portability Suite
 - Improved dependency handling during the build of CHAI and when it is imported into another library/application
+- Renamed CMake option CHAI\_DISABLE\_RM to CHAI\_ENABLE\_MANAGER
 - Removed ArrayManager::enableDeviceSynchronization and ArrayManager::disableDeviceSynchronization. Instead, use the environment variables for device synchronization after all kernels (e.g. CUDA\_LAUNCH\_BLOCKING or HIP\_LAUNCH\_BLOCKING)
 
 ### Fixed
