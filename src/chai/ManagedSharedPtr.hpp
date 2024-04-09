@@ -25,6 +25,19 @@ struct msp_pointer_record {
 
   int m_allocators[NUM_EXECUTION_SPACES];
 
+  //template<typename Yp>
+  //msp_pointer_record(Yp* host_p = nullptr, Yp* device_p = nullptr) : m_last_space(NONE) { 
+  //   for (int space = 0; space < NUM_EXECUTION_SPACES; ++space ) {
+  //      m_pointers[space] = nullptr;
+  //      m_touched[space] = false;
+  //      m_owned[space] = true;
+  //      m_allocators[space] = 0;
+  //   }
+  //   m_pointers[CPU] = host_p;
+  //   m_pointers[GPU] = device_p;
+  //}
+
+
   msp_pointer_record(Tp* host_p = nullptr, Tp* device_p = nullptr) : m_last_space(NONE) { 
      for (int space = 0; space < NUM_EXECUTION_SPACES; ++space ) {
         m_pointers[space] = nullptr;
@@ -35,6 +48,18 @@ struct msp_pointer_record {
      m_pointers[CPU] = host_p;
      m_pointers[GPU] = device_p;
   }
+
+  //Tp* get_pointer(ExecutionSpace space) noexcept { return m_pointers[space]; }
+  //template<typename Yp>
+  //msp_pointer_record(msp_pointer_record<Yp> const& rhs) :
+  //  m_pointers(rhs.m_pointers),
+  //  m_touched(rhs.m_touched),
+  //  m_owned(rhs.m_owned),
+  //  m_last_space(rhs.m_last_space),
+  //  m_allocators(rhs.m_allocators)
+  //{}
+
+
 
 };
 
@@ -69,7 +94,8 @@ template<typename Ptr>
 class msp_counted_ptr final : public msp_counted_base {
 public:
   msp_counted_ptr(Ptr p) noexcept : m_ptr(p) {}
-  virtual void m_dispose() noexcept { delete m_ptr.m_pointers[chai::CPU]; }// TODO : Other Exec spaces...
+  //virtual void m_dispose() noexcept { delete (m_ptr.get_pointer(chai::CPU)); }// TODO : Other Exec spaces...
+  virtual void m_dispose() noexcept { delete m_ptr->m_pointers[chai::CPU]; }// TODO : Other Exec spaces...
   virtual void m_destroy() noexcept { delete this; }
   msp_counted_ptr(msp_counted_ptr const&) = delete;
   msp_counted_ptr& operator=(msp_counted_ptr const&) = delete;
@@ -185,129 +211,88 @@ private:
   using Assignable = Compatible<Yp, ManagedSharedPtr&>;
 
 public:
-  // Default Ctor with same type Tp
+
+  /*
+   * Constructors
+   */
   constexpr ManagedSharedPtr() noexcept : m_ref_count() {}
 
   // *Default* Ctor with convertible type Yp -> Tp
   template<typename Yp, typename = SafeConv<Yp>>
   explicit ManagedSharedPtr(Yp* host_p) :
     m_pointer_record(new msp_pointer_record<Tp>(host_p)),
-    m_ref_count(m_pointer_record)
+    m_ref_count(m_pointer_record),
+    m_active_pointer(m_pointer_record->m_pointers[chai::CPU])
+  {}
+
+  template<typename Yp, typename = SafeConv<Yp>>
+  explicit ManagedSharedPtr(Yp* host_p, Yp* device_p) :
+    m_pointer_record(new msp_pointer_record<Yp>(host_p, device_p)),
+    m_ref_count(m_pointer_record),
+    m_active_pointer(m_pointer_record->m_pointers[chai::CPU])
   {}
 
   template<typename Yp, typename Deleter, typename = SafeConv<Yp>> 
   ManagedSharedPtr(Yp* host_p, Deleter d) :
-    m_pointer_record(new msp_pointer_record<Tp>(host_p)),
-    m_ref_count(m_pointer_record, std::move(d))
-  {
-  }
+    m_pointer_record(new msp_pointer_record<Yp>(host_p)),
+    m_ref_count(m_pointer_record, std::move(d)),
+    m_active_pointer(m_pointer_record->m_pointers[chai::CPU])
+  {}
 
   template<typename Yp, typename Deleter, typename = SafeConv<Yp>> 
   ManagedSharedPtr(Yp* host_p, Yp* device_p, Deleter d) :
-    m_pointer_record(new msp_pointer_record<Tp>(host_p, device_p)),
-    m_ref_count(m_pointer_record, std::move(d))
+    m_pointer_record(new msp_pointer_record<Yp>(host_p, device_p)),
+    m_ref_count(m_pointer_record, std::move(d)),
+    m_active_pointer(m_pointer_record->m_pointers[chai::CPU])
+  {}
+
+  /*
+   * Copy Constructors
+   */
+  ManagedSharedPtr(ManagedSharedPtr const&) noexcept = default; // TODO: this is *NOT* going to be default
+
+  template<typename Yp, typename = Compatible<Yp>>
+  ManagedSharedPtr(ManagedSharedPtr<Yp> const& rhs) noexcept : 
+    m_ref_count(rhs.m_ref_count),
+    m_active_pointer(rhs.m_active_pointer)
   {
+    // TODO : Is this safe??
+    m_pointer_record = reinterpret_cast<msp_pointer_record<Tp>*>(rhs.m_pointer_record);
   }
 
+  
+  /*
+   * Accessors
+   */
+  element_type* get(ExecutionSpace space = chai::CPU) const noexcept { return m_active_pointer; }
 
-  long use_count() const noexcept { return m_ref_count.m_get_use_count(); }
+  element_type& operator*() const noexcept { assert(m_get() != nullptr); return *m_get(); }
 
-
-
+  element_type* operator->() const noexcept { assert(m_get() != nullptr); return m_get(); }
 
 private:
+  element_type* m_get() const noexcept { return static_cast<const ManagedSharedPtr<Tp>*>(this)->get(); }
 
+
+public:
+  long use_count() const noexcept { return m_ref_count.m_get_use_count(); }
+
+  /*
+   * Private Members
+   */
+private:
   template<typename Tp1>
   friend class ManagedSharedPtr;
 
-  template<typename Yp, typename... Args>
-  friend ManagedSharedPtr<Yp> make_managed(Args... args);
+  //template<typename Yp, typename... Args>
+  //friend ManagedSharedPtr<Yp> make_managed(Args... args);
   
   mutable msp_pointer_record<Tp>* m_pointer_record = nullptr;
   msp_shared_count m_ref_count;
+  mutable element_type* m_active_pointer = nullptr;
 
   //mutable ArrayManager* m_resource_manager = nullptr;
 };
-
-//template <typename T,
-//         typename... Args>
-//T* make_on_host(Args&&... args) {
-//#if !defined(CHAI_DISABLE_RM)
-//  // Get the ArrayManager and save the current execution space
-//  chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
-//  ExecutionSpace currentSpace = arrayManager->getExecutionSpace();
-//
-//  // Set the execution space so that ManagedArrays and managed_ptrs
-//  // are handled properly
-//  arrayManager->setExecutionSpace(CPU);
-//#endif
-//
-//  // Create on the host
-//  T* cpuPointer = new T(args...);
-//
-//#if !defined(CHAI_DISABLE_RM)
-//  // Set the execution space back to the previous value
-//  arrayManager->setExecutionSpace(currentSpace);
-//#endif
-//
-//  // Return the CPU pointer
-//  return cpuPointer;
-//}
-//
-//namespace detail {
-//
-//template <typename T,
-//          typename... Args>
-//__global__ void make_on_device(T** gpuPointer, Args... args)
-//{
-//   *gpuPointer = new T(args...);
-//}
-//
-//}// namespace detail
-//
-//template <typename T,
-//         typename... Args>
-//T* make_on_device(Args... args) {
-//#if !defined(CHAI_DISABLE_RM)
-//  // Get the ArrayManager and save the current execution space
-//  chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
-//  ExecutionSpace currentSpace = arrayManager->getExecutionSpace();
-//
-//  // Set the execution space so that ManagedArrays and managed_ptrs
-//  // are handled properly
-//  arrayManager->setExecutionSpace(GPU);
-//#endif
-//
-//  // Allocate space on the GPU to hold the pointer to the new object
-//  T** gpuBuffer;
-//  gpuMalloc((void**)(&gpuBuffer), sizeof(T*));
-//
-//  // Create the object on the device
-//#if defined(__CUDACC__) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-//  detail::make_on_device<<<1, 1>>>(gpuBuffer, args...);
-//#elif defined(__HIPCC__) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-//  hipLaunchKernelGGL(detail::make_on_device, 1, 1, 0, 0, gpuBuffer, args...);
-//#endif
-//
-//  // Allocate space on the CPU for the pointer and copy the pointer to the CPU
-//  T** cpuBuffer = (T**) malloc(sizeof(T*));
-//  gpuMemcpy(cpuBuffer, gpuBuffer, sizeof(T*), gpuMemcpyDeviceToHost);
-//
-//  // Get the GPU pointer
-//  T* gpuPointer = cpuBuffer[0];
-//
-//  // Free the host and device buffers
-//  free(cpuBuffer);
-//  gpuFree(gpuBuffer);
-//
-//#if !defined(CHAI_DISABLE_RM)
-//  // Set the execution space back to the previous value
-//  arrayManager->setExecutionSpace(currentSpace);
-//#endif
-//
-//  // Return the GPU pointer
-//  return gpuPointer;
-//}
 
 template<typename Tp, typename... Args>
 ManagedSharedPtr<Tp> make_shared(Args... args) {

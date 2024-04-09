@@ -4,6 +4,7 @@
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
+#include "chai/ManagedSharedPtr.hpp"
 #include "gtest/gtest.h"
 
 #define GPU_TEST(X, Y)              \
@@ -15,6 +16,7 @@
 #include "chai/ArrayManager.hpp"
 #include "chai/ManagedArray.hpp"
 #include "chai/managed_ptr.hpp"
+#include "chai/ManagedSharedPtr.hpp"
 
 #include "../src/util/forall.hpp"
 
@@ -71,22 +73,31 @@ class RawPointerClass {
 
 class TestBase {
    public:
-      CHAI_HOST_DEVICE TestBase() {}
-      CHAI_HOST_DEVICE virtual ~TestBase() {}
+      CHAI_HOST_DEVICE TestBase() {printf("TestBase Ctor\n");}
+      CHAI_HOST_DEVICE virtual ~TestBase() {printf("TestBase Dtor\n");}
 
       CHAI_HOST_DEVICE virtual int getValue(const int i) const = 0;
+      CHAI_HOST_DEVICE virtual int getMemberValue() const = 0;
+      CHAI_HOST_DEVICE virtual void setMemberValue(int v) = 0;
+      CHAI_HOST virtual void doSomething() const = 0;
 };
 
 class TestDerived : public TestBase {
    public:
-      CHAI_HOST_DEVICE TestDerived() : TestBase(), m_values(nullptr) {}
+      CHAI_HOST_DEVICE TestDerived() : TestBase(), m_values(nullptr) {printf("TestDerived Ctor\n");}
       CHAI_HOST_DEVICE TestDerived(chai::ManagedArray<int> values) : TestBase(), m_values(values) {}
-      CHAI_HOST_DEVICE virtual ~TestDerived() {}
+      CHAI_HOST_DEVICE virtual ~TestDerived() {printf("TestDerived Dtor\n");}
 
       CHAI_HOST_DEVICE virtual int getValue(const int i) const { return m_values[i]; }
+      CHAI_HOST_DEVICE virtual int getMemberValue() const {return m_member;}
+
+      CHAI_HOST_DEVICE void setMemberValue(int v) { m_member = v; }
+
+      CHAI_HOST virtual void doSomething() const {printf("TestDerived doSomething()\n");}
 
    private:
       chai::ManagedArray<int> m_values;
+      int m_member = -1;
 };
 
 class TestInnerBase {
@@ -150,6 +161,27 @@ class MultipleRawArrayClass {
       int* m_values1;
       int* m_values2;
 };
+
+TEST(managed_ptr, shared_ptr)
+{
+
+  //chai::ManagedSharedPtr<TestDerived> sptr(new TestDerived(),
+  //    [](TestDerived*p){ printf("Deleter Call\n"); p->~TestDerived(); });
+  chai::ManagedSharedPtr<TestBase> sptr = chai::ManagedSharedPtr<TestDerived>(new TestDerived(),
+      [](TestDerived*p){ printf("Custom Deleter Call\n"); delete p; });
+  //chai::ManagedSharedPtr<TestBase> sptr(new TestDerived());
+  
+  //chai::ManagedSharedPtr<TestDerived> sptr = chai::make_shared<TestDerived>();
+  std::cout << "use_count : " << sptr.use_count() << std::endl;
+
+  auto sptr2 = sptr;
+  sptr2->doSomething();
+  std::cout << "use_count : " << sptr.use_count() << std::endl;
+
+
+
+
+}
 
 TEST(managed_ptr, class_with_raw_array)
 {
@@ -523,6 +555,7 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_array_and_callback)
 GPU_TEST(managed_ptr, gpu_class_with_managed_array)
 {
   const int expectedValue = rand();
+  const int expectedMemberValue = rand();
 
   chai::ManagedArray<int> array(1, chai::CPU);
 
@@ -531,16 +564,38 @@ GPU_TEST(managed_ptr, gpu_class_with_managed_array)
   });
 
   chai::managed_ptr<TestBase> derived = chai::make_managed<TestDerived>(array);
+  derived->setMemberValue(expectedMemberValue);
 
-  chai::ManagedArray<int> results(1, chai::GPU);
+  derived.set_callback([=] (chai::Action action, chai::ExecutionSpace space, void*) mutable {
+    if (action == chai::ACTION_MOVE) {
+       //printf("trigger move : ");
+       //if (space == chai::NONE) printf("NONE\n");
+       //if (space == chai::CPU) printf("CPU\n");
+       //if (space == chai::GPU) printf("GPU\n");
+       auto temp = array; // Trigger copy constructor in order to move inner ManagedArray to correct memory space
+       (void) temp; // Get rid of unused variable warnings
+       return true;
+    }
+    else if (action == chai::ACTION_FREE && space == chai::NONE) {
+       array.free();  // If TestDerived does not take ownership of the ManagedArray, you can use the callback to clean it up
+       return true;
+    }
+    else {
+       return false;
+    }
+  });
+
+  chai::ManagedArray<int> results(2, chai::GPU);
   
   forall(gpu(), 0, 1, [=] __device__ (int i) {
     results[i] = derived->getValue(i);
+    results[1] = derived->getMemberValue();
   });
 
   results.move(chai::CPU);
 
   ASSERT_EQ(results[0], expectedValue);
+  ASSERT_EQ(results[1], expectedMemberValue);
 
   results.free();
   derived.free();
