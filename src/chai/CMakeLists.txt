@@ -29,6 +29,7 @@ if(CHAI_DISABLE_RM)
 endif ()
 
 set (chai_sources
+  #  SharedPtrManager.cpp
   ArrayManager.cpp)
 
 set (chai_depends
