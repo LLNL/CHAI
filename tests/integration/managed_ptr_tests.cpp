@@ -172,12 +172,12 @@ TEST(managed_ptr, shared_ptr)
   //chai::ManagedSharedPtr<TestBase> sptr(new TestDerived());
 
   //chai::ManagedSharedPtr<TestDerived> sptr = chai::make_shared<TestDerived>();
-  chai::ManagedSharedPtr<TestDerived> sptr = chai::make_shared_deleter<TestDerived>(
+  chai::ManagedSharedPtr<TestBase> sptr = chai::make_shared_deleter<TestDerived>(
       [](TestDerived* p){ printf("Custom Deleter Call\n"); p->~TestDerived(); });
 
   std::cout << "use_count : " << sptr.use_count() << std::endl;
 
-  auto sptr2 = sptr;
+  chai::ManagedSharedPtr<TestBase> sptr2 = sptr;
   sptr2->doSomething();
   std::cout << "use_count : " << sptr.use_count() << std::endl;
 
