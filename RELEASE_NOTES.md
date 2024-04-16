@@ -13,6 +13,11 @@ in this file.
 
 The format of this file is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Version 2024.02.1] - Release date 2024-04-16
+
+### Changed
+- Updated to BLT v0.6.2, Umpire v2024.02.1, and RAJA v2024.02.1
+
 ## [Version 2024.02.0] - Release date 2024-03-04
 
 ### Added
