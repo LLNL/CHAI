@@ -217,10 +217,10 @@ public:
    *
    * \return Pointer to the allocated memory.
    */
-  template <typename T>
-  void* reallocate(void* pointer,
-                   size_t elems,
-                   msp_pointer_record* record);
+//  template <typename T>
+//  void* reallocate(void* pointer,
+//                   size_t elems,
+//                   msp_pointer_record* record);
 
   /*!
    * \brief Set the default space for new ManagedArray allocations.
@@ -262,24 +262,24 @@ public:
    * \param pointer Pointer to find the size of.
    * \return Size of pointer.
    */
-  CHAISHAREDDLL_API size_t getSize(void* pointer);
+  //CHAISHAREDDLL_API size_t getSize(void* pointer);
 
-  CHAISHAREDDLL_API msp_pointer_record* makeManaged(void* pointer,
-                                               size_t size,
-                                               ExecutionSpace space,
-                                               bool owned);
+  CHAISHAREDDLL_API msp_pointer_record* makeSharedPtrRecord(void* pointer, void* d_pointer,
+                                                            //size_t size,
+                                                            //ExecutionSpace space,
+                                                            bool owned);
 
   /*!
    * \brief Assign a user-defined callback triggered upon memory operations.
    *        This callback applies to a single ManagedArray.
    */
-  CHAISHAREDDLL_API void setUserCallback(void* pointer, UserCallback const& f);
+  //CHAISHAREDDLL_API void setUserCallback(void* pointer, UserCallback const& f);
 
   /*!
    * \brief Assign a user-defined callback triggered upon memory operations.
    *        This callback applies to all ManagedArrays.
    */
-  CHAISHAREDDLL_API void setGlobalUserCallback(UserCallback const& f);
+  //CHAISHAREDDLL_API void setGlobalUserCallback(UserCallback const& f);
 
   /*!
    * \brief Set touched to false in all spaces for the given msp_pointer_record.
@@ -327,12 +327,12 @@ public:
    *
    * \return The total amount of memory allocated.
    */
-  CHAISHAREDDLL_API size_t getTotalSize() const;
+  //CHAISHAREDDLL_API size_t getTotalSize() const;
 
   /*!
    * \brief Calls callbacks of pointers still in the map with ACTION_LEAKED.
    */
-  CHAISHAREDDLL_API void reportLeaks() const;
+  //CHAISHAREDDLL_API void reportLeaks() const;
 
   /*!
    * \brief Get the allocator ID
@@ -456,21 +456,21 @@ private:
    * \param space The space in which the event occurred
    * \param size The number of bytes in the array associated with this pointer record
    */
-  inline void callback(const msp_pointer_record* record,
-                       Action action,
-                       ExecutionSpace space) const {
-     if (m_callbacks_active) {
-        // Callback for this ManagedArray only
-        if (record && record->m_user_callback) {
-           record->m_user_callback(record, action, space);
-        }
-
-        // Callback for all ManagedArrays
-        if (m_user_callback) {
-           m_user_callback(record, action, space);
-        }
-     }
-  }
+//  inline void callback(const msp_pointer_record* record,
+//                       Action action,
+//                       ExecutionSpace space) const {
+//     if (m_callbacks_active) {
+//        // Callback for this ManagedArray only
+//        if (record && record->m_user_callback) {
+//           record->m_user_callback(record, action, space);
+//        }
+//
+//        // Callback for all ManagedArrays
+//        if (m_user_callback) {
+//           m_user_callback(record, action, space);
+//        }
+//     }
+//  }
 
   /*!
    * Current execution space.

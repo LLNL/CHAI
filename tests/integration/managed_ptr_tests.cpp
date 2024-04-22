@@ -4,8 +4,11 @@
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
+#include "chai/ChaiMacros.hpp"
 #include "chai/ManagedSharedPtr.hpp"
+#include "chai/SharedPtrManager.hpp"
 #include "gtest/gtest.h"
+#include "umpire/ResourceManager.hpp"
 
 #define GPU_TEST(X, Y)              \
   static void gpu_test_##X##Y();    \
@@ -79,7 +82,7 @@ class TestBase {
       CHAI_HOST_DEVICE virtual int getValue(const int i) const = 0;
       CHAI_HOST_DEVICE virtual int getMemberValue() const = 0;
       CHAI_HOST_DEVICE virtual void setMemberValue(int v) = 0;
-      CHAI_HOST virtual void doSomething() const = 0;
+      CHAI_HOST_DEVICE virtual void doSomething() const = 0;
 };
 
 class TestDerived : public TestBase {
@@ -93,7 +96,7 @@ class TestDerived : public TestBase {
 
       CHAI_HOST_DEVICE void setMemberValue(int v) { m_member = v; }
 
-      CHAI_HOST virtual void doSomething() const {printf("TestDerived doSomething()\n");}
+      CHAI_HOST_DEVICE virtual void doSomething() const {printf("TestDerived doSomething()\n");}
 
    private:
       chai::ManagedArray<int> m_values;
@@ -162,9 +165,65 @@ class MultipleRawArrayClass {
       int* m_values2;
 };
 
-TEST(managed_ptr, shared_ptr)
+#define assert_empty_map(IGNORED) ASSERT_EQ(chai::SharedPtrManager::getInstance()->getPointerMap().size(),0)
+
+inline void gpuErrorCheck(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess) {
+      fprintf(stderr, "[CHAI] GPU Error: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) {
+         exit(code);
+      }
+   }
+}
+#define GPU_ERROR_CHECK(code) { gpuErrorCheck((code), __FILE__, __LINE__); }
+
+GPU_TEST(managed_ptr, shared_ptralloc)
 {
 
+  {
+
+  chai::SharedPtrManager* sptr_manager = chai::SharedPtrManager::getInstance();
+  umpire::ResourceManager& res_manager = umpire::ResourceManager::getInstance();
+
+  auto cpu_allocator = sptr_manager->getAllocator(chai::CPU);
+  TestBase* cpu_ptr = static_cast<TestDerived*>( cpu_allocator.allocate(1*sizeof(TestDerived)) );
+
+  new(cpu_ptr) TestDerived();
+
+
+  TestBase* gpu_ptr = chai::msp_make_on_device<TestDerived>();
+
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
+    printf("GPU Body\n");
+    gpu_ptr->doSomething();
+    printf("Mem val : %d\n", gpu_ptr->getMemberValue());
+  });
+
+  std::cout << "Ump alloc cpu : " << cpu_ptr << std::endl;
+  std::cout << "Ump alloc gpu : " << gpu_ptr << std::endl;
+
+  cpu_ptr->setMemberValue(5);
+
+  unsigned int offset = sizeof(void*);
+  GPU_ERROR_CHECK(cudaMemcpy((char*)gpu_ptr+offset, (char*)cpu_ptr+offset, sizeof(TestDerived)-offset, cudaMemcpyHostToDevice));
+
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
+    printf("GPU Body\n");
+    gpu_ptr->doSomething();
+    printf("Mem val : %d\n", gpu_ptr->getMemberValue());
+  });
+  GPU_ERROR_CHECK( cudaPeekAtLastError() );
+  GPU_ERROR_CHECK( cudaDeviceSynchronize() );
+
+  }
+  //assert_empty_map();
+}
+
+GPU_TEST(managed_ptr, shared_ptr)
+{
+
+  {
   //chai::ManagedSharedPtr<TestDerived> sptr(new TestDerived(),
   //    [](TestDerived*p){ printf("Deleter Call\n"); p->~TestDerived(); });
   //chai::ManagedSharedPtr<TestBase> sptr = chai::ManagedSharedPtr<TestDerived>(new TestDerived(),
@@ -172,16 +231,26 @@ TEST(managed_ptr, shared_ptr)
   //chai::ManagedSharedPtr<TestBase> sptr(new TestDerived());
 
   //chai::ManagedSharedPtr<TestDerived> sptr = chai::make_shared<TestDerived>();
-  chai::ManagedSharedPtr<TestBase> sptr = chai::make_shared_deleter<TestDerived>(
+  
+  chai::ManagedSharedPtr<TestDerived> sptr = chai::make_shared_deleter<TestDerived>(
       [](TestDerived* p){ printf("Custom Deleter Call\n"); p->~TestDerived(); });
 
   std::cout << "use_count : " << sptr.use_count() << std::endl;
 
+  std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
   chai::ManagedSharedPtr<TestBase> sptr2 = sptr;
-  sptr2->doSomething();
+  //sptr2->doSomething();
   std::cout << "use_count : " << sptr.use_count() << std::endl;
 
+  std::cout << "GPU CALL...\n";
+  forall(gpu(), 0, 3, [=] __device__ (int i) {
+    printf("GPU Body\n");
+    sptr->doSomething();
+    //results[i] = rawArrayClass->getValue(i);
+  });
 
+  }
+  //assert_empty_map();
 
 
 }

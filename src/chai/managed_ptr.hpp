@@ -759,8 +759,9 @@ namespace chai {
                 typename... Args>
       __global__ void make_on_device(T** gpuPointer, Args... args)
       {
-         printf("On GPU\n");
          *gpuPointer = new T(processArguments(args)...);
+         printf("On GPU @ : %p\n", gpuPointer);
+         printf("On GPU @ : %p\n", &gpuPointer);
       }
 
       ///

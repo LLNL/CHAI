@@ -25,6 +25,19 @@ blt_add_test(
   NAME managed_array_test
   COMMAND managed_array_tests)
 
+blt_add_executable(
+  NAME polymorphism_tests
+  SOURCES polymorphism_tests.cpp
+  DEPENDS_ON ${chai_integration_test_depends})
+
+target_include_directories(
+  polymorphism_tests
+  PUBLIC ${PROJECT_BINARY_DIR}/include)
+
+blt_add_test(
+  NAME polymorphism_test
+  COMMAND polymorphism_tests)
+
 if (CHAI_ENABLE_MANAGED_PTR)
   blt_add_executable(
     NAME managed_ptr_tests
