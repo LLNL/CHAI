@@ -186,10 +186,12 @@ GPU_TEST(managed_ptr, shared_ptralloc)
   chai::SharedPtrManager* sptr_manager = chai::SharedPtrManager::getInstance();
   umpire::ResourceManager& res_manager = umpire::ResourceManager::getInstance();
 
-  auto cpu_allocator = sptr_manager->getAllocator(chai::CPU);
+  auto cpu_allocator = sptr_manager->getAllocator(chai::UM);
   TestBase* cpu_ptr = static_cast<TestDerived*>( cpu_allocator.allocate(1*sizeof(TestDerived)) );
 
   new(cpu_ptr) TestDerived();
+
+  std::cout << "check\n";
 
 
   TestBase* gpu_ptr = chai::msp_make_on_device<TestDerived>();
@@ -207,6 +209,7 @@ GPU_TEST(managed_ptr, shared_ptralloc)
 
   unsigned int offset = sizeof(void*);
   GPU_ERROR_CHECK(cudaMemcpy((char*)gpu_ptr+offset, (char*)cpu_ptr+offset, sizeof(TestDerived)-offset, cudaMemcpyHostToDevice));
+  //GPU_ERROR_CHECK(cudaMemcpy((char*)gpu_ptr, (char*)cpu_ptr, sizeof(TestDerived), cudaMemcpyHostToDevice));
 
   forall(gpu(), 0, 1, [=] __device__ (int i) {
     printf("GPU Body\n");

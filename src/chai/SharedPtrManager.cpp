@@ -252,11 +252,9 @@ static void copy(void * dst_pointer, void * src_pointer, umpire::ResourceManager
    camp::resources::Resource host_resource(camp::resources::Host::get_default());
    if (dst_space == GPU || src_space == GPU) {
       // Do the copy using the device resource
-      //manager.copy(dst_pointer, src_pointer, device_resource);
-      {
-        std::cout << "Do Fake Copy to GPU.....\n";
-        //CHAI_GPU_ERROR_CHECK(cudaMemcpyAsync(dst_pointer, src_pointer, 1, cudaMemcpyHostToDevice));
-      }
+      manager.copy_poly(dst_pointer, src_pointer, device_resource);
+      //manager.copy(dst_pointer, src_pointer);
+      //CHAI_GPU_ERROR_CHECK(cudaMemcpyAsync(dst_pointer, src_pointer, 1, cudaMemcpyHostToDevice));
    } else {
       // Do the copy using the host resource
       manager.copy(dst_pointer, src_pointer, host_resource);
@@ -288,7 +286,6 @@ void SharedPtrManager::move(msp_pointer_record* record, ExecutionSpace space)
   //  allocate(record, space);
   //  dst_pointer = record->m_pointers[space];
   //}
-
 
   if ( (!record->m_touched[record->m_last_space]) || (! src_pointer )) {
     printf("failed move conditions\n");
@@ -342,9 +339,9 @@ void SharedPtrManager::free(msp_pointer_record* pointer_record, ExecutionSpace s
         if (pointer_record->m_owned[space]) {
 #if defined(CHAI_ENABLE_UM)
           if (space_ptr == pointer_record->m_pointers[UM]) {
-            callback(pointer_record,
-                     ACTION_FREE,
-                     ExecutionSpace(UM));
+            //callback(pointer_record,
+            //         ACTION_FREE,
+            //         ExecutionSpace(UM));
 
             auto alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[UM]);
             alloc.deallocate(space_ptr);
@@ -441,7 +438,7 @@ msp_pointer_record* SharedPtrManager::getPointerRecord(void* pointer)
 }
 
 msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void* pointer, void* d_pointer,
-                                                          //size_t size,
+                                                          size_t size,
                                                           //ExecutionSpace space,
                                                           bool owned)
 {
@@ -455,12 +452,12 @@ msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void* pointer, void* d
 
   m_resource_manager.registerAllocation(
       pointer,
-      {pointer, 1, m_allocators[chai::CPU]->getAllocationStrategy()});
+      {pointer, size, m_allocators[chai::CPU]->getAllocationStrategy()});
   std::cout << "m_allocators[chai::CPU] : " << m_allocators[chai::CPU]->getName() << std::endl;
 
   m_resource_manager.registerAllocation(
       d_pointer,
-      {d_pointer, 1, m_allocators[chai::GPU]->getAllocationStrategy()});
+      {d_pointer, size, m_allocators[chai::GPU]->getAllocationStrategy()});
   std::cout << "m_allocators[chai::GPU] : " << m_allocators[chai::GPU]->getName() << std::endl;
 
   auto pointer_record = getPointerRecord(pointer);
@@ -489,7 +486,7 @@ msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void* pointer, void* d
   }
 
   if (pointer) {
-     registerPointer(pointer_record, chai::CPU, owned);
+     //registerPointer(pointer_record, chai::CPU, owned);
   }
 
   return pointer_record;

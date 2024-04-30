@@ -6,8 +6,6 @@
 #include "chai/ArrayManager.hpp"
 #include "chai/ChaiMacros.hpp"
 #include "chai/ExecutionSpaces.hpp"
-//#include "chai/SharedPtrManager.hpp"
-//#include "chai/SharedPointerRecord.hpp"
 #include "chai/SharedPtrCounter.hpp"
 #include "chai/managed_ptr.hpp"
 
@@ -55,33 +53,33 @@ public:
 
   //// *Default* Ctor with convertible type Yp -> Tp
   template<typename Yp, typename Deleter, typename = SafeConv<Yp>> 
-  ManagedSharedPtr(Yp* host_p, Yp* device_p, Deleter d) :
-    m_record_count(host_p, device_p, std::move(d)),
-    m_active_pointer(m_record_count.m_get_pointer<Yp>(chai::CPU)),
-    m_resource_manager(SharedPtrManager::getInstance())
+  ManagedSharedPtr(Yp* host_p, Yp* device_p, Deleter d) 
+    : m_record_count(host_p, device_p, std::move(d))
+    , m_active_pointer(m_record_count.m_get_pointer<Yp>(chai::CPU))
+    , m_resource_manager(SharedPtrManager::getInstance())
   {}
 
   /*
    * Copy Constructors
    */
   CHAI_HOST_DEVICE
-  ManagedSharedPtr(ManagedSharedPtr const& rhs) noexcept :
-    m_record_count(rhs.m_record_count),
-    m_active_pointer(rhs.m_active_pointer),
-    m_resource_manager(rhs.m_resource_manager)
+  ManagedSharedPtr(ManagedSharedPtr const& rhs) noexcept
+    : m_record_count(rhs.m_record_count)
+    , m_active_pointer(rhs.m_active_pointer)
+    , m_resource_manager(rhs.m_resource_manager)
   {
 #if !defined(CHAI_DEVICE_COMPILE)
-    if (m_active_pointer) move(ArrayManager::getInstance()->getExecutionSpace());
+    if (m_active_pointer) move(ArrayManager::getInstance()->getExecutionSpace()); // TODO: Use a generic interface for RAJA queries.
     //if (m_active_pointer) move(m_resource_manager->getExecutionSpace());
 #endif
   }
 
   template<typename Yp, typename = Compatible<Yp>>
   CHAI_HOST_DEVICE
-  ManagedSharedPtr(ManagedSharedPtr<Yp> const& rhs) noexcept : 
-    m_record_count(rhs.m_record_count),
-    m_active_pointer(rhs.m_active_pointer),
-    m_resource_manager(rhs.m_resource_manager)
+  ManagedSharedPtr(ManagedSharedPtr<Yp> const& rhs) noexcept
+    : m_record_count(rhs.m_record_count)
+    , m_active_pointer(rhs.m_active_pointer)
+    , m_resource_manager(rhs.m_resource_manager)
   {
 #if !defined(CHAI_DEVICE_COMPILE)
     if (m_active_pointer) move(ArrayManager::getInstance()->getExecutionSpace());
@@ -150,7 +148,6 @@ template <typename T,
 __global__ void msp_make_on_device(T* gpuPointer, Args... args)
 {
    new(gpuPointer) T(processArguments(args)...);
-   //printf("On GPU @ : %p\n", gpuPointer);
 }
 
 

@@ -8,6 +8,7 @@
 #ifndef CHAI_SharedPointerCounter_HPP
 #define CHAI_SharedPointerCounter_HPP
 
+#include <type_traits>
 #include "chai/ChaiMacros.hpp"
 #include "chai/SharedPtrManager.hpp"
 
@@ -46,27 +47,31 @@ private:
 template<typename Ptr>
 class msp_counted_ptr final : public msp_counted_base {
 public:
-  msp_counted_ptr(Ptr h_p, Ptr d_p) noexcept :
-    m_record(SharedPtrManager::getInstance()->makeSharedPtrRecord(h_p, d_p, true)) {}
-  //msp_counted_ptr(Ptr h_p, Ptr d_p) noexcept : m_record(new msp_pointer_record(h_p, d_p)) {}
+  msp_counted_ptr(Ptr h_p, Ptr d_p) noexcept 
+    : m_record(SharedPtrManager::getInstance()->makeSharedPtrRecord(h_p, d_p, sizeof(std::remove_pointer<Ptr>), true)) 
+  {}
+
   virtual void m_dispose() noexcept { delete (Ptr)m_record->m_pointers[chai::CPU]; }// TODO : Other Exec spaces...
   virtual void m_destroy() noexcept { delete this; }
   msp_counted_ptr(msp_counted_ptr const&) = delete;
   msp_counted_ptr& operator=(msp_counted_ptr const&) = delete;
-
   msp_pointer_record* m_get_record() noexcept { return m_record; }
 private:
   msp_pointer_record* m_record;
 };
+
+#include <typeinfo>
 
 template<typename Ptr, typename Deleter>
 class msp_counted_deleter final : public msp_counted_base {
 
   class impl {
   public:
-    impl(Ptr h_p, Ptr d_p, Deleter d) :
-      m_record(SharedPtrManager::getInstance()->makeSharedPtrRecord(h_p, d_p, true)), m_deleter(std::move(d)) {}
-    //impl(Ptr h_p, Ptr d_p, Deleter d) : m_record(new msp_pointer_record(h_p, d_p)), m_deleter(std::move(d)) {}
+    impl(Ptr h_p, Ptr d_p, Deleter d) 
+      : m_record(SharedPtrManager::getInstance()->makeSharedPtrRecord(h_p, d_p, sizeof(std::remove_pointer_t<Ptr>), true))
+      , m_deleter(std::move(d)) 
+    {}
+
     Deleter& m_del() noexcept { return m_deleter; }
     msp_pointer_record* m_record;
     Deleter m_deleter;
