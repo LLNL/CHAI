@@ -110,7 +110,7 @@ public:
 
   CHAI_HOST
   void move(ExecutionSpace space, bool registerTouch = true) noexcept {
-    printf("Calling move\n");
+    //printf("Calling move\n");
      ExecutionSpace prev_space = m_record_count.m_get_record()->m_last_space;
      if (prev_space == CPU || prev_space == NONE) {
         /// Move nested ManagedArrays first, so they are working with a valid m_active_pointer for the host,
@@ -164,22 +164,28 @@ CHAI_HOST Tp* msp_make_on_device(Args... args) {
 }
 
 template<typename Tp, typename... Args>
-ManagedSharedPtr<Tp> make_shared(Args... args) {
-  Tp* gpu_pointer = make_on_device<Tp>(args...);
-  Tp* cpu_pointer = make_on_host<Tp>(args...);
-  std::cout << "CPU @ " << cpu_pointer << std::endl;
-  std::cout << "GPU @ " << gpu_pointer << std::endl;
+CHAI_HOST Tp* msp_make_on_host(Args... args) {
+  chai::SharedPtrManager* sptr_manager = chai::SharedPtrManager::getInstance();
 
+  auto cpu_allocator = sptr_manager->getAllocator(chai::CPU);
+  Tp* cpu_ptr = static_cast<Tp*>( cpu_allocator.allocate(1*sizeof(Tp)) );
+
+  new (cpu_ptr) Tp{args...};
+
+  return cpu_ptr;
+}
+
+template<typename Tp, typename... Args>
+ManagedSharedPtr<Tp> make_shared(Args... args) {
+  Tp* gpu_pointer = msp_make_on_device<Tp>(args...);
+  Tp* cpu_pointer = msp_make_on_host<Tp>(args...);
   return ManagedSharedPtr<Tp>(cpu_pointer, gpu_pointer, [](Tp* p){delete p;});
 }
 
 template<typename Tp, typename Deleter, typename... Args>
 ManagedSharedPtr<Tp> make_shared_deleter(Args... args, Deleter d) {
-  Tp* gpu_pointer = make_on_device<Tp>(args...);
-  Tp* cpu_pointer = make_on_host<Tp>(args...);
-  std::cout << "CPU @ " << cpu_pointer << std::endl;
-  std::cout << "GPU @ " << gpu_pointer << std::endl;
-
+  Tp* gpu_pointer = msp_make_on_device<Tp>(args...);
+  Tp* cpu_pointer = msp_make_on_host<Tp>(args...);
   return ManagedSharedPtr<Tp>(cpu_pointer, gpu_pointer, std::move(d));
 }
 

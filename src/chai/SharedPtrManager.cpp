@@ -252,9 +252,11 @@ static void copy(void * dst_pointer, void * src_pointer, umpire::ResourceManager
    camp::resources::Resource host_resource(camp::resources::Host::get_default());
    if (dst_space == GPU || src_space == GPU) {
       // Do the copy using the device resource
-      manager.copy_poly(dst_pointer, src_pointer, device_resource);
-      //manager.copy(dst_pointer, src_pointer);
-      //CHAI_GPU_ERROR_CHECK(cudaMemcpyAsync(dst_pointer, src_pointer, 1, cudaMemcpyHostToDevice));
+      std::size_t vtable_size = sizeof(void*); 
+      void* poly_src_ptr = ((char*)src_pointer + vtable_size);
+      void* poly_dst_ptr = ((char*)dst_pointer + vtable_size);
+
+      manager.copy(poly_dst_ptr, poly_src_ptr);
    } else {
       // Do the copy using the host resource
       manager.copy(dst_pointer, src_pointer, host_resource);
@@ -288,22 +290,22 @@ void SharedPtrManager::move(msp_pointer_record* record, ExecutionSpace space)
   //}
 
   if ( (!record->m_touched[record->m_last_space]) || (! src_pointer )) {
-    printf("failed move conditions\n");
-    for (int i = chai::CPU; i < NUM_EXECUTION_SPACES; i++) std::cout << i << " : " <<record->m_touched[i] << std::endl;
-    std::cout << record->m_last_space << std::endl;
-    std::cout << record->m_touched[record->m_last_space] << std::endl;
-    std::cout << (src_pointer) << std::endl;
+    //printf("failed move conditions\n");
+    //for (int i = chai::CPU; i < NUM_EXECUTION_SPACES; i++) std::cout << i << " : " <<record->m_touched[i] << std::endl;
+    //std::cout << record->m_last_space << std::endl;
+    //std::cout << record->m_touched[record->m_last_space] << std::endl;
+    //std::cout << (src_pointer) << std::endl;
     return;
   } else if (dst_pointer != src_pointer) {
     // Exclude the copy if src and dst are the same (can happen for PINNED memory)
     {
-      printf("Performing Copy\n");
-      std::cout << "dst_pointer : " << dst_pointer << std::endl;
-      std::cout << "src_pointer : " << src_pointer << std::endl;
-      std::cout << "space : " << space << std::endl;
-      std::cout << "prev_space : " << prev_space << std::endl;
-      std::cout << m_resource_manager.findAllocatorForPointer(dst_pointer)->getName() << std::endl;
-      std::cout << m_resource_manager.findAllocatorForPointer(src_pointer)->getName() << std::endl;
+      //printf("Performing Copy\n");
+      //std::cout << "dst_pointer : " << dst_pointer << std::endl;
+      //std::cout << "src_pointer : " << src_pointer << std::endl;
+      //std::cout << "space : " << space << std::endl;
+      //std::cout << "prev_space : " << prev_space << std::endl;
+      //std::cout << m_resource_manager.findAllocatorForPointer(dst_pointer)->getName() << std::endl;
+      //std::cout << m_resource_manager.findAllocatorForPointer(src_pointer)->getName() << std::endl;
       chai::copy(dst_pointer, src_pointer, m_resource_manager, space, prev_space);
 
     }
@@ -453,12 +455,12 @@ msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void* pointer, void* d
   m_resource_manager.registerAllocation(
       pointer,
       {pointer, size, m_allocators[chai::CPU]->getAllocationStrategy()});
-  std::cout << "m_allocators[chai::CPU] : " << m_allocators[chai::CPU]->getName() << std::endl;
+  //std::cout << "m_allocators[chai::CPU] : " << m_allocators[chai::CPU]->getName() << std::endl;
 
   m_resource_manager.registerAllocation(
       d_pointer,
       {d_pointer, size, m_allocators[chai::GPU]->getAllocationStrategy()});
-  std::cout << "m_allocators[chai::GPU] : " << m_allocators[chai::GPU]->getName() << std::endl;
+  //std::cout << "m_allocators[chai::GPU] : " << m_allocators[chai::GPU]->getName() << std::endl;
 
   auto pointer_record = getPointerRecord(pointer);
 
@@ -486,7 +488,7 @@ msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void* pointer, void* d
   }
 
   if (pointer) {
-     //registerPointer(pointer_record, chai::CPU, owned);
+     registerPointer(pointer_record, chai::CPU, owned);
   }
 
   return pointer_record;

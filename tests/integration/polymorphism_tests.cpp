@@ -141,22 +141,23 @@ GPU_TEST(managed_ptr, shared_ptr)
   chai::ManagedSharedPtr<DerivedT> sptr = chai::make_shared_deleter<DerivedT>(
       [](DerivedT* p){ printf("Custom Deleter Call\n"); p->~DerivedT(); });
 
-  std::cout << "use_count : " << sptr.use_count() << std::endl;
-
   std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
 
   chai::ManagedSharedPtr<BaseT> sptr2 = sptr;
   std::cout << "use_count : " << sptr.use_count() << std::endl;
 
   sptr->set_content(0xFFFFFFFFFFFFFFFFull);
-  sptr->function();
 
   std::cout << "GPU CALL...\n";
   forall(gpu(), 0, 1, [=] __device__ (int i) {
     printf("GPU Body\n");
-    sptr->function();
+    sptr2->function();
+    sptr2->d_function();
+
     //results[i] = rawArrayClass->getValue(i);
   });
+  GPU_ERROR_CHECK( cudaPeekAtLastError() );
+  GPU_ERROR_CHECK( cudaDeviceSynchronize() );
 
   }
 
@@ -179,11 +180,10 @@ GPU_TEST(managed_ptr, shared_ptralloc)
   BaseT* cpu_ptr = static_cast<DerivedT*>( cpu_allocator.allocate(1*sizeof(DerivedT)) );
 
   new(cpu_ptr) DerivedT();
-
-  std::cout << "check\n";
-
-
   BaseT* gpu_ptr = chai::msp_make_on_device<DerivedT>();
+
+
+  auto record = sptr_manager->makeSharedPtrRecord(cpu_ptr, gpu_ptr, sizeof(DerivedT), true);
 
   forall(gpu(), 0, 1, [=] __device__ (int i) {
     printf("GPU Body\n");
@@ -193,6 +193,7 @@ GPU_TEST(managed_ptr, shared_ptralloc)
 
   std::cout << "Ump alloc cpu : " << cpu_ptr << std::endl;
   std::cout << "Ump alloc gpu : " << gpu_ptr << std::endl;
+  std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
 
   cpu_ptr->set_content(0xFFFFFFFFFFFFFFFFull);
 
