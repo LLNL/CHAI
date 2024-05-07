@@ -69,6 +69,7 @@ public:
     , m_resource_manager(rhs.m_resource_manager)
   {
 #if !defined(CHAI_DEVICE_COMPILE)
+    std::cout << "ManagedSharedPtr Copy Ctor\n";
     if (m_active_pointer) move(ArrayManager::getInstance()->getExecutionSpace()); // TODO: Use a generic interface for RAJA queries.
     //if (m_active_pointer) move(m_resource_manager->getExecutionSpace());
 #endif
@@ -91,7 +92,9 @@ public:
    * Accessors
    */
   CHAI_HOST_DEVICE
-  element_type* get(ExecutionSpace space = chai::CPU) const noexcept { return m_active_pointer; }
+  element_type* get(ExecutionSpace space = chai::CPU) const noexcept { 
+    return m_active_pointer; 
+  }
 
   CHAI_HOST_DEVICE
   element_type& operator*() const noexcept { assert(get() != nullptr); return *get(); }
@@ -110,14 +113,17 @@ public:
 
   CHAI_HOST
   void move(ExecutionSpace space, bool registerTouch = true) noexcept {
-    //printf("Calling move\n");
      ExecutionSpace prev_space = m_record_count.m_get_record()->m_last_space;
-     if (prev_space == CPU || prev_space == NONE) {
+     if (prev_space == CPU && space == GPU) {
+     //if (prev_space == CPU || prev_space == NONE) {
         /// Move nested ManagedArrays first, so they are working with a valid m_active_pointer for the host,
         // and so the meta data associated with them are updated before we move the other array down.
-        //moveInnerImpl();
+        moveInnerImpl();
      }
      m_active_pointer = static_cast<Tp*>(m_resource_manager->move((void *)m_active_pointer, m_record_count.m_get_record(), space));
+     if (prev_space == CPU && space == GPU) {
+       std::cout << "m_active_pointer @ " << m_active_pointer << std::endl;
+     }
 
      if (registerTouch) {
        m_resource_manager->registerTouch(m_record_count.m_get_record(), space);
@@ -125,7 +131,7 @@ public:
      if (space != GPU && prev_space == GPU) {
         /// Move nested ManagedArrays after the move, so they are working with a valid m_active_pointer for the host,
         // and so the meta data associated with them are updated with live GPU data
-        //moveInnerImpl();
+        moveInnerImpl();
      }
 
   }
@@ -140,6 +146,30 @@ private:
   mutable element_type* m_active_pointer = nullptr;
 
   mutable SharedPtrManager* m_resource_manager = nullptr;
+
+  template <bool B = std::is_base_of<CHAICopyable, Tp>::value,
+            typename std::enable_if<B, int>::type = 0>
+  CHAI_HOST
+  void
+  moveInnerImpl() 
+  {
+    std::cout << "moveInnerImpl\n";
+    m_record_count.moveInnerImpl();
+    //Tp * host_ptr = (Tp *) m_record_count.m_get_record()->m_pointers[CPU]; 
+    //// trigger the copy constructor
+    //Tp inner = Tp(*host_ptr);
+    // ensure the inner type gets the state of the result of the copy
+    //  host_ptr[i].shallowCopy(inner);
+  }
+
+  template <bool B = std::is_base_of<CHAICopyable, Tp>::value,
+            typename std::enable_if<!B, int>::type = 0>
+  CHAI_HOST
+  void
+  moveInnerImpl() 
+  {
+  }
+
 };
 
 
@@ -147,7 +177,7 @@ template <typename T,
           typename... Args>
 __global__ void msp_make_on_device(T* gpuPointer, Args... args)
 {
-   new(gpuPointer) T(processArguments(args)...);
+   new(gpuPointer) T((args)...);
 }
 
 
@@ -177,15 +207,21 @@ CHAI_HOST Tp* msp_make_on_host(Args... args) {
 
 template<typename Tp, typename... Args>
 ManagedSharedPtr<Tp> make_shared(Args... args) {
-  Tp* gpu_pointer = msp_make_on_device<Tp>(args...);
+  Tp* gpu_pointer = msp_make_on_device<Tp>();
+  //Tp* gpu_pointer = msp_make_on_device<Tp>(args...);
   Tp* cpu_pointer = msp_make_on_host<Tp>(args...);
+  std::cout << "CPU pointer @ " << cpu_pointer << std::endl;
+  std::cout << "GPU pointer @ " << gpu_pointer << std::endl;
   return ManagedSharedPtr<Tp>(cpu_pointer, gpu_pointer, [](Tp* p){delete p;});
 }
 
 template<typename Tp, typename Deleter, typename... Args>
 ManagedSharedPtr<Tp> make_shared_deleter(Args... args, Deleter d) {
-  Tp* gpu_pointer = msp_make_on_device<Tp>(args...);
+  Tp* gpu_pointer = msp_make_on_device<Tp>();
+  //Tp* gpu_pointer = msp_make_on_device<Tp>(args...);
   Tp* cpu_pointer = msp_make_on_host<Tp>(args...);
+  std::cout << "CPU pointer @ " << cpu_pointer << std::endl;
+  std::cout << "GPU pointer @ " << gpu_pointer << std::endl;
   return ManagedSharedPtr<Tp>(cpu_pointer, gpu_pointer, std::move(d));
 }
 

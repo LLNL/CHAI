@@ -249,22 +249,29 @@ static void copy(void * dst_pointer, void * src_pointer, umpire::ResourceManager
    camp::resources::Resource device_resource(camp::resources::Host::get_default());
 #endif
 
-   camp::resources::Resource host_resource(camp::resources::Host::get_default());
-   if (dst_space == GPU || src_space == GPU) {
-      // Do the copy using the device resource
-      std::size_t vtable_size = sizeof(void*); 
-      void* poly_src_ptr = ((char*)src_pointer + vtable_size);
-      void* poly_dst_ptr = ((char*)dst_pointer + vtable_size);
 
-      manager.copy(poly_dst_ptr, poly_src_ptr);
-   } else {
-      // Do the copy using the host resource
-      manager.copy(dst_pointer, src_pointer, host_resource);
-   }
-   // Ensure device to host copies are synchronous
-   if (dst_space == CPU && src_space == GPU) {
-      device_resource.wait();
-   }
+  std::cout << "SPtr Manager Copy Call\n";
+  std::cout << "dst_ptr @ " << dst_pointer << std::endl;
+  std::cout << "src_ptr @ " << src_pointer << std::endl;
+  camp::resources::Resource host_resource(camp::resources::Host::get_default());
+  if (dst_space == GPU || src_space == GPU) {
+    // Do the copy using the device resource
+    std::size_t vtable_size = sizeof(void*); 
+    void* poly_src_ptr = ((char*)src_pointer + vtable_size);
+    void* poly_dst_ptr = ((char*)dst_pointer + vtable_size);
+
+    std::cout << "---- Sptr Manager Device Copy\n";
+    std::cout << "---- dst_ptr @ " << dst_pointer << std::endl;
+    std::cout << "---- src_ptr @ " << src_pointer << std::endl;
+    manager.copy(poly_dst_ptr, poly_src_ptr);
+  } else {
+    // Do the copy using the host resource
+    manager.copy(dst_pointer, src_pointer, host_resource);
+  }
+  // Ensure device to host copies are synchronous
+  if (dst_space == CPU && src_space == GPU) {
+    device_resource.wait();
+  }
 }
 
 void SharedPtrManager::move(msp_pointer_record* record, ExecutionSpace space)
