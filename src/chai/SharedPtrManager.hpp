@@ -264,7 +264,7 @@ public:
    */
   //CHAISHAREDDLL_API size_t getSize(void* pointer);
 
-  CHAISHAREDDLL_API msp_pointer_record* makeSharedPtrRecord(void* pointer, void* d_pointer,
+  CHAISHAREDDLL_API msp_pointer_record* makeSharedPtrRecord(void const* c_pointer, void const* c_d_pointer,
                                                             size_t size,
                                                             //ExecutionSpace space,
                                                             bool owned);

@@ -60,7 +60,7 @@ public:
     using T = std::remove_pointer_t<Ptr>;
     Ptr host_ptr = (Ptr) m_record->m_pointers[CPU]; 
     // trigger the copy constructor
-    std::cout << "Trigger Inner Copy Ctor\n";
+    std::cout << "Trigger Inner Copy Ctor @ " << host_ptr << std::endl;
     T inner = T(*host_ptr);
     // ensure the inner type gets the state of the result of the copy
     host_ptr->operator=(inner);
@@ -74,6 +74,9 @@ private:
 };
 
 #include <typeinfo>
+
+//template<typename T>
+//void err_func(T arg){ static_assert(false); }
 
 template<typename Ptr, typename Deleter>
 class msp_counted_deleter final : public msp_counted_base {
@@ -99,12 +102,16 @@ public:
   virtual void m_destroy() noexcept { this->~msp_counted_deleter(); }
 
   virtual void moveInnerImpl() {
-    using T = std::remove_pointer_t<Ptr>;
-    Ptr host_ptr = (Ptr) m_impl.m_record->m_pointers[CPU]; 
+    //using T = std::remove_cv_t<Ptr>;
+    using T_non_const = std::remove_const_t<std::remove_pointer_t<Ptr>>;
+
+    T_non_const* host_ptr = const_cast<T_non_const*>((Ptr)m_impl.m_record->m_pointers[CPU]); 
     // trigger the copy constructor
-    std::cout << "Trigger Inner Copy Ctor\n";
-    T inner = T(*host_ptr);
+    std::cout << "Trigger Inner Copy Ctor @ " << host_ptr << std::endl;
+    T_non_const inner = T_non_const(*host_ptr);
+
     // ensure the inner type gets the state of the result of the copy
+    //err_func(host_ptr);
     host_ptr->operator=(inner);
   }
 

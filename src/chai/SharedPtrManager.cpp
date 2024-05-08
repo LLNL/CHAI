@@ -446,11 +446,14 @@ msp_pointer_record* SharedPtrManager::getPointerRecord(void* pointer)
   return record->second ? *record->second : &s_null_record;
 }
 
-msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void* pointer, void* d_pointer,
+msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void const* c_pointer, void const* c_d_pointer,
                                                           size_t size,
                                                           //ExecutionSpace space,
                                                           bool owned)
 {
+  void* pointer = const_cast<void*>(c_pointer);
+  void* d_pointer = const_cast<void*>(c_d_pointer);
+
   if (pointer == nullptr) {
      return &s_null_record ;
   }
