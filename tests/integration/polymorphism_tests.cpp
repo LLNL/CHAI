@@ -106,8 +106,8 @@ public:
   D d;
   CHAI_HOST_DEVICE A(void) : content_A(0xAAAAAAAAAAAAAAAAull) { printf("++ A has been constructed\n"); }
   CHAI_HOST_DEVICE ~A(void) { printf("-- A has been destructed\n"); }
-  CHAI_HOST_DEVICE virtual void function(void) = 0;
-  CHAI_HOST_DEVICE virtual void d_function(void) = 0;
+  CHAI_HOST_DEVICE virtual void function(void) const = 0;
+  CHAI_HOST_DEVICE virtual void d_function(void) const = 0;
   CHAI_HOST_DEVICE virtual void set_content(unsigned long long) = 0;
 };
 
@@ -124,8 +124,8 @@ public:
   unsigned long long content_B;
   CHAI_HOST_DEVICE B(void) : content_B(0xBBBBBBBBBBBBBBBBull) { printf("++ B has been constructed\n"); }
   CHAI_HOST_DEVICE ~B(void) { printf("-- B has been destructed\n"); }
-  CHAI_HOST_DEVICE virtual void function(void) override { printf("%lX\n", content_B); }
-  CHAI_HOST_DEVICE virtual void d_function(void) override { d.function(); }
+  CHAI_HOST_DEVICE virtual void function(void) const override { printf("%lX\n", content_B); }
+  CHAI_HOST_DEVICE virtual void d_function(void) const override { d.function(); }
   CHAI_HOST_DEVICE virtual void set_content(unsigned long long val) override { content_B = val; content_A = val; }
 };
 
@@ -134,6 +134,7 @@ class AAbsMem : public chai::CHAICopyable
 {
 public:
   unsigned long long content_A;
+  //chai::ManagedSharedPtr<C> base_member;
   chai::ManagedSharedPtr<const C> base_member;
 
   CHAI_HOST_DEVICE AAbsMem(void) : content_A(0xAAAAAAAAAAAAAAAAull) { printf("++ A has been constructed\n"); }
@@ -141,7 +142,8 @@ public:
   //template<typename Derived, typename = typename std::enable_if<std::is_base_of<C, Derived>::value>::type >
   template<typename Derived>
   CHAI_HOST AAbsMem(Derived const& base_val)
-    : base_member(chai::make_shared<const Derived>(base_val))
+    //: base_member(chai::make_shared<const Derived>(base_val))
+    : base_member(chai::make_shared<Derived>(base_val))
     , content_A(0xAAAAAAAAAAAAAAAAull) 
   { printf("++ A has been constructed\n"); }
 
@@ -185,11 +187,8 @@ GPU_TEST(managed_ptr, shared_ptr_absmem)
   std::cout << "size of (DerivedT) : " << sizeof(DerivedT) << std::endl;
   std::cout << "size of (BaseT)    : " << sizeof(BaseT)    << std::endl;
 
-  //chai::ManagedSharedPtr<DerivedT> sptr = chai::make_shared<DerivedT>(D{});
   D d;
-  //DerivedT der(d);
-  chai::ManagedSharedPtr<const BaseT> sptr = chai::make_shared<const DerivedT>(d);
-  //chai::ManagedSharedPtr<BaseT> sptr = chai::make_shared<DerivedT>(d);
+  chai::ManagedSharedPtr<BaseT> sptr = chai::make_shared<DerivedT>(d);
 
   GPU_ERROR_CHECK( cudaPeekAtLastError() );
   GPU_ERROR_CHECK( cudaDeviceSynchronize() );
@@ -198,23 +197,21 @@ GPU_TEST(managed_ptr, shared_ptr_absmem)
   sptr2->function();
   sptr2->d_function();
 
+  std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
+
   std::cout << "GPU CALL...\n";
   forall(gpu(), 0, 1, [=] __device__ (int i) {
     printf("GPU Body\n");
     sptr2->function();
     sptr2->d_function();
   });
-
-  //sptr2.registerTouch(chai::GPU);
-
-
   GPU_ERROR_CHECK( cudaPeekAtLastError() );
   GPU_ERROR_CHECK( cudaDeviceSynchronize() );
 
   std::cout << "CPU CALL...\n";
   forall(sequential(), 0, 1, [=] (int i) {
     printf("CPU Body\n");
-    //sptr->set_content(0xFFFFFFFFFFFFFFFFull);
+    sptr->set_content(0xFFFFFFFFFFFFFFFFull);
     sptr2->function();
     sptr2->d_function();
   });
@@ -229,43 +226,56 @@ GPU_TEST(managed_ptr, shared_ptr_absmem)
   GPU_ERROR_CHECK( cudaDeviceSynchronize() );
 
   }
+  std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
 }
 
-//GPU_TEST(managed_ptr, shared_ptr)
-//{
-//  {
-//  using DerivedT = B;
-//  using BaseT = A;
-//
-//  std::cout << "size of (DerivedT) : " << sizeof(DerivedT) << std::endl;
-//  std::cout << "size of (BaseT)    : " << sizeof(BaseT)    << std::endl;
-//
-//  chai::ManagedSharedPtr<DerivedT> sptr = chai::make_shared_deleter<DerivedT>(
-//      [](DerivedT* p){ printf("Custom Deleter Call\n"); p->~DerivedT(); });
-//
-//  std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
-//
-//  chai::ManagedSharedPtr<BaseT> sptr2 = sptr;
-//  std::cout << "use_count : " << sptr.use_count() << std::endl;
-//
-//  sptr->set_content(0xFFFFFFFFFFFFFFFFull);
-//
-//  std::cout << "GPU CALL...\n";
-//  forall(gpu(), 0, 1, [=] __device__ (int i) {
-//    printf("GPU Body\n");
-//    sptr2->function();
-//    sptr2->d_function();
-//
-//    //results[i] = rawArrayClass->getValue(i);
-//  });
-//  GPU_ERROR_CHECK( cudaPeekAtLastError() );
-//  GPU_ERROR_CHECK( cudaDeviceSynchronize() );
-//
-//  }
-//}
-//
-//
-//
+GPU_TEST(managed_ptr, shared_ptr_const)
+{
+  {
+  using DerivedT = B;
+  using BaseT = A;
+
+  std::cout << "size of (DerivedT) : " << sizeof(DerivedT) << std::endl;
+  std::cout << "size of (BaseT)    : " << sizeof(BaseT)    << std::endl;
+
+  chai::ManagedSharedPtr<BaseT> sptr = chai::make_shared<DerivedT>();
+
+  chai::ManagedSharedPtr<const BaseT> sptr2 = sptr;
+
+  std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
+
+  std::cout << "GPU CALL...\n";
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
+    printf("GPU Body\n");
+    sptr2->function();
+    sptr2->d_function();
+  });
+  GPU_ERROR_CHECK( cudaPeekAtLastError() );
+  GPU_ERROR_CHECK( cudaDeviceSynchronize() );
+
+  std::cout << "CPU CALL...\n";
+  forall(sequential(), 0, 1, [=] (int i) {
+    printf("CPU Body\n");
+    sptr->set_content(0xFFFFFFFFFFFFFFFFull);
+    sptr2->function();
+    sptr2->d_function();
+  });
+
+  std::cout << "GPU CALL...\n";
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
+    printf("GPU Body\n");
+    sptr2->function();
+    sptr2->d_function();
+  });
+  GPU_ERROR_CHECK( cudaPeekAtLastError() );
+  GPU_ERROR_CHECK( cudaDeviceSynchronize() );
+
+  }
+  std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
+}
+
+
+
 //GPU_TEST(managed_ptr, shared_ptralloc)
 //{
 //

@@ -75,8 +75,16 @@ private:
 
 #include <typeinfo>
 
-//template<typename T>
-//void err_func(T arg){ static_assert(false); }
+namespace impl {
+
+template <typename T,
+          typename Deleter>
+__global__ void msp_dispose_on_device(T* gpuPointer, Deleter d)
+{
+   d(gpuPointer);
+}
+
+} // namespace impl
 
 template<typename Ptr, typename Deleter>
 class msp_counted_deleter final : public msp_counted_base {
@@ -97,15 +105,20 @@ public:
   msp_counted_deleter(Ptr h_p, Ptr d_p, Deleter d) noexcept : m_impl(h_p, d_p, std::move(d)) {}
   virtual void m_dispose() noexcept { 
     printf("Delete GPU Memory Here...\n");
+    ::chai::impl::msp_dispose_on_device<<<1,1>>>((Ptr)m_impl.m_record->m_pointers[chai::GPU], m_impl.m_del());
+    SharedPtrManager::getInstance()->free(m_impl.m_record, chai::GPU);
+
+    printf("Delete CPU Memory Here...\n");
     m_impl.m_del()((Ptr)m_impl.m_record->m_pointers[chai::CPU]);
+    SharedPtrManager::getInstance()->free(m_impl.m_record, chai::CPU);
   }
   virtual void m_destroy() noexcept { this->~msp_counted_deleter(); }
 
   virtual void moveInnerImpl() {
-    //using T = std::remove_cv_t<Ptr>;
-    using T_non_const = std::remove_const_t<std::remove_pointer_t<Ptr>>;
 
+    using T_non_const = std::remove_const_t<std::remove_pointer_t<Ptr>>;
     T_non_const* host_ptr = const_cast<T_non_const*>((Ptr)m_impl.m_record->m_pointers[CPU]); 
+
     // trigger the copy constructor
     std::cout << "Trigger Inner Copy Ctor @ " << host_ptr << std::endl;
     T_non_const inner = T_non_const(*host_ptr);

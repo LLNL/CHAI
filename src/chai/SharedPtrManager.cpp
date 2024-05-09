@@ -499,6 +499,7 @@ msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void const* c_pointer,
 
   if (pointer) {
      registerPointer(pointer_record, chai::CPU, owned);
+     registerPointer(pointer_record, chai::GPU, owned);
   }
 
   return pointer_record;

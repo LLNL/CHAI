@@ -199,12 +199,21 @@ private:
 namespace detail {
 
 namespace impl {
+
+template <typename T,
+          typename Deleter>
+__global__ void msp_dispose_on_device(T* gpuPointer, Deleter d)
+{
+   d(gpuPointer);
+}
+
 template <typename T,
           typename... Args>
 __global__ void msp_make_on_device(T* gpuPointer, Args&&... args)
 {
    new(gpuPointer) T(std::forward<Args>(args)...);
 }
+
 } // namespace impl
 
 //template<typename Tp>
@@ -247,14 +256,15 @@ ManagedSharedPtr<Tp> make_shared(Args&&... args) {
   std::cout << "make_shared\n";
 
   Tp* cpu_pointer = detail::msp_make_on_host<Tp_non_const>(std::forward<Args>(args)...);
-  //Tp* gpu_pointer = detail::msp_make_on_device<Tp>(std::forward<Args>(args)...);
   std::cout << "CPU pointer @ " << cpu_pointer << std::endl;
 
   Tp* gpu_pointer = detail::msp_make_on_device<Tp_non_const>();
-  std::cout << "GPU pointer @ " << gpu_pointer << std::endl;
-  cudaDeviceSynchronize();
+  std::cout << "GPU pointer @ " << gpu_pointer << std::endl; cudaDeviceSynchronize();
 
-  auto result = ManagedSharedPtr<Tp>(cpu_pointer, gpu_pointer, [](Tp* p){delete p;});
+  auto result = ManagedSharedPtr<Tp>(cpu_pointer, gpu_pointer, 
+      [] CHAI_HOST_DEVICE (Tp* p){p->~Tp();}
+  );
+  //auto result = ManagedSharedPtr<Tp>(cpu_pointer, gpu_pointer, [](Tp* p){delete p;});
 
   if (!is_CHAICopyable<Tp>::value) {
     result.move(chai::GPU, false);
