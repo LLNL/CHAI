@@ -186,7 +186,7 @@ void SharedPtrManager::setExecutionSpace(ExecutionSpace space)
 
 void* SharedPtrManager::move(void* pointer,
                          msp_pointer_record* pointer_record,
-                         ExecutionSpace space)
+                         ExecutionSpace space, bool poly)
 {
   // Check for default arg (NONE)
   if (space == NONE) {
@@ -197,7 +197,7 @@ void* SharedPtrManager::move(void* pointer,
     return pointer;
   }
 
-  move(pointer_record, space);
+  move(pointer_record, space, poly);
 
   return pointer_record->m_pointers[space];
 }
@@ -239,7 +239,7 @@ void SharedPtrManager::resetTouch(msp_pointer_record* pointer_record)
 /* Not all GPU platform runtimes (notably HIP), will give you asynchronous copies to the device by default, so we leverage
  * umpire's API for asynchronous copies using camp resources in this method, based off of the CHAI destination space
  * */
-static void copy(void * dst_pointer, void * src_pointer, umpire::ResourceManager & manager, ExecutionSpace dst_space, ExecutionSpace src_space) {
+static void copy(void * dst_pointer, void * src_pointer, umpire::ResourceManager & manager, ExecutionSpace dst_space, ExecutionSpace src_space, bool poly=false) {
 
 #ifdef CHAI_ENABLE_CUDA
    camp::resources::Resource device_resource(camp::resources::Cuda::get_default());
@@ -256,14 +256,21 @@ static void copy(void * dst_pointer, void * src_pointer, umpire::ResourceManager
   camp::resources::Resource host_resource(camp::resources::Host::get_default());
   if (dst_space == GPU || src_space == GPU) {
     // Do the copy using the device resource
-    std::size_t vtable_size = sizeof(void*); 
-    void* poly_src_ptr = ((char*)src_pointer + vtable_size);
-    void* poly_dst_ptr = ((char*)dst_pointer + vtable_size);
-
     std::cout << "---- Sptr Manager Device Copy\n";
     std::cout << "---- dst_ptr @ " << dst_pointer << std::endl;
     std::cout << "---- src_ptr @ " << src_pointer << std::endl;
-    manager.copy(poly_dst_ptr, poly_src_ptr);
+    
+    if (poly) {
+      std::cout << "---- POLY COPY\n";
+      std::size_t vtable_size = sizeof(void*); 
+      void* poly_src_ptr = ((char*)src_pointer + vtable_size);
+      void* poly_dst_ptr = ((char*)dst_pointer + vtable_size);
+      manager.copy(poly_dst_ptr, poly_src_ptr, device_resource);
+    } else {
+      std::cout << "---- STD COPY\n";
+      manager.copy(dst_pointer, src_pointer, device_resource);
+    }
+
   } else {
     // Do the copy using the host resource
     manager.copy(dst_pointer, src_pointer, host_resource);
@@ -274,7 +281,7 @@ static void copy(void * dst_pointer, void * src_pointer, umpire::ResourceManager
   }
 }
 
-void SharedPtrManager::move(msp_pointer_record* record, ExecutionSpace space)
+void SharedPtrManager::move(msp_pointer_record* record, ExecutionSpace space, bool poly)
 {
   if (space == NONE) {
     return;
@@ -291,30 +298,12 @@ void SharedPtrManager::move(msp_pointer_record* record, ExecutionSpace space)
   void* src_pointer = record->m_pointers[prev_space];
   void* dst_pointer = record->m_pointers[space];
 
-  //if (!dst_pointer) {
-  //  allocate(record, space);
-  //  dst_pointer = record->m_pointers[space];
-  //}
-
   if ( (!record->m_touched[record->m_last_space]) || (! src_pointer )) {
-    //printf("failed move conditions\n");
-    //for (int i = chai::CPU; i < NUM_EXECUTION_SPACES; i++) std::cout << i << " : " <<record->m_touched[i] << std::endl;
-    //std::cout << record->m_last_space << std::endl;
-    //std::cout << record->m_touched[record->m_last_space] << std::endl;
-    //std::cout << (src_pointer) << std::endl;
     return;
   } else if (dst_pointer != src_pointer) {
     // Exclude the copy if src and dst are the same (can happen for PINNED memory)
     {
-      //printf("Performing Copy\n");
-      //std::cout << "dst_pointer : " << dst_pointer << std::endl;
-      //std::cout << "src_pointer : " << src_pointer << std::endl;
-      //std::cout << "space : " << space << std::endl;
-      //std::cout << "prev_space : " << prev_space << std::endl;
-      //std::cout << m_resource_manager.findAllocatorForPointer(dst_pointer)->getName() << std::endl;
-      //std::cout << m_resource_manager.findAllocatorForPointer(src_pointer)->getName() << std::endl;
-      chai::copy(dst_pointer, src_pointer, m_resource_manager, space, prev_space);
-
+      chai::copy(dst_pointer, src_pointer, m_resource_manager, space, prev_space, poly);
     }
 
     //callback(record, ACTION_MOVE, space);

@@ -81,7 +81,7 @@ void PrintMemory(const unsigned char* memory,
   });
 
 
-class C
+class C : chai::CHAIPoly
 {
 public:
   CHAI_HOST_DEVICE C(void) { printf("++ C has been constructed\n"); }
@@ -99,7 +99,7 @@ public:
 };
 
 
-class A 
+class A : chai::CHAIPoly
 {
 public:
   unsigned long long content_A;
@@ -130,7 +130,7 @@ public:
 };
 
 
-class AAbsMem : public chai::CHAICopyable 
+class AAbsMem : public chai::CHAICopyable , public chai::CHAIPoly
 {
 public:
   unsigned long long content_A;
@@ -266,6 +266,57 @@ GPU_TEST(managed_ptr, shared_ptr_const)
     printf("GPU Body\n");
     sptr2->function();
     sptr2->d_function();
+  });
+  GPU_ERROR_CHECK( cudaPeekAtLastError() );
+  GPU_ERROR_CHECK( cudaDeviceSynchronize() );
+
+  }
+  std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
+}
+
+class NV
+{
+public:
+  unsigned long long content_NV;
+  CHAI_HOST_DEVICE NV(void) : content_NV(0xFFFFFFFFFFFFFFFFull) { printf("++ NV has been constructed\n"); }
+  CHAI_HOST_DEVICE ~NV(void) { printf("-- NV has been destructed\n"); }
+  CHAI_HOST_DEVICE void function(void) const { printf("%lX\n", content_NV); }
+};
+
+GPU_TEST(managed_ptr, shared_ptr_nv)
+{
+  {
+  using DerivedT = NV;
+  using BaseT = A;
+
+  std::cout << "size of (DerivedT) : " << sizeof(DerivedT) << std::endl;
+
+  chai::ManagedSharedPtr<DerivedT> sptr = chai::make_shared<DerivedT>();
+
+  chai::ManagedSharedPtr<const DerivedT> sptr2 = sptr;
+  //chai::ManagedSharedPtr<const BaseT> sptr2 = sptr;
+
+  std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
+
+  std::cout << "GPU CALL...\n";
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
+    printf("GPU Body\n");
+    sptr2->function();
+  });
+  GPU_ERROR_CHECK( cudaPeekAtLastError() );
+  GPU_ERROR_CHECK( cudaDeviceSynchronize() );
+
+  std::cout << "CPU CALL...\n";
+  forall(sequential(), 0, 1, [=] (int i) {
+    printf("CPU Body\n");
+    //sptr->set_content(0xFFFFFFFFFFFFFFFFull);
+    sptr2->function();
+  });
+
+  std::cout << "GPU CALL...\n";
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
+    printf("GPU Body\n");
+    sptr2->function();
   });
   GPU_ERROR_CHECK( cudaPeekAtLastError() );
   GPU_ERROR_CHECK( cudaDeviceSynchronize() );

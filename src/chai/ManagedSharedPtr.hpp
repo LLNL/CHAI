@@ -12,6 +12,9 @@
 
 namespace chai {
 
+
+struct CHAIPoly {};
+
 // Type traits for SFINAE
 template<typename Tp, typename Yp>
 struct msp_is_constructible : std::is_convertible<Yp*, Tp*>::type {};
@@ -24,6 +27,9 @@ struct msp_compatible_with<Yp*, Tp*> : std::is_convertible<Yp*, Tp*>::type {};
 
 template<typename Tp>
 struct is_CHAICopyable : std::is_base_of<CHAICopyable, Tp>::type {};
+
+template<typename Tp>
+struct is_CHAIPoly : std::is_base_of<CHAIPoly, Tp>::type {};
 
 
 template<typename Tp>
@@ -99,7 +105,7 @@ public:
   const element_type* cget(ExecutionSpace space = chai::CPU) const noexcept { 
 #if !defined(CHAI_DEVICE_COMPILE)
   if (m_active_pointer) {
-     //move(CPU, false);
+     move(CPU, false);
   }
 #endif
     return m_active_pointer; 
@@ -108,7 +114,7 @@ public:
   element_type* get(ExecutionSpace space = chai::CPU) const noexcept { 
 #if !defined(CHAI_DEVICE_COMPILE)
   if (m_active_pointer) {
-     //move(CPU);
+     move(CPU);
   }
 #endif
     return m_active_pointer; 
@@ -135,9 +141,8 @@ public:
   }
 
   CHAI_HOST
-  void move(ExecutionSpace space,// bool registerTouch = true) noexcept {
-                      bool registerTouch=(!std::is_const<Tp>::value || is_CHAICopyable<Tp>::value)) {
-                      //bool registerTouch=false) {
+  void move(ExecutionSpace space,
+            bool registerTouch=(!std::is_const<Tp>::value || is_CHAICopyable<Tp>::value)) const {
      ExecutionSpace prev_space = m_record_count.m_get_record()->m_last_space;
      ExecutionSpace oldContext = m_resource_manager->getExecutionSpace();
      if (prev_space != GPU && space == GPU) {
@@ -147,7 +152,8 @@ public:
        moveInnerImpl();
      }
      auto old_pointer = m_active_pointer;
-     m_active_pointer = static_cast<Tp*>(m_resource_manager->move((void *)m_active_pointer, m_record_count.m_get_record(), space));
+     m_active_pointer = static_cast<Tp*>(m_resource_manager->move(
+           (void *)m_active_pointer, m_record_count.m_get_record(), space, is_CHAIPoly<Tp>::value));
      if (old_pointer != m_active_pointer) {
        std::cout << "m_active_pointer @ " << m_active_pointer << " : def touch behaviour : " << (!std::is_const<Tp>::value || is_CHAICopyable<Tp>::value) << std::endl;
      }
@@ -180,7 +186,7 @@ private:
             typename std::enable_if<B, int>::type = 0>
   CHAI_HOST
   void
-  moveInnerImpl() 
+  moveInnerImpl() const 
   {
     m_record_count.moveInnerImpl();
   }
@@ -190,7 +196,7 @@ private:
             typename std::enable_if<!B, int>::type = 0>
   CHAI_HOST
   void
-  moveInnerImpl() 
+  moveInnerImpl() const
   {
   }
 

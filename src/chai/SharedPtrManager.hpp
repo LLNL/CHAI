@@ -178,7 +178,7 @@ public:
    */
   CHAISHAREDDLL_API void* move(void* pointer,
                                msp_pointer_record* pointer_record,
-                               ExecutionSpace = NONE);
+                               ExecutionSpace = NONE, bool = false);
 
   /*!
    * \brief Register a touch of the pointer in the current execution space.
@@ -446,7 +446,7 @@ private:
    * \param record
    * \param space
    */
-  void move(msp_pointer_record* record, ExecutionSpace space);
+  void move(msp_pointer_record* record, ExecutionSpace space, bool = false);
   
     /*!
    * \brief Execute a user callback if callbacks are active

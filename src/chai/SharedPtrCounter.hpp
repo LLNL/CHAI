@@ -24,7 +24,7 @@ public:
   virtual void m_dispose() noexcept = 0;
   virtual void m_destroy() noexcept { delete this; }
 
-  virtual void moveInnerImpl() = 0;
+  virtual void moveInnerImpl() const = 0;
 
   void m_add_ref_copy() noexcept { ++m_use_count; }
 
@@ -56,7 +56,7 @@ public:
   virtual void m_dispose() noexcept { delete (Ptr)m_record->m_pointers[chai::CPU]; }// TODO : Other Exec spaces...
   virtual void m_destroy() noexcept { delete this; }
 
-  virtual void moveInnerImpl() {
+  virtual void moveInnerImpl() const {
     using T = std::remove_pointer_t<Ptr>;
     Ptr host_ptr = (Ptr) m_record->m_pointers[CPU]; 
     // trigger the copy constructor
@@ -114,7 +114,7 @@ public:
   }
   virtual void m_destroy() noexcept { this->~msp_counted_deleter(); }
 
-  virtual void moveInnerImpl() {
+  virtual void moveInnerImpl() const {
 
     using T_non_const = std::remove_const_t<std::remove_pointer_t<Ptr>>;
     T_non_const* host_ptr = const_cast<T_non_const*>((Ptr)m_impl.m_record->m_pointers[CPU]); 
@@ -193,12 +193,12 @@ public:
   operator==(msp_record_count const& a, msp_record_count const& b) noexcept
   { return a.m_pi == b.m_pi; }
 
-  msp_pointer_record* m_get_record() noexcept { return m_pi->m_get_record(); }
+  msp_pointer_record* m_get_record() const noexcept { return m_pi->m_get_record(); }
 
   template<typename Ptr>
   Ptr* m_get_pointer(chai::ExecutionSpace space) noexcept { return static_cast<Ptr*>(m_get_record()->m_pointers[space]); }
 
-  void moveInnerImpl() { m_pi->moveInnerImpl(); }
+  void moveInnerImpl() const { m_pi->moveInnerImpl(); }
 
   msp_counted_base* m_pi;
 
