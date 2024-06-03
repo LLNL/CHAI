@@ -18,6 +18,7 @@
 #define CHAI_HOST __host__
 #define CHAI_DEVICE __device__
 #define CHAI_HOST_DEVICE __device__ __host__
+#define CHAI_GLOBAL __global__
 
 #define gpuMemcpyKind cudaMemcpyKind
 #define gpuMemcpyHostToHost cudaMemcpyHostToHost
@@ -34,6 +35,7 @@
 #define CHAI_HOST __host__
 #define CHAI_DEVICE __device__
 #define CHAI_HOST_DEVICE __device__ __host__
+#define CHAI_GLOBAL __global__
 
 #define gpuMemcpyKind hipMemcpyKind
 #define gpuMemcpyHostToHost hipMemcpyHostToHost
@@ -47,6 +49,7 @@
 #define CHAI_HOST
 #define CHAI_DEVICE
 #define CHAI_HOST_DEVICE
+#define CHAI_GLOBAL
 
 #define gpuMemcpyKind int
 #define gpuMemcpyHostToHost 0
