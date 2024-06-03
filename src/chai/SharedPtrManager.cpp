@@ -5,6 +5,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
 #include "chai/SharedPtrManager.hpp"
+#include <initializer_list>
 
 #include "chai/ExecutionSpaces.hpp"
 #include "chai/config.hpp"
@@ -433,6 +434,57 @@ msp_pointer_record* SharedPtrManager::getPointerRecord(void* pointer)
   std::lock_guard<std::mutex> lock(m_mutex);
   auto record = m_pointer_map.find(pointer);
   return record->second ? *record->second : &s_null_record;
+}
+
+//msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void const* c_pointer, void const* c_d_pointer,
+msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(std::initializer_list<void const*> pointers,
+                                                          std::initializer_list<chai::ExecutionSpace> spaces,
+                                                          size_t size,
+                                                          //ExecutionSpace space,
+                                                          bool owned)
+{
+  int i = 0;
+  for (void const* c_ptr : pointers) {
+    void* ptr = const_cast<void*>(c_ptr);
+
+    if (ptr == nullptr) return &s_null_record;
+
+    m_resource_manager.registerAllocation(ptr, {ptr, size, m_allocators[spaces.begin()[i++]]->getAllocationStrategy()} );
+  }
+
+  void* lookup_pointer = const_cast<void*>(pointers.begin()[0]);
+
+  auto pointer_record = getPointerRecord(lookup_pointer);
+
+  if (pointer_record == &s_null_record) {
+     if (lookup_pointer) {
+        pointer_record = new msp_pointer_record();
+     } else {
+        return pointer_record;
+     }
+  }
+  else {
+     CHAI_LOG(Warning, "SharedPtrManager::makeManaged found abandoned pointer record!!!");
+     //callback(pointer_record, ACTION_FOUND_ABANDONED, space);
+  }
+
+  i=0;
+  for (void const* c_ptr : pointers) {
+    void* ptr = const_cast<void*>(c_ptr);
+    chai::ExecutionSpace space = spaces.begin()[i];
+
+    pointer_record->m_pointers[space] = ptr;
+    pointer_record->m_owned[space] = owned;
+    registerPointer(pointer_record, space, owned);
+
+    i++;
+  }
+
+  for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
+    pointer_record->m_allocators[space] = getAllocatorId(ExecutionSpace(space));
+  }
+
+  return pointer_record;
 }
 
 msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void const* c_pointer, void const* c_d_pointer,

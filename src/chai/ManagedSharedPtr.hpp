@@ -110,7 +110,7 @@ public:
   CHAI_HOST void swap(ManagedSharedPtr& rhs) noexcept {
     std::swap(m_active_pointer, rhs.m_active_pointer);
     std::swap(m_resource_manager, rhs.m_resource_manager);
-    m_record_count.swap(rhs.m_record_count);
+    m_record_count.m_swap(rhs.m_record_count);
 
   }
 

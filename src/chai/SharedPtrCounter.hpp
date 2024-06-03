@@ -92,7 +92,8 @@ class msp_counted_deleter final : public msp_counted_base {
   class impl {
   public:
     impl(Ptr h_p, Ptr d_p, Deleter d) 
-      : m_record(SharedPtrManager::getInstance()->makeSharedPtrRecord(h_p, d_p, sizeof(std::remove_pointer_t<Ptr>), true))
+      : m_record(SharedPtrManager::getInstance()->makeSharedPtrRecord({h_p, d_p},{chai::CPU, chai::GPU}, sizeof(std::remove_pointer_t<Ptr>), true))
+      //: m_record(SharedPtrManager::getInstance()->makeSharedPtrRecord(h_p, d_p, sizeof(std::remove_pointer_t<Ptr>), true))
       , m_deleter(std::move(d)) 
     {}
 
@@ -104,9 +105,12 @@ class msp_counted_deleter final : public msp_counted_base {
 public:
   msp_counted_deleter(Ptr h_p, Ptr d_p, Deleter d) noexcept : m_impl(h_p, d_p, std::move(d)) {}
   virtual void m_dispose() noexcept { 
+
+#if defined(CHAI_GPUCC)
     printf("Delete GPU Memory Here...\n");
     ::chai::impl::msp_dispose_on_device<<<1,1>>>((Ptr)m_impl.m_record->m_pointers[chai::GPU], m_impl.m_del());
     SharedPtrManager::getInstance()->free(m_impl.m_record, chai::GPU);
+#endif
 
     printf("Delete CPU Memory Here...\n");
     m_impl.m_del()((Ptr)m_impl.m_record->m_pointers[chai::CPU]);
