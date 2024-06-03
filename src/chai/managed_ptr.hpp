@@ -757,7 +757,7 @@ namespace chai {
       ///
       template <typename T,
                 typename... Args>
-      __global__ void make_on_device(T** gpuPointer, Args... args)
+      CHAI_GLOBAL void make_on_device(T** gpuPointer, Args... args)
       {
          *gpuPointer = new T(processArguments(args)...);
       }
@@ -778,7 +778,7 @@ namespace chai {
       template <typename T,
                 typename F,
                 typename... Args>
-      __global__ void make_on_device_from_factory(T** gpuPointer, F f, Args... args)
+      CHAI_GLOBAL void make_on_device_from_factory(T** gpuPointer, F f, Args... args)
       {
          *gpuPointer = f(processArguments(args)...);
       }
@@ -791,7 +791,7 @@ namespace chai {
       /// @param[out] gpuPointer The device pointer to call delete on
       ///
       template <typename T>
-      __global__ void destroy_on_device(T* gpuPointer)
+      CHAI_GLOBAL void destroy_on_device(T* gpuPointer)
       {
          delete gpuPointer;
       }
