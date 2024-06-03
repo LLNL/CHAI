@@ -180,6 +180,16 @@ public:
     return *this;
   }
 
+  CHAI_HOST_DEVICE
+  msp_record_count& operator=(std::nullptr_t) { 
+#if !defined(CHAI_DEVICE_COMPILE)
+    std::cout << "msp_record_count = nullptr\n";
+    if(m_pi) m_pi->m_release();
+    //m_pi = nullptr;
+#endif // !defined(CHAI_DEVICE_COMPILE)
+    return *this; 
+  }
+
   void m_swap(msp_record_count& rhs) noexcept {
     msp_counted_base* temp = rhs.m_pi;
     rhs.m_pi = m_pi;
@@ -200,7 +210,7 @@ public:
 
   void moveInnerImpl() const { m_pi->moveInnerImpl(); }
 
-  msp_counted_base* m_pi;
+  mutable msp_counted_base* m_pi = nullptr;
 
 };
 

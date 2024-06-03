@@ -33,7 +33,7 @@ struct is_CHAIPoly : std::is_base_of<CHAIPoly, Tp>::type {};
 
 
 template<typename Tp>
-class ManagedSharedPtr {
+class ManagedSharedPtr : public CHAICopyable{
 
 public:
   using element_type = Tp;//typename std::remove_extent<Tp>::type;
@@ -97,6 +97,39 @@ public:
     //if (m_active_pointer) move(m_resource_manager->getExecutionSpace());
 #endif
   }
+
+  CHAI_HOST_DEVICE ManagedSharedPtr& operator=(ManagedSharedPtr const& rhs){
+    m_record_count=rhs.m_record_count;
+    m_active_pointer=rhs.m_active_pointer;
+    m_resource_manager=rhs.m_resource_manager;
+
+    return *this;
+
+  }
+
+  CHAI_HOST void swap(ManagedSharedPtr& rhs) noexcept {
+    std::swap(m_active_pointer, rhs.m_active_pointer);
+    std::swap(m_resource_manager, rhs.m_resource_manager);
+    m_record_count.swap(rhs.m_record_count);
+
+  }
+
+  CHAI_HOST void reset() noexcept {
+    ManagedSharedPtr().swap(*this);
+  }
+
+  CHAI_HOST ManagedSharedPtr& operator=(std::nullptr_t) { 
+    reset();
+    return *this;
+  }
+
+  CHAI_HOST_DEVICE void shallowCopy(ManagedSharedPtr const& rhs) {
+    m_active_pointer = rhs.m_active_pointer;
+    m_active_pointer=rhs.m_active_pointer;
+    m_resource_manager=rhs.m_resource_manager;
+  }
+
+
   
   /*
    * Accessors

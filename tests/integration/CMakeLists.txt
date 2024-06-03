@@ -26,17 +26,17 @@ blt_add_test(
   COMMAND managed_array_tests)
 
 blt_add_executable(
-  NAME polymorphism_tests
-  SOURCES polymorphism_tests.cpp
+  NAME managed_shared_ptr_tests
+  SOURCES managed_shared_ptr_tests.cpp
   DEPENDS_ON ${chai_integration_test_depends})
 
 target_include_directories(
-  polymorphism_tests
+  managed_shared_ptr_tests
   PUBLIC ${PROJECT_BINARY_DIR}/include)
 
 blt_add_test(
-  NAME polymorphism_test
-  COMMAND polymorphism_tests)
+  NAME managed_shared_ptr_test
+  COMMAND managed_shared_ptr_tests)
 
 if (CHAI_ENABLE_MANAGED_PTR)
   blt_add_executable(

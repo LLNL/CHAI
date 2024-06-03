@@ -260,6 +260,7 @@ CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
     if (m_pointer_record == &ArrayManager::s_null_record) {
        m_pointer_record = m_resource_manager->makeManaged((void *)m_active_base_pointer,m_size,space,true);
     }
+    freeInner();
     m_resource_manager->free(m_pointer_record, space);
     m_active_pointer = nullptr;
     m_active_base_pointer = nullptr;
