@@ -8,8 +8,10 @@
 #ifndef CHAI_SharedPointerCounter_HPP
 #define CHAI_SharedPointerCounter_HPP
 
+#include <initializer_list>
 #include <type_traits>
 #include "chai/ChaiMacros.hpp"
+#include "chai/ExecutionSpaces.hpp"
 #include "chai/SharedPtrManager.hpp"
 
 namespace chai
@@ -75,6 +77,7 @@ private:
 
 #include <typeinfo>
 
+#if defined(CHAI_GPUCC)
 namespace impl {
 
 template <typename T,
@@ -85,17 +88,24 @@ __global__ void msp_dispose_on_device(T* gpuPointer, Deleter d)
 }
 
 } // namespace impl
+#endif
 
 template<typename Ptr, typename Deleter>
 class msp_counted_deleter final : public msp_counted_base {
 
   class impl {
   public:
-    impl(Ptr h_p, Ptr d_p, Deleter d) 
-      : m_record(SharedPtrManager::getInstance()->makeSharedPtrRecord({h_p, d_p},{chai::CPU, chai::GPU}, sizeof(std::remove_pointer_t<Ptr>), true))
-      //: m_record(SharedPtrManager::getInstance()->makeSharedPtrRecord(h_p, d_p, sizeof(std::remove_pointer_t<Ptr>), true))
+    impl(std::initializer_list<Ptr> ptrs,
+         std::initializer_list<chai::ExecutionSpace> spaces,
+         Deleter d) 
+      : m_record(SharedPtrManager::getInstance()->
+          makeSharedPtrRecord(std::move(ptrs),
+                              std::move(spaces),
+                              sizeof(std::remove_pointer_t<Ptr>),
+                              true))
       , m_deleter(std::move(d)) 
     {}
+    ~impl() { if (m_record) delete m_record; }
 
     Deleter& m_del() noexcept { return m_deleter; }
     msp_pointer_record* m_record;
@@ -103,19 +113,33 @@ class msp_counted_deleter final : public msp_counted_base {
   };
 
 public:
-  msp_counted_deleter(Ptr h_p, Ptr d_p, Deleter d) noexcept : m_impl(h_p, d_p, std::move(d)) {}
+  template<typename PtrList, typename ExecSpaceList>
+  msp_counted_deleter(PtrList&& ptrs,
+                      ExecSpaceList&& spaces,
+  //msp_counted_deleter(std::initializer_list<Ptr> ptrs,
+  //                    std::initializer_list<chai::ExecutionSpace> spaces,
+                      Deleter d) noexcept 
+    : m_impl(std::forward<PtrList>(ptrs),
+             std::forward<ExecSpaceList>(spaces),
+    //: m_impl(std::move(ptrs),
+    //         std::move(spaces),
+             std::move(d))
+  {}
+
   virtual void m_dispose() noexcept { 
 
+    for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
+      Ptr ptr = (Ptr)m_impl.m_record->m_pointers[space];
+      if (ptr) {
+        if (space == chai::CPU) m_impl.m_del()(ptr);
 #if defined(CHAI_GPUCC)
-    printf("Delete GPU Memory Here...\n");
-    ::chai::impl::msp_dispose_on_device<<<1,1>>>((Ptr)m_impl.m_record->m_pointers[chai::GPU], m_impl.m_del());
-    SharedPtrManager::getInstance()->free(m_impl.m_record, chai::GPU);
+        if (space == chai::GPU) ::chai::impl::msp_dispose_on_device<<<1,1>>>(ptr, m_impl.m_del());
 #endif
-
-    printf("Delete CPU Memory Here...\n");
-    m_impl.m_del()((Ptr)m_impl.m_record->m_pointers[chai::CPU]);
-    SharedPtrManager::getInstance()->free(m_impl.m_record, chai::CPU);
+        SharedPtrManager::getInstance()->free(m_impl.m_record, ExecutionSpace(space));
+      }
+    }
   }
+
   virtual void m_destroy() noexcept { this->~msp_counted_deleter(); }
 
   virtual void moveInnerImpl() const {
@@ -152,13 +176,15 @@ public:
 
   template<typename Ptr, typename Deleter>
   explicit msp_record_count(Ptr h_p, Ptr d_p, Deleter d)
-  : m_pi( new  msp_counted_deleter<Ptr, Deleter>(h_p, d_p, d) ) {}
+  : m_pi( new  msp_counted_deleter<Ptr, Deleter>(std::initializer_list<Ptr>{h_p, d_p,}, std::initializer_list<ExecutionSpace>{chai::CPU, chai::GPU}, std::move(d)) ) {}
 
   CHAI_HOST_DEVICE
   ~msp_record_count() noexcept
   { 
 #if !defined(CHAI_DEVICE_COMPILE)
-    if (m_pi) m_pi->m_release();
+    if (m_pi) {
+      m_pi->m_release();
+    }
 #endif // !defined(CHAI_DEVICE_COMPILE)
   }
 
@@ -184,15 +210,13 @@ public:
     return *this;
   }
 
-  CHAI_HOST_DEVICE
-  msp_record_count& operator=(std::nullptr_t) { 
-#if !defined(CHAI_DEVICE_COMPILE)
-    std::cout << "msp_record_count = nullptr\n";
-    if(m_pi) m_pi->m_release();
-    //m_pi = nullptr;
-#endif // !defined(CHAI_DEVICE_COMPILE)
-    return *this; 
-  }
+//  CHAI_HOST_DEVICE
+//  msp_record_count& operator=(std::nullptr_t) { 
+//#if !defined(CHAI_DEVICE_COMPILE)
+//    if(m_pi) m_pi->m_release();
+//#endif // !defined(CHAI_DEVICE_COMPILE)
+//    return *this; 
+//  }
 
   void m_swap(msp_record_count& rhs) noexcept {
     msp_counted_base* temp = rhs.m_pi;

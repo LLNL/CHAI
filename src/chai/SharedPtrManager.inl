@@ -79,6 +79,55 @@ namespace chai {
 //
 //  return pointer_record->m_pointers[my_space];
 //}
+template<typename Ptr>
+msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(std::initializer_list<Ptr*> pointers,
+                                                          std::initializer_list<chai::ExecutionSpace> spaces,
+                                                          size_t size,
+                                                          bool owned)
+{
+  int i = 0;
+  for (Ptr* ptr : pointers) {
+    if (ptr == nullptr) return &s_null_record;
+    m_resource_manager.registerAllocation(ptr, 
+        {ptr, size, m_allocators[spaces.begin()[i++]]->getAllocationStrategy()}
+    );
+  }
+
+  Ptr* lookup_pointer = const_cast<Ptr*>(pointers.begin()[0]);
+
+  auto pointer_record = getPointerRecord(lookup_pointer);
+
+  if (pointer_record == &s_null_record) {
+     if (lookup_pointer) {
+        pointer_record = new msp_pointer_record();
+     } else {
+        return pointer_record;
+     }
+  }
+  else {
+     CHAI_LOG(Warning, "SharedPtrManager::makeManaged found abandoned pointer record!!!");
+     //callback(pointer_record, ACTION_FOUND_ABANDONED, space);
+  }
+
+  i=0;
+  for (void const* c_ptr : pointers) {
+    void* ptr = const_cast<void*>(c_ptr);
+    chai::ExecutionSpace space = spaces.begin()[i];
+
+    pointer_record->m_pointers[space] = ptr;
+    pointer_record->m_owned[space] = owned;
+    registerPointer(pointer_record, space, owned);
+
+    i++;
+  }
+
+  for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
+    pointer_record->m_allocators[space] = getAllocatorId(ExecutionSpace(space));
+  }
+
+  return pointer_record;
+}
+
 
 #if defined(CHAI_ENABLE_PICK)
 template<typename T>

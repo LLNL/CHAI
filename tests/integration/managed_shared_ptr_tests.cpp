@@ -184,9 +184,6 @@ GPU_TEST(managed_shared_ptr, shared_ptr_absmem)
   using DerivedT = BAbsMem;
   using BaseT = AAbsMem;
 
-  std::cout << "size of (DerivedT) : " << sizeof(DerivedT) << std::endl;
-  std::cout << "size of (BaseT)    : " << sizeof(BaseT)    << std::endl;
-
   D d;
   chai::ManagedSharedPtr<BaseT> sptr = chai::make_shared<DerivedT>(d);
 
@@ -294,7 +291,6 @@ GPU_TEST(managed_shared_ptr, shared_ptr_nv)
   chai::ManagedSharedPtr<DerivedT> sptr = chai::make_shared<DerivedT>();
 
   chai::ManagedSharedPtr<const DerivedT> sptr2 = sptr;
-  //chai::ManagedSharedPtr<const BaseT> sptr2 = sptr;
 
   std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
 
@@ -329,10 +325,6 @@ GPU_TEST(managed_shared_ptr, shared_ptr_nv)
 GPU_TEST(managed_shared_ptr, shared_arr_shared_ptr_absmem)
 {
   {
-
-  //using DerivedT = NV;
-  //using BaseT = NV;
-
   using DerivedT = BAbsMem;
   using BaseT = AAbsMem;
 
@@ -349,9 +341,7 @@ GPU_TEST(managed_shared_ptr, shared_arr_shared_ptr_absmem)
   D d;
   arr[0] = chai::make_shared<DerivedT>(d);
   arr.registerTouch(chai::CPU);
-  //chai::ManagedSharedPtr<BaseT> sptr = chai::make_shared<DerivedT>(d);
-  //arr[0] = sptr;
-  ////std::cout << "Use count : " << sptr.use_count() << std::endl;
+
   std::cout << "GPU CALL...\n";
   forall(gpu(), 0, 1, [=] __device__ (int i) {
     printf("GPU Body\n");
@@ -382,6 +372,7 @@ GPU_TEST(managed_shared_ptr, shared_arr_shared_ptr_absmem)
   std::cout << "Arr  Map Sz : " << chai::ArrayManager::getInstance()->getPointerMap().size() << std::endl;
 
   arr.free();
+
   std::cout << "arr.free()\n";
   }
   std::cout << "Sptr Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;

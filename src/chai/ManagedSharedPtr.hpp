@@ -111,17 +111,16 @@ public:
     std::swap(m_active_pointer, rhs.m_active_pointer);
     std::swap(m_resource_manager, rhs.m_resource_manager);
     m_record_count.m_swap(rhs.m_record_count);
-
   }
 
   CHAI_HOST void reset() noexcept {
     ManagedSharedPtr().swap(*this);
   }
 
-  CHAI_HOST ManagedSharedPtr& operator=(std::nullptr_t) { 
-    reset();
-    return *this;
-  }
+  //CHAI_HOST ManagedSharedPtr& operator=(std::nullptr_t) { 
+  //  reset();
+  //  return *this;
+  //}
 
   CHAI_HOST_DEVICE void shallowCopy(ManagedSharedPtr const& rhs) {
     m_active_pointer = rhs.m_active_pointer;
@@ -278,6 +277,7 @@ CHAI_HOST Tp* msp_make_on_host(Args&&... args) {
   chai::SharedPtrManager* sptr_manager = chai::SharedPtrManager::getInstance();
 
   auto cpu_allocator = sptr_manager->getAllocator(chai::CPU);
+
   Tp* cpu_ptr = static_cast<Tp*>( cpu_allocator.allocate(1*sizeof(Tp)) );
 
   new (cpu_ptr) Tp{std::forward<Args>(args)...};
@@ -303,7 +303,8 @@ ManagedSharedPtr<Tp> make_shared(Args&&... args) {
   auto result = ManagedSharedPtr<Tp>(cpu_pointer, gpu_pointer, 
       [] CHAI_HOST_DEVICE (Tp* p){p->~Tp();}
   );
-  //auto result = ManagedSharedPtr<Tp>(cpu_pointer, gpu_pointer, [](Tp* p){delete p;});
+
+  result.registerTouch(chai::CPU);
 
   if (!is_CHAICopyable<Tp>::value) {
     result.move(chai::GPU, false);
