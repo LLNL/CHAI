@@ -36,17 +36,15 @@ struct msp_pointer_record {
 
   int m_allocators[NUM_EXECUTION_SPACES];
 
-  msp_pointer_record(void* host_p = nullptr, void* device_p = nullptr) :
+  //msp_pointer_record(void* host_p = nullptr, void* device_p = nullptr) :
+  msp_pointer_record() :
     m_last_space(CPU) { 
     for (int space = 0; space < NUM_EXECUTION_SPACES; ++space ) {
       m_pointers[space] = nullptr;
       m_touched[space] = false;
       m_owned[space] = true;
-      //m_allocators[space] = 0;
+      m_allocators[space] = 0;
     }
-    m_pointers[CPU] = host_p;
-    m_touched[CPU] = true;
-    m_pointers[GPU] = device_p;
   }
 
 };
