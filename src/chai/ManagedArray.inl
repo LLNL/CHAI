@@ -134,6 +134,11 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
    if (m_resource_manager == nullptr) {
       m_resource_manager = ArrayManager::getInstance();
    }
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+   if (m_resource_manager->isGPUSimMode()) {
+      return;
+   }
+#endif
    if (m_pointer_record == &ArrayManager::s_null_record || m_pointer_record==nullptr) {
       m_pointer_record = m_resource_manager->makeManaged((void *) data, m_size,ExecutionSpace(CPU),true);
    }
@@ -305,6 +310,11 @@ CHAI_INLINE
 CHAI_HOST_DEVICE
 typename ManagedArray<T>::T_non_const ManagedArray<T>::pick(size_t i) const { 
   #if !defined(CHAI_DEVICE_COMPILE)
+    #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+      if (m_resource_manager->isGPUSimMode()) {
+        return (T_non_const)(m_active_pointer[i]);
+      }
+    #endif
     #if defined(CHAI_ENABLE_UM)
       if(m_pointer_record->m_pointers[UM] == m_active_base_pointer) {
         synchronize();
@@ -328,6 +338,12 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const { 
   #if !defined(CHAI_DEVICE_COMPILE)
+    #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+      if (m_resource_manager->isGPUSimMode()) {
+        m_active_pointer[i] = val;
+        return;
+      }
+    #endif
     #if defined(CHAI_ENABLE_UM)
       if(m_pointer_record->m_pointers[UM] == m_active_pointer) {
         synchronize();
@@ -490,6 +506,11 @@ T* ManagedArray<T>::data() const {
         CHAI_LOG(Warning, "nullptr pointer_record associated with non-nullptr active_pointer")
      }
 
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+     if (m_resource_manager->isGPUSimMode()) {
+        return m_active_pointer;
+     }
+#endif
      move(CPU);
   }
 
@@ -513,6 +534,11 @@ const T* ManagedArray<T>::cdata() const {
         CHAI_LOG(Warning, "nullptr pointer_record associated with non-nullptr active_pointer")
      }
 
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+     if (m_resource_manager->isGPUSimMode()) {
+        return m_active_pointer;
+     }
+#endif
      move(CPU, false);
   }
 
