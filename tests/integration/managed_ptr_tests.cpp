@@ -327,7 +327,7 @@ TEST(managed_ptr, managed_array_of_managed_ptr)
   delete[] expectedValues;
 }
 
-#ifdef CHAI_GPUCC
+#if defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
 
 template <typename T>
 CHAI_GLOBAL void deviceNew(T** arr) {
