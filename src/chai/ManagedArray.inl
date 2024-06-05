@@ -287,6 +287,9 @@ CHAI_HOST void ManagedArray<T>::reset()
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE size_t ManagedArray<T>::size() const {
+#if !defined(CHAI_DEVICE_COMPILE)
+  if (!m_is_slice) m_size = m_pointer_record->m_size;
+#endif
   return m_size/sizeof(T);
 }
 
