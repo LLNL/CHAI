@@ -86,7 +86,7 @@ public:
     , m_resource_manager(rhs.m_resource_manager)
   {
 #if !defined(CHAI_DEVICE_COMPILE)
-    std::cout << "ManagedSharedPtr Copy Ctor: m_active_pointer @ " << m_active_pointer << std::endl;
+    //std::cout << "ManagedSharedPtr Copy Ctor: m_active_pointer @ " << m_active_pointer << std::endl;
     if (m_active_pointer) move(ArrayManager::getInstance()->getExecutionSpace()); // TODO: Use a generic interface for RAJA queries.
     //if (m_active_pointer) move(m_resource_manager->getExecutionSpace());
 #endif
