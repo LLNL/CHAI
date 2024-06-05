@@ -444,7 +444,6 @@ private:
   CHAI_HOST bool initInner(size_t start = 0)
   {
     for (size_t i = start; i < m_size/sizeof(T); ++i) {
-      //m_active_base_pointer[i] = nullptr;
       new (&m_active_base_pointer[i]) T();
     }
     return true;

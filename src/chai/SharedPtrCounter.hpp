@@ -95,14 +95,11 @@ class msp_counted_deleter final : public msp_counted_base {
 
   class impl {
   public:
-    impl(std::initializer_list<Ptr> ptrs,
-         std::initializer_list<chai::ExecutionSpace> spaces,
-         Deleter d) 
+    template<typename Ptrs, typename Spaces>
+    impl(Ptrs&& ptrs, Spaces&& spaces, Deleter d) 
       : m_record(SharedPtrManager::getInstance()->
-          makeSharedPtrRecord(std::move(ptrs),
-                              std::move(spaces),
-                              sizeof(std::remove_pointer_t<Ptr>),
-                              true))
+          makeSharedPtrRecord(std::forward<Ptrs>(ptrs), std::forward<Spaces>(spaces), 
+                              sizeof(std::remove_pointer_t<Ptr>), true))
       , m_deleter(std::move(d)) 
     {}
     ~impl() { if (m_record) delete m_record; }
@@ -113,17 +110,9 @@ class msp_counted_deleter final : public msp_counted_base {
   };
 
 public:
-  template<typename PtrList, typename ExecSpaceList>
-  msp_counted_deleter(PtrList&& ptrs,
-                      ExecSpaceList&& spaces,
-  //msp_counted_deleter(std::initializer_list<Ptr> ptrs,
-  //                    std::initializer_list<chai::ExecutionSpace> spaces,
-                      Deleter d) noexcept 
-    : m_impl(std::forward<PtrList>(ptrs),
-             std::forward<ExecSpaceList>(spaces),
-    //: m_impl(std::move(ptrs),
-    //         std::move(spaces),
-             std::move(d))
+  template<typename Ptrs, typename Spaces>
+  msp_counted_deleter(Ptrs&& ptrs, Spaces&& spaces, Deleter d) noexcept 
+    : m_impl(std::forward<Ptrs>(ptrs), std::forward<Spaces>(spaces), std::move(d))
   {}
 
   virtual void m_dispose() noexcept { 
@@ -170,13 +159,20 @@ public:
   CHAI_HOST_DEVICE
   constexpr msp_record_count() noexcept : m_pi(0) {}
 
-  template<typename Ptr>
-  explicit msp_record_count(Ptr h_p, Ptr d_p)
-  : m_pi( new  msp_counted_ptr<Ptr>(h_p, d_p) ) {}
+  //template<typename Ptr>
+  //explicit msp_record_count(Ptr h_p, Ptr d_p)
+  //: m_pi( new  msp_counted_ptr<Ptr>(h_p, d_p) ) {}
 
-  template<typename Ptr, typename Deleter>
-  explicit msp_record_count(Ptr h_p, Ptr d_p, Deleter d)
-  : m_pi( new  msp_counted_deleter<Ptr, Deleter>(std::initializer_list<Ptr>{h_p, d_p,}, std::initializer_list<ExecutionSpace>{chai::CPU, chai::GPU}, std::move(d)) ) {}
+  //template<typename Ptr, typename Deleter>
+  //explicit msp_record_count(Ptr h_p, Ptr d_p, Deleter d)
+  //: m_pi( new  msp_counted_deleter<Ptr, Deleter>(std::initializer_list<Ptr>{h_p, d_p,}, std::initializer_list<ExecutionSpace>{chai::CPU, chai::GPU}, std::move(d)) ) {}
+
+  template<typename T, typename Ptrs, typename Spaces, typename Deleter>
+  explicit msp_record_count(T, Ptrs&& ptrs, Spaces&& spaces, Deleter d)
+  : m_pi( new  msp_counted_deleter<T*, Deleter>(
+          std::forward<Ptrs>(ptrs)
+        , std::forward<Spaces>(spaces)
+        , std::move(d)) ) {}
 
   CHAI_HOST_DEVICE
   ~msp_record_count() noexcept
@@ -209,14 +205,6 @@ public:
 #endif // !defined(CHAI_DEVICE_COMPILE)
     return *this;
   }
-
-//  CHAI_HOST_DEVICE
-//  msp_record_count& operator=(std::nullptr_t) { 
-//#if !defined(CHAI_DEVICE_COMPILE)
-//    if(m_pi) m_pi->m_release();
-//#endif // !defined(CHAI_DEVICE_COMPILE)
-//    return *this; 
-//  }
 
   void m_swap(msp_record_count& rhs) noexcept {
     msp_counted_base* temp = rhs.m_pi;

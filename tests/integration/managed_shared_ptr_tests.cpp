@@ -30,7 +30,7 @@
 #include <cstdlib>
 
 #define BEGIN_EXEC_ON_DEVICE() \
-  forall(gpu(), 0, 1, [=] __device__ (int i) { 
+  forall(gpu(), 0, 1, [=] __device__ (int) { 
 
 #define END_EXEC()\
   }); \
@@ -75,7 +75,7 @@ void PrintMemory(const unsigned char* memory,
   M_PRINT_MEMORY(memory) \
 
 #define GPU_PRINT_MEMORY(memory, label)\
-  forall(gpu(), 0, 1, [=] __device__ (int i) { \
+  forall(gpu(), 0, 1, [=] __device__ (int) { \
     printf("DEVICE Memory "); printf(label); printf("\n"); \
     M_PRINT_MEMORY(memory) \
   });
@@ -197,7 +197,7 @@ GPU_TEST(managed_shared_ptr, shared_ptr_absmem)
   std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
 
   std::cout << "GPU CALL...\n";
-  forall(gpu(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int) {
     printf("GPU Body\n");
     sptr2->function();
     sptr2->d_function();
@@ -206,7 +206,7 @@ GPU_TEST(managed_shared_ptr, shared_ptr_absmem)
   GPU_ERROR_CHECK( cudaDeviceSynchronize() );
 
   std::cout << "CPU CALL...\n";
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
     printf("CPU Body\n");
     sptr->set_content(0xFFFFFFFFFFFFFFFFull);
     sptr2->function();
@@ -214,7 +214,7 @@ GPU_TEST(managed_shared_ptr, shared_ptr_absmem)
   });
 
   std::cout << "GPU CALL...\n";
-  forall(gpu(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int) {
     printf("GPU Body\n");
     sptr2->function();
     sptr2->d_function();
@@ -242,7 +242,7 @@ GPU_TEST(managed_shared_ptr, shared_ptr_const)
   std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
 
   std::cout << "GPU CALL...\n";
-  forall(gpu(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int) {
     printf("GPU Body\n");
     sptr2->function();
     sptr2->d_function();
@@ -251,7 +251,7 @@ GPU_TEST(managed_shared_ptr, shared_ptr_const)
   GPU_ERROR_CHECK( cudaDeviceSynchronize() );
 
   std::cout << "CPU CALL...\n";
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
     printf("CPU Body\n");
     sptr->set_content(0xFFFFFFFFFFFFFFFFull);
     sptr2->function();
@@ -259,7 +259,7 @@ GPU_TEST(managed_shared_ptr, shared_ptr_const)
   });
 
   std::cout << "GPU CALL...\n";
-  forall(gpu(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int) {
     printf("GPU Body\n");
     sptr2->function();
     sptr2->d_function();
@@ -295,7 +295,7 @@ GPU_TEST(managed_shared_ptr, shared_ptr_nv)
   std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
 
   std::cout << "GPU CALL...\n";
-  forall(gpu(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int) {
     printf("GPU Body\n");
     sptr2->function();
   });
@@ -303,14 +303,14 @@ GPU_TEST(managed_shared_ptr, shared_ptr_nv)
   GPU_ERROR_CHECK( cudaDeviceSynchronize() );
 
   std::cout << "CPU CALL...\n";
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
     printf("CPU Body\n");
     //sptr->set_content(0xFFFFFFFFFFFFFFFFull);
     sptr2->function();
   });
 
   std::cout << "GPU CALL...\n";
-  forall(gpu(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int) {
     printf("GPU Body\n");
     sptr2->function();
   });
@@ -343,7 +343,7 @@ GPU_TEST(managed_shared_ptr, shared_arr_shared_ptr_absmem)
   arr.registerTouch(chai::CPU);
 
   std::cout << "GPU CALL...\n";
-  forall(gpu(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int) {
     printf("GPU Body\n");
     arr[0]->function();
     arr[0]->d_function();
@@ -352,7 +352,7 @@ GPU_TEST(managed_shared_ptr, shared_arr_shared_ptr_absmem)
   GPU_ERROR_CHECK( cudaDeviceSynchronize() );
 
   std::cout << "CPU CALL...\n";
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
     printf("CPU Body\n");
     arr[0]->set_content(0xFFFFFFFFFFFFFFFFull);
     arr[0]->function();
@@ -360,7 +360,7 @@ GPU_TEST(managed_shared_ptr, shared_arr_shared_ptr_absmem)
   });
 
   std::cout << "GPU CALL...\n";
-  forall(gpu(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int) {
     printf("GPU Body\n");
     arr[0]->function();
     arr[0]->d_function();
@@ -371,9 +371,10 @@ GPU_TEST(managed_shared_ptr, shared_arr_shared_ptr_absmem)
   std::cout << "Sptr Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
   std::cout << "Arr  Map Sz : " << chai::ArrayManager::getInstance()->getPointerMap().size() << std::endl;
 
-  arr.free();
-
   std::cout << "arr.free()\n";
+  arr.free();
+  std::cout << "End of scope\n";
+
   }
   std::cout << "Sptr Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
   std::cout << "Arr  Map Sz : " << chai::ArrayManager::getInstance()->getPointerMap().size() << std::endl;
