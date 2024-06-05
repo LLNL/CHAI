@@ -50,35 +50,14 @@ inline void gpuErrorCheck(cudaError_t code, const char *file, int line, bool abo
 
 #define GPU_ERROR_CHECK(code) { gpuErrorCheck((code), __FILE__, __LINE__); }
 
-void PrintMemory(const unsigned char* memory,
-                 const char label[] = "contents")
-{
-  std::cout << "Memory " << label << ": \n";
-  for (size_t i = 0; i < 4; i++) 
-  {
-    for (size_t j = 0; j < 8; j++)
-      printf("%02X ", static_cast<int> (memory[i * 8 + j]));
-    printf("\n");
-  }
-}
 
-#define M_PRINT_MEMORY(memory) \
-  for (size_t i = 0; i < 7; i++)  \
-  { \
-    for (size_t j = 0; j < 8; j++) \
-      printf("%02X ", static_cast<int> (memory[i * 8 + j])); \
-    printf("\n"); \
-  }
-
-#define CPU_PRINT_MEMORY(memory, label)\
-  printf("HOST   Memory "); printf(label); printf("\n"); \
-  M_PRINT_MEMORY(memory) \
-
-#define GPU_PRINT_MEMORY(memory, label)\
-  forall(gpu(), 0, 1, [=] __device__ (int) { \
-    printf("DEVICE Memory "); printf(label); printf("\n"); \
-    M_PRINT_MEMORY(memory) \
-  });
+#ifdef CHAI_DISABLE_RM
+#define assert_empty_array_map(IGNORED)
+#define assert_empty_sptr_map(IGNORED)
+#else
+#define assert_empty_array_map(IGNORED) ASSERT_EQ(chai::ArrayManager::getInstance()->getPointerMap().size(),0)
+#define assert_empty_sptr_map(IGNORED) ASSERT_EQ(chai::SharedPtrManager::getInstance()->getPointerMap().size(),0)
+#endif
 
 
 class C : chai::CHAIPoly
@@ -153,6 +132,16 @@ public:
   CHAI_HOST_DEVICE virtual void set_content(unsigned long long) = 0;
 };
 
+class NV
+{
+public:
+  unsigned long long content_NV;
+  CHAI_HOST_DEVICE NV(void) : content_NV(0xFFFFFFFFFFFFFFFFull) { printf("++ NV has been constructed\n"); }
+  CHAI_HOST_DEVICE ~NV(void) { printf("-- NV has been destructed\n"); }
+  CHAI_HOST_DEVICE void function(void) const { printf("%lX\n", content_NV); }
+};
+
+
 class BAbsMem : public AAbsMem
 {
 public:
@@ -224,6 +213,7 @@ GPU_TEST(managed_shared_ptr, shared_ptr_absmem)
 
   }
   std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
+  assert_empty_sptr_map();
 }
 
 GPU_TEST(managed_shared_ptr, shared_ptr_const)
@@ -268,25 +258,14 @@ GPU_TEST(managed_shared_ptr, shared_ptr_const)
   GPU_ERROR_CHECK( cudaDeviceSynchronize() );
 
   }
+  assert_empty_sptr_map();
   std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
 }
-
-class NV
-{
-public:
-  unsigned long long content_NV;
-  CHAI_HOST_DEVICE NV(void) : content_NV(0xFFFFFFFFFFFFFFFFull) { printf("++ NV has been constructed\n"); }
-  CHAI_HOST_DEVICE ~NV(void) { printf("-- NV has been destructed\n"); }
-  CHAI_HOST_DEVICE void function(void) const { printf("%lX\n", content_NV); }
-};
 
 GPU_TEST(managed_shared_ptr, shared_ptr_nv)
 {
   {
   using DerivedT = NV;
-  using BaseT = A;
-
-  std::cout << "size of (DerivedT) : " << sizeof(DerivedT) << std::endl;
 
   chai::ManagedSharedPtr<DerivedT> sptr = chai::make_shared<DerivedT>();
 
@@ -305,7 +284,6 @@ GPU_TEST(managed_shared_ptr, shared_ptr_nv)
   std::cout << "CPU CALL...\n";
   forall(sequential(), 0, 1, [=] (int) {
     printf("CPU Body\n");
-    //sptr->set_content(0xFFFFFFFFFFFFFFFFull);
     sptr2->function();
   });
 
@@ -318,6 +296,7 @@ GPU_TEST(managed_shared_ptr, shared_ptr_nv)
   GPU_ERROR_CHECK( cudaDeviceSynchronize() );
 
   }
+  assert_empty_sptr_map();
   std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
 }
 
@@ -330,9 +309,6 @@ GPU_TEST(managed_shared_ptr, shared_arr_shared_ptr_absmem)
 
   using ElemT = chai::ManagedSharedPtr<BaseT>;
   using Container = chai::ManagedArray<ElemT>;
-
-  std::cout << "size of (DerivedT) : " << sizeof(DerivedT) << std::endl;
-  std::cout << "size of (BaseT)    : " << sizeof(BaseT)    << std::endl;
 
   std::cout << "Sptr Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
   std::cout << "Arr  Map Sz : " << chai::ArrayManager::getInstance()->getPointerMap().size() << std::endl;
@@ -374,9 +350,11 @@ GPU_TEST(managed_shared_ptr, shared_arr_shared_ptr_absmem)
   std::cout << "arr.free()\n";
   arr.free();
   std::cout << "End of scope\n";
+  assert_empty_array_map();
 
   }
   std::cout << "Sptr Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
   std::cout << "Arr  Map Sz : " << chai::ArrayManager::getInstance()->getPointerMap().size() << std::endl;
+  assert_empty_sptr_map();
 }
 
