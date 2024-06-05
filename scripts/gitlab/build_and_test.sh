@@ -67,7 +67,7 @@ echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 if [[ "${option}" != "--build-only" && "${option}" != "--test-only" ]]
 then
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-    echo "~~~~~ Building Dependencies"
+    echo "~~~~~ Building dependencies"
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 
     if [[ -z ${spec} ]]
@@ -107,7 +107,7 @@ then
 
 fi
   echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-  echo "~~~~~ Dependencies Built"
+  echo "~~~~~ Dependencies built"
   echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 date
 
@@ -178,7 +178,6 @@ then
     then
         module unload rocm
     fi
-
     $cmake_exe \
       -C ${hostconfig_path} \
       -DCMAKE_INSTALL_PREFIX=${install_dir} \
@@ -191,14 +190,12 @@ then
         echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
         $cmake_exe --build . --verbose -j 1
     else
-        # todo this should use cmake --install once we use CMake 3.15+ everywhere
-        #$cmake_exe --install .
-        make install
+        $cmake_exe --install .
     fi
     date
 
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-    echo "~~~~~ CHAI Built"
+    echo "~~~~~ CHAI built"
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 fi
 
@@ -237,20 +234,24 @@ then
         echo "[Error]: failure(s) while running CTest" && exit 1
     fi
 
-    if [[ ! -d ${install_dir} ]]
+    if grep -q -i "ENABLE_HIP.*ON" ${hostconfig_path}
     then
-        echo "[Error]: Install directory not found : ${install_dir}" && exit 1
-    fi
+        echo "[Warning]: not testing install with HIP"
+    else
+        if [[ ! -d ${install_dir} ]]
+        then
+            echo "[Error]: Install directory not found : ${install_dir}" && exit 1
+        fi
 
-    cd ${install_dir}/examples/chai/using-with-cmake
-    mkdir build && cd build
+        cd ${install_dir}/examples/chai/using-with-cmake
+        mkdir build && cd build
+        if ! $cmake_exe -C ../host-config.cmake ..; then
+            echo "[Error]: Running $cmake_exe for using-with-cmake test" && exit 1
+        fi
 
-    if ! $cmake_exe -C ../host-config.cmake ..; then
-        echo "[Error]: Running $cmake_exe for using-with-cmake test" && exit 1
-    fi
-
-    if ! make; then
-        echo "[Error]: Running make for using-with-cmake test" && exit 1
+        if ! make; then
+            echo "[Error]: Running make for using-with-cmake test" && exit 1
+        fi
     fi
 
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
