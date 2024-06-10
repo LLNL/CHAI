@@ -188,7 +188,7 @@ then
     fi
 else
     # Using provided host-config file.
-    hostconfig_path="${project_dir}/host-configs/${hostconfig}"
+    hostconfig_path="${project_dir}/${hostconfig}"
 fi
 
 hostconfig=$(basename ${hostconfig_path})
