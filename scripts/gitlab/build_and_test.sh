@@ -238,7 +238,7 @@ then
         $cmake_exe --install .
     fi
 
-    timed_message "RAJA built and installed"
+    timed_message "CHAI built and installed"
 fi
 
 # Test
@@ -252,7 +252,7 @@ then
 
     cd ${build_dir}
 
-    timed_message "Testing RAJA"
+    timed_message "Testing CHAI"
     ctest --output-on-failure --no-compress-output -T test -VV 2>&1 | tee tests_output.txt
 
     no_test_str="No tests were found!!!"
@@ -261,7 +261,7 @@ then
         echo "[Error]: No tests were found" && exit 1
     fi
 
-    timed_message "Preparing tests xml reports for export"
+    timed_message "Preparing testing xml reports for export"
     tree Testing
     xsltproc -o junit.xml ${project_dir}/blt/tests/ctest-to-junit.xsl Testing/*/Test.xml
     mv junit.xml ${project_dir}/junit.xml
@@ -291,7 +291,7 @@ then
         fi
     fi
 
-    timed_message "RAJA tests completed"
+    timed_message "CHAI tests completed"
 fi
 
 timed_message "Cleaning up"
