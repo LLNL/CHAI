@@ -26,9 +26,37 @@ spec=${SPEC:-""}
 module_list=${MODULE_LIST:-""}
 job_unique_id=${CI_JOB_ID:-""}
 use_dev_shm=${USE_DEV_SHM:-true}
+spack_debug=${SPACK_DEBUG:-false}
+debug_mode=${DEBUG_MODE:-false}
+
+# REGISTRY_TOKEN allows you to provide your own personal access token to the CI
+# registry. Be sure to set the token with at least read access to the registry.
+registry_token=${REGISTRY_TOKEN:-""}
+ci_registry_user=${CI_REGISTRY_USER:-"${USER}"}
+ci_registry_image=${CI_REGISTRY_IMAGE:-"czregistry.llnl.gov:5050/radiuss/chai"}
+ci_registry_token=${CI_JOB_TOKEN:-"${registry_token}"}
+
+timed_message ()
+{
+    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    echo "~ $(date --rfc-3339=seconds) ~ ${1}"
+    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+}
 
 raja_version=${UPDATE_RAJA:-""}
 umpire_version=${UPDATE_UMPIRE:-""}
+
+if [[ ${debug_mode} == true ]]
+then
+    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    echo "~~~~~ Debug mode:"
+    echo "~~~~~ - Spack debug mode."
+    echo "~~~~~ - Deactivated shared memory."
+    echo "~~~~~ - Do not push to buildcache."
+    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    use_dev_shm=false
+    spack_debug=true
+fi
 
 if [[ -n ${module_list} ]]
 then
@@ -52,23 +80,29 @@ then
     fi
 
     prefix="${prefix}-${job_unique_id}"
-    mkdir -p ${prefix}
 else
     # We set the prefix in the parent directory so that spack dependencies are not installed inside the source tree.
     prefix="$(pwd)/../spack-and-build-root"
-    mkdir -p ${prefix}
+fi
+
+echo "Creating directory ${prefix}"
+echo "project_dir: ${project_dir}"
+
+mkdir -p ${prefix}
+
+spack_cmd="${prefix}/spack/bin/spack"
+spack_env_path="${prefix}/spack_env"
+uberenv_cmd="./scripts/uberenv/uberenv.py"
+if [[ ${spack_debug} == true ]]
+then
+    spack_cmd="${spack_cmd} --debug --stacktrace"
+    uberenv_cmd="${uberenv_cmd} --spack-debug"
 fi
 
 # Dependencies
-date
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo "~~~~~ Build and test started"
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 if [[ "${option}" != "--build-only" && "${option}" != "--test-only" ]]
 then
-    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-    echo "~~~~~ Building dependencies"
-    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    timed_message "Building dependencies"
 
     if [[ -z ${spec} ]]
     then
@@ -103,15 +137,29 @@ then
     export SPACK_USER_CACHE_PATH="${spack_user_cache}"
     mkdir -p ${spack_user_cache}
 
-    ./scripts/uberenv/uberenv.py --spec="${spec}" ${prefix_opt}
+    # generate cmake cache file with uberenv and radiuss spack package
+    timed_message "Spack setup and environment"
+    ${uberenv_cmd} --setup-and-env-only --spec="${spec}" ${prefix_opt}
 
+    if [[ -n ${ci_registry_token} ]]
+    then
+        timed_message "GitLab registry as Spack Buildcache"
+        ${spack_cmd} -D ${spack_env_path} mirror add --unsigned --oci-username ${ci_registry_user} --oci-password ${ci_registry_token} gitlab_ci oci://${ci_registry_image}
+    fi
+
+    timed_message "Spack build of dependencies"
+    ${uberenv_cmd} --skip-setup-and-env --spec="${spec}" ${prefix_opt}
+
+    if [[ -n ${ci_registry_token} && ${debug_mode} == false ]]
+    then
+        timed_message "Push dependencies to buildcache"
+        ${spack_cmd} -D ${spack_env_path} buildcache push --only dependencies gitlab_ci
+    fi
+
+    timed_message "Dependencies built"
 fi
-  echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-  echo "~~~~~ Dependencies built"
-  echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-date
 
-# Host config file
+# Find cmake cache file (hostconfig)
 if [[ -z ${hostconfig} ]]
 then
     # If no host config file was provided, we assume it was generated.
@@ -120,24 +168,24 @@ then
     if [[ ${#hostconfigs[@]} == 1 ]]
     then
         hostconfig_path=${hostconfigs[0]}
-        echo "Found host config file: ${hostconfig_path}"
     elif [[ ${#hostconfigs[@]} == 0 ]]
     then
-        echo "No result for: ${project_dir}/*.cmake"
-        echo "Spack generated host-config not found."
+        echo "[Error]: No result for: ${project_dir}/*.cmake"
+        echo "[Error]: Spack generated host-config not found."
         exit 1
     else
-        echo "More than one result for: ${project_dir}/*.cmake"
-        echo "${hostconfigs[@]}"
-        echo "Please specify one with HOST_CONFIG variable"
+        echo "[Error]: More than one result for: ${project_dir}/*.cmake"
+        echo "[Error]: ${hostconfigs[@]}"
+        echo "[Error]: Please specify one with HOST_CONFIG variable"
         exit 1
     fi
 else
     # Using provided host-config file.
-    hostconfig_path="${project_dir}/host-configs/${hostconfig}"
+    hostconfig_path="${project_dir}/${hostconfig}"
 fi
 
 hostconfig=$(basename ${hostconfig_path})
+echo "[Information]: Found hostconfig ${hostconfig_path}"
 
 # Build Directory
 # When using /dev/shm, we use prefix for both spack builds and source build, unless BUILD_ROOT was defined
@@ -151,17 +199,15 @@ cmake_exe=`grep 'CMake executable' ${hostconfig_path} | cut -d ':' -f 2 | xargs`
 # Build
 if [[ "${option}" != "--deps-only" && "${option}" != "--test-only" ]]
 then
-    date
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    echo "~~~~~ Prefix: ${prefix}"
     echo "~~~~~ Host-config: ${hostconfig_path}"
     echo "~~~~~ Build Dir:   ${build_dir}"
     echo "~~~~~ Project Dir: ${project_dir}"
     echo "~~~~~ Install Dir: ${install_dir}"
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
     echo ""
-    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-    echo "~~~~~ Building CHAI"
-    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    timed_message "Cleaning working directory"
 
     # Map CPU core allocations
     declare -A core_counts=(["lassen"]=40 ["ruby"]=28 ["poodle"]=28 ["corona"]=32 ["rzansel"]=48 ["tioga"]=32)
@@ -173,7 +219,7 @@ then
     rm -rf ${build_dir} 2>/dev/null
     mkdir -p ${build_dir} && cd ${build_dir}
 
-    date
+    timed_message "Building CHAI"
     if [[ "${truehostname}" == "corona" || "${truehostname}" == "tioga" ]]
     then
         module unload rocm
@@ -184,28 +230,20 @@ then
       ${project_dir}
     if ! $cmake_exe --build . -j ${core_counts[$truehostname]}
     then
-        echo "[Error]: compilation failed, building with verbose output..."
-        echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-        echo "~~~~~ Running make VERBOSE=1"
-        echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+        echo "[Error]: Compilation failed, building with verbose output..."
+        timed_message "Re-building with --verbose"
         $cmake_exe --build . --verbose -j 1
     else
+        timed_message "Installing"
         $cmake_exe --install .
     fi
-    date
 
-    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-    echo "~~~~~ CHAI built"
-    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    timed_message "CHAI built and installed"
 fi
 
 # Test
 if [[ "${option}" != "--build-only" ]] && grep -q -i "ENABLE_TESTS.*ON" ${hostconfig_path}
 then
-    date
-    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-    echo "~~~~~ Testing CHAI"
-    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 
     if [[ ! -d ${build_dir} ]]
     then
@@ -214,9 +252,8 @@ then
 
     cd ${build_dir}
 
-    date
+    timed_message "Testing CHAI"
     ctest --output-on-failure --no-compress-output -T test -VV 2>&1 | tee tests_output.txt
-    date
 
     no_test_str="No tests were found!!!"
     if [[ "$(tail -n 1 tests_output.txt)" == "${no_test_str}" ]]
@@ -224,19 +261,19 @@ then
         echo "[Error]: No tests were found" && exit 1
     fi
 
-    echo "Copying Testing xml reports for export"
+    timed_message "Preparing testing xml reports for export"
     tree Testing
     xsltproc -o junit.xml ${project_dir}/blt/tests/ctest-to-junit.xsl Testing/*/Test.xml
     mv junit.xml ${project_dir}/junit.xml
 
     if grep -q "Errors while running CTest" ./tests_output.txt
     then
-        echo "[Error]: failure(s) while running CTest" && exit 1
+        echo "[Error]: Failure(s) while running CTest" && exit 1
     fi
 
     if grep -q -i "ENABLE_HIP.*ON" ${hostconfig_path}
     then
-        echo "[Warning]: not testing install with HIP"
+        echo "[Warning]: Not testing install with HIP"
     else
         if [[ ! -d ${install_dir} ]]
         then
@@ -254,18 +291,10 @@ then
         fi
     fi
 
-    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-    echo "~~~~~ CHAI Tests Complete"
-    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-    date
+    timed_message "CHAI tests completed"
 fi
 
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo "~~~~~ CLEAN UP"
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+timed_message "Cleaning up"
 make clean
 
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo "~~~~~ Build and test completed"
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-date
+timed_message "Build and test completed"
