@@ -22,7 +22,7 @@ set (chai_headers
   PointerRecord.hpp
   Types.hpp)
 
-if(CHAI_DISABLE_RM)
+if (NOT CHAI_ENABLE_MANAGER)
   set(chai_headers
     ${chai_headers}
     ManagedArray_thin.inl)

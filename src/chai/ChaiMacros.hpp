@@ -73,7 +73,7 @@
 
 #define CHAI_UNUSED_ARG(X)
 
-#if !defined(CHAI_DISABLE_RM)
+#if defined(CHAI_ENABLE_MANAGER)
 
 #define CHAI_LOG(level, msg) \
   UMPIRE_LOG(level, msg);
