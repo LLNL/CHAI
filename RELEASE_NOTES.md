@@ -13,6 +13,12 @@ in this file.
 
 The format of this file is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Version 2024.02.2] - Release date 2024-06-26
+
+### Changed
+- Updated to RAJA v2024.02.2
+- Improved debugging with GPU simulation mode
+
 ## [Version 2024.02.1] - Release date 2024-04-19
 
 ### Changed

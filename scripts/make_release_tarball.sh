@@ -7,7 +7,7 @@
 ##############################################################################
 
 TAR_CMD=gtar
-VERSION=2024.02.1
+VERSION=2024.02.2
 
 git archive --prefix=chai-${VERSION}/ -o chai-${VERSION}.tar HEAD 2> /dev/null
 
