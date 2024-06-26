@@ -733,7 +733,7 @@ TEST(ManagedArray, ReallocateCPU)
 TEST(ManagedArray, ReallocateCopyCPU)
 {
   chai::ManagedArray<float> array(10);
-  auto array_copy = array;
+  chai::ManagedArray<float> array_copy = array;
   ASSERT_EQ(array.size(), 10u);
   ASSERT_EQ(array_copy.size(), 10u);
 
@@ -804,7 +804,7 @@ GPU_TEST(ManagedArray, ReallocateCopyGPU)
 
   forall(gpu(), 0, 10, [=] __device__(int i) {
       array[i] = i;
-      device_assert(&array[i] == &array_copy[i]);
+      device_assert(array.data()[i] == array_copy.data()[i]);
   });
 
   array.reallocate(20);
@@ -822,7 +822,7 @@ GPU_TEST(ManagedArray, ReallocateCopyGPU)
 
   forall(gpu(), 0, 20, [=]__device__(int i) {
     device_assert(array.size() == array_copy.size());
-    device_assert(&array[i] == &array_copy[i]);
+    device_assert(array.data()[i] == array_copy.data()[i]);
     if (i < 10) {
       device_assert(array[i] == i);
     } else {

@@ -12,6 +12,7 @@ blt_list_append(TO chai_integration_test_depends ELEMENTS blt::hip IF ${CHAI_ENA
 blt_list_append(TO chai_integration_test_depends ELEMENTS openmp IF ${CHAI_ENABLE_OPENMP})
 
 # ManagedArray tests
+if (CHAI_ENABLE_CUDA OR CHAI_ENABLE_HIP)
 blt_add_executable(
   NAME managed_array_tests
   SOURCES managed_array_tests.cpp
@@ -37,6 +38,7 @@ target_include_directories(
 blt_add_test(
   NAME managed_shared_ptr_test
   COMMAND managed_shared_ptr_tests)
+endif()
 
 if (CHAI_ENABLE_MANAGED_PTR)
   blt_add_executable(
