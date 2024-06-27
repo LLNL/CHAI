@@ -17,7 +17,7 @@ The format of this file is based on [Keep a Changelog](http://keepachangelog.com
 
 ### Changed
 - Updated to Umpire v2024.07.0 and RAJA v2024.07.0
-- Increased minimum CMake version required to 3.21
+- Increased minimum CMake version required to 3.20
 
 ## [Version 2024.02.2] - Release date 2024-06-26
 
