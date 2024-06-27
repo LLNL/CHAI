@@ -13,6 +13,12 @@ in this file.
 
 The format of this file is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Version 2024.07.0] - Release date 2024-07
+
+### Changed
+- Updated to Umpire v2024.07.0 and RAJA v2024.07.0
+- Increased minimum CMake version required to 3.21
+
 ## [Version 2024.02.2] - Release date 2024-06-26
 
 ### Changed
