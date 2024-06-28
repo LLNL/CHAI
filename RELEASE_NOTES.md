@@ -19,6 +19,7 @@ The format of this file is based on [Keep a Changelog](http://keepachangelog.com
 - Updated to Umpire v2024.07.0 and RAJA v2024.07.0
 - Increased minimum CMake version required to 3.20
 - Turns off benchmarks and examples by default
+- Enable RAJA plugin by default
 
 ## [Version 2024.02.2] - Release date 2024-06-26
 
