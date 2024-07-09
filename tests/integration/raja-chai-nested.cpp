@@ -258,10 +258,10 @@ CUDA_TEST(Chai, NestedMultiView)
 //
 ///////////////////////////////////////////////////////////////////////////
 
-RAJA_INDEX_VALUE_T(IM, int, "IM");
-RAJA_INDEX_VALUE_T(ID, int, "ID");
-RAJA_INDEX_VALUE_T(IG, int, "IG");
-RAJA_INDEX_VALUE_T(IZ, int, "IZ");
+RAJA_INDEX_VALUE_T(IM, int, "IM")
+RAJA_INDEX_VALUE_T(ID, int, "ID")
+RAJA_INDEX_VALUE_T(IG, int, "IG")
+RAJA_INDEX_VALUE_T(IZ, int, "IZ")
 
 void runLTimesTests(Index_type num_moments,
                    Index_type num_directions,
