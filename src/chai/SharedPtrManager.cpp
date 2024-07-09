@@ -117,8 +117,8 @@ void SharedPtrManager::registerPointer(
      // if umpire already knows about this pointer, we want to make sure its records and ours
      // are consistent
      if (m_resource_manager.hasAllocator(pointer)) {
-         umpire::util::AllocationRecord *allocation_record = const_cast<umpire::util::AllocationRecord *>(m_resource_manager.findAllocationRecord(pointer));
-         //allocation_record->size = record->m_size;
+     //    umpire::util::AllocationRecord *allocation_record = const_cast<umpire::util::AllocationRecord *>(m_resource_manager.findAllocationRecord(pointer));
+     //    //allocation_record->size = record->m_size;
      }
      // register with umpire if it's not there so that umpire can perform data migrations
      else {
@@ -436,13 +436,16 @@ msp_pointer_record* SharedPtrManager::getPointerRecord(void* pointer)
   return record->second ? *record->second : &s_null_record;
 }
 
+// TODO: Need a better way of dealing with non-cuda builds here...
 msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void const* c_pointer, void const* c_d_pointer,
                                                           size_t size,
                                                           //ExecutionSpace space,
                                                           bool owned)
 {
   void* pointer = const_cast<void*>(c_pointer);
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
   void* d_pointer = const_cast<void*>(c_d_pointer);
+#endif
 
   if (pointer == nullptr) {
      return &s_null_record ;
@@ -457,9 +460,11 @@ msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void const* c_pointer,
       {pointer, size, m_allocators[chai::CPU]->getAllocationStrategy()});
   //std::cout << "m_allocators[chai::CPU] : " << m_allocators[chai::CPU]->getName() << std::endl;
 
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
   m_resource_manager.registerAllocation(
       d_pointer,
       {d_pointer, size, m_allocators[chai::GPU]->getAllocationStrategy()});
+#endif
   //std::cout << "m_allocators[chai::GPU] : " << m_allocators[chai::GPU]->getName() << std::endl;
 
   auto pointer_record = getPointerRecord(pointer);
@@ -478,8 +483,10 @@ msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void const* c_pointer,
 
   pointer_record->m_pointers[chai::CPU] = pointer;
   pointer_record->m_owned[chai::CPU] = owned;
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
   pointer_record->m_pointers[chai::GPU] = d_pointer;
   pointer_record->m_owned[chai::GPU] = owned;
+#endif
   //pointer_record->m_size = size;
   //pointer_record->m_user_callback = [] (const msp_pointer_record*, Action, ExecutionSpace) {};
   
@@ -489,7 +496,9 @@ msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void const* c_pointer,
 
   if (pointer) {
      registerPointer(pointer_record, chai::CPU, owned);
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
      registerPointer(pointer_record, chai::GPU, owned);
+#endif
   }
 
   return pointer_record;
