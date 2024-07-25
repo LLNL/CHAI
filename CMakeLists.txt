@@ -12,7 +12,7 @@ include(CMakeDependentOption)
 include(CMakePackageConfigHelpers)
 
 project(Chai LANGUAGES C CXX VERSION 2024.02.2)
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.23)
 
 include(cmake/SetupChaiOptions.cmake)
 
