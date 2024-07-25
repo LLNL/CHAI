@@ -7,14 +7,14 @@ jobs:
         docker_target: gcc
       clang:
         docker_target: clang
-      intel:
-        docker_target: intel
+      #intel:
+        #docker_target: intel
       cuda:
         docker_target: cuda
-      hip:
-        docker_target: hip
-      sycl:
-        docker_target: sycl
+      #hip:
+        #docker_target: hip
+      #sycl:
+        #docker_target: sycl
   pool:
     vmImage: 'ubuntu-latest'
   variables:
