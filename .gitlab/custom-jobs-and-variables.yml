@@ -19,7 +19,7 @@ variables:
 # Note: We repeat the reservation, necessary when jobs are manually re-triggered.
   RUBY_JOB_ALLOC: "--overlap --reservation=ci --nodes=1"
 # Project specific variants for ruby
-  PROJECT_RUBY_VARIANTS: "~shared +raja tests=basic "
+  PROJECT_RUBY_VARIANTS: "~shared +raja tests=basic ^raja~examples~exercises"
 # Project specific deps for ruby
   PROJECT_RUBY_DEPS: ""
 
@@ -30,7 +30,7 @@ variables:
 # Note: We repeat the reservation, necessary when jobs are manually re-triggered.
   POODLE_JOB_ALLOC: "--overlap --nodes=1"
 # Project specific variants for poodle
-  PROJECT_POODLE_VARIANTS: "~shared +raja tests=basic "
+  PROJECT_POODLE_VARIANTS: "~shared +raja tests=basic ^raja~examples~exercises"
 # Project specific deps for poodle
   PROJECT_POODLE_DEPS: ""
 
@@ -40,7 +40,7 @@ variables:
 # Arguments for job level allocation
   CORONA_JOB_ALLOC: "--nodes=1 --begin-time=+5s"
 # Project specific variants for corona
-  PROJECT_CORONA_VARIANTS: "~shared +raja tests=basic "
+  PROJECT_CORONA_VARIANTS: "~shared +raja tests=basic ^raja~examples~exercises"
 # Project specific deps for corona
   PROJECT_CORONA_DEPS: ""
 
@@ -50,7 +50,7 @@ variables:
 # Arguments for job level allocation
   TIOGA_JOB_ALLOC: "--nodes=1 --begin-time=+5s"
 # Project specific variants for tioga
-  PROJECT_TIOGA_VARIANTS: "~shared +raja tests=basic "
+  PROJECT_TIOGA_VARIANTS: "~shared +raja tests=basic ^raja~examples~exercises"
 # Project specific deps for tioga
   PROJECT_TIOGA_DEPS: ""
 
