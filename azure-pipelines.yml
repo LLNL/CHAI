@@ -9,8 +9,8 @@ jobs:
         docker_target: clang
       #intel:
         #docker_target: intel
-      cuda:
-        docker_target: cuda
+      #cuda:
+        #docker_target: cuda
       #hip:
         #docker_target: hip
       #sycl:
