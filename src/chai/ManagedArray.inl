@@ -148,6 +148,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
 
 
 template<typename T>
+CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::allocate(
     size_t elems,
     ExecutionSpace space, 
