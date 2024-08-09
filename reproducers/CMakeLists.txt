@@ -6,13 +6,10 @@
 ##############################################################################
 set (chai_reproducer_depends chai)
 
-if (CHAI_ENABLE_CUDA)
-  list(APPEND chai_reproducer_depends cuda)
-endif ()
-
-if (CHAI_ENABLE_HIP)
-  list(APPEND chai_reproducer_depends blt::hip)
-endif ()
+blt_add_executable(
+  NAME c_array_of_managed_arrays_reproducer
+  SOURCES c_array_of_managed_arrays_reproducer.cpp
+  DEPENDS_ON ${chai_reproducer_depends})
 
 if (CHAI_ENABLE_MANAGED_PTR AND CHAI_ENABLE_HIP)
   blt_add_executable(
