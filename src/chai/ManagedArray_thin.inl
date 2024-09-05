@@ -167,7 +167,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::allocate(size_t elems,
                                          ExecutionSpace space,
-                                         UserCallback const &) {
+                                         const UserCallback&) {
   if (!m_is_slice) {
      if (elems > 0) {
        (void) space; // Quiet compiler warning when CHAI_LOG does nothing
