@@ -15,8 +15,11 @@ if (NOT TARGET umpire)
     else ()
       message(STATUS "[CHAI] Using internal Umpire")
 
+      set(UMPIRE_ENABLE_BENCHMARKS Off CACHE BOOL "Enable benchmarks in Umpire")
+      set(UMPIRE_ENABLE_C Off CACHE BOOL "Enable C in Umpire")
+      set(UMPIRE_ENABLE_DOCS Off CACHE BOOL "Enable documentation in Umpire")
+      set(UMPIRE_ENABLE_EXAMPLES Off CACHE BOOL "Enable examples in Umpire")
       set(UMPIRE_ENABLE_FORTRAN Off CACHE BOOL "Enable Fortran in Umpire")
-      set(UMPIRE_ENABLE_C Off CACHE BOOL "Enable Fortran in Umpire")
       set(UMPIRE_ENABLE_TESTS Off CACHE BOOL "Enable tests in Umpire")
       set(UMPIRE_ENABLE_TOOLS Off CACHE BOOL "Enable tools in Umpire")
 
