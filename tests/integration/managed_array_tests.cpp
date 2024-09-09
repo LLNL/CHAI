@@ -16,7 +16,7 @@
 #define device_assert(EXP) assert(EXP)
 #endif
 
-#ifdef CHAI_DISABLE_RM
+#if !defined(CHAI_ENABLE_MANAGER)
 #define assert_empty_map(IGNORED)
 #else
 #define assert_empty_map(IGNORED) ASSERT_EQ(chai::ArrayManager::getInstance()->getPointerMap().size(),0)
@@ -50,7 +50,7 @@ TEST(ManagedArray, SetOnHost)
   assert_empty_map(true);
 }
 
-#if (!defined(CHAI_DISABLE_RM))
+#if defined(CHAI_ENABLE_MANAGER)
 TEST(ManagedArray, Const)
 {
   chai::ManagedArray<float> array(10);
@@ -165,7 +165,7 @@ TEST(ManagedArray, ArrayOfSlices) {
 }
 
 #if defined(CHAI_ENABLE_PICK)
-#if (!defined(CHAI_DISABLE_RM))
+#if defined(CHAI_ENABLE_MANAGER)
 TEST(ManagedArray, PickHostFromHostConst) {
   chai::ManagedArray<int> array(10);
 
@@ -236,7 +236,7 @@ TEST(ManagedArray, IncrementDecrementOnHost)
 
 
 #if defined(CHAI_ENABLE_UM)
-#if (!defined(CHAI_DISABLE_RM))
+#if defined(CHAI_ENABLE_MANAGER)
 TEST(ManagedArray, PickHostFromHostConstUM) {
   chai::ManagedArray<int> array(10, chai::UM);
 
@@ -343,7 +343,7 @@ GPU_TEST(ManagedArray, PickHostFromDeviceUM)
   assert_empty_map(true);
 }
 
-#if (!defined(CHAI_DISABLE_RM))
+#if defined(CHAI_ENABLE_MANAGER)
 GPU_TEST(ManagedArray, PickHostFromDeviceConstUM) {
   chai::ManagedArray<int> array(10, chai::UM);
 
@@ -443,7 +443,7 @@ GPU_TEST(ManagedArray, PickandSetSliceDeviceToDeviceUM) {
 }
 #endif
 
-#if (!defined(CHAI_DISABLE_RM))
+#if defined(CHAI_ENABLE_MANAGER)
 GPU_TEST(ManagedArray, PickandSetDeviceToDevice)
 {
   chai::ManagedArray<int> array1(10);
@@ -904,7 +904,7 @@ TEST(ManagedArray, ExternalUnownedFromManagedArray)
 }
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-#ifndef CHAI_DISABLE_RM
+#if defined(CHAI_ENABLE_MANAGER)
 GPU_TEST(ManagedArray, ExternalUnownedMoveToGPU)
 {
   float data[20];
@@ -950,7 +950,7 @@ TEST(ManagedArray, data)
 }
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-#ifndef CHAI_DISABLE_RM
+#if defined(CHAI_ENABLE_MANAGER)
 GPU_TEST(ManagedArray, dataGPU)
 {
   // Initialize
@@ -1047,7 +1047,7 @@ TEST(ManagedArray, cdata)
 }
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-#ifndef CHAI_DISABLE_RM
+#if defined(CHAI_ENABLE_MANAGER)
 GPU_TEST(ManagedArray, cdataGPU)
 {
   // Initialize
@@ -1178,7 +1178,7 @@ TEST(ManagedArray, Reset)
 }
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-#ifndef CHAI_DISABLE_RM
+#if defined(CHAI_ENABLE_MANAGER)
 GPU_TEST(ManagedArray, ResetDevice)
 {
   chai::ManagedArray<float> array(20);
@@ -1199,7 +1199,7 @@ GPU_TEST(ManagedArray, ResetDevice)
 
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-#ifndef CHAI_DISABLE_RM
+#if defined(CHAI_ENABLE_MANAGER)
 GPU_TEST(ManagedArray, UserCallback)
 {
   int num_h2d = 0;
@@ -1583,7 +1583,7 @@ GPU_TEST(ManagedArray, DeviceInitializedNestedArrays)
 
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-#ifndef CHAI_DISABLE_RM
+#if defined(CHAI_ENABLE_MANAGER)
 GPU_TEST(ManagedArray, Move)
 {
   chai::ManagedArray<float> array(10, chai::GPU);
@@ -1856,11 +1856,11 @@ GPU_TEST(ManagedArray, MoveInnerToDeviceAgain)
   outerArray.free();
   assert_empty_map(true);
 }
-#endif  // CHAI_DISABLE_RM
+#endif  // defined(CHAI_ENABLE_MANAGER)
 #endif  // defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 
 
-#ifndef CHAI_DISABLE_RM
+#if defined(CHAI_ENABLE_MANAGER)
 TEST(ManagedArray, DeepCopy)
 {
   chai::ManagedArray<float> array(10);
@@ -1885,7 +1885,7 @@ TEST(ManagedArray, DeepCopy)
 #endif
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-#ifndef CHAI_DISABLE_RM
+#if defined(CHAI_ENABLE_MANAGER)
 GPU_TEST(ManagedArray, DeviceDeepCopy)
 {
   chai::ManagedArray<float> array(10, chai::GPU);

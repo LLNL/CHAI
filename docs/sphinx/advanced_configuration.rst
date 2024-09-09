@@ -26,7 +26,7 @@ Here is a summary of the configuration options, their default value, and meaning
       CHAI_ENABLE_GPU_SIMULATION_MODE   Off      Simulates GPU execution.
       CHAI_ENABLE_UM                    Off      Enable support for CUDA Unified Memory.
       CHAI_ENABLE_IMPLICIT_CONVERSIONS  On       Enable implicit conversions between ManagedArray and raw pointers
-      CHAI_DISABLE_RM                   Off      Disable the ArrayManager and make ManagedArray a thin wrapper around a pointer.
+      CHAI_ENABLE_MANAGER          On       Enable the ArrayManager.
       ENABLE_TESTS                 On       Build test executables.
       ENABLE_BENCHMARKS            On       Build benchmark programs.
       ===========================  ======== ===============================================================================
@@ -57,10 +57,11 @@ These arguments are explained in more detail below:
   ``ManagedArray<T>`` and the correpsonding raw pointer type ``T*``. This
   option is disabled by default, and should be used with caution.
 
-* CHAI_DISABLE_RM
-  This option will remove all usage of the ``ArrayManager`` class and let the
-  ``ManagedArray`` objects function as thin wrappers around a raw pointer. This
-  option can be used with CPU-only allocations, or with CUDA Unified Memory.
+* CHAI_ENABLE_MANAGER
+  This option enables usage of the ``ArrayManager`` class. Turning it off lets
+  the ``ManagedArray`` objects function as thin wrappers around a raw pointer.
+  The thin wrapper version can be used with CPU-only allocations, unified
+  memory, or with architectures using a single memory space.
 
 * ENABLE_TESTS
   This option controls whether or not test executables will be built.
