@@ -1014,6 +1014,11 @@ namespace chai {
       T** gpuBuffer;
       gpuMalloc((void**)(&gpuBuffer), sizeof(T*));
 
+      // TODO: Use the default camp resource and/or provide a way to pass
+      //       a camp resource with which to launch these kernels. Then
+      //       these synchronizes could probably be removed.
+      synchronize();
+
       // Create the object on the device
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
       detail::make_on_device(gpuBuffer, args...);
@@ -1023,6 +1028,8 @@ namespace chai {
 #elif defined(__HIPCC__) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
       hipLaunchKernelGGL(detail::make_on_device, 1, 1, 0, 0, gpuBuffer, args...);
 #endif
+
+      synchronize();
 
       // Allocate space on the CPU for the pointer and copy the pointer to the CPU
       T** cpuBuffer = (T**) malloc(sizeof(T*));
@@ -1075,6 +1082,11 @@ namespace chai {
       T** gpuBuffer;
       gpuMalloc((void**)(&gpuBuffer), sizeof(T*));
 
+      // TODO: Use the default camp resource and/or provide a way to pass
+      //       a camp resource with which to launch these kernels. Then
+      //       these synchronizes could probably be removed.
+      synchronize();
+
       // Create the object on the device
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
       detail::make_on_device_from_factory(gpuBuffer, f, args...);
@@ -1084,6 +1096,8 @@ namespace chai {
 #elif defined(__HIPCC__) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
       hipLaunchKernelGGL(detail::make_on_device_from_factory, 1, 1, 0, 0, gpuBuffer, f, args...);
 #endif
+
+      synchronize();
 
       // Allocate space on the CPU for the pointer and copy the pointer to the CPU
       T** cpuBuffer = (T**) malloc(sizeof(T*));
@@ -1114,6 +1128,11 @@ namespace chai {
    ///
    template <typename T>
    CHAI_HOST void destroy_on_device(T* gpuPointer) {
+      // TODO: Use the default camp resource and/or provide a way to pass
+      //       a camp resource with which to launch these kernels. Then
+      //       these synchronizes could probably be removed.
+      synchronize();
+
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
       chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
       arrayManager->setGPUSimMode(true);
@@ -1124,6 +1143,8 @@ namespace chai {
 #elif defined(__HIPCC__) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
       hipLaunchKernelGGL(detail::destroy_on_device, 1, 1, 0, 0, gpuPointer);
 #endif
+
+      synchronize();
    }
 
 #endif
