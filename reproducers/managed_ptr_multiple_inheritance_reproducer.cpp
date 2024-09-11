@@ -172,7 +172,7 @@ class  DerivedTable1D : public Table1D, public Table::Data, public Table::Derive
 
 class StitchTable1D : public DerivedTable1D {
    public:
-      CHAI_HOST_DEVICE  StitchTable1D(int nt, chai::managed_ptr<Table1D const>* tabs, const real8* bds) ;
+      CHAI_HOST_DEVICE  StitchTable1D(int nt, chai::managed_ptr<Table1D const>* tabs) ;
 
       CHAI_HOST_DEVICE virtual ~StitchTable1D() ;
 
@@ -187,7 +187,6 @@ class StitchTable1D : public DerivedTable1D {
 
       int m_nTables ;
       const Table1D ** m_tables = nullptr;
-      real8 * m_bds ;
 } ;
 
 class ComputedTable1D : public DerivedTable1D, public Table::Compute {
@@ -268,11 +267,10 @@ CHAI_HOST_DEVICE real8 DataTable1D::Evaluate() const
    return innerEvaluate() ;
 }
 
-CHAI_HOST_DEVICE StitchTable1D::StitchTable1D(int nt, chai::managed_ptr<Table1D const>* tabs, const real8* bds)
+CHAI_HOST_DEVICE StitchTable1D::StitchTable1D(int nt, chai::managed_ptr<Table1D const>* tabs)
    : DerivedTable1D()
    , m_nTables(nt)
    , m_tables(new const Table1D *[nt])
-   , m_bds(new real8[nt-1])
 {
    for (int i = 0 ; i < nt ; ++i) {
       m_tables[i] = tabs[i].get() ;
@@ -280,20 +278,12 @@ CHAI_HOST_DEVICE StitchTable1D::StitchTable1D(int nt, chai::managed_ptr<Table1D 
       printf("StitchTable1D::StitchTable1D POINTER %p i %d m_tables[i] %p\n", this, i, m_tables[i]) ;
 #endif
    }
-
-   for (int i = 0 ; i < nt-1 ; ++i) {
-      m_bds[i] = bds[i] ;
-   }
 }
 
 CHAI_HOST_DEVICE StitchTable1D::~StitchTable1D()
 {
    if (m_nTables > 0) {
       delete [] m_tables ;
-   }
-
-   if (m_nTables > 1) {
-      delete [] m_bds ;
    }
 }
 
@@ -369,47 +359,33 @@ CHAI_HOST_DEVICE real8 RofTfromXYTable1D::innerEvaluate() const
 
 int main(int, char**) {
    chai::managed_ptr<Table1D const> tabArray[6] ;
-   {
-      tabArray[0] = chai::make_managed<LinearTable1D>() ;
-      tabArray[1] = chai::make_managed<YofXfromRTTable1D>(chai::unpack(tabArray[0])) ;
-      tabArray[2] = chai::make_managed<LinearTable1D>() ;
-      tabArray[3] = chai::make_managed<LinearTable1D>() ;
 
-   }
-   {
-      chai::ManagedArray<chai::managed_ptr<const Table1D> > host_device_temp(2) ;
-      chai::managed_ptr<const Table1D> *host_temp = host_device_temp.data() ;
-      host_temp[0] = tabArray[1] ;
-      host_temp[1] = tabArray[2] ;
+   tabArray[0] = chai::make_managed<LinearTable1D>() ;
+   tabArray[1] = chai::make_managed<YofXfromRTTable1D>(chai::unpack(tabArray[0])) ;
+   tabArray[2] = chai::make_managed<LinearTable1D>() ;
+   tabArray[3] = chai::make_managed<LinearTable1D>() ;
 
-      chai::ManagedArray<real8> host_device_bp(1) ;
-      real8 *host_bp = host_device_bp.data() ;
-      // Changing this to 0.0 also makes the crash go away!
-      host_bp[0] = 2.449293593598294706e-16 ;
+   chai::ManagedArray<chai::managed_ptr<const Table1D> > host_device_temp0(2) ;
+   chai::managed_ptr<const Table1D> *host_temp0 = host_device_temp0.data() ;
+   host_temp0[0] = tabArray[1] ;
+   host_temp0[1] = tabArray[2] ;
 
-      tabArray[4] = chai::make_managed<StitchTable1D>(2, chai::unpack(host_device_temp), chai::unpack(host_device_bp)) ;
-      host_device_temp.free() ;
-      host_device_bp.free() ;
-   }
-   {
-      chai::ManagedArray<chai::managed_ptr<const Table1D> > host_device_temp(2) ;
-      chai::managed_ptr<const Table1D> *host_temp = host_device_temp.data() ;
-      host_temp[0] = tabArray[3] ;
-      host_temp[1] = tabArray[4] ;
+   tabArray[4] = chai::make_managed<StitchTable1D>(2, chai::unpack(host_device_temp0)) ;
 
-      chai::ManagedArray<real8> host_device_bp(1) ;
-      real8 *host_bp = host_device_bp.data() ;
-      host_bp[0] = 2.5 ;
+   chai::ManagedArray<chai::managed_ptr<const Table1D> > host_device_temp1(2) ;
+   chai::managed_ptr<const Table1D> *host_temp1 = host_device_temp1.data() ;
+   host_temp1[0] = tabArray[3] ;
+   host_temp1[1] = tabArray[4] ;
 
-      tabArray[5] = chai::make_managed<StitchTable1D>(2, chai::unpack(host_device_temp), chai::unpack(host_device_bp)) ;
-
-      host_device_bp.free() ;
-      host_device_temp.free() ;
-   }
+   tabArray[5] = chai::make_managed<StitchTable1D>(2, chai::unpack(host_device_temp1)) ;
 
    chai::make_managed<RofTfromXYTable1D>(chai::unpack(tabArray[5])) ;
 
    printf("SUCCESS\n") ;
+
+   host_device_temp0.free() ;
+   host_device_temp1.free() ;
+
    return 0;
 }
 
