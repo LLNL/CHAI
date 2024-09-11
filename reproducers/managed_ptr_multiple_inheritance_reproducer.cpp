@@ -77,10 +77,6 @@ class  Table {
             Compute(const Compute &other);
             Compute &operator=(const Compute &other);
       } ;
-   protected:
-
-      CHAI_HOST_DEVICE int Search(real8 xin, const real8* xvals, int numX) const ;
-
    private:
 
       Table(const Table &other);
@@ -115,7 +111,7 @@ class  Table1D : public SimpleTable {
 
       CHAI_HOST_DEVICE virtual ~Table1D() {}
 
-      CHAI_HOST_DEVICE virtual real8 Evaluate(real8 xin) const = 0 ;
+      CHAI_HOST_DEVICE virtual real8 Evaluate() const = 0 ;
 
    protected:
       CHAI_HOST_DEVICE Table1D(const Table1D &other) = delete;
@@ -129,12 +125,12 @@ class  DataTable1D : public Table1D, public Table::Data {
 
       CHAI_HOST_DEVICE virtual ~DataTable1D() {}
 
-      CHAI_HOST_DEVICE virtual real8 Evaluate(real8 xin) const override;
+      CHAI_HOST_DEVICE virtual real8 Evaluate() const override;
 
       using Table1D::Evaluate ;
 
    protected:
-      CHAI_HOST_DEVICE virtual real8 innerEvaluate(real8 x) const = 0 ;
+      CHAI_HOST_DEVICE virtual real8 innerEvaluate() const = 0 ;
 } ;
 
 class LinearTable1D : public DataTable1D {
@@ -143,7 +139,7 @@ class LinearTable1D : public DataTable1D {
 
       CHAI_HOST_DEVICE virtual ~LinearTable1D() {}
 
-      CHAI_HOST_DEVICE virtual real8 innerEvaluate(real8 x) const override;
+      CHAI_HOST_DEVICE virtual real8 innerEvaluate() const override;
 
    private:
       CHAI_HOST_DEVICE LinearTable1D(const LinearTable1D &other) = delete;
@@ -161,13 +157,13 @@ class  DerivedTable1D : public Table1D, public Table::Data, public Table::Derive
 
       CHAI_HOST_DEVICE virtual ~DerivedTable1D() {}
 
-      CHAI_HOST_DEVICE virtual real8 Evaluate(real8 xin) const override;
+      CHAI_HOST_DEVICE virtual real8 Evaluate() const override;
 
       virtual int GetNumStrings() const override = 0;
 
    protected:
 
-      CHAI_HOST_DEVICE virtual real8 innerEvaluate(real8 x) const = 0 ;
+      CHAI_HOST_DEVICE virtual real8 innerEvaluate() const = 0 ;
 
    private:
       CHAI_HOST_DEVICE DerivedTable1D(const DerivedTable1D &other) = delete;
@@ -183,7 +179,7 @@ class StitchTable1D : public DerivedTable1D {
       inline virtual int GetNumStrings() const override { return m_nTables; }
 
    private:
-      CHAI_HOST_DEVICE real8 innerEvaluate(real8 x) const override;
+      CHAI_HOST_DEVICE real8 innerEvaluate() const override;
 
       CHAI_HOST_DEVICE StitchTable1D() = delete;
       CHAI_HOST_DEVICE StitchTable1D(const StitchTable1D &other) = delete;
@@ -218,7 +214,7 @@ class YofXfromRTTable1D : public ComputedTable1D {
       inline int virtual GetNumStrings() const override { return 1; }
 
    private:
-      CHAI_HOST_DEVICE virtual real8 innerEvaluate(real8 x) const override;
+      CHAI_HOST_DEVICE virtual real8 innerEvaluate() const override;
 
       CHAI_HOST_DEVICE virtual real8 RootFromBaseX() const override;
 
@@ -236,7 +232,7 @@ class RofTfromXYTable1D : public ComputedTable1D {
       inline int virtual GetNumStrings() const override { return 1; }
 
    private:
-      CHAI_HOST_DEVICE virtual real8 innerEvaluate(real8 x) const override;
+      CHAI_HOST_DEVICE virtual real8 innerEvaluate() const override;
 
       CHAI_HOST_DEVICE virtual real8 RootFromBaseX() const override;
 
@@ -254,22 +250,22 @@ CHAI_HOST_DEVICE real8 Table::Compute::BaseXFromNewX() const
    return 0.0 ;
 }
 
-CHAI_HOST_DEVICE real8 LinearTable1D::innerEvaluate(real8 xin) const
+CHAI_HOST_DEVICE real8 LinearTable1D::innerEvaluate() const
 {
    return 0.0 ;
 }
 
-CHAI_HOST_DEVICE real8 DerivedTable1D::Evaluate(real8 xin) const
+CHAI_HOST_DEVICE real8 DerivedTable1D::Evaluate() const
 {
 #ifdef CHAI_DEVICE_COMPILE
    printf("DerivedTable1D::Evaluate POINTER %p\n", this) ;
 #endif
-   return innerEvaluate(xin) ;
+   return innerEvaluate() ;
 }
 
-CHAI_HOST_DEVICE real8 DataTable1D::Evaluate(real8 xin) const
+CHAI_HOST_DEVICE real8 DataTable1D::Evaluate() const
 {
-   return innerEvaluate(xin) ;
+   return innerEvaluate() ;
 }
 
 CHAI_HOST_DEVICE StitchTable1D::StitchTable1D(int nt, chai::managed_ptr<Table1D const>* tabs, const real8* bds)
@@ -301,17 +297,15 @@ CHAI_HOST_DEVICE StitchTable1D::~StitchTable1D()
    }
 }
 
-CHAI_HOST_DEVICE real8 StitchTable1D::innerEvaluate(real8 xin) const
+CHAI_HOST_DEVICE real8 StitchTable1D::innerEvaluate() const
 {
-   real8 xv = xin ;
-   int i=0 ;
-   while ( (i < m_nTables-1) && (xv >= m_bds[i]) ) {
-      i++ ;
-   }
+   for (int i = 0 ; i < m_nTables ; ++i) {
 #ifdef CHAI_DEVICE_COMPILE
-   printf("StitchTable1D::innerEvaluate POINTER %p i %d m_tables[i] %p\n", this, i, m_tables[i]) ;
+      printf("StitchTable1D::innerEvaluate POINTER %p i %d m_tables[i] %p\n", this, i, m_tables[i]) ;
 #endif
-   return m_tables[i]->Evaluate(xv) ;
+      m_tables[i]->Evaluate() ;
+   }
+   return 0.0 ;
 }
 
 CHAI_HOST_DEVICE ComputedTable1D::
@@ -330,7 +324,7 @@ CHAI_HOST_DEVICE YofXfromRTTable1D::YofXfromRTTable1D(Table1D const * f)
 #ifdef CHAI_DEVICE_COMPILE
    printf("YofXfromRTTable1D::YofXfromRTTable1D POINTER %p m_table %p <<< CHECK THESE POINTERS\n", this, m_table) ;
 #endif
-   m_table->Evaluate(0.0) ;
+   m_table->Evaluate() ;
 }
 
 CHAI_HOST_DEVICE real8 YofXfromRTTable1D::RootFromBaseX() const
@@ -338,16 +332,16 @@ CHAI_HOST_DEVICE real8 YofXfromRTTable1D::RootFromBaseX() const
 #ifdef CHAI_DEVICE_COMPILE
    printf("YofXfromRTTable1D::RootFromBaseX POINTER %p m_table %p <<< CHECK THESE POINTERS\n", this, m_table) ;
 #endif
-   return m_table->Evaluate(0.0) ;
+   return m_table->Evaluate() ;
 }
 
-CHAI_HOST_DEVICE real8 YofXfromRTTable1D::innerEvaluate(real8 xin) const
+CHAI_HOST_DEVICE real8 YofXfromRTTable1D::innerEvaluate() const
 {
 #ifdef CHAI_DEVICE_COMPILE
    printf("YofXfromRTTable1D::innerEvaluate POINTER %p m_table %p <<< CHECK THESE POINTERS\n", this, m_table) ;
 #endif
-   real8 t = BaseXFromNewX() ;
-   return t ;
+   BaseXFromNewX() ;
+   return 0.0 ;
 }
 
 CHAI_HOST_DEVICE RofTfromXYTable1D::RofTfromXYTable1D(Table1D const * f)
@@ -358,55 +352,29 @@ CHAI_HOST_DEVICE RofTfromXYTable1D::RofTfromXYTable1D(Table1D const * f)
    printf("RofTfromXY::RofTfromXYTable1D POINTER %p m_table %p\n", this, m_table) ;
 #endif
 
-   m_table->Evaluate(0.0) ;
+   m_table->Evaluate() ;
 }
 
 
 CHAI_HOST_DEVICE real8 RofTfromXYTable1D::RootFromBaseX() const
 {
-   return m_table->Evaluate(0.0) ;
+   return m_table->Evaluate() ;
 }
 
-CHAI_HOST_DEVICE real8 RofTfromXYTable1D::innerEvaluate(real8 xin) const
+CHAI_HOST_DEVICE real8 RofTfromXYTable1D::innerEvaluate() const
 {
-   real8 x = BaseXFromNewX() ;
-   return x ;
+   BaseXFromNewX() ;
+   return 0.0 ;
 }
 
 int main(int, char**) {
    chai::managed_ptr<Table1D const> tabArray[6] ;
    {
-      chai::ManagedArray<real8> x(2) ;
-      chai::ManagedArray<real8> fx(2) ;
-      real8 *x_host = x.data() ;
-      real8 *fx_host = fx.data() ;
-      x_host[0] = 0.0 ;
-      x_host[1] = 180.0 ;
-      fx_host[0] = 4.0 ;
-      fx_host[1] = 4.0 ;
-
       tabArray[0] = chai::make_managed<LinearTable1D>() ;
-      x.free() ;
-      fx.free() ;
-   }
-   {
-      chai::managed_ptr<const Table1D> tabArray_0 = tabArray[0];
-
-      tabArray[1] = chai::make_managed<YofXfromRTTable1D>(chai::unpack(tabArray_0)) ;
-   }
-   {
-      chai::ManagedArray<real8> x(2) ;
-      chai::ManagedArray<real8> fx(2) ;
-      real8 *x_host = x.data() ;
-      real8 *fx_host = fx.data() ;
-      x_host[0] = -20.0 ;
-      x_host[1] = 20.0 ;
-      fx_host[0] = 4.0 ;
-      fx_host[1] = 4.0 ;
-
+      tabArray[1] = chai::make_managed<YofXfromRTTable1D>(chai::unpack(tabArray[0])) ;
       tabArray[2] = chai::make_managed<LinearTable1D>() ;
-      x.free() ;
-      fx.free() ;
+      tabArray[3] = chai::make_managed<LinearTable1D>() ;
+
    }
    {
       chai::ManagedArray<chai::managed_ptr<const Table1D> > host_device_temp(2) ;
@@ -419,23 +387,9 @@ int main(int, char**) {
       // Changing this to 0.0 also makes the crash go away!
       host_bp[0] = 2.449293593598294706e-16 ;
 
-      tabArray[3] = chai::make_managed<StitchTable1D>(2, chai::unpack(host_device_temp), chai::unpack(host_device_bp)) ;
+      tabArray[4] = chai::make_managed<StitchTable1D>(2, chai::unpack(host_device_temp), chai::unpack(host_device_bp)) ;
       host_device_temp.free() ;
       host_device_bp.free() ;
-   }
-   {
-      chai::ManagedArray<real8> x(2) ;
-      chai::ManagedArray<real8> fx(2) ;
-      real8 *x_host = x.data() ;
-      real8 *fx_host = fx.data() ;
-      x_host[0] = 2.5 ;
-      x_host[1] = 4.0 ;
-      fx_host[0] = 3.0 ;
-      fx_host[1] = 5.0 ;
-
-      tabArray[4] = chai::make_managed<LinearTable1D>() ;
-      x.free() ;
-      fx.free() ;
    }
    {
       chai::ManagedArray<chai::managed_ptr<const Table1D> > host_device_temp(2) ;
@@ -452,11 +406,8 @@ int main(int, char**) {
       host_device_bp.free() ;
       host_device_temp.free() ;
    }
-   {
-      chai::managed_ptr<const Table1D> tabArray_0 = tabArray[5];
 
-      chai::make_managed<RofTfromXYTable1D>(chai::unpack(tabArray_0)) ;
-   }
+   chai::make_managed<RofTfromXYTable1D>(chai::unpack(tabArray[5])) ;
 
    printf("SUCCESS\n") ;
    return 0;
