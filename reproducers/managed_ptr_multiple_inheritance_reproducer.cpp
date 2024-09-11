@@ -128,7 +128,7 @@ class  DataTable1D : public Table1D, public Table::Data {
 
       CHAI_HOST_DEVICE virtual ~DataTable1D();
 
-      CHAI_HOST_DEVICE real8 Evaluate(real8 xin) const override;
+      CHAI_HOST_DEVICE virtual real8 Evaluate(real8 xin) const override;
 
       using Table1D::Evaluate ;
 
@@ -157,7 +157,7 @@ class LinearTable1D : public DataTable1D {
 
       CHAI_HOST_DEVICE virtual ~LinearTable1D() ;
 
-      CHAI_HOST_DEVICE real8 innerEvaluate(real8 x) const override;
+      CHAI_HOST_DEVICE virtual real8 innerEvaluate(real8 x) const override;
 
    private:
       CHAI_HOST_DEVICE LinearTable1D() = delete;
@@ -177,7 +177,7 @@ class  DerivedTable1D : public Table1D, public Table::Data, public Table::Derive
 
       CHAI_HOST_DEVICE virtual ~DerivedTable1D() {}
 
-      CHAI_HOST_DEVICE real8 Evaluate(real8 xin) const override;
+      CHAI_HOST_DEVICE virtual real8 Evaluate(real8 xin) const override;
 
       virtual int GetNumStrings() const override = 0;
 
@@ -205,7 +205,7 @@ class StitchTable1D : public DerivedTable1D {
 
       CHAI_HOST_DEVICE virtual ~StitchTable1D() ;
 
-      inline int GetNumStrings() const override { return m_nTables; }
+      inline virtual int GetNumStrings() const override { return m_nTables; }
 
    private:
       CHAI_HOST_DEVICE real8 innerEvaluate(real8 x) const override;
@@ -242,12 +242,12 @@ class YofXfromRTTable1D : public ComputedTable1D {
 
       CHAI_HOST_DEVICE virtual ~YofXfromRTTable1D() {}
 
-      inline int GetNumStrings() const override { return 1; }
+      inline int virtual GetNumStrings() const override { return 1; }
 
    private:
-      CHAI_HOST_DEVICE real8 innerEvaluate(real8 x) const override;
+      CHAI_HOST_DEVICE virtual real8 innerEvaluate(real8 x) const override;
 
-      CHAI_HOST_DEVICE real8 RootFromBaseX(real8 baseX, const real8 *vals) const override;
+      CHAI_HOST_DEVICE virtual real8 RootFromBaseX(real8 baseX, const real8 *vals) const override;
 
       CHAI_HOST_DEVICE YofXfromRTTable1D() = delete;
       CHAI_HOST_DEVICE YofXfromRTTable1D(const YofXfromRTTable1D &other) = delete;
@@ -261,12 +261,12 @@ class RofTfromXYTable1D : public ComputedTable1D {
 
       CHAI_HOST_DEVICE virtual ~RofTfromXYTable1D() {}
 
-      inline int GetNumStrings() const override { return 1; }
+      inline int virtual GetNumStrings() const override { return 1; }
 
    private:
-      CHAI_HOST_DEVICE real8 innerEvaluate(real8 x) const override;
+      CHAI_HOST_DEVICE virtual real8 innerEvaluate(real8 x) const override;
 
-      CHAI_HOST_DEVICE real8 RootFromBaseX(real8 baseX, const real8 *vals) const override;
+      CHAI_HOST_DEVICE virtual real8 RootFromBaseX(real8 baseX, const real8 *vals) const override;
 
       CHAI_HOST_DEVICE RofTfromXYTable1D() = delete;
       CHAI_HOST_DEVICE RofTfromXYTable1D(const RofTfromXYTable1D &other) = delete;
