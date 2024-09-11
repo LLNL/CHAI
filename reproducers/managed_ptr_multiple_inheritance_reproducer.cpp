@@ -92,7 +92,7 @@ class  SimpleTable : public Table {
    public:
       CHAI_HOST_DEVICE SimpleTable(const char* id);
 
-      CHAI_HOST_DEVICE virtual ~SimpleTable();
+      CHAI_HOST_DEVICE virtual ~SimpleTable() {}
 
    private:
       SimpleTable();
@@ -106,7 +106,7 @@ class  Table1D : public SimpleTable {
    public:
       CHAI_HOST_DEVICE Table1D(const char* id) ;
 
-      CHAI_HOST_DEVICE virtual ~Table1D() ;
+      CHAI_HOST_DEVICE virtual ~Table1D() {}
 
       CHAI_HOST_DEVICE virtual real8 Evaluate(real8 xin) const = 0 ;
 
@@ -125,8 +125,6 @@ class  DataTable1D : public Table1D, public Table::Data {
                                   const char *id,
                                   const real8 *x,
                                   const real8 *fx) ;
-
-      CHAI_HOST_DEVICE DataTable1D(const char *id, real8 value) ;
 
       CHAI_HOST_DEVICE virtual ~DataTable1D();
 
@@ -177,7 +175,7 @@ class  DerivedTable1D : public Table1D, public Table::Data, public Table::Derive
    public:
       CHAI_HOST_DEVICE DerivedTable1D(const char *id) ;
 
-      CHAI_HOST_DEVICE virtual ~DerivedTable1D() ;
+      CHAI_HOST_DEVICE virtual ~DerivedTable1D() {}
 
       CHAI_HOST_DEVICE real8 Evaluate(real8 xin) const override;
 
@@ -226,7 +224,7 @@ class ComputedTable1D : public DerivedTable1D, public Table::Compute {
       CHAI_HOST_DEVICE  ComputedTable1D(const char* id, const Table1D * table,
                                                      real8 lb, real8 ub);
 
-      CHAI_HOST_DEVICE virtual ~ComputedTable1D() ;
+      CHAI_HOST_DEVICE virtual ~ComputedTable1D() {}
 
    protected:
       const Table1D *m_table;
@@ -242,7 +240,7 @@ class YofXfromRTTable1D : public ComputedTable1D {
       CHAI_HOST_DEVICE YofXfromRTTable1D(const char* id, Table1D const * f,
                                         real8 theta_low, real8 theta_high) ;
 
-      CHAI_HOST_DEVICE virtual ~YofXfromRTTable1D() ;
+      CHAI_HOST_DEVICE virtual ~YofXfromRTTable1D() {}
 
       inline int GetNumStrings() const override { return 1; }
 
@@ -261,7 +259,7 @@ class RofTfromXYTable1D : public ComputedTable1D {
       CHAI_HOST_DEVICE RofTfromXYTable1D(const char* id, Table1D const * f,
                                         real8 x_low, real8 x_high) ;
 
-      CHAI_HOST_DEVICE virtual ~RofTfromXYTable1D() ;
+      CHAI_HOST_DEVICE virtual ~RofTfromXYTable1D() {}
 
       inline int GetNumStrings() const override { return 1; }
 
@@ -293,6 +291,7 @@ CHAI_HOST_DEVICE Table::~Table()
    }
 #endif
 }
+
 CHAI_HOST_DEVICE real8 Table::Compute::BaseXFromNewX(const real8 *xin) const
 {
 #ifdef CHAI_DEVICE_COMPILE
@@ -320,10 +319,6 @@ CHAI_HOST_DEVICE SimpleTable::SimpleTable(const char* id)
 #ifdef CHAI_DEVICE_COMPILE
    printf("SimpleTable::SimpleTable %p\n", this) ;
 #endif
-}
-
-CHAI_HOST_DEVICE SimpleTable::~SimpleTable()
-{
 }
 
 CHAI_HOST_DEVICE LinearTable1D::LinearTable1D(const int numX,
@@ -387,15 +382,12 @@ CHAI_HOST_DEVICE real8 LinearTable1D::innerEvaluate(real8 xin) const
 
 CHAI_HOST_DEVICE DerivedTable1D::DerivedTable1D(const char *id)
    : Table1D(id)
+   , Table::Data()
    , Table::Derived()
 {
 #ifdef CHAI_DEVICE_COMPILE
    printf("DerivedTable1D::DerivedTable1D POINTER %p\n", this) ;
 #endif
-}
-
-CHAI_HOST_DEVICE DerivedTable1D::~DerivedTable1D()
-{
 }
 
 CHAI_HOST_DEVICE real8 DerivedTable1D::Evaluate(real8 xin) const
@@ -412,10 +404,6 @@ CHAI_HOST_DEVICE Table1D::Table1D(const char* id)
 #ifdef CHAI_DEVICE_COMPILE
    printf("Table1D::Table1D POINTER %p\n", this) ;
 #endif
-}
-
-CHAI_HOST_DEVICE Table1D::~Table1D()
-{
 }
 
 CHAI_HOST_DEVICE DataTable1D::DataTable1D(const int numX,
@@ -533,10 +521,6 @@ ComputedTable1D(const char* id, const Table1D * f, real8 min, real8 max)
 #endif
 }
 
-CHAI_HOST_DEVICE ComputedTable1D::~ComputedTable1D()
-{
-}
-
 CHAI_HOST_DEVICE YofXfromRTTable1D::YofXfromRTTable1D(const char* id, Table1D const * f,
                                                      real8 xlow,
                                                      real8 xhigh)
@@ -546,10 +530,6 @@ CHAI_HOST_DEVICE YofXfromRTTable1D::YofXfromRTTable1D(const char* id, Table1D co
    printf("YofXfromRTTable1D::YofXfromRTTable1D POINTER %p m_table %p <<< CHECK THESE POINTERS\n", this, m_table) ;
 #endif
    real8 r_min = m_table->Evaluate(xlow) ;
-}
-
-CHAI_HOST_DEVICE YofXfromRTTable1D::~YofXfromRTTable1D()
-{
 }
 
 CHAI_HOST_DEVICE real8 YofXfromRTTable1D::RootFromBaseX(real8 t, const real8 *vals) const
@@ -583,9 +563,6 @@ CHAI_HOST_DEVICE RofTfromXYTable1D::RofTfromXYTable1D(const char* id, Table1D co
    m_table->Evaluate(xlow) ;
 }
 
-CHAI_HOST_DEVICE RofTfromXYTable1D::~RofTfromXYTable1D()
-{
-}
 
 CHAI_HOST_DEVICE real8 RofTfromXYTable1D::RootFromBaseX(real8 xnew, const real8 *vals) const
 {
