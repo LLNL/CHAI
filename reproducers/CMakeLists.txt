@@ -14,6 +14,13 @@ if (CHAI_ENABLE_HIP)
   list(APPEND chai_reproducer_depends blt::hip)
 endif ()
 
+if (CHAI_ENABLE_MANAGED_PTR)
+  blt_add_executable(
+    NAME managed_ptr_multiple_inheritance_reproducer.exe
+    SOURCES managed_ptr_multiple_inheritance_reproducer.cpp
+    DEPENDS_ON ${chai_reproducer_depends})
+endif ()
+
 if (CHAI_ENABLE_MANAGED_PTR AND CHAI_ENABLE_HIP)
   blt_add_executable(
     NAME virtual_function_simple_reproducer.exe
