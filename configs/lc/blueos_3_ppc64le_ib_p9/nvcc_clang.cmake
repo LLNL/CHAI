@@ -1,6 +1,6 @@
 ##############################################################################
-# Copyright (c) 2020-24, Lawrence Livermore National Security, LLC and CARE
-# project contributors. See the CARE LICENSE file for details.
+# Copyright (c) 2020-24, Lawrence Livermore National Security, LLC and CHAI
+# project contributors. See the CHAI LICENSE file for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
@@ -21,7 +21,3 @@ set(CMAKE_CUDA_COMPILER "${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc" CACHE PATH "")
 set(CMAKE_CUDA_HOST_COMPILER "${CMAKE_CXX_COMPILER}" CACHE PATH "")
 set(CMAKE_CUDA_ARCHITECTURES "70" CACHE STRING "")
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=--gcc-toolchain=${GCC_HOME}" CACHE STRING "")
-
-set(ENABLE_REPRODUCERS ON CACHE BOOL "")
-set(CHAI_ENABLE_REPRODUCERS ON CACHE BOOL "")
-set(ENABLE_TESTS OFF CACHE BOOL "")
