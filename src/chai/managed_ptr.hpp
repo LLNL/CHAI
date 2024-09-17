@@ -997,6 +997,9 @@ namespace chai {
    template <typename T,
              typename... Args>
    CHAI_HOST T* make_on_device(Args... args) {
+      // Allocate space to hold the pointer to the new object
+      ManagedArray<T*> pointerBuffer(1, GPU);
+
 #if !defined(CHAI_DISABLE_RM)
       // Get the ArrayManager and save the current execution space
       chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
@@ -1010,35 +1013,26 @@ namespace chai {
       arrayManager->setExecutionSpace(GPU);
 #endif
 
-      // Allocate space on the GPU to hold the pointer to the new object
-      T** gpuBuffer;
-      gpuMalloc((void**)(&gpuBuffer), sizeof(T*));
-
       // Create the object on the device
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
-      detail::make_on_device(gpuBuffer, args...);
+      detail::make_on_device(pointerBuffer.data(GPU), args...);
       arrayManager->setGPUSimMode(false);
 #elif defined(__CUDACC__) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-      detail::make_on_device<<<1, 1>>>(gpuBuffer, args...);
+      detail::make_on_device<<<1, 1>>>(pointerBuffer.data(GPU), args...);
 #elif defined(__HIPCC__) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-      hipLaunchKernelGGL(detail::make_on_device, 1, 1, 0, 0, gpuBuffer, args...);
+      hipLaunchKernelGGL(detail::make_on_device, 1, 1, 0, 0, pointerBuffer.data(GPU), args...);
 #endif
-
-      // Allocate space on the CPU for the pointer and copy the pointer to the CPU
-      T** cpuBuffer = (T**) malloc(sizeof(T*));
-      gpuMemcpy(cpuBuffer, gpuBuffer, sizeof(T*), gpuMemcpyDeviceToHost);
-
-      // Get the GPU pointer
-      T* gpuPointer = cpuBuffer[0];
-
-      // Free the host and device buffers
-      free(cpuBuffer);
-      gpuFree(gpuBuffer);
 
 #if !defined(CHAI_DISABLE_RM)
       // Set the execution space back to the previous value
       arrayManager->setExecutionSpace(currentSpace);
 #endif
+
+      // Get the GPU pointer
+      T* gpuPointer = pointerBuffer.data(CPU)[0];
+
+      // Free the buffers
+      pointerBuffer.free();
 
       // Return the GPU pointer
       return gpuPointer;
@@ -1058,6 +1052,9 @@ namespace chai {
              typename F,
              typename... Args>
    CHAI_HOST T* make_on_device_from_factory(F f, Args&&... args) {
+      // Allocate space to hold the pointer to the new object
+      ManagedArray<T*> pointerBuffer(1, GPU);
+
 #if !defined(CHAI_DISABLE_RM)
       // Get the ArrayManager and save the current execution space
       chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
@@ -1071,35 +1068,26 @@ namespace chai {
       arrayManager->setExecutionSpace(GPU);
 #endif
 
-      // Allocate space on the GPU to hold the pointer to the new object
-      T** gpuBuffer;
-      gpuMalloc((void**)(&gpuBuffer), sizeof(T*));
-
       // Create the object on the device
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
-      detail::make_on_device_from_factory(gpuBuffer, f, args...);
+      detail::make_on_device_from_factory(pointerBuffer.data(GPU), f, args...);
       arrayManager->setGPUSimMode(false);
 #elif defined(__CUDACC__) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-      detail::make_on_device_from_factory<T><<<1, 1>>>(gpuBuffer, f, args...);
+      detail::make_on_device_from_factory<T><<<1, 1>>>(pointerBuffer.data(GPU), f, args...);
 #elif defined(__HIPCC__) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-      hipLaunchKernelGGL(detail::make_on_device_from_factory, 1, 1, 0, 0, gpuBuffer, f, args...);
+      hipLaunchKernelGGL(detail::make_on_device_from_factory, 1, 1, 0, 0, pointerBuffer.data(GPU), f, args...);
 #endif
-
-      // Allocate space on the CPU for the pointer and copy the pointer to the CPU
-      T** cpuBuffer = (T**) malloc(sizeof(T*));
-      gpuMemcpy(cpuBuffer, gpuBuffer, sizeof(T*), gpuMemcpyDeviceToHost);
-
-      // Get the GPU pointer
-      T* gpuPointer = cpuBuffer[0];
-
-      // Free the host and device buffers
-      free(cpuBuffer);
-      gpuFree(gpuBuffer);
 
 #if !defined(CHAI_DISABLE_RM)
       // Set the execution space back to the previous value
       arrayManager->setExecutionSpace(currentSpace);
 #endif
+
+      // Get the GPU pointer
+      T* gpuPointer = pointerBuffer.data(CPU)[0];
+
+      // Free the buffers
+      pointerBuffer.free();
 
       // Return the GPU pointer
       return gpuPointer;
