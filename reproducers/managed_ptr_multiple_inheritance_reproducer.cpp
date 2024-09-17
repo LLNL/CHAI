@@ -4,6 +4,27 @@
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
+//
+// To reproduce crash on with a ROCM compiler:
+// % mkdir build_rocm
+// % cd build_rocm
+// % cmake -DCHAI_ENABLE_REPRODUCERS=1 -C ../host-configs/lc/toss_4_x86_64_ib_cray/amdclang.cmake ..
+// % flux alloc -N 1 -n 1 -g1 make -j 40
+// % flux alloc -N 1 -n 1 -g1 ./bin/managed_ptr_multiple_inheritance_reproducer.exe
+//
+// - Note that the "this" pointer in YofXfromRTTable1D::RootFromBaseX differs from the
+//   "this" pointer in other YofXfromRTTable1D methods.
+// - Interestingly , the crash goes away if GetNumStrings() is removed
+//
+// The NVCC case does not crash and has consistent pointer addresses in YofXfromRTTable1D.
+// This can be reproduced with:
+// % mkdir build_cuda
+// % cd build_cuda
+// % cmake -DCHAI_ENABLE_REPRODUCERS=1 -C ../host-configs/lc/blueos_3_ppc64le_ib_p9/nvcc_clang.cmake ..
+// % lalloc 1 make -j 40
+// % lalloc 1 ./bin/managed_ptr_multiple_inheritance_reproducer.exe
+//
+
 #include "chai/config.hpp"
 #include "chai/managed_ptr.hpp"
 #include "chai/ArrayManager.hpp"
