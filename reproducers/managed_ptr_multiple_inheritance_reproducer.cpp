@@ -13,7 +13,8 @@
 // % flux alloc -N 1 -n 1 -g1 ./bin/managed_ptr_multiple_inheritance_reproducer.exe
 //
 // - Note that the "this" pointer in YofXfromRTTable1D::RootFromBaseX differs from the
-//   "this" pointer in other YofXfromRTTable1D methods.
+//   "this" pointer in other YofXfromRTTable1D methods. The crash occurs because m_table is null
+//   and is dereferenced.
 // - Interestingly , the crash goes away if GetNumStrings() is removed
 //
 // The NVCC case does not crash and has consistent pointer addresses in YofXfromRTTable1D.
