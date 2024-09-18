@@ -71,8 +71,6 @@ cmake_dependent_option(CHAI_ENABLE_DOCS "Build CHAI docs" On
                        "ENABLE_DOCS" Off)
 cmake_dependent_option( CHAI_ENABLE_GMOCK "Build CHAI with gmock" On
                         "ENABLE_GMOCK" Off )
-cmake_dependent_option(CHAI_ENABLE_REPRODUCERS "Build CHAI reproducers" On
-                       "ENABLE_REPRODUCERS" Off)
 
 include(cmake/ChaiBasics.cmake)
 
