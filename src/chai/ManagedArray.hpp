@@ -132,7 +132,7 @@ public:
    */
   CHAI_HOST void allocate(size_t elems,
                           ExecutionSpace space = CPU,
-                          UserCallback const& cback =
+                          const UserCallback& cback =
                           [] (const PointerRecord*, Action, ExecutionSpace) {});
 
 
