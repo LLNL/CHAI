@@ -35,7 +35,7 @@ The format of this file is based on [Keep a Changelog](http://keepachangelog.com
 ## [Version 2024.02.0] - Release date 2024-03-04
 
 ### Added
-- Support for APUs with a single memory space. To use, configure with -DCHAI\_DISABLE\_RM=ON -DCHAI\_GPU\_THIN\_ALLOCATE=ON.
+- Support for APUs with a single memory space. To use, configure with -DCHAI\_DISABLE\_RM=ON -DCHAI\_THIN\_GPU\_ALLOCATE=ON.
 
 ### Changed
 - Moved installed CMake targets from share/chai/cmake to lib/cmake/chai to be consistent with other libraries in the RAJA Portability Suite
