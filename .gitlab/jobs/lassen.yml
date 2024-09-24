@@ -17,22 +17,14 @@
 # project. We keep ${PROJECT_<MACHINE>_VARIANTS} and ${PROJECT_<MACHINE>_DEPS}
 # So that the comparison with the original job is easier.
 
-# Overridden to increase allocation time
-xl_2022_08_19_gcc_8_3_1_cuda_11_2_0:
+# Allow failure due to what appears to be a bug with handling std::function in
+# cuda context (https://github.com/LLNL/CHAI/pull/275#issuecomment-2332696091)
+gcc_11_2_1_cuda_11_8_0:
   variables:
-    SPEC: "${PROJECT_LASSEN_VARIANTS} +cuda %xl@16.1.1.12.gcc.8.3.1 ^cuda@11.2.0+allow-unsupported-compilers ${PROJECT_LASSEN_DEPS}"
-    MODULE_LIST: "cuda/11.2.0"
-    LASSEN_JOB_ALLOC: "1 -W 12 -q pci"
-  extends: .job_on_lassen
-
-
-# Override job with old cuda to allow it to fail.
-clang_12_0_1_ibm_gcc_8_3_1_cuda_10_1_243:
-  variables:
-    SPEC: "${PROJECT_LASSEN_VARIANTS} +cuda %clang@12.0.1.ibm.gcc.8.3.1 ^cuda@10.1.243+allow-unsupported-compilers ${PROJECT_LASSEN_DEPS}"
+    SPEC: "${PROJECT_LASSEN_VARIANTS} +cuda %gcc@=11.2.1 ^cuda@11.8.0+allow-unsupported-compilers ${PROJECT_LASSEN_DEPS}"
+    MODULE_LIST: "cuda/11.8.0"
   extends: .job_on_lassen
   allow_failure: true
-
 
 ############
 # Extra jobs
@@ -45,7 +37,11 @@ clang_12_0_1_libcpp:
   extends: .job_on_lassen
   variables:
     SPEC: "~shared +raja tests=basic %clang@12.0.1 cflags==\"-DGTEST_HAS_CXXABI_H_=0\" cxxflags==\"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0\""
-  allow_failure: true
+
+clang_16_0_6_libcpp:
+  extends: .job_on_lassen
+  variables:
+    SPEC: "~shared +raja tests=basic %clang@16.0.6 cflags==\"-DGTEST_HAS_CXXABI_H_=0\" cxxflags==\"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0\""
 
 clang_12_0_1_gcc_8_3_1_memleak:
   extends: .job_on_lassen
@@ -53,9 +49,19 @@ clang_12_0_1_gcc_8_3_1_memleak:
     SPEC: "~shared +raja tests=basic %clang@12.0.1.gcc.8.3.1 cxxflags==\"-fsanitize=address\""
     ASAN_OPTIONS: "detect_leaks=1"
 
+clang_16_0_6_gcc_8_3_1_memleak:
+  extends: .job_on_lassen
+  variables:
+    SPEC: "~shared +raja tests=basic %clang@16.0.6.gcc.8.3.1 cxxflags==\"-fsanitize=address\""
+    ASAN_OPTIONS: "detect_leaks=1"
+
 clang_12_0_1_datarace:
   extends: .job_on_lassen
   variables:
     SPEC: "~shared +raja tests=basic %clang@12.0.1 cxxflags==\"-fsanitize=thread\""
-  allow_failure: true
+
+clang_16_0_6_datarace:
+  extends: .job_on_lassen
+  variables:
+    SPEC: "~shared +raja tests=basic %clang@16.0.6 cxxflags==\"-fsanitize=thread\""
 
