@@ -48,12 +48,8 @@ int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv))
   std::cout << "Doubling v2 on device." << std::endl;
   forall(gpu(), 0, 10, [=] __device__(int i) { v2[i] *= 2.0f; });
 
-  std::cout << "Casting v2 to a pointer." << std::endl;
-#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
-  float* raw_v2 = v2;
-#else
+  std::cout << "Extracting pointer from v2." << std::endl;
   float* raw_v2 = v2.data();
-#endif
 
   std::cout << "raw_v2 = [";
   for (int i = 0; i < 10; i++) {
@@ -61,12 +57,8 @@ int main(int CHAI_UNUSED_ARG(argc), char** CHAI_UNUSED_ARG(argv))
   }
   std::cout << " ]" << std::endl;
 
-  std::cout << "Casting device_array to a pointer." << std::endl;
-#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
-  int* raw_device_array = device_array;
-#else  
+  std::cout << "Extracting pointer from device_array." << std::endl;
   int* raw_device_array = device_array.data();
-#endif
   std::cout << "device_array = [";
   for (int i = 0; i < 10; i++) {
     std::cout << " " << device_array[i];

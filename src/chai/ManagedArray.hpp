@@ -323,29 +323,6 @@ public:
 #endif
 
 
-#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
-  /*!
-   * \brief Cast the ManagedArray to a raw pointer.
-   *
-   * \return Raw pointer to data.
-   */
-  CHAI_HOST_DEVICE operator T*() const;
-
-  /*!
-   * \brief Construct a ManagedArray from a raw pointer.
-   *
-   * This raw pointer *must* have taken from an existing ManagedArray object.
-   *
-   * \param data Raw pointer to data.
-   * \param enable Boolean argument (unused) added to differentiate constructor.
-   */
-  template <bool Q = false>
-  CHAI_HOST_DEVICE ManagedArray(T* data,
-                                CHAIDISAMBIGUATE test = CHAIDISAMBIGUATE(),
-                                bool foo = Q);
-#endif
-
-
 #ifndef CHAI_DISABLE_RM
   /*!
    * \brief Assign a user-defined callback triggerd upon memory migration.
