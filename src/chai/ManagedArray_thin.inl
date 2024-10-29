@@ -352,28 +352,6 @@ CHAI_INLINE CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const Idx i) const
   return m_active_pointer[i];
 }
 
-#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
-template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const
-{
-  return m_active_pointer;
-}
-
-template <typename T>
-template <bool Q>
-CHAI_INLINE CHAI_HOST_DEVICE
-ManagedArray<T>::ManagedArray(T* data, CHAIDISAMBIGUATE, bool) :
-  m_active_pointer(data),
-  m_active_base_pointer(data),
-  m_resource_manager(nullptr),
-  m_size(-1),
-  m_pointer_record(nullptr),
-  m_offset(0),
-  m_is_slice(false)
-{
-}
-#endif
-
 template <typename T>
 template <typename U>
 ManagedArray<T>::operator typename std::
@@ -419,19 +397,6 @@ CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator!=(
     const ManagedArray<T>& rhs) const
 {
   return (m_active_pointer != rhs.m_active_pointer);
-}
-
-
-template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator==(const T* from) const
-{
-  return m_active_pointer == from;
-}
-
-template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator!=(const T* from) const
-{
-  return m_active_pointer != from;
 }
 
 template <typename T>

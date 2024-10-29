@@ -7,7 +7,6 @@
 option(CHAI_ENABLE_GPU_SIMULATION_MODE "Enable GPU Simulation Mode" Off)
 option(CHAI_ENABLE_OPENMP "Enable OpenMP" Off)
 option(CHAI_ENABLE_MPI "Enable MPI (for umpire replay only)" Off)
-option(CHAI_ENABLE_IMPLICIT_CONVERSIONS "Enable implicit conversions to-from raw pointers" On)
 
 option(CHAI_DISABLE_RM "Make ManagedArray a thin wrapper" Off)
 mark_as_advanced(CHAI_DISABLE_RM)

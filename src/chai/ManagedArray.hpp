@@ -43,18 +43,6 @@ class CHAICopyable
 };
 
 /*!
- * \class CHAIDISAMBIGUATE
- *
- * \brief Type to disambiguate otherwise ambiguous constructors.
- *
- */
-class CHAIDISAMBIGUATE
-{
-public:
-  CHAI_HOST_DEVICE CHAIDISAMBIGUATE(){};
-  CHAI_HOST_DEVICE ~CHAIDISAMBIGUATE(){};
-};
-/*!
  * \class ManagedArray
  *
  * \brief Provides an array-like class that automatically transfers data
@@ -274,9 +262,6 @@ public:
   CHAI_HOST_DEVICE bool operator==(const ManagedArray<T>& rhs) const;
   CHAI_HOST_DEVICE bool operator!=(const ManagedArray<T>& from) const;
 
-  CHAI_HOST_DEVICE bool operator==(const T* from) const;
-  CHAI_HOST_DEVICE bool operator!=(const T* from) const;
-
   CHAI_HOST_DEVICE bool operator==(std::nullptr_t from) const;
   CHAI_HOST_DEVICE bool operator!=(std::nullptr_t from) const;
 
@@ -320,29 +305,6 @@ public:
    * \tparam T The type of data value in ManagedArray.
    */
   CHAI_HOST_DEVICE void decr(size_t i) const;
-#endif
-
-
-#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
-  /*!
-   * \brief Cast the ManagedArray to a raw pointer.
-   *
-   * \return Raw pointer to data.
-   */
-  CHAI_HOST_DEVICE operator T*() const;
-
-  /*!
-   * \brief Construct a ManagedArray from a raw pointer.
-   *
-   * This raw pointer *must* have taken from an existing ManagedArray object.
-   *
-   * \param data Raw pointer to data.
-   * \param enable Boolean argument (unused) added to differentiate constructor.
-   */
-  template <bool Q = false>
-  CHAI_HOST_DEVICE ManagedArray(T* data,
-                                CHAIDISAMBIGUATE test = CHAIDISAMBIGUATE(),
-                                bool foo = Q);
 #endif
 
 

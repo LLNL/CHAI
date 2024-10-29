@@ -774,22 +774,6 @@ TEST(ManagedArray, NullpointerConversions)
   assert_empty_map(true);
 }
 
-#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
-TEST(ManagedArray, ImplicitConversions)
-{
-  chai::ManagedArray<float> a(1);
-  a[0] = 3.14159;
-
-  chai::ManagedArray<float> a2 = a;
-  
-  ASSERT_EQ(a2[0], a[0]);
-
-  a.free();
-  SUCCEED();
-  assert_empty_map(true);
-}
-#endif
-
 TEST(ManagedArray, PodTest)
 {
   chai::ManagedArray<my_point> array(1);
@@ -877,11 +861,8 @@ TEST(ManagedArray, ExternalOwnedFromManagedArray)
   chai::ManagedArray<float> arrayCopy =
       chai::makeManagedArray<float>(array.data(chai::CPU), 20, chai::CPU, true);
 
-#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
-  ASSERT_EQ(array, arrayCopy);
-#else
   ASSERT_EQ(array.data(), arrayCopy.data());
-#endif
+
   // should be able to free through the new ManagedArray
   arrayCopy.free();
   assert_empty_map(true);
