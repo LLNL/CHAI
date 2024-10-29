@@ -875,7 +875,7 @@ TEST(ManagedArray, ExternalOwnedFromManagedArray)
   forall(sequential(), 0, 20, [=](int i) { array[i] = 1.0f * i; });
 
   chai::ManagedArray<float> arrayCopy =
-      chai::makeManagedArray<float>(array.getPointer(chai::CPU), 20, chai::CPU, true);
+      chai::makeManagedArray<float>(array.data(chai::CPU), 20, chai::CPU, true);
 
 #if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
   ASSERT_EQ(array, arrayCopy);
@@ -894,7 +894,7 @@ TEST(ManagedArray, ExternalUnownedFromManagedArray)
   forall(sequential(), 0, 20, [=](int i) { array[i] = 1.0f * i; });
 
   chai::ManagedArray<float> arrayCopy =
-      chai::makeManagedArray<float>(array.getPointer(chai::CPU), 20, chai::CPU, false);
+      chai::makeManagedArray<float>(array.data(chai::CPU), 20, chai::CPU, false);
 
   forall(sequential(), 0, 20, [=](int i) { ASSERT_EQ(arrayCopy[i], 1.0f * i); });
   // freeing from an unowned pointer should leave the original ManagedArray intact
