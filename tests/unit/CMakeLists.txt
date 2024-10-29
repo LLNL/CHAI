@@ -50,3 +50,18 @@ if (CHAI_ENABLE_MANAGED_PTR)
     NAME managed_ptr_unit_test
     COMMAND managed_ptr_unit_tests)
 endif ()
+
+if (CHAI_ENABLE_HIP)
+  blt_add_executable(
+    NAME PinnedArrayUnitTests
+    SOURCES PinnedArrayUnitTests.cpp
+    DEPENDS_ON ${chai_unit_test_depends})
+
+  target_include_directories(
+    PinnedArrayUnitTests
+    PUBLIC ${PROJECT_BINARY_DIR}/include)
+
+  blt_add_test(
+    NAME PinnedArrayUnitTest
+    COMMAND PinnedArrayUnitTests)
+endif()

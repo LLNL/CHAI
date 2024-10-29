@@ -90,3 +90,17 @@ if (CHAI_ENABLE_RAJA_PLUGIN)
   endif ()
 
 endif ()
+
+# PinnedArray tests
+blt_add_executable(
+  NAME PinnedArrayIntegrationTests
+  SOURCES PinnedArrayIntegrationTests.cpp
+  DEPENDS_ON ${chai_integration_test_depends})
+
+target_include_directories(
+  PinnedArrayIntegrationTests
+  PUBLIC ${PROJECT_BINARY_DIR}/include)
+
+blt_add_test(
+  NAME PinnedArrayIntegrationTest
+  COMMAND PinnedArrayIntegrationTests)

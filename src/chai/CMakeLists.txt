@@ -22,6 +22,10 @@ set (chai_headers
   PointerRecord.hpp
   Types.hpp)
 
+if (CHAI_ENABLE_HIP)
+  set(chai_headers ${chai_headers} containers/PinnedArray.hpp)
+endif()
+
 if(CHAI_DISABLE_RM)
   set(chai_headers
     ${chai_headers}

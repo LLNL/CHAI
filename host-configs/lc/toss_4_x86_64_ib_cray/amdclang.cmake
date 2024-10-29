@@ -6,7 +6,7 @@
 ##############################################################################
 
 # Set up software versions
-set(ROCM_VERSION "6.2.0" CACHE PATH "")
+set(ROCM_VERSION "6.2.1" CACHE PATH "")
 set(GCC_VERSION "12.2.1" CACHE PATH "")
 
 # Set up compilers
