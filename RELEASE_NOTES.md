@@ -13,6 +13,11 @@ in this file.
 
 The format of this file is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased] - Release date yyyy-mm-dd
+
+### Removed
+- Removes deprecated ManagedArray::getPointer method. Use ManagedArray::data instead.
+
 ## [Version 2024.07.0] - Release date 2024-07-26
 
 ### Changed
