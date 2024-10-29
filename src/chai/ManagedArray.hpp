@@ -102,11 +102,6 @@ public:
    */
   CHAI_HOST_DEVICE ManagedArray(ManagedArray const& other);
 
-  /*!
-   * \brief Construct a ManagedArray from a nullptr.
-   */
-  CHAI_HOST_DEVICE ManagedArray(std::nullptr_t other);
-
   CHAI_HOST ManagedArray(PointerRecord* record, ExecutionSpace space);
 
   /*!
@@ -253,18 +248,10 @@ public:
                                 PointerRecord* pointer_record);
 
   ManagedArray<T>& operator=(ManagedArray const & other) = default;
-
   CHAI_HOST_DEVICE ManagedArray<T>& operator=(ManagedArray && other);
-
-  CHAI_HOST_DEVICE ManagedArray<T>& operator=(std::nullptr_t);
-
 
   CHAI_HOST_DEVICE bool operator==(const ManagedArray<T>& rhs) const;
   CHAI_HOST_DEVICE bool operator!=(const ManagedArray<T>& from) const;
-
-  CHAI_HOST_DEVICE bool operator==(std::nullptr_t from) const;
-  CHAI_HOST_DEVICE bool operator!=(std::nullptr_t from) const;
-
 
   CHAI_HOST_DEVICE explicit operator bool() const;
 
