@@ -17,6 +17,7 @@ The format of this file is based on [Keep a Changelog](http://keepachangelog.com
 
 ### Removed
 - Removes deprecated ManagedArray::getPointer method. Use ManagedArray::data instead.
+- Removes optional support for implicitly casting between raw pointers and ManagedArrays (CHAI\_ENABLE\_IMPLICIT\_CONVERSIONS). Use makeManagedArray and ManagedArray::data to perform explicit conversions instead.
 
 ## [Version 2024.07.0] - Release date 2024-07-26
 

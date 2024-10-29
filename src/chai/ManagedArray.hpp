@@ -43,18 +43,6 @@ class CHAICopyable
 };
 
 /*!
- * \class CHAIDISAMBIGUATE
- *
- * \brief Type to disambiguate otherwise ambiguous constructors.
- *
- */
-class CHAIDISAMBIGUATE
-{
-public:
-  CHAI_HOST_DEVICE CHAIDISAMBIGUATE(){};
-  CHAI_HOST_DEVICE ~CHAIDISAMBIGUATE(){};
-};
-/*!
  * \class ManagedArray
  *
  * \brief Provides an array-like class that automatically transfers data
