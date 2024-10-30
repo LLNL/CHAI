@@ -349,18 +349,6 @@ ManagedArray<T>::operator typename std::
                                nullptr);
 }
 
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE
-ManagedArray<T>&
-ManagedArray<T>::operator= (ManagedArray && other) {
-  if (this != &other) {
-      *this = other;
-      other = nullptr;
-  }
-  return *this;
-}
-
 template <typename T>
 CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator==(
     const ManagedArray<T>& rhs) const

@@ -248,7 +248,6 @@ public:
                                 PointerRecord* pointer_record);
 
   ManagedArray<T>& operator=(ManagedArray const & other) = default;
-  CHAI_HOST_DEVICE ManagedArray<T>& operator=(ManagedArray && other);
 
   CHAI_HOST_DEVICE bool operator==(const ManagedArray<T>& rhs) const;
   CHAI_HOST_DEVICE bool operator!=(const ManagedArray<T>& from) const;

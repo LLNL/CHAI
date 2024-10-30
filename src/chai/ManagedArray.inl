@@ -562,17 +562,6 @@ typename std::enable_if< !std::is_const<U>::value ,
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE
-ManagedArray<T>&
-ManagedArray<T>::operator= (ManagedArray && other) {
-  // TODO: What happens if *this == other?
-  *this = other;
-  other = ManagedArray<T>();
-  return *this;
-}
-
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE
 bool
 ManagedArray<T>::operator== (const ManagedArray<T>& rhs) const
 {
