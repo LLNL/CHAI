@@ -79,7 +79,7 @@ class TestBase {
 
 class TestDerived : public TestBase {
    public:
-      CHAI_HOST_DEVICE TestDerived() : TestBase(), m_values(nullptr) {}
+      CHAI_HOST_DEVICE TestDerived() : TestBase(), m_values() {}
       CHAI_HOST_DEVICE TestDerived(chai::ManagedArray<int> values) : TestBase(), m_values(values) {}
       CHAI_HOST_DEVICE virtual ~TestDerived() {}
 

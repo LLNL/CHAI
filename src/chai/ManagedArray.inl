@@ -174,8 +174,8 @@ CHAI_HOST void ManagedArray<T>::allocate(
        m_active_pointer = m_active_base_pointer; // Cannot be a slice
 
        // if T is a CHAICopyable, then it is important to initialize all the
-       // ManagedArrays to nullptr at allocation, since it is extremely easy to
-       // trigger a moveInnerImpl, which expects inner values to be initialized.
+       // ManagedArrays at allocation, since it is extremely easy to trigger
+       // a moveInnerImpl, which expects inner values to be initialized.
        initInner();
      
 #if defined(CHAI_ENABLE_UM)
@@ -228,8 +228,8 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t elems)
       m_active_pointer = m_active_base_pointer; // Cannot be a slice
  
       // if T is a CHAICopyable, then it is important to initialize all the new
-      // ManagedArrays to nullptr at allocation, since it is extremely easy to
-      // trigger a moveInnerImpl, which expects inner values to be initialized.
+      // ManagedArrays at allocation, since it is extremely easy to trigger a
+      // moveInnerImpl, which expects inner values to be initialized.
       if (initInner(old_size/sizeof(T))) {
         // if we are active on the  GPU, we need to send any newly initialized inner members to the device
         if (m_pointer_record->m_last_space == GPU && old_size < m_size) {
@@ -564,8 +564,9 @@ CHAI_INLINE
 CHAI_HOST_DEVICE
 ManagedArray<T>&
 ManagedArray<T>::operator= (ManagedArray && other) {
+  // TODO: What happens if *this == other?
   *this = other;
-  other = nullptr;
+  other = ManagedArray<T>();
   return *this;
 }
 
