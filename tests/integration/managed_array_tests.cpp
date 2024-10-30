@@ -755,25 +755,6 @@ GPU_TEST(ManagedArray, ReallocateGPU)
 }
 #endif
 
-TEST(ManagedArray, NullpointerConversions)
-{
-  chai::ManagedArray<float> a;
-  a.free();
-  a = nullptr;
-
-  chai::ManagedArray<const float> b;
-  b.free();
-  b = nullptr;
-
-  ASSERT_EQ(a.size(), 0u);
-  ASSERT_EQ(b.size(), 0u);
-
-  chai::ManagedArray<float> c(nullptr);
-
-  ASSERT_EQ(c.size(), 0u);
-  assert_empty_map(true);
-}
-
 TEST(ManagedArray, PodTest)
 {
   chai::ManagedArray<my_point> array(1);

@@ -59,20 +59,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(size_t elems, ExecutionSpace spac
 #endif
 }
 
-
-template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t)
-    : m_active_pointer(nullptr),
-      m_active_base_pointer(nullptr),
-      m_resource_manager(nullptr),
-      m_size(0),
-      m_offset(0),
-      m_pointer_record(nullptr),
-      m_is_slice(false)
-{
-}
-
-
 template<typename T>
 CHAI_INLINE
 CHAI_HOST ManagedArray<T>::ManagedArray(PointerRecord* record, ExecutionSpace space):
@@ -363,28 +349,6 @@ ManagedArray<T>::operator typename std::
                                nullptr);
 }
 
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE
-ManagedArray<T>&
-ManagedArray<T>::operator= (ManagedArray && other) {
-  if (this != &other) {
-      *this = other;
-      other = nullptr;
-  }
-  return *this;
-}
-
-template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>& ManagedArray<T>::operator=(std::nullptr_t from)
-{
-  m_active_pointer = from;
-  m_active_base_pointer = from;
-  m_size = 0;
-  m_is_slice = false;
-  return *this;
-}
-
 template <typename T>
 CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator==(
     const ManagedArray<T>& rhs) const
@@ -397,17 +361,6 @@ CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator!=(
     const ManagedArray<T>& rhs) const
 {
   return (m_active_pointer != rhs.m_active_pointer);
-}
-
-template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator==( std::nullptr_t from) const
-{
-  return m_active_pointer == from;
-}
-template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator!=( std::nullptr_t from) const
-{
-  return m_active_pointer != from;
 }
 
 template <typename T>

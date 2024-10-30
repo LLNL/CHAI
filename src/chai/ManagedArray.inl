@@ -74,13 +74,6 @@ ManagedArray<T>::ManagedArray(
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t) :
-  ManagedArray()
-{
-}
-
-template<typename T>
-CHAI_INLINE
 CHAI_HOST ManagedArray<T>::ManagedArray(PointerRecord* record, ExecutionSpace space):
   m_active_pointer(static_cast<T*>(record->m_pointers[space])),
   m_active_base_pointer(static_cast<T*>(record->m_pointers[space])),
@@ -181,8 +174,8 @@ CHAI_HOST void ManagedArray<T>::allocate(
        m_active_pointer = m_active_base_pointer; // Cannot be a slice
 
        // if T is a CHAICopyable, then it is important to initialize all the
-       // ManagedArrays to nullptr at allocation, since it is extremely easy to
-       // trigger a moveInnerImpl, which expects inner values to be initialized.
+       // ManagedArrays at allocation, since it is extremely easy to trigger
+       // a moveInnerImpl, which expects inner values to be initialized.
        initInner();
      
 #if defined(CHAI_ENABLE_UM)
@@ -235,8 +228,8 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t elems)
       m_active_pointer = m_active_base_pointer; // Cannot be a slice
  
       // if T is a CHAICopyable, then it is important to initialize all the new
-      // ManagedArrays to nullptr at allocation, since it is extremely easy to
-      // trigger a moveInnerImpl, which expects inner values to be initialized.
+      // ManagedArrays at allocation, since it is extremely easy to trigger a
+      // moveInnerImpl, which expects inner values to be initialized.
       if (initInner(old_size/sizeof(T))) {
         // if we are active on the  GPU, we need to send any newly initialized inner members to the device
         if (m_pointer_record->m_last_space == GPU && old_size < m_size) {
@@ -569,36 +562,6 @@ typename std::enable_if< !std::is_const<U>::value ,
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE
-ManagedArray<T>&
-ManagedArray<T>::operator= (ManagedArray && other) {
-  *this = other;
-  other = nullptr;
-  return *this;
-}
-
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE
-ManagedArray<T>&
-ManagedArray<T>::operator= (std::nullptr_t) {
-  m_active_pointer = nullptr;
-  m_active_base_pointer = nullptr;
-  m_size = 0;
-  m_offset = 0;
-  #if !defined(CHAI_DEVICE_COMPILE)
-  m_pointer_record = &ArrayManager::s_null_record;
-  m_resource_manager = ArrayManager::getInstance();
-  #else
-  m_pointer_record = nullptr;
-  m_resource_manager = nullptr;
-  #endif
-  m_is_slice = false;
-  return *this;
-}
-
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE
 bool
 ManagedArray<T>::operator== (const ManagedArray<T>& rhs) const
 {
@@ -612,21 +575,6 @@ bool
 ManagedArray<T>::operator!= (const ManagedArray<T>& rhs) const
 {
   return (m_active_pointer !=  rhs.m_active_pointer);
-}
-
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE
-bool
-ManagedArray<T>::operator== (std::nullptr_t from) const {
-   return m_active_pointer == from || m_size == 0;
-}
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE
-bool
-ManagedArray<T>::operator!= (std::nullptr_t from) const {
-   return m_active_pointer != from && m_size > 0;
 }
 
 template<typename T>
