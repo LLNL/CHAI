@@ -32,10 +32,11 @@ namespace care {
             }
             else if (m_size != count) {
                T* newData = nullptr;
-               hipMalloc(&newData, count * sizeof(T));
+               hipMallocAsync(&newData, count * sizeof(T), m_control->m_last_resource.get_stream());
                const size_t min = m_size < count ? m_size : count;
-               hipMemcpy(newData, m_data, min * sizeof(T), hipMemcpyDeviceToDevice);
-               hipFree(m_data);
+               hipMemcpyAsync(newData, m_data, min * sizeof(T), hipMemcpyDeviceToDevice, m_control->m_last_resource);
+               m_control->m_last_event = m_control->m_last_resource.get_event();
+               hipFreeAsync(m_data, m_control->m_last_resource);
                m_data = newData;
             }
 
