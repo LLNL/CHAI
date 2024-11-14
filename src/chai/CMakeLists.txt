@@ -19,6 +19,7 @@ set (chai_headers
   ManagedArray.hpp
   ManagedArray.inl
   managed_ptr.hpp
+  PinnedArray.hpp
   PointerRecord.hpp
   Types.hpp)
 
