@@ -36,32 +36,32 @@ gcc_11_2_1_cuda_11_8_0:
 clang_12_0_1_libcpp:
   extends: .job_on_lassen
   variables:
-    SPEC: "~shared +raja tests=basic %clang@12.0.1 cflags==\"-DGTEST_HAS_CXXABI_H_=0\" cxxflags==\"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0\""
+    SPEC: "~shared +raja tests=basic %clang@12.0.1 cflags==\"-DGTEST_HAS_CXXABI_H_=0\" cxxflags==\"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0\" ^raja~examples~exercises"
 
 clang_16_0_6_libcpp:
   extends: .job_on_lassen
   variables:
-    SPEC: "~shared +raja tests=basic %clang@16.0.6 cflags==\"-DGTEST_HAS_CXXABI_H_=0\" cxxflags==\"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0\""
+    SPEC: "~shared +raja tests=basic %clang@16.0.6 cflags==\"-DGTEST_HAS_CXXABI_H_=0\" cxxflags==\"-stdlib=libc++ -DGTEST_HAS_CXXABI_H_=0\" ^raja~examples~exercises"
 
 clang_12_0_1_gcc_8_3_1_memleak:
   extends: .job_on_lassen
   variables:
-    SPEC: "~shared +raja tests=basic %clang@12.0.1.gcc.8.3.1 cxxflags==\"-fsanitize=address\""
+    SPEC: "~shared +raja tests=basic %clang@12.0.1.gcc.8.3.1 cxxflags==\"-fsanitize=address\" ^raja~examples~exercises"
     ASAN_OPTIONS: "detect_leaks=1"
 
 clang_16_0_6_gcc_8_3_1_memleak:
   extends: .job_on_lassen
   variables:
-    SPEC: "~shared +raja tests=basic %clang@16.0.6.gcc.8.3.1 cxxflags==\"-fsanitize=address\""
+    SPEC: "~shared +raja tests=basic %clang@16.0.6.gcc.8.3.1 cxxflags==\"-fsanitize=address\" ^raja~examples~exercises"
     ASAN_OPTIONS: "detect_leaks=1"
 
 clang_12_0_1_datarace:
   extends: .job_on_lassen
   variables:
-    SPEC: "~shared +raja tests=basic %clang@12.0.1 cxxflags==\"-fsanitize=thread\""
+    SPEC: "~shared +raja tests=basic %clang@12.0.1 cxxflags==\"-fsanitize=thread\" ^raja~examples~exercises"
 
 clang_16_0_6_datarace:
   extends: .job_on_lassen
   variables:
-    SPEC: "~shared +raja tests=basic %clang@16.0.6 cxxflags==\"-fsanitize=thread\""
+    SPEC: "~shared +raja tests=basic %clang@16.0.6 cxxflags==\"-fsanitize=thread\" ^raja~examples~exercises"
 
