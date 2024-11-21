@@ -64,7 +64,7 @@ PluginStrategy::PluginStrategy() = default;
 #endif
 
 // Register plugin with RAJA
-RAJA::util::PluginRegistry::add<chai::RajaExecutionSpacePlugin> P(
+static RAJA::util::PluginRegistry::add<chai::RajaExecutionSpacePlugin> P(
      "RajaExecutionSpacePlugin",
      "Plugin to set CHAI execution space based on RAJA execution platform");
 
