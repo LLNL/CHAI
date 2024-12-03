@@ -222,10 +222,6 @@ then
     mkdir -p ${build_dir} && cd ${build_dir}
 
     timed_message "Building CHAI"
-    if [[ "${truehostname}" == "corona" || "${truehostname}" == "tioga" ]]
-    then
-        module unload rocm
-    fi
     $cmake_exe \
       -C ${hostconfig_path} \
       -DCMAKE_INSTALL_PREFIX=${install_dir} \
