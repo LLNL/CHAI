@@ -73,7 +73,7 @@ namespace chai {
    ///       device context.
    ///    C-style array members of T need to be initialized correctly with a host or
    ///       device C-style array. If a ManagedArray is passed to the make_managed
-   ///       method in place of a C-style array, wrap it in a call to chai::unpack to
+   ///       function in place of a C-style array, wrap it in a call to chai::unpack to
    ///       extract the C-style arrays contained within the ManagedArray. This will
    ///       pass the extracted host C-style array to the host constructor and the
    ///       extracted device C-style array to the device constructor. If it is desired
@@ -87,7 +87,7 @@ namespace chai {
    ///       only or __device__ only. Special care should be taken when passing C-style
    ///       arrays as arguments to member functions.
    ///    The same restrictions for C-style array members also apply to raw pointer
-   ///       members. If a managed_ptr is passed to the make_managed method in place of
+   ///       members. If a managed_ptr is passed to the make_managed function in place of
    ///       a raw pointer, wrap it in a call to chai::unpack to extract the raw pointers
    ///       contained within the managed_ptr. This will pass the extracted host pointer
    ///       to the host constructor and the extracted device pointer to the device
