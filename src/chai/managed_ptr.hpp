@@ -245,7 +245,7 @@ namespace chai {
          {
 #if !defined(CHAI_DEVICE_COMPILE)
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-            if (ArrayManager::getInstance()->isGPUSimMode()) {
+            if (chai::ArrayManager::getInstance()->isGPUSimMode()) {
                 return;
             }
 #endif
@@ -277,7 +277,7 @@ namespace chai {
 
 #if !defined(CHAI_DEVICE_COMPILE)
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-            if (ArrayManager::getInstance()->isGPUSimMode()) {
+            if (chai::ArrayManager::getInstance()->isGPUSimMode()) {
                 return;
             }
 #endif
@@ -350,7 +350,7 @@ namespace chai {
 
 #if !defined(CHAI_DEVICE_COMPILE)
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-               if (ArrayManager::getInstance()->isGPUSimMode()) {
+               if (chai::ArrayManager::getInstance()->isGPUSimMode()) {
                   return *this;
                }
 #endif
@@ -385,7 +385,7 @@ namespace chai {
 
 #if !defined(CHAI_DEVICE_COMPILE)
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-            if (ArrayManager::getInstance()->isGPUSimMode()) {
+            if (chai::ArrayManager::getInstance()->isGPUSimMode()) {
                return *this;
             }
 #endif
@@ -408,7 +408,7 @@ namespace chai {
 
 #if !defined(CHAI_DEVICE_COMPILE)
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-            if (ArrayManager::getInstance()->isGPUSimMode()) {
+            if (chai::ArrayManager::getInstance()->isGPUSimMode()) {
                return m_gpu_pointer;
             }
 #endif
@@ -456,7 +456,7 @@ namespace chai {
 
 #if !defined(CHAI_DEVICE_COMPILE)
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-            if (ArrayManager::getInstance()->isGPUSimMode()) {
+            if (chai::ArrayManager::getInstance()->isGPUSimMode()) {
                return m_gpu_pointer;
             }
 #endif
@@ -479,7 +479,7 @@ namespace chai {
 
 #if !defined(CHAI_DEVICE_COMPILE)
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-            if (ArrayManager::getInstance()->isGPUSimMode()) {
+            if (chai::ArrayManager::getInstance()->isGPUSimMode()) {
                return *m_gpu_pointer;
             }
 #endif
@@ -798,9 +798,9 @@ namespace chai {
       ///
       template <typename T,
                 typename... Args>
-      CHAI_GLOBAL void make_on_device(T* gpuPointer, Args... args)
+      CHAI_GLOBAL void make_on_device(T** gpuPointer, Args... args)
       {
-         new (gpuPointer) T(processArguments(args)...);
+         *gpuPointer = new T(processArguments(args)...);
       }
 
       ///
@@ -813,7 +813,7 @@ namespace chai {
       template <typename T>
       CHAI_GLOBAL void destroy_on_device(T* gpuPointer)
       {
-         gpuPointer->~T();
+         delete gpuPointer;
       }
 
 #endif
@@ -891,7 +891,7 @@ namespace chai {
    CHAI_HOST T* make_on_host(Args&&... args) {
 #if !defined(CHAI_DISABLE_RM)
       // Get the ArrayManager and save the current execution space
-      ArrayManager* arrayManager = ArrayManager::getInstance();
+      chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
       ExecutionSpace currentSpace = arrayManager->getExecutionSpace();
 
       // Set the execution space so that ManagedArrays and managed_ptrs
@@ -939,9 +939,8 @@ namespace chai {
    CHAI_HOST T* make_on_device(Args... args) {
 #if !defined(CHAI_DISABLE_RM)
       // Get the ArrayManager and save the current execution space
-      ArrayManager* arrayManager = ArrayManager::getInstance();
+      chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
       ExecutionSpace currentSpace = arrayManager->getExecutionSpace();
-
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
       arrayManager->setGPUSimMode(true);
 #endif
@@ -951,18 +950,30 @@ namespace chai {
       arrayManager->setExecutionSpace(GPU);
 #endif
 
-      // Allocate space on the GPU to hold the new object
-      T* gpuPointer = (T*) ArrayManager::getInstance()->getAllocator(GPU).allocate(sizeof(T));
+      // Allocate space on the GPU to hold the pointer to the new object
+      T** gpuBuffer;
+      gpuMalloc((void**)(&gpuBuffer), sizeof(T*));
 
       // Create the object on the device
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
-      detail::make_on_device(gpuPointer, args...);
+      detail::make_on_device(gpuBuffer, args...);
       arrayManager->setGPUSimMode(false);
 #elif defined(__CUDACC__) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-      detail::make_on_device<<<1, 1>>>(gpuPointer, args...);
+      detail::make_on_device<<<1, 1>>>(gpuBuffer, args...);
 #elif defined(__HIPCC__) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-      hipLaunchKernelGGL(detail::make_on_device, 1, 1, 0, 0, gpuPointer, args...);
+      hipLaunchKernelGGL(detail::make_on_device, 1, 1, 0, 0, gpuBuffer, args...);
 #endif
+
+      // Allocate space on the CPU for the pointer and copy the pointer to the CPU
+      T** cpuBuffer = (T**) malloc(sizeof(T*));
+      gpuMemcpy(cpuBuffer, gpuBuffer, sizeof(T*), gpuMemcpyDeviceToHost);
+
+      // Get the GPU pointer
+      T* gpuPointer = cpuBuffer[0];
+
+      // Free the host and device buffers
+      free(cpuBuffer);
+      gpuFree(gpuBuffer);
 
 #if !defined(CHAI_DISABLE_RM)
       // Set the execution space back to the previous value
@@ -983,7 +994,7 @@ namespace chai {
    template <typename T>
    CHAI_HOST void destroy_on_device(T* gpuPointer) {
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
-      ArrayManager* arrayManager = ArrayManager::getInstance();
+      chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
       arrayManager->setGPUSimMode(true);
       detail::destroy_on_device(gpuPointer);
       arrayManager->setGPUSimMode(false);
@@ -992,8 +1003,6 @@ namespace chai {
 #elif defined(__HIPCC__) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
       hipLaunchKernelGGL(detail::destroy_on_device, 1, 1, 0, 0, gpuPointer);
 #endif
-
-      ArrayManager::getInstance()->getAllocator(GPU).deallocate(gpuPointer);
    }
 
 #endif
