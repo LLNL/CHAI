@@ -15,6 +15,9 @@ The format of this file is based on [Keep a Changelog](http://keepachangelog.com
 
 ## [Unreleased] - Release date yyyy-mm-dd
 
+### Changed
+- make\_managed now uses the GPU allocator to allocate space for the object on the device. The object is then created using placement new on the device.
+
 ### Removed
 - Removes deprecated ManagedArray::getPointer method. Use ManagedArray::data instead.
 - Removes optional support for implicitly casting between raw pointers and ManagedArrays (CHAI\_ENABLE\_IMPLICIT\_CONVERSIONS). Use makeManagedArray and ManagedArray::data to perform explicit conversions instead.
