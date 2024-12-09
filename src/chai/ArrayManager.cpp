@@ -281,6 +281,9 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 
 #if defined(CHAI_ENABLE_UM)
   if (record->m_last_space == UM) {
+    if (space == CPU) {
+      syncIfNeeded();
+    }
     return;
   }
 #endif
