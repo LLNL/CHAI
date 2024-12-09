@@ -15,6 +15,10 @@ The format of this file is based on [Keep a Changelog](http://keepachangelog.com
 
 ## [Unreleased] - Release date yyyy-mm-dd
 
+### Fixed
+- Fixes reallocate when using pinned or unified memory.
+- Adds missing synchronize when using pinned memory.
+
 ### Removed
 - Removes deprecated ManagedArray::getPointer method. Use ManagedArray::data instead.
 - Removes optional support for implicitly casting between raw pointers and ManagedArrays (CHAI\_ENABLE\_IMPLICIT\_CONVERSIONS). Use makeManagedArray and ManagedArray::data to perform explicit conversions instead.
