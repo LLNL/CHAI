@@ -11,7 +11,13 @@
   static void gpu_test_##X##Y()
 
 #ifdef NDEBUG
+
+#ifdef CHAI_ENABLE_CUDA
 #define device_assert(EXP) if( !EXP ) asm ("trap;")
+#else
+#define device_assert(EXP) if( !EXP ) asm ("s_trap 1;")
+#endif
+
 #else
 #define device_assert(EXP) assert(EXP)
 #endif
