@@ -235,7 +235,7 @@ private:
 
 namespace detail {
 
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA) or defined(CHAI_ENABLE_HIP)
 namespace impl {
 
 template <typename T,
@@ -269,7 +269,7 @@ CHAI_HOST Tp* msp_make_on_device(Args&&... args) {
 
   return gpu_ptr;
 }
-#endif // defined(CHAI_ENABLE_CUDA)
+#endif // defined(CHAI_ENABLE_CUDA) of defined(CHAI_ENABLE_HIP)
 
 template<typename Tp, typename... Args>
 CHAI_INLINE
@@ -298,10 +298,16 @@ ManagedSharedPtr<Tp> make_shared(Args&&... args) {
   Tp* cpu_pointer = detail::msp_make_on_host<Tp_non_const>(std::forward<Args>(args)...);
   std::cout << "CPU pointer @ " << cpu_pointer << std::endl;
 
-#if defined(CHAI_ENABLE_CUDA)
+#if defined(CHAI_ENABLE_CUDA) or defined(CHAI_ENABLE_HIP)
 
   Tp* gpu_pointer = detail::msp_make_on_device<Tp_non_const>();
-  std::cout << "GPU pointer @ " << gpu_pointer << std::endl; cudaDeviceSynchronize();
+  std::cout << "GPU pointer @ " << gpu_pointer << std::endl; 
+#if defined(CHAI_ENABLE_CUDA)
+  cudaDeviceSynchronize();
+#endif
+#if defined(CHAI_ENABLE_HIP)
+  hipDeviceSynchronize();
+#endif
 
   auto result = ManagedSharedPtr<Tp>({cpu_pointer, gpu_pointer}, {CPU, GPU},
       [] CHAI_HOST_DEVICE (Tp* p){p->~Tp();}
@@ -314,13 +320,13 @@ ManagedSharedPtr<Tp> make_shared(Args&&... args) {
     result.move(chai::CPU, false);
   }
 
-#else // defined(CHAI_ENABLE_CUDA)
+#else // defined(CHAI_ENABLE_CUDA) or defined(CHAI_ENABLE_HIP)
 
   auto result = ManagedSharedPtr<Tp>({cpu_pointer}, {CPU},
       [] CHAI_HOST_DEVICE (Tp* p){p->~Tp();}
   );
 
-#endif // defined(CHAI_ENABLE_CUDA)
+#endif // defined(CHAI_ENABLE_CUDA) or defined(CHAI_ENABLE_HIP)
 
   std::cout << "End of make_shared\n";
   return result;
