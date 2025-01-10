@@ -22,6 +22,13 @@ if (CHAI_ENABLE_MANAGED_PTR AND (CHAI_ENABLE_HIP OR CHAI_ENABLE_CUDA))
     DEPENDS_ON ${chai_reproducer_depends})
 endif ()
 
+if (CHAI_ENABLE_HIP)
+  blt_add_executable(
+    NAME memory_allocation.exe
+    SOURCES memory_allocation.cpp
+    DEPENDS_ON ${chai_reproducer_depends})
+endif ()
+
 if (CHAI_ENABLE_MANAGED_PTR AND CHAI_ENABLE_HIP)
   blt_add_executable(
     NAME virtual_function_simple_reproducer.exe
