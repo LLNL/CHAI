@@ -10,6 +10,7 @@ namespace expt {
    * will take care of synchronizations needed when switching between using
    * the array on the host and device.
    */
+  template <class T>
   class PinnedArray {
     public:
       /*!
