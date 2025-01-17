@@ -1,5 +1,5 @@
-#ifndef CHAI_HOST_ARRAY_HPP
-#define CHAI_HOST_ARRAY_HPP
+#ifndef CHAI_DEVICE_ARRAY_HPP
+#define CHAI_DEVICE_ARRAY_HPP
 
 #include "chai/config.hpp"
 
@@ -9,12 +9,12 @@ namespace expt {
    * Represents an array backed by host memory.
    */
   template <class T>
-  class HostArray {
+  class DeviceArray {
     public:
       /*!
        * \brief Default constructor
        */
-      HostArray() = default;
+      DeviceArray() = default;
 
       /*!
        * \brief Default constructor
@@ -22,9 +22,9 @@ namespace expt {
        * \param count The new number of elements
        * \param allocator_id The ID of the Umpire allocator to use
        */
-      HostArray(
+      DeviceArray(
         size_type count,
-        int allocator_id = getDefaultHostAllocatorId())
+        int allocator_id = getDefaultDeviceAllocatorId())
         : m_allocator_id{allocator_id}
       {
         resize(count);
@@ -36,15 +36,15 @@ namespace expt {
        * \note This object is intended to be passed around by value,
        *       so the copy constructor is intentionally shallow.
        */
-      HostArray(const HostArray& other) = default;
+      DeviceArray(const DeviceArray& other) = default;
 
       /*!
        * \brief Aliasing constructor. Allows converting the element type to const.
        *
-       * \param other HostArray with non-const element type
+       * \param other DeviceArray with non-const element type
        */
       template <class U, class std::enable_if<!std::is_const<U>::value, int>::type = 0>
-      HostArray(const HostArray<U>& other)
+      CHAI_HOST_DEVICE DeviceArray(const DeviceArray<U>& other)
         : m_data{other.m_data},
           m_size{other.m_size},
           m_allocator_id{other.m_allocator_id}
@@ -57,10 +57,10 @@ namespace expt {
        * \note This object is intended to be passed around by value,
        *       so the assignment operator is intentionally shallow.
        */
-      HostArray& operator=(const HostArray& other) = default;
+      DeviceArray& operator=(const DeviceArray& other) = default;
 
       /*!
-       * \brief Resizes the host array
+       * \brief Resizes the device array
        *
        * \param count The new number of elements
        */
@@ -92,7 +92,7 @@ namespace expt {
       }
 
       /*!
-       * \brief Frees the host array
+       * \brief Frees the device array
        */
       void free()
       {
@@ -106,19 +106,19 @@ namespace expt {
        *
        * \return The number of elements in the array
        */
-      size_type size() const
+      CHAI_DEVICE size_type size() const
       {
         return m_size;
       }
 
      /*!
-      * \brief Return reference to i-th element of the HostArray.
+      * \brief Return reference to i-th element of the DeviceArray.
       *
       * \param i Element to return reference to.
       *
       * \return Reference to i-th element.
       */
-     T& operator[](size_type i) const
+     CHAI_DEVICE T& operator[](size_type i) const
      {
        return m_data[i];
      }
@@ -131,7 +131,7 @@ namespace expt {
       */
      T* data(ExecutionSpace space) const
      {
-       if (space == CPU)
+       if (space == GPU)
        {
          return m_data;
        }
@@ -146,7 +146,7 @@ namespace expt {
       *
       * \return Pointer to data in the current execution space
       */
-     T* data() const
+     CHAI_DEVICE T* data() const
      {
        return m_data;
      }
@@ -171,19 +171,19 @@ namespace expt {
       *
       * \note Do not mark data as touched in the current execution space
       */
-     const T* cdata() const
+     CHAI_DEVICE const T* cdata() const
      {
        return data();
      }
 
      /*!
-      * \brief Compare one HostArray with another for equality
+      * \brief Compare one DeviceArray with another for equality
       *
-      * \param other The other HostArray
+      * \param other The other DeviceArray
       *
       * \return true if all members are equal
       */
-     bool operator==(const HostArray<T>& other) const
+     CHAI_DEVICE bool operator==(const DeviceArray<T>& other) const
      {
        return m_data == other.m_data &&
               m_size == other.m_size &&
@@ -191,13 +191,13 @@ namespace expt {
      }
 
      /*!
-      * \brief Compare one HostArray with another for inequality
+      * \brief Compare one DeviceArray with another for inequality
       *
-      * \param other The other HostArray
+      * \param other The other DeviceArray
       *
       * \return true if not all members are equal
       */
-     bool operator!=(const HostArray<T>& other) const
+     CHAI_DEVICE bool operator!=(const DeviceArray<T>& other) const
      {
        return !(this == other);
      }
@@ -205,32 +205,32 @@ namespace expt {
      /*!
       * \brief Conversion to bool operator
       *
-      * \return true if the HostArray is not empty
+      * \return true if the DeviceArray is not empty
       */
-     explicit operator bool() const
+     CHAI_DEVICE explicit operator bool() const
      {
        return m_size > 0;
      }
 
 #if defined(CHAI_ENABLE_PICK)
      /*!
-      * \brief Return the value of element i in the HostArray.
+      * \brief Return the value of element i in the DeviceArray.
       *
       * \param index The index of the element to be fetched
-      * \return The value of the i-th element in the HostArray.
+      * \return The value of the i-th element in the DeviceArray.
       */
-     T pick(size_type index) const
+     CHAI_DEVICE T pick(size_type index) const
      {
        return m_data[index];
      }
 
      /*!
-      * \brief Set the value of element i in the HostArray to be value.
+      * \brief Set the value of element i in the DeviceArray to be value.
       *
       * \param index The index of the element to be set
       * \param value Source location of the value
       */
-     void set(size_type index, T value) const
+     CHAI_DEVICE void set(size_type index, T value) const
      {
        m_data[index] = value;
      }
@@ -238,9 +238,9 @@ namespace expt {
    private:
      mutable T* m_data = nullptr;
      mutable size_type m_size = 0;
-     int m_allocator_id = getDefaultHostAllocatorId();
-  };  // class HostArray
+     int m_allocator_id = getDefaultDeviceAllocatorId();
+  };  // class DeviceArray
 }  // namespace expt
 }  // namespace chai
 
-#endif  // CHAI_HOST_ARRAY_HPP
+#endif  // CHAI_DEVICE_ARRAY_HPP
