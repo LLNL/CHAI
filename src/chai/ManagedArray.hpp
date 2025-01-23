@@ -382,7 +382,6 @@ public:
 
 
 private:
-  CHAI_HOST void modify(size_t i, const T& val) const;
   // The following are only used by ManagedArray.inl, but for template
   // shenanigan reasons need to be defined here.
 #if !defined(CHAI_DISABLE_RM)
