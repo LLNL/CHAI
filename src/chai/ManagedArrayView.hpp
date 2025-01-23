@@ -33,8 +33,8 @@ using ManagedArrayMultiView =
     RAJA::MultiView<ValueType,
                     LayoutType,
                     P2Pidx,
-                    chai::ManagedArray<ValueType> *,
-                    chai::ManagedArray<camp::type::cv::rem<ValueType>> *>;
+                    chai::ManagedArray<chai::ManagedArray<ValueType>>,
+                    chai::ManagedArray<chai::ManagedArray<camp::type::cv::rem<ValueType>>>>;
 
 } // end of namespace chai
 
