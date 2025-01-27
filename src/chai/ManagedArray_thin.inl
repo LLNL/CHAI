@@ -272,6 +272,7 @@ CHAI_INLINE CHAI_HOST void ManagedArray<T>::reset()
 
 
 #if defined(CHAI_ENABLE_PICK)
+
 template <typename T>
 CHAI_INLINE CHAI_HOST_DEVICE typename ManagedArray<T>::T_non_const ManagedArray<
     T>::pick(size_t i) const
@@ -299,31 +300,6 @@ CHAI_INLINE CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const
   m_active_pointer[i] = val;
 }
 
-template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE void ManagedArray<T>::incr(size_t i) const
-{
-#if defined(CHAI_THIN_GPU_ALLOCATE)
-#if !defined(CHAI_DEVICE_COMPILE)
-  ArrayManager::getInstance()->syncIfNeeded();
-#endif
-#elif defined(CHAI_ENABLE_UM)
-   synchronize();
-#endif
-  ++m_active_pointer[i];
-}
-
-template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE void ManagedArray<T>::decr(size_t i) const
-{
-#if defined(CHAI_THIN_GPU_ALLOCATE)
-#if !defined(CHAI_DEVICE_COMPILE)
-  ArrayManager::getInstance()->syncIfNeeded();
-#endif
-#elif defined(CHAI_ENABLE_UM)
-   synchronize();
-#endif
-  --m_active_pointer[i];
-}
 #endif // CHAI_ENABLE_PICK
 
 template <typename T>

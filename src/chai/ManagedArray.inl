@@ -364,40 +364,6 @@ CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const {
   #endif // !defined(CHAI_DEVICE_COMPILE)
 }
 
-template<typename T>
-CHAI_INLINE
-CHAI_HOST void ManagedArray<T>::modify(size_t i, const T& val) const { 
-  #if defined(CHAI_ENABLE_UM)
-    if(m_pointer_record->m_pointers[UM] == m_active_pointer) {
-      synchronize();
-      m_active_pointer[i] = m_active_pointer[i] + val;
-      return;
-    }
-  #endif
-    T_non_const temp = pick(i);
-    temp = temp + val;
-    set(i, temp);
-}
-
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE void ManagedArray<T>::incr(size_t i) const { 
-  #if !defined(CHAI_DEVICE_COMPILE)
-    modify(i, (T)1);
-  #else
-     ++m_active_pointer[i]; 
-  #endif
-}
-
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE void ManagedArray<T>::decr(size_t i) const { 
-  #if !defined(CHAI_DEVICE_COMPILE)
-    modify(i, (T)-1);
-  #else
-     --m_active_pointer[i]; 
-  #endif
-}
 #endif
 
 template <typename T>

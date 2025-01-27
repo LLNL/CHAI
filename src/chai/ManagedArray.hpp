@@ -289,22 +289,6 @@ public:
    * \tparam T The type of data value in ManagedArray.
    */
   CHAI_HOST_DEVICE void set(size_t i, T val) const;
-
-  /*!
-   * \brief Increment the value of element i in the ManagedArray.
-   *
-   * \param index The index of the element to be incremented
-   * \tparam T The type of data value in ManagedArray.
-   */
-  CHAI_HOST_DEVICE void incr(size_t i) const;
-
-  /*!
-   * \brief Decrement the value of element i in the ManagedArray.
-   *
-   * \param index The index of the element to be decremented
-   * \tparam T The type of data value in ManagedArray.
-   */
-  CHAI_HOST_DEVICE void decr(size_t i) const;
 #endif
 
 
@@ -382,7 +366,6 @@ public:
 
 
 private:
-  CHAI_HOST void modify(size_t i, const T& val) const;
   // The following are only used by ManagedArray.inl, but for template
   // shenanigan reasons need to be defined here.
 #if !defined(CHAI_DISABLE_RM)
