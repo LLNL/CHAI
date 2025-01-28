@@ -270,9 +270,6 @@ CHAI_INLINE CHAI_HOST void ManagedArray<T>::reset()
 {
 }
 
-
-#if defined(CHAI_ENABLE_PICK)
-
 template <typename T>
 CHAI_INLINE CHAI_HOST_DEVICE typename ManagedArray<T>::T_non_const ManagedArray<
     T>::pick(size_t i) const
@@ -299,8 +296,6 @@ CHAI_INLINE CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const
 #endif
   m_active_pointer[i] = val;
 }
-
-#endif // CHAI_ENABLE_PICK
 
 template <typename T>
 CHAI_INLINE CHAI_HOST_DEVICE size_t ManagedArray<T>::size() const

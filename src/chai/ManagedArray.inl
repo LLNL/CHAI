@@ -304,8 +304,6 @@ CHAI_HOST void ManagedArray<T>::registerTouch(ExecutionSpace space) {
   m_resource_manager->registerTouch(m_pointer_record, space);
 }
 
-
-#if defined(CHAI_ENABLE_PICK)
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE
@@ -363,8 +361,6 @@ CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const {
     m_active_pointer[i] = val; 
   #endif // !defined(CHAI_DEVICE_COMPILE)
 }
-
-#endif
 
 template <typename T>
 CHAI_INLINE

@@ -164,7 +164,6 @@ TEST(ManagedArray, ArrayOfSlices) {
   assert_empty_map(true);
 }
 
-#if defined(CHAI_ENABLE_PICK)
 #if (!defined(CHAI_DISABLE_RM))
 TEST(ManagedArray, PickHostFromHostConst) {
   chai::ManagedArray<int> array(10);
@@ -255,10 +254,7 @@ TEST(ManagedArray, SetHostToHostUM)
 
 #endif
 
-#endif
-
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-#if defined(CHAI_ENABLE_PICK)
 
 #if defined(CHAI_ENABLE_UM)
 GPU_TEST(ManagedArray, PickandSetDeviceToDeviceUM)
@@ -440,7 +436,6 @@ GPU_TEST(ManagedArray, SetHostToDevice)
   assert_empty_map(true);
 }
 
-#endif
 #endif
 
 GPU_TEST(ManagedArray, ArrayOfSlicesDevice) {

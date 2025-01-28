@@ -268,8 +268,6 @@ public:
 
   CHAI_HOST_DEVICE explicit operator bool() const;
 
-
-#if defined(CHAI_ENABLE_PICK)
   /*!
    * \brief Return the value of element i in the ManagedArray.
    * ExecutionSpace space to the current one
@@ -289,8 +287,6 @@ public:
    * \tparam T The type of data value in ManagedArray.
    */
   CHAI_HOST_DEVICE void set(size_t i, T val) const;
-#endif
-
 
 #ifndef CHAI_DISABLE_RM
   /*!
