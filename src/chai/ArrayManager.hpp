@@ -253,13 +253,11 @@ public:
    */
   CHAISHAREDDLL_API void free(PointerRecord* pointer, ExecutionSpace space = NONE);
 
-#if defined(CHAI_ENABLE_PICK)
   template <typename T>
-   T_non_const<T> pick(T* src_ptr, size_t index);
+  T_non_const<T> pick(T* src_ptr, size_t index);
 
   template <typename T>
-   void set(T* dst_ptr, size_t index, const T& val);
-#endif
+  void set(T* dst_ptr, size_t index, const T& val);
 
   /*!
    * \brief Get the size of the given pointer.

@@ -25,6 +25,7 @@ The format of this file is based on [Keep a Changelog](http://keepachangelog.com
 - Removes optional support for implicitly casting between raw pointers and ManagedArrays (CHAI\_ENABLE\_IMPLICIT\_CONVERSIONS). Use makeManagedArray and ManagedArray::data to perform explicit conversions instead.
 - Removes equality and inequality comparison operators between ManagedArrays and raw pointers.
 - Removes make\_managed\_from\_factory function for creating managed\_ptr objects from factory functions. This change will lead to safer adoption of allocators during construction and destruction of managed\_ptr objects.
+- Removes CHAI\_ENABLE\_PICK CMake option. ManagedArray::pick and ManagedArray::set will always be available.
 
 ## [Version 2024.07.0] - Release date 2024-07-26
 

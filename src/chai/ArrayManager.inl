@@ -124,7 +124,6 @@ void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* point
   return pointer_record->m_pointers[my_space];
 }
 
-#if defined(CHAI_ENABLE_PICK)
 template<typename T>
 CHAI_INLINE
 typename ArrayManager::T_non_const<T> ArrayManager::pick(T* src_ptr, size_t index)
@@ -144,7 +143,6 @@ void ArrayManager::set(T* dst_ptr, size_t index, const T& val)
   m_resource_manager.copy(const_cast<T_non_const<T>*>(dst_ptr+index), const_cast<T_non_const<T>*>(&val), sizeof(T));
   m_resource_manager.deregisterAllocation(const_cast<T_non_const<T>*>(&val));
 }
-#endif
 
 CHAI_INLINE
 void ArrayManager::copy(void * dst, void * src, size_t size) {

@@ -7,7 +7,6 @@
 #ifndef CHAI_config_HPP
 #define CHAI_config_HPP
 
-#cmakedefine CHAI_ENABLE_PICK
 #cmakedefine CHAI_ENABLE_CUDA 
 #cmakedefine CHAI_ENABLE_HIP 
 #cmakedefine CHAI_DISABLE_RM
