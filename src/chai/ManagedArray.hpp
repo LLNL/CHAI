@@ -427,6 +427,8 @@ protected:
  * \tparam T Type of the raw data.
  *
  * \return A new ManagedArray containing the raw data pointer.
+ *
+ * \note If using this method on HIP platforms, XNACK must be enabled.
  */
 template <typename T>
 ManagedArray<T> makeManagedArray(T* data,
