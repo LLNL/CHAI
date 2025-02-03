@@ -8,9 +8,7 @@
 # Override reproducer section to define project specific variables.
 .ruby_reproducer_vars:
   script:
-    - |
-      echo -e "export MODULE_LIST=\"${MODULE_LIST}\""
-      echo -e "export SPEC=\"${SPEC//\"/\\\"}\""
+    - !reference [.reproducer_vars, script]
 
 ########################
 # Overridden shared jobs
@@ -32,3 +30,10 @@ clang_14_0_6_develop_tpls:
   variables:
     SPEC: " %clang@14.0.6 ^umpire@develop ^raja@develop ^camp@main"
   extends: .job_on_ruby
+  allow_failure: true
+
+clang_16_0_6_develop_tpls:
+  variables:
+    SPEC: " %clang@16.0.6 ^umpire@develop ^raja@develop ^camp@main"
+  extends: .job_on_ruby
+  allow_failure: true

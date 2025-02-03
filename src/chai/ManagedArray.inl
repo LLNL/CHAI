@@ -134,6 +134,11 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
    if (m_resource_manager == nullptr) {
       m_resource_manager = ArrayManager::getInstance();
    }
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+   if (m_resource_manager->isGPUSimMode()) {
+      return;
+   }
+#endif
    if (m_pointer_record == &ArrayManager::s_null_record || m_pointer_record==nullptr) {
       m_pointer_record = m_resource_manager->makeManaged((void *) data, m_size,ExecutionSpace(CPU),true);
    }
@@ -143,6 +148,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
 
 
 template<typename T>
+CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::allocate(
     size_t elems,
     ExecutionSpace space, 
@@ -305,13 +311,16 @@ CHAI_HOST void ManagedArray<T>::registerTouch(ExecutionSpace space) {
   m_resource_manager->registerTouch(m_pointer_record, space);
 }
 
-
-#if defined(CHAI_ENABLE_PICK)
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE
 typename ManagedArray<T>::T_non_const ManagedArray<T>::pick(size_t i) const { 
   #if !defined(CHAI_DEVICE_COMPILE)
+    #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+      if (m_resource_manager->isGPUSimMode()) {
+        return (T_non_const)(m_active_pointer[i]);
+      }
+    #endif
     #if defined(CHAI_ENABLE_UM)
       if(m_pointer_record->m_pointers[UM] == m_active_base_pointer) {
         synchronize();
@@ -335,6 +344,12 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const { 
   #if !defined(CHAI_DEVICE_COMPILE)
+    #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+      if (m_resource_manager->isGPUSimMode()) {
+        m_active_pointer[i] = val;
+        return;
+      }
+    #endif
     #if defined(CHAI_ENABLE_UM)
       if(m_pointer_record->m_pointers[UM] == m_active_pointer) {
         synchronize();
@@ -353,42 +368,6 @@ CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const {
     m_active_pointer[i] = val; 
   #endif // !defined(CHAI_DEVICE_COMPILE)
 }
-
-template<typename T>
-CHAI_INLINE
-CHAI_HOST void ManagedArray<T>::modify(size_t i, const T& val) const { 
-  #if defined(CHAI_ENABLE_UM)
-    if(m_pointer_record->m_pointers[UM] == m_active_pointer) {
-      synchronize();
-      m_active_pointer[i] = m_active_pointer[i] + val;
-      return;
-    }
-  #endif
-    T_non_const temp = pick(i);
-    temp = temp + val;
-    set(i, temp);
-}
-
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE void ManagedArray<T>::incr(size_t i) const { 
-  #if !defined(CHAI_DEVICE_COMPILE)
-    modify(i, (T)1);
-  #else
-     ++m_active_pointer[i]; 
-  #endif
-}
-
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE void ManagedArray<T>::decr(size_t i) const { 
-  #if !defined(CHAI_DEVICE_COMPILE)
-    modify(i, (T)-1);
-  #else
-     --m_active_pointer[i]; 
-  #endif
-}
-#endif
 
 template <typename T>
 CHAI_INLINE
@@ -438,41 +417,6 @@ CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const Idx i) const {
   return m_active_pointer[i];
 }
 
-#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const {
-   return data();
-}
-
-template<typename T>
-template<bool Q>
-CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, CHAIDISAMBIGUATE, bool ) :
-  m_active_pointer(data),
-  m_active_base_pointer(data),
-#if !defined(CHAI_DEVICE_COMPILE)
-  m_resource_manager(ArrayManager::getInstance()),
-  m_size(m_resource_manager->getSize((void *)m_active_base_pointer)),
-  m_offset(0),
-  m_pointer_record(m_resource_manager->getPointerRecord((void *)data)),
-#else
-  m_resource_manager(nullptr),
-  m_size(0),
-  m_offset(0),
-  m_pointer_record(nullptr),
-#endif
-  m_is_slice(false)
-{
-#if !defined(CHAI_DEVICE_COMPILE)
-
-   if (m_active_pointer && (m_pointer_record == &ArrayManager::s_null_record || m_active_pointer != m_pointer_record->m_pointers[CPU])) {
-      CHAI_LOG(Warning,"REINTEGRATED external pointer unknown by CHAI.");
-   }
-#endif
-}
-#endif
-
 template<typename T>
 CHAI_HOST_DEVICE T*
 ManagedArray<T>::getActiveBasePointer() const
@@ -497,6 +441,11 @@ T* ManagedArray<T>::data() const {
         CHAI_LOG(Warning, "nullptr pointer_record associated with non-nullptr active_pointer")
      }
 
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+     if (m_resource_manager->isGPUSimMode()) {
+        return m_active_pointer;
+     }
+#endif
      move(CPU);
   }
 
@@ -520,6 +469,11 @@ const T* ManagedArray<T>::cdata() const {
         CHAI_LOG(Warning, "nullptr pointer_record associated with non-nullptr active_pointer")
      }
 
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+     if (m_resource_manager->isGPUSimMode()) {
+        return m_active_pointer;
+     }
+#endif
      move(CPU, false);
   }
 
@@ -552,11 +506,6 @@ T* ManagedArray<T>::data(ExecutionSpace space, bool do_move) const {
 
    int offset = m_is_slice ? m_offset : 0 ;
    return ((T*) m_pointer_record->m_pointers[space]) + offset;
-}
-
-template<typename T>
-T* ManagedArray<T>::getPointer(ExecutionSpace space, bool do_move) const {
-   return data(space, do_move);
 }
 
 template<typename T>
@@ -632,23 +581,6 @@ bool
 ManagedArray<T>::operator!= (const ManagedArray<T>& rhs) const
 {
   return (m_active_pointer !=  rhs.m_active_pointer);
-}
-
-
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE
-bool
-ManagedArray<T>::operator== (const T * from) const {
-   return m_active_pointer == from;
-}
-
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE
-bool
-ManagedArray<T>::operator!= (const T * from) const {
-   return m_active_pointer != from;
 }
 
 template<typename T>

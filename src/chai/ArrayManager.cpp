@@ -53,8 +53,13 @@ ArrayManager::ArrayManager() :
 #endif
 
 #if defined(CHAI_ENABLE_UM)
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+  m_allocators[UM] =
+      new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
+#else
   m_allocators[UM] =
       new umpire::Allocator(m_resource_manager.getAllocator("UM"));
+#endif
 #endif
 
 #if defined(CHAI_ENABLE_PINNED)
@@ -163,7 +168,7 @@ void * ArrayManager::frontOfAllocation(void * pointer) {
 void ArrayManager::setExecutionSpace(ExecutionSpace space)
 {
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
-   if (isGPUSimMode()) {
+   if (isGPUSimMode() && chai::NONE != space) {
       space = chai::GPU;
    }
 #endif
@@ -276,6 +281,9 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 
 #if defined(CHAI_ENABLE_UM)
   if (record->m_last_space == UM) {
+    if (space == CPU) {
+      syncIfNeeded();
+    }
     return;
   }
 #endif

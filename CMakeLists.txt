@@ -11,8 +11,8 @@ cmake_policy(SET CMP0025 NEW)
 include(CMakeDependentOption)
 include(CMakePackageConfigHelpers)
 
-project(Chai LANGUAGES C CXX VERSION 2024.02.0)
-cmake_minimum_required(VERSION 3.14)
+project(Chai LANGUAGES C CXX VERSION 2024.07.0)
+cmake_minimum_required(VERSION 3.23)
 
 include(cmake/SetupChaiOptions.cmake)
 
@@ -71,8 +71,6 @@ cmake_dependent_option(CHAI_ENABLE_DOCS "Build CHAI docs" On
                        "ENABLE_DOCS" Off)
 cmake_dependent_option( CHAI_ENABLE_GMOCK "Build CHAI with gmock" On
                         "ENABLE_GMOCK" Off )
-cmake_dependent_option(CHAI_ENABLE_REPRODUCERS "Build CHAI reproducers" On
-                       "ENABLE_REPRODUCERS" Off)
 
 include(cmake/ChaiBasics.cmake)
 

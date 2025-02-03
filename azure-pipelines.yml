@@ -3,20 +3,18 @@ jobs:
   timeoutInMinutes: 360
   strategy:
     matrix:
-      gcc7:
-        docker_target: gcc7
-      gcc8:
-        docker_target: gcc8
-      gcc9:
-        docker_target: gcc9
-      clang10:
-        docker_target: clang10
-      clang11:
-        docker_target: clang11
-      clang12:
-        docker_target: clang12
-      clang13:
-        docker_target: clang13
+      gcc:
+        docker_target: gcc
+      clang:
+        docker_target: clang
+      #intel:
+        #docker_target: intel
+      #cuda:
+        #docker_target: cuda
+      #hip:
+        #docker_target: hip
+      #sycl:
+        #docker_target: sycl
   pool:
     vmImage: 'ubuntu-latest'
   variables:

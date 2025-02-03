@@ -1,88 +1,48 @@
-FROM ghcr.io/rse-ops/gcc-ubuntu-20.04:gcc-7.3.0 AS gcc7
+FROM ghcr.io/llnl/radiuss:ubuntu-22.04-gcc-13 AS gcc
 ENV GTEST_COLOR=1
 COPY . /home/chai/workspace
 WORKDIR /home/chai/workspace/build
-RUN cmake -DENABLE_COVERAGE=On -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++ .. && \
+RUN cmake -DENABLE_COVERAGE=On -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc .. && \
     make -j 16 && \
     ctest -T test --output-on-failure
 
-FROM ghcr.io/rse-ops/gcc-ubuntu-20.04:gcc-8.1.0 AS gcc8
+FROM ghcr.io/llnl/radiuss:clang-15-ubuntu-22.04 AS clang
 ENV GTEST_COLOR=1
 COPY . /home/chai/workspace
 WORKDIR /home/chai/workspace/build
-RUN cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++ .. && \
+RUN cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang .. && \
     make -j 16 && \
     ctest -T test --output-on-failure
 
-FROM ghcr.io/rse-ops/gcc-ubuntu-18.04:gcc-9.4.0 AS gcc9
+FROM ghcr.io/llnl/radiuss:intel-2024.0-ubuntu-20.04 AS intel
 ENV GTEST_COLOR=1
 COPY . /home/chai/workspace
 WORKDIR /home/chai/workspace/build
-RUN cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++ .. && \
+RUN /bin/bash -c "source /opt/intel/oneapi/setvars.sh 2>&1 > /dev/null && \
+    cmake -DCMAKE_CXX_COMPILER=icpx -DCMAKE_C_COMPILER=icx -DENABLE_WARNINGS_AS_ERRORS=Off .. && \
     make -j 16 && \
-    ctest -T test --output-on-failure
+    ctest -T test --output-on-failure"
 
-FROM ghcr.io/rse-ops/gcc-ubuntu-18.04:gcc-11.2.0 AS gcc11
+FROM ghcr.io/llnl/radiuss:ubuntu-22.04-cuda-12-3 AS cuda
 ENV GTEST_COLOR=1
 COPY . /home/chai/workspace
 WORKDIR /home/chai/workspace/build
-RUN cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++ .. && \
-    make -j 16 && \
-    ctest -T test --output-on-failure
-
-FROM ghcr.io/rse-ops/clang-ubuntu-20.04:llvm-10.0.0 AS clang10
-ENV GTEST_COLOR=1
-COPY . /home/chai/workspace
-WORKDIR /home/chai/workspace/build
-RUN cmake -DCMAKE_CXX_COMPILER=clang++ .. && \
-    make -j 16 && \
-    ctest -T test --output-on-failure
-
-FROM ghcr.io/rse-ops/clang-ubuntu-22.04:llvm-11.0.0 AS clang11
-ENV GTEST_COLOR=1
-COPY . /home/chai/workspace
-WORKDIR /home/chai/workspace/build
-RUN cmake -DCMAKE_CXX_COMPILER=clang++ .. && \
-    make -j 16 && \
-    ctest -T test --output-on-failure
-
-FROM ghcr.io/rse-ops/clang-ubuntu-22.04:llvm-12.0.0 AS clang12
-ENV GTEST_COLOR=1
-COPY . /home/chai/workspace
-WORKDIR /home/chai/workspace/build
-RUN cmake -DCMAKE_CXX_COMPILER=clang++ .. && \
-    make -j 16 && \
-    ctest -T test --output-on-failure
-
-FROM ghcr.io/rse-ops/clang-ubuntu-22.04:llvm-13.0.0 AS clang13
-ENV GTEST_COLOR=1
-COPY . /home/chai/workspace
-WORKDIR /home/chai/workspace/build
-RUN cmake -DCMAKE_CXX_COMPILER=clang++ .. && \
-    make -j 16 && \
-    ctest -T test --output-on-failure
-
-FROM ghcr.io/rse-ops/cuda:cuda-10.1.243-ubuntu-18.04 AS nvcc10
-ENV GTEST_COLOR=1
-COPY . /home/chai/workspace
-WORKDIR /home/chai/workspace/build
-RUN . /opt/spack/share/spack/setup-env.sh && spack load cuda && \
-    cmake -DCMAKE_CXX_COMPILER=g++ -DENABLE_CUDA=On .. && \
+RUN cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DENABLE_CUDA=On -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -DCMAKE_CUDA_ARCHITECTURES=70 .. && \
     make -j 16
 
-FROM ghcr.io/rse-ops/cuda-ubuntu-20.04:cuda-11.1.1 AS nvcc11
-ENV GTEST_COLOR=1
-COPY . /home/chai/workspace
-WORKDIR /home/chai/workspace/build
-RUN . /opt/spack/share/spack/setup-env.sh && spack load cuda && \
-    cmake -DCMAKE_CXX_COMPILER=g++ -DENABLE_CUDA=On .. && \
-    make -j 16
-
-FROM ghcr.io/rse-ops/hip-ubuntu-22.04:hip-5.1.3 AS hip
+# TODO: switch to ROCM 6
+FROM ghcr.io/llnl/radiuss:hip-5.6.1-ubuntu-20.04 AS hip
 ENV GTEST_COLOR=1
 ENV HCC_AMDGPU_TARGET=gfx900
 COPY . /home/chai/workspace
 WORKDIR /home/chai/workspace/build
-RUN . /opt/spack/share/spack/setup-env.sh && spack load hip llvm-amdgpu && \
-    cmake -DENABLE_WARNINGS_AS_ERRORS=Off -DCHAI_ENABLE_MANAGED_PTR=Off -DCMAKE_CXX_COMPILER=amdclang++ -DCMAKE_C_COMPILER=amdclang -DENABLE_HIP=On .. && \
-    make -j 16 VERBOSE=1
+RUN cmake -DCMAKE_CXX_COMPILER=amdclang++ -DCMAKE_C_COMPILER=amdclang -DENABLE_HIP=On -DENABLE_WARNINGS_AS_ERRORS=Off .. && \
+    make -j 16
+
+FROM ghcr.io/llnl/radiuss:intel-2024.0-ubuntu-20.04 AS sycl
+ENV GTEST_COLOR=1
+COPY . /home/chai/workspace
+WORKDIR /home/chai/workspace/build
+RUN /bin/bash -c "source /opt/intel/oneapi/setvars.sh 2>&1 > /dev/null && \
+    cmake -DCMAKE_CXX_COMPILER=dpcpp -DCMAKE_C_COMPILER=icx -DENABLE_WARNINGS_AS_ERRORS=Off .. && \
+    make -j 16"

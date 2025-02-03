@@ -145,12 +145,6 @@ T* ManagedArray<T>::data(ExecutionSpace space, bool do_move) const
   return m_active_pointer;
 }
 
-template <typename T>
-T* ManagedArray<T>::getPointer(ExecutionSpace space, bool do_move) const
-{
-  return data(space, do_move);
-}
-
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE T* ManagedArray<T>::begin() const {
@@ -167,7 +161,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::allocate(size_t elems,
                                          ExecutionSpace space,
-                                         UserCallback const &) {
+                                         const UserCallback&) {
   if (!m_is_slice) {
      if (elems > 0) {
        (void) space; // Quiet compiler warning when CHAI_LOG does nothing
@@ -276,8 +270,6 @@ CHAI_INLINE CHAI_HOST void ManagedArray<T>::reset()
 {
 }
 
-
-#if defined(CHAI_ENABLE_PICK)
 template <typename T>
 CHAI_INLINE CHAI_HOST_DEVICE typename ManagedArray<T>::T_non_const ManagedArray<
     T>::pick(size_t i) const
@@ -306,33 +298,6 @@ CHAI_INLINE CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const
 }
 
 template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE void ManagedArray<T>::incr(size_t i) const
-{
-#if defined(CHAI_THIN_GPU_ALLOCATE)
-#if !defined(CHAI_DEVICE_COMPILE)
-  ArrayManager::getInstance()->syncIfNeeded();
-#endif
-#elif defined(CHAI_ENABLE_UM)
-   synchronize();
-#endif
-  ++m_active_pointer[i];
-}
-
-template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE void ManagedArray<T>::decr(size_t i) const
-{
-#if defined(CHAI_THIN_GPU_ALLOCATE)
-#if !defined(CHAI_DEVICE_COMPILE)
-  ArrayManager::getInstance()->syncIfNeeded();
-#endif
-#elif defined(CHAI_ENABLE_UM)
-   synchronize();
-#endif
-  --m_active_pointer[i];
-}
-#endif // CHAI_ENABLE_PICK
-
-template <typename T>
 CHAI_INLINE CHAI_HOST_DEVICE size_t ManagedArray<T>::size() const
 {
   return m_size/sizeof(T);
@@ -357,28 +322,6 @@ CHAI_INLINE CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const Idx i) const
 {
   return m_active_pointer[i];
 }
-
-#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
-template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>::operator T*() const
-{
-  return m_active_pointer;
-}
-
-template <typename T>
-template <bool Q>
-CHAI_INLINE CHAI_HOST_DEVICE
-ManagedArray<T>::ManagedArray(T* data, CHAIDISAMBIGUATE, bool) :
-  m_active_pointer(data),
-  m_active_base_pointer(data),
-  m_resource_manager(nullptr),
-  m_size(-1),
-  m_pointer_record(nullptr),
-  m_offset(0),
-  m_is_slice(false)
-{
-}
-#endif
 
 template <typename T>
 template <typename U>
@@ -425,19 +368,6 @@ CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator!=(
     const ManagedArray<T>& rhs) const
 {
   return (m_active_pointer != rhs.m_active_pointer);
-}
-
-
-template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator==(const T* from) const
-{
-  return m_active_pointer == from;
-}
-
-template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE bool ManagedArray<T>::operator!=(const T* from) const
-{
-  return m_active_pointer != from;
 }
 
 template <typename T>
