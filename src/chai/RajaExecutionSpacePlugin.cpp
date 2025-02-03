@@ -47,6 +47,7 @@ RajaExecutionSpacePlugin::postCapture(const RAJA::util::PluginContext&)
 
 }
 RAJA_INSTANTIATE_REGISTRY(RAJA::util::PluginRegistry)
+RAJA_INSTANTIATE_REGISTRY(RAJA::util::PluginRegistry);
 
 // this is needed to link a dynamic lib as RAJA does not provide an exported definition of this symbol.
 #if defined(_WIN32) && !defined(CHAISTATICLIB)

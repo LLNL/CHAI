@@ -801,8 +801,6 @@ namespace chai {
       CHAI_GLOBAL void make_on_device(T** gpuPointer, Args... args)
       {
          *gpuPointer = new T(processArguments(args)...);
-         printf("On GPU @ : %p\n", gpuPointer);
-         printf("On GPU @ : %p\n", &gpuPointer);
       }
 
       ///
@@ -901,7 +899,6 @@ namespace chai {
       arrayManager->setExecutionSpace(CPU);
 #endif
 
-      printf("On Host\n");
       // Create on the host
       T* cpuPointer = new T(detail::processArguments(args)...);
 
