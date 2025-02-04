@@ -71,8 +71,6 @@ struct PointerRecord {
   }
 };
 
-struct MyPointerRecord final : public PointerRecord {};
-
 }  // end of namespace chai
 
 #endif  // CHAI_PointerRecord_HPP
