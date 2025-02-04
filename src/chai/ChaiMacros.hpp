@@ -11,6 +11,12 @@
 
 #include "umpire/util/Macros.hpp"
 
+#define CHAI_UNUSED_VAR RAJA_UNUSED_VAR
+
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+#define CHAI_ENABLE_DEVICE
+#endif
+
 #if defined(CHAI_ENABLE_CUDA)
 
 #include <cuda_runtime_api.h>
