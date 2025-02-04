@@ -67,17 +67,17 @@ class C : chai::CHAIPoly
 {
 public:
   CHAI_HOST_DEVICE C(void) { printf("++ C has been constructed\n"); }
-  CHAI_HOST_DEVICE ~C(void) { printf("-- C has been destructed\n"); }
+  CHAI_HOST_DEVICE virtual ~C(void) { printf("-- C has been destructed\n"); }
   CHAI_HOST_DEVICE virtual void function(void) const = 0;
 };
 
-class D : public C
+class D final : public C
 {
 public:
   unsigned long long content_D;
   CHAI_HOST_DEVICE D(void) : content_D(0xDDDDDDDDDDDDDDDDull) { printf("++ D has been constructed\n"); }
   CHAI_HOST_DEVICE ~D(void) { printf("-- D has been destructed\n"); }
-  CHAI_HOST_DEVICE virtual void function(void) const { printf("%lX\n", content_D); }
+  CHAI_HOST_DEVICE virtual void function(void) const { printf("%llX\n", content_D); }
 };
 
 
@@ -87,7 +87,7 @@ public:
   unsigned long long content_A;
   D d;
   CHAI_HOST_DEVICE A(void) : content_A(0xAAAAAAAAAAAAAAAAull) { printf("++ A has been constructed\n"); }
-  CHAI_HOST_DEVICE ~A(void) { printf("-- A has been destructed\n"); }
+  CHAI_HOST_DEVICE virtual ~A(void) { printf("-- A has been destructed\n"); }
   CHAI_HOST_DEVICE virtual void function(void) const = 0;
   CHAI_HOST_DEVICE virtual void d_function(void) const = 0;
   CHAI_HOST_DEVICE virtual void set_content(unsigned long long) = 0;
@@ -100,13 +100,13 @@ public:
   CHAI_HOST_DEVICE ~A2(void) { printf("-- A2 has been destructed\n"); }
 };
 
-class B : public A, public A2
+class B final : public A, public A2
 {
 public:
   unsigned long long content_B;
   CHAI_HOST_DEVICE B(void) : content_B(0xBBBBBBBBBBBBBBBBull) { printf("++ B has been constructed\n"); }
   CHAI_HOST_DEVICE ~B(void) { printf("-- B has been destructed\n"); }
-  CHAI_HOST_DEVICE virtual void function(void) const override { printf("%lX\n", content_B); }
+  CHAI_HOST_DEVICE virtual void function(void) const override { printf("%llX\n", content_B); }
   CHAI_HOST_DEVICE virtual void d_function(void) const override { d.function(); }
   CHAI_HOST_DEVICE virtual void set_content(unsigned long long val) override { content_B = val; content_A = val; }
 };
@@ -115,9 +115,9 @@ public:
 class AAbsMem : public chai::CHAICopyable , public chai::CHAIPoly
 {
 public:
-  unsigned long long content_A;
   //chai::ManagedSharedPtr<C> base_member;
   chai::ManagedSharedPtr<const C> base_member;
+  unsigned long long content_A;
 
   CHAI_HOST_DEVICE AAbsMem(void) : content_A(0xAAAAAAAAAAAAAAAAull) { printf("++ A has been constructed\n"); }
 
@@ -129,23 +129,13 @@ public:
     , content_A(0xAAAAAAAAAAAAAAAAull) 
   { printf("++ A has been constructed\n"); }
 
-  CHAI_HOST_DEVICE ~AAbsMem(void) { printf("-- A has been destructed\n"); }
+  CHAI_HOST_DEVICE virtual ~AAbsMem(void) { printf("-- A has been destructed\n"); }
   CHAI_HOST_DEVICE virtual void function(void) const = 0;
   CHAI_HOST_DEVICE virtual void d_function(void) const = 0;
   CHAI_HOST_DEVICE virtual void set_content(unsigned long long) = 0;
 };
 
-class NV
-{
-public:
-  unsigned long long content_NV;
-  CHAI_HOST_DEVICE NV(void) : content_NV(0xFFFFFFFFFFFFFFFFull) { printf("++ NV has been constructed\n"); }
-  CHAI_HOST_DEVICE ~NV(void) { printf("-- NV has been destructed\n"); }
-  CHAI_HOST_DEVICE void function(void) const { printf("%lX\n", content_NV); }
-};
-
-
-class BAbsMem : public AAbsMem
+class BAbsMem final : public AAbsMem
 {
 public:
   unsigned long long content_B;
@@ -164,11 +154,19 @@ public:
   }
 
   CHAI_HOST_DEVICE ~BAbsMem(void) { printf("-- B has been destructed\n"); }
-  CHAI_HOST_DEVICE virtual void function(void) const override { printf("%lX\n", content_B); }
+  CHAI_HOST_DEVICE virtual void function(void) const override { printf("%llX\n", content_B); }
   CHAI_HOST_DEVICE virtual void d_function(void) const override { base_member->function(); }
   CHAI_HOST_DEVICE virtual void set_content(unsigned long long val) override { content_B = val; content_A = val; }
 };
 
+class NV
+{
+public:
+  unsigned long long content_NV;
+  CHAI_HOST_DEVICE NV(void) : content_NV(0xFFFFFFFFFFFFFFFFull) { printf("++ NV has been constructed\n"); }
+  CHAI_HOST_DEVICE ~NV(void) { printf("-- NV has been destructed\n"); }
+  CHAI_HOST_DEVICE void function(void) const { printf("%llX\n", content_NV); }
+};
 
 GPU_TEST(managed_shared_ptr, shared_ptr_absmem)
 {
