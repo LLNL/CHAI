@@ -21,7 +21,11 @@
 #ifdef NDEBUG
 
 #ifdef CHAI_ENABLE_CUDA
-#define device_assert(EXP) if( !EXP ) asm ("trap;")
+#define device_assert(EXP) if( !(EXP) ) asm ("trap;")
+#else
+#define device_assert(EXP) if( !(EXP) ) asm ("s_trap 1;")
+#endif
+
 #else
 #define device_assert(EXP) if( !EXP ) asm ("s_trap 1;")
 #endif
@@ -884,7 +888,7 @@ GPU_TEST(ManagedArray, dataGPU)
   chai::ManagedArray<int> array;
   array.allocate(length,
                  chai::GPU,
-                 [&] (const chai::PointerRecord* record, chai::Action act, chai::ExecutionSpace s) {
+                 [&] (const chai::PointerRecord*, chai::Action act, chai::ExecutionSpace s) {
                    if (act == chai::ACTION_MOVE) {
                      if (s == chai::CPU) {
                        ++transfersD2H;
@@ -912,7 +916,7 @@ GPU_TEST(ManagedArray, dataGPU)
 
   // Move data to device with touch
   forall(gpu(), 0, length, [=] __device__ (int i) {
-    int* d_data = array.data();
+    array.data();
     array[i] += 1;
   });
 
@@ -930,7 +934,7 @@ GPU_TEST(ManagedArray, dataGPU)
 
   // Access on device with touch (should not be moved)
   forall(gpu(), 0, length, [=] __device__ (int i) {
-    int* d_data = array.data();
+    array.data();
     array[i] += i;
   });
 
@@ -981,7 +985,7 @@ GPU_TEST(ManagedArray, cdataGPU)
   chai::ManagedArray<int> array;
   array.allocate(length,
                  chai::GPU,
-                 [&] (const chai::PointerRecord* record, chai::Action act, chai::ExecutionSpace s) {
+                 [&] (const chai::PointerRecord*, chai::Action act, chai::ExecutionSpace s) {
                    if (act == chai::ACTION_MOVE) {
                      if (s == chai::CPU) {
                        ++transfersD2H;
@@ -1876,11 +1880,11 @@ GPU_TEST(ManagedArray, CopyZero)
   array.allocate(0);
   ASSERT_EQ(array.size(), 0u);
 
-  forall(gpu(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int) {
     (void) array;
   });
 
-  forall(sequential(), 0, 1, [=] (int i) { 
+  forall(sequential(), 0, 1, [=] (int) { 
     (void) array;
   });
 

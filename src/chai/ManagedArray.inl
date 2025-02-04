@@ -55,6 +55,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(
     ExecutionSpace space) :
   ManagedArray()
 {
+  CHAI_UNUSED_VAR(elems, space);
 #if !defined(CHAI_DEVICE_COMPILE)
   this->allocate(elems, space);
 #endif
