@@ -194,6 +194,7 @@ public:
 
   CHAI_HOST_DEVICE
   msp_record_count& operator=(msp_record_count const& rhs) noexcept {
+    CHAI_UNUSED_VAR(rhs);
 #if !defined(CHAI_DEVICE_COMPILE)
     msp_counted_base* temp = rhs.m_pi;
     if (temp != m_pi)

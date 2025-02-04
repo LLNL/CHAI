@@ -136,6 +136,7 @@ public:
    */
   CHAI_HOST_DEVICE
   const element_type* cget(ExecutionSpace space = chai::CPU) const noexcept { 
+    CHAI_UNUSED_VAR(space);
 #if !defined(CHAI_DEVICE_COMPILE)
   if (m_active_pointer) {
      move(space, false);
@@ -145,6 +146,7 @@ public:
   }
   CHAI_HOST_DEVICE
   element_type* get(ExecutionSpace space = chai::CPU) const noexcept { 
+    CHAI_UNUSED_VAR(space);
 #if !defined(CHAI_DEVICE_COMPILE)
   if (m_active_pointer) {
      move(space);

@@ -27,10 +27,6 @@
 #endif
 
 #else
-#define device_assert(EXP) if( !EXP ) asm ("s_trap 1;")
-#endif
-
-#else
 #define device_assert(EXP) assert(EXP)
 #endif
 
