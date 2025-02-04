@@ -10,10 +10,10 @@
 #include "chai/config.hpp"
 #include "chai/ChaiMacros.hpp"
 #include "chai/ExecutionSpaces.hpp"
-//#include "chai/PointerRecord.hpp"
+
 #include "chai/SharedPointerRecord.hpp"
 #include "chai/Types.hpp"
-#include "chai/ArrayManager.hpp"
+#include "chai/ChaiManager.hpp"
 
 #if defined(CHAI_ENABLE_RAJA_PLUGIN)
 #include "chai/pluginLinker.hpp"

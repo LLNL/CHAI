@@ -11,6 +11,10 @@
 
 #include "umpire/util/Macros.hpp"
 
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+#define CHAI_ENABLE_DEVICE
+#endif
+
 #if defined(CHAI_ENABLE_CUDA)
 
 #include <cuda_runtime_api.h>
@@ -26,6 +30,11 @@
 #define gpuMemcpyDeviceToHost cudaMemcpyDeviceToHost
 #define gpuMemcpyDeviceToDevice cudaMemcpyDeviceToDevice
 #define gpuMemcpyDefault cudaMemcpyDefault
+
+#define gpuSuccess cudaSuccess
+#define gpuError_t cudaError_t
+#define gpuGetErrorString cudaGetErrorString
+#define gpuDeviceSynchronize cudaDeviceSynchronize
 
 // NOTE: Cannot have if defined(__HIPCC__) in the condition below, since __HIPCC__ comes from the included header hip_runtime below.
 #elif defined(CHAI_ENABLE_HIP)
@@ -43,6 +52,11 @@
 #define gpuMemcpyDeviceToHost hipMemcpyDeviceToHost
 #define gpuMemcpyDeviceToDevice hipMemcpyDeviceToDevice
 #define gpuMemcpyDefault hipMemcpyDefault
+
+#define gpuSuccess hipSuccess
+#define gpuError_t hipError_t
+#define gpuGetErrorString hipGetErrorString
+#define gpuDeviceSynchronize hipDeviceSynchronize
 
 #else
 
