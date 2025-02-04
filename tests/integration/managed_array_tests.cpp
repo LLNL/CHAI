@@ -4,6 +4,14 @@
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
+#include "chai/config.hpp"
+
+#include "../src/util/forall.hpp"
+
+#include "chai/ManagedArray.hpp"
+
+#include "umpire/ResourceManager.hpp"
+
 #include "gtest/gtest.h"
 #define GPU_TEST(X, Y)              \
   static void gpu_test_##X##Y();    \
@@ -27,16 +35,6 @@
 #else
 #define assert_empty_map(IGNORED) ASSERT_EQ(chai::ArrayManager::getInstance()->getPointerMap().size(),0)
 #endif
-
-
-#include "chai/config.hpp"
-
-#include "../src/util/forall.hpp"
-
-#include "chai/ManagedArray.hpp"
-
-#include "umpire/ResourceManager.hpp"
-
 
 struct my_point {
   double x;
