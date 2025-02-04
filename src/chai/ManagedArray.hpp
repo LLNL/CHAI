@@ -428,7 +428,8 @@ protected:
  *
  * \return A new ManagedArray containing the raw data pointer.
  *
- * \note If using this method on HIP platforms, XNACK must be enabled.
+ * \note If using this method on HIP platforms, XNACK must be enabled
+ *       (see https://rocm.docs.amd.com/projects/HIP/en/latest/how-to/hip_runtime_api/memory_management/unified_memory.html).
  */
 template <typename T>
 ManagedArray<T> makeManagedArray(T* data,
