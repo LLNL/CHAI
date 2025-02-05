@@ -298,7 +298,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 
 void ArrayManager::move(PointerRecord* record,
                         ExecutionSpace space,
-                        camp::resources::Resource* resource)
+                        camp::resources::Resource* )
 {
   if (space == NONE) {
     return;
@@ -347,9 +347,7 @@ void ArrayManager::move(PointerRecord* record,
       chai::copy(dst_pointer, src_pointer, m_resource_manager, space, prev_space);
     }
 
-        callback(record, ACTION_MOVE, space);
-      }
-    }
+    callback(record, ACTION_MOVE, space);
   }
 
   resetTouch(record);
