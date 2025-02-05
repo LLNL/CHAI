@@ -522,7 +522,7 @@ GPU_TEST(managed_ptr, gpu_class_with_managed_array)
 
   chai::ManagedArray<int> array(1, chai::CPU);
 
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
      array[0] = expectedValue;
   });
 
@@ -549,7 +549,7 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_ptr)
 
   chai::ManagedArray<int> array(1, chai::CPU);
 
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
      array[0] = expectedValue;
   });
 
@@ -642,7 +642,7 @@ GPU_TEST(managed_ptr, static_pointer_cast)
 
   chai::ManagedArray<int> array(1, chai::CPU);
 
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
      array[0] = expectedValue;
   });
 
@@ -675,7 +675,7 @@ GPU_TEST(managed_ptr, dynamic_pointer_cast)
 
   chai::ManagedArray<int> array(1, chai::CPU);
 
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
      array[0] = expectedValue;
   });
 
@@ -708,7 +708,7 @@ GPU_TEST(managed_ptr, const_pointer_cast)
 
   chai::ManagedArray<int> array(1, chai::CPU);
 
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
      array[0] = expectedValue;
   });
 
@@ -741,7 +741,7 @@ GPU_TEST(managed_ptr, reinterpret_pointer_cast)
 
   chai::ManagedArray<int> array(1, chai::CPU);
 
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
      array[0] = expectedValue;
   });
 
