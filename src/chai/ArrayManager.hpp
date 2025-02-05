@@ -22,6 +22,8 @@
 #include "umpire/Allocator.hpp"
 #include "umpire/util/MemoryMap.hpp"
 
+#include "camp/resource.hpp"
+
 #if defined(CHAI_ENABLE_CUDA)
 #include <cuda_runtime_api.h>
 #endif
@@ -169,21 +171,54 @@ public:
   CHAISHAREDDLL_API void setExecutionSpace(ExecutionSpace space);
 
   /*!
+   * \brief Set the current execution space.
+   *
+   * \param space The space to set as current.
+   * \param resource The resource to set as current.
+   */
+  CHAISHAREDDLL_API void setExecutionSpace(ExecutionSpace space, camp::resources::Resource *resource);
+
+  /*!
    * \brief Get the current execution space.
    *
-   * \return The current execution space.jo
+   * \return The current execution space.
    */
   CHAISHAREDDLL_API ExecutionSpace getExecutionSpace();
 
   /*!
-   * \brief Move data in pointer to the current execution space.
+   * \brief Get the current resource.
+   *
+   * \return The current resource.
+   */
+  CHAISHAREDDLL_API camp::resources::Resource* getResource();
+
+  /*!
+   * \brief Move data in pointer to the given execution space.
    *
    * \param pointer Pointer to data in any execution space.
+   * \param pointer_record The pointer record.
+   * \param space The execution space to which to move the data.
+   *
    * \return Pointer to data in the current execution space.
    */
   CHAISHAREDDLL_API void* move(void* pointer,
                                PointerRecord* pointer_record,
-                               ExecutionSpace = NONE);
+                               ExecutionSpace space = NONE);
+
+  /*!
+   * \brief Move data in pointer to the given execution space.
+   *
+   * \param pointer Pointer to data in any execution space.
+   * \param pointer_record The pointer record.
+   * \param resource The resource to use to move the data.
+   * \param space The execution space to which to move the data.
+   *
+   * \return Pointer to data in the current execution space.
+   */
+  CHAISHAREDDLL_API void* move(void* pointer,
+                               PointerRecord* pointer_record,
+                               camp::resources::Resource* resource,
+                               ExecutionSpace space = NONE);
 
   /*!
    * \brief Register a touch of the pointer in the current execution space.
@@ -444,14 +479,23 @@ private:
 
 
   /*!
-   * \brief Move data in PointerRecord to the corresponding ExecutionSpace.
+   * \brief Move data in the pointer record to the corresponding execution space.
    *
-   * \param record
-   * \param space
+   * \param record The pointer record.
+   * \param space The execution space to which to move the data.
    */
   void move(PointerRecord* record, ExecutionSpace space);
-  
-    /*!
+
+  /*!
+   * \brief Move data in the pointer record to the corresponding execution space.
+   *
+   * \param record The pointer record.
+   * \param space The execution space to which to move the data.
+   * \param resource The resource to use to move the data.
+   */
+  void move(PointerRecord* record, ExecutionSpace space, camp::resources::Resource* resource);
+
+  /*!
    * \brief Execute a user callback if callbacks are active
    *
    * \param record The pointer record containing the callback
@@ -479,6 +523,11 @@ private:
    * Current execution space.
    */
   static thread_local ExecutionSpace m_current_execution_space;
+
+  /*!
+   * Current resource.
+   */
+  camp::resources::Resource* m_current_resource;
 
   /**
    * Default space for new allocations.

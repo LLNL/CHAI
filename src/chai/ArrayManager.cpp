@@ -37,6 +37,7 @@ ArrayManager::ArrayManager() :
 {
   m_pointer_map.clear();
   m_current_execution_space = NONE;
+  m_current_resource = nullptr;
   m_default_allocation_space = CPU;
 
   m_allocators[CPU] =
@@ -167,6 +168,11 @@ void * ArrayManager::frontOfAllocation(void * pointer) {
 
 void ArrayManager::setExecutionSpace(ExecutionSpace space)
 {
+  setExecutionSpace(space, nullptr);
+}
+
+void ArrayManager::setExecutionSpace(ExecutionSpace space, camp::resources::Resource* resource)
+{
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
    if (isGPUSimMode() && chai::NONE != space) {
       space = chai::GPU;
@@ -186,10 +192,19 @@ void ArrayManager::setExecutionSpace(ExecutionSpace space)
 #endif
 
   m_current_execution_space = space;
+  m_current_resource = resource;
 }
 
 void* ArrayManager::move(void* pointer,
                          PointerRecord* pointer_record,
+                         ExecutionSpace space)
+{
+  return move(pointer, pointer_record, nullptr, space);
+}
+
+void* ArrayManager::move(void* pointer,
+                         PointerRecord* pointer_record,
+                         camp::resources::Resource* resource,
                          ExecutionSpace space)
 {
   // Check for default arg (NONE)
@@ -201,7 +216,7 @@ void* ArrayManager::move(void* pointer,
     return pointer;
   }
 
-  move(pointer_record, space);
+  move(pointer_record, space, resource);
 
   return pointer_record->m_pointers[space];
 }
@@ -209,6 +224,11 @@ void* ArrayManager::move(void* pointer,
 ExecutionSpace ArrayManager::getExecutionSpace()
 {
   return m_current_execution_space;
+}
+
+camp::resources::Resource* ArrayManager::getResource()
+{
+  return m_current_resource;
 }
 
 void ArrayManager::registerTouch(PointerRecord* pointer_record)
@@ -269,13 +289,20 @@ static void copy(void * dst_pointer, void * src_pointer, umpire::ResourceManager
 
 void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 {
+  move(record, space, nullptr);
+}
+
+void ArrayManager::move(PointerRecord* record,
+                        ExecutionSpace space,
+                        camp::resources::Resource* )
+{
   if (space == NONE) {
     return;
   }
 
   callback(record, ACTION_CAPTURED, space);
 
-  if (space == record->m_last_space) {
+  if (space == record->m_last_space && !record->transfer_pending) {
     return;
   }
 

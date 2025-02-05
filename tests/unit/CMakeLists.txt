@@ -4,12 +4,28 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
+
 set (chai_unit_test_depends
      chai umpire gtest)
      
 blt_list_append(TO chai_unit_test_depends ELEMENTS cuda IF ${CHAI_ENABLE_CUDA})
 blt_list_append(TO chai_unit_test_depends ELEMENTS blt::hip IF ${CHAI_ENABLE_HIP})
 
+# ExecutionSpace tests
+blt_add_executable(
+  NAME execution_space_unit_test
+  SOURCES execution_space_unit_tests.cpp
+  DEPENDS_ON ${chai_unit_test_depends})
+
+target_include_directories(
+  execution_space_unit_test
+  PUBLIC ${PROJECT_BINARY_DIR}/include)
+
+blt_add_test(
+  NAME execution_space_unit_test
+  COMMAND execution_space_unit_test)
+
+# ManagedArray tests
 blt_add_executable(
   NAME managed_array_unit_tests
   SOURCES managed_array_unit_tests.cpp
