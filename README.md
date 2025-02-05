@@ -1,5 +1,5 @@
 [comment]: # (#################################################################)
-[comment]: # (Copyright 2016-24, Lawrence Livermore National Security, LLC)
+[comment]: # (Copyright 2016-25, Lawrence Livermore National Security, LLC)
 [comment]: # (and CHAI project contributors. See the CHAI LICENSE file for)
 [comment]: # (details.)
 [comment]: # 
