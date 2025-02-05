@@ -11,6 +11,10 @@
 
 #include "umpire/util/Macros.hpp"
 
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+#define CHAI_ENABLE_DEVICE
+#endif
+
 #if defined(CHAI_ENABLE_CUDA)
 
 #include <cuda_runtime_api.h>
@@ -91,5 +95,11 @@
 
 #endif
 #endif
+
+namespace chai
+{
+template <typename... T>
+CHAI_HOST_DEVICE CHAI_INLINE void CHAI_UNUSED_VAR(T &&...) noexcept {}
+} // namespace chai
 
 #endif  // CHAI_ChaiMacros_HPP
