@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
-// project contributors. See the COPYRIGHT file for details.
+// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+// project contributors. See the CHAI LICENSE file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
@@ -77,11 +77,13 @@ inline void synchronize() {
 #endif
 }
 
-#if defined(CHAI_GPUCC)
+#if defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
 
 // wrapper for hip/cuda free
 CHAI_HOST inline void gpuFree(void* buffer) {
-#if defined (CHAI_ENABLE_HIP)
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+   free(buffer);
+#elif defined (CHAI_ENABLE_HIP)
    CHAI_GPU_ERROR_CHECK(hipFree(buffer));
 #elif defined (CHAI_ENABLE_CUDA)
    CHAI_GPU_ERROR_CHECK(cudaFree(buffer));
@@ -90,7 +92,9 @@ CHAI_HOST inline void gpuFree(void* buffer) {
 
 // wrapper for hip/cuda malloc
 CHAI_HOST inline void gpuMalloc(void** devPtr, size_t size) {
-#if defined (CHAI_ENABLE_HIP)
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+   *devPtr = (void*)malloc(size);
+#elif defined (CHAI_ENABLE_HIP)
    CHAI_GPU_ERROR_CHECK(hipMalloc(devPtr, size));
 #elif defined (CHAI_ENABLE_CUDA)
    CHAI_GPU_ERROR_CHECK(cudaMalloc(devPtr, size));
@@ -99,7 +103,9 @@ CHAI_HOST inline void gpuMalloc(void** devPtr, size_t size) {
 
 // wrapper for hip/cuda managed malloc
 CHAI_HOST inline void gpuMallocManaged(void** devPtr, size_t size) {
-#if defined (CHAI_ENABLE_HIP)
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+   *devPtr = (void*)malloc(size);
+#elif defined (CHAI_ENABLE_HIP)
    CHAI_GPU_ERROR_CHECK(hipMallocManaged(devPtr, size));
 #elif defined (CHAI_ENABLE_CUDA)
    CHAI_GPU_ERROR_CHECK(cudaMallocManaged(devPtr, size));
@@ -108,7 +114,9 @@ CHAI_HOST inline void gpuMallocManaged(void** devPtr, size_t size) {
 
 // wrapper for hip/cuda mem copy
 CHAI_HOST inline void  gpuMemcpy(void* dst, const void* src, size_t count, gpuMemcpyKind kind) {
-#if defined (CHAI_ENABLE_HIP)
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+   memcpy(dst, src, count);
+#elif defined (CHAI_ENABLE_HIP)
    CHAI_GPU_ERROR_CHECK(hipMemcpy(dst, src, count, kind));
 #elif defined (CHAI_ENABLE_CUDA)
    CHAI_GPU_ERROR_CHECK(cudaMemcpy(dst, src, count, kind));
@@ -280,13 +288,11 @@ public:
    */
   CHAISHAREDDLL_API void free(PointerRecord* pointer, ExecutionSpace space = NONE);
 
-#if defined(CHAI_ENABLE_PICK)
   template <typename T>
-   T_non_const<T> pick(T* src_ptr, size_t index);
+  T_non_const<T> pick(T* src_ptr, size_t index);
 
   template <typename T>
-   void set(T* dst_ptr, size_t index, const T& val);
-#endif
+  void set(T* dst_ptr, size_t index, const T& val);
 
   /*!
    * \brief Get the size of the given pointer.
@@ -432,21 +438,6 @@ public:
   void disableCallbacks() { m_callbacks_active = false; }
 
   /*!
-   * \brief Turn on device synchronization after every kernel.
-   */
-  void enableDeviceSynchronize() { m_device_synchronize = true; }
-
-  /*!
-   * \brief Turn off device synchronization after every kernel.
-   */
-  void disableDeviceSynchronize() { m_device_synchronize = false; }
-
-  /*!
-   * \brief Turn on device synchronization after every kernel.
-   */
-  bool deviceSynchronize() { return m_device_synchronize; }
-
-  /*!
    * \brief synchronize the device if there hasn't been a synchronize since the last kernel
    */
   CHAISHAREDDLL_API bool syncIfNeeded();
@@ -531,7 +522,7 @@ private:
   /*!
    * Current execution space.
    */
-  ExecutionSpace m_current_execution_space;
+  static thread_local ExecutionSpace m_current_execution_space;
 
   /*!
    * Current resource.
@@ -575,15 +566,10 @@ private:
   bool m_callbacks_active;
 
   /*!
-   * Whether or not to synchronize on device after every CHAI kernel.
-   */
-  bool m_device_synchronize = false;
-
-  /*!
    * Whether or not a synchronize has been performed since the launch of the last
    * GPU context
    */
-  bool m_synced_since_last_kernel = false;
+  static thread_local bool m_synced_since_last_kernel;
 
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
   /*!

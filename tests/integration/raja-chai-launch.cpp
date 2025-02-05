@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
-// project contributors. See the COPYRIGHT file for details.
+// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+// project contributors. See the CHAI LICENSE file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
@@ -48,8 +48,8 @@ CUDA_TEST(Chai, LaunchSimple)
 {
 
   using LAUNCH_POLICY = RAJA::LaunchPolicy<RAJA::seq_launch_t>;
-  using LOOP_POLICY_0 = RAJA::LoopPolicy<RAJA::loop_exec>;
-  using LOOP_POLICY_1 = RAJA::LoopPolicy<RAJA::loop_exec>;
+  using LOOP_POLICY_0 = RAJA::LoopPolicy<RAJA::seq_exec>;
+  using LOOP_POLICY_1 = RAJA::LoopPolicy<RAJA::seq_exec>;
 
 #if defined(RAJA_ENABLE_CUDA)
 
@@ -61,7 +61,7 @@ CUDA_TEST(Chai, LaunchSimple)
 #elif defined(RAJA_ENABLE_OPENMP)
 
   using PARALLEL_LAUNCH_POLICY = RAJA::LaunchPolicy<RAJA::omp_launch_t>;
-  using PARALLEL_LOOP_POLICY_0 = RAJA::LoopPolicy<RAJA::loop_exec>;
+  using PARALLEL_LOOP_POLICY_0 = RAJA::LoopPolicy<RAJA::seq_exec>;
   using PARALLEL_LOOP_POLICY_1 = RAJA::LoopPolicy<RAJA::omp_for_exec>;
 
 #else
@@ -122,8 +122,8 @@ CUDA_TEST(Chai, LaunchView)
 {
 
   using LAUNCH_POLICY = RAJA::LaunchPolicy<RAJA::seq_launch_t>;
-  using LOOP_POLICY_0 = RAJA::LoopPolicy<RAJA::loop_exec>;
-  using LOOP_POLICY_1 = RAJA::LoopPolicy<RAJA::loop_exec>;
+  using LOOP_POLICY_0 = RAJA::LoopPolicy<RAJA::seq_exec>;
+  using LOOP_POLICY_1 = RAJA::LoopPolicy<RAJA::seq_exec>;
 
 #if defined(RAJA_ENABLE_CUDA)
 
@@ -135,7 +135,7 @@ CUDA_TEST(Chai, LaunchView)
 #elif defined(RAJA_ENABLE_OPENMP)
 
   using PARALLEL_LAUNCH_POLICY = RAJA::LaunchPolicy<RAJA::omp_launch_t>;
-  using PARALLEL_LOOP_POLICY_0 = RAJA::LoopPolicy<RAJA::loop_exec>;
+  using PARALLEL_LOOP_POLICY_0 = RAJA::LoopPolicy<RAJA::seq_exec>;
   using PARALLEL_LOOP_POLICY_1 = RAJA::LoopPolicy<RAJA::omp_for_exec>;
 
 #else
@@ -200,8 +200,8 @@ CUDA_TEST(Chai, LaunchMultiView)
 {
 
   using LAUNCH_POLICY = RAJA::LaunchPolicy<RAJA::seq_launch_t>;
-  using LOOP_POLICY_0 = RAJA::LoopPolicy<RAJA::loop_exec>;
-  using LOOP_POLICY_1 = RAJA::LoopPolicy<RAJA::loop_exec>;
+  using LOOP_POLICY_0 = RAJA::LoopPolicy<RAJA::seq_exec>;
+  using LOOP_POLICY_1 = RAJA::LoopPolicy<RAJA::seq_exec>;
 
 #if defined(RAJA_ENABLE_CUDA)
 
@@ -213,7 +213,7 @@ CUDA_TEST(Chai, LaunchMultiView)
 #elif defined(RAJA_ENABLE_OPENMP)
 
   using PARALLEL_LAUNCH_POLICY = RAJA::LaunchPolicy<RAJA::omp_launch_t>;
-  using PARALLEL_LOOP_POLICY_0 = RAJA::LoopPolicy<RAJA::loop_exec>;
+  using PARALLEL_LOOP_POLICY_0 = RAJA::LoopPolicy<RAJA::seq_exec>;
   using PARALLEL_LOOP_POLICY_1 = RAJA::LoopPolicy<RAJA::omp_for_exec>;
 #else
 
@@ -345,23 +345,23 @@ void runLTimesTests(Index_type num_moments,
 #if defined(RAJA_ENABLE_CUDA)
   const bool async = false;
   using PARALLEL_LAUNCH_POLICY = RAJA::LaunchPolicy<RAJA::cuda_launch_t<async>>;
-  using PARALLEL_LOOP_POLICY_0 = RAJA::LoopPolicy<RAJA::loop_exec>;
+  using PARALLEL_LOOP_POLICY_0 = RAJA::LoopPolicy<RAJA::seq_exec>;
   using PARALLEL_LOOP_POLICY_1 = RAJA::LoopPolicy<RAJA::cuda_thread_x_loop>;
   using PARALLEL_LOOP_POLICY_2 = RAJA::LoopPolicy<RAJA::cuda_block_y_loop>;
   using PARALLEL_LOOP_POLICY_3 = RAJA::LoopPolicy<RAJA::cuda_block_x_loop>;
 
 #elif defined(RAJA_ENABLE_OPENMP)
   using PARALLEL_LAUNCH_POLICY = RAJA::LaunchPolicy<RAJA::omp_launch_t>;
-  using PARALLEL_LOOP_POLICY_0 = RAJA::LoopPolicy<RAJA::loop_exec>;
-  using PARALLEL_LOOP_POLICY_1 = RAJA::LoopPolicy<RAJA::loop_exec>;
-  using PARALLEL_LOOP_POLICY_2 = RAJA::LoopPolicy<RAJA::loop_exec>;
+  using PARALLEL_LOOP_POLICY_0 = RAJA::LoopPolicy<RAJA::seq_exec>;
+  using PARALLEL_LOOP_POLICY_1 = RAJA::LoopPolicy<RAJA::seq_exec>;
+  using PARALLEL_LOOP_POLICY_2 = RAJA::LoopPolicy<RAJA::seq_exec>;
   using PARALLEL_LOOP_POLICY_3 = RAJA::LoopPolicy<RAJA::omp_for_exec>;
 #else
   using PARALLEL_LAUNCH_POLICY = RAJA::LaunchPolicy<RAJA::seq_launch_t>;
-  using PARALLEL_LOOP_POLICY_0 = RAJA::LoopPolicy<RAJA::loop_exec>;
-  using PARALLEL_LOOP_POLICY_1 = RAJA::LoopPolicy<RAJA::loop_exec>;
-  using PARALLEL_LOOP_POLICY_2 = RAJA::LoopPolicy<RAJA::loop_exec>;
-  using PARALLEL_LOOP_POLICY_3 = RAJA::LoopPolicy<RAJA::loop_exec>;
+  using PARALLEL_LOOP_POLICY_0 = RAJA::LoopPolicy<RAJA::seq_exec>;
+  using PARALLEL_LOOP_POLICY_1 = RAJA::LoopPolicy<RAJA::seq_exec>;
+  using PARALLEL_LOOP_POLICY_2 = RAJA::LoopPolicy<RAJA::seq_exec>;
+  using PARALLEL_LOOP_POLICY_3 = RAJA::LoopPolicy<RAJA::seq_exec>;
 #endif
 
     RAJA::launch<PARALLEL_LAUNCH_POLICY>

@@ -1,3 +1,9 @@
+..
+    # Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+    # project contributors. See the CHAI LICENSE file for details.
+    #
+    # SPDX-License-Identifier: BSD-3-Clause
+
 .. _advanced_configuration:
 
 ================
@@ -19,7 +25,6 @@ Here is a summary of the configuration options, their default value, and meaning
       ENABLE_HIP                   Off      Enable HIP support.
       CHAI_ENABLE_GPU_SIMULATION_MODE   Off      Simulates GPU execution.
       CHAI_ENABLE_UM                    Off      Enable support for CUDA Unified Memory.
-      CHAI_ENABLE_IMPLICIT_CONVERSIONS  On       Enable implicit conversions between ManagedArray and raw pointers
       CHAI_DISABLE_RM                   Off      Disable the ArrayManager and make ManagedArray a thin wrapper around a pointer.
       ENABLE_TESTS                 On       Build test executables.
       ENABLE_BENCHMARKS            On       Build benchmark programs.
@@ -45,11 +50,6 @@ These arguments are explained in more detail below:
   space. When a ``ManagedArray`` is allocated in the ``UM`` space, CHAI will
   not manually copy data. Data movement in this case is handled by the CUDA
   driver and runtime.
-
-* CHAI_ENABLE_IMPLICIT_CONVERSIONS
-  This option will allow implicit casting between an object of type
-  ``ManagedArray<T>`` and the correpsonding raw pointer type ``T*``. This
-  option is disabled by default, and should be used with caution.
 
 * CHAI_DISABLE_RM
   This option will remove all usage of the ``ArrayManager`` class and let the

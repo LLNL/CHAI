@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
-// project contributors. See the COPYRIGHT file for details.
+// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+// project contributors. See the CHAI LICENSE file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
@@ -43,18 +43,6 @@ class CHAICopyable
 };
 
 /*!
- * \class CHAIDISAMBIGUATE
- *
- * \brief Type to disambiguate otherwise ambiguous constructors.
- *
- */
-class CHAIDISAMBIGUATE
-{
-public:
-  CHAI_HOST_DEVICE CHAIDISAMBIGUATE(){};
-  CHAI_HOST_DEVICE ~CHAIDISAMBIGUATE(){};
-};
-/*!
  * \class ManagedArray
  *
  * \brief Provides an array-like class that automatically transfers data
@@ -81,7 +69,7 @@ public:
   /*!
    * \brief Default constructor creates a ManagedArray with no allocations.
    */
-  CHAI_HOST_DEVICE ManagedArray(
+  ManagedArray(
       std::initializer_list<chai::ExecutionSpace> spaces,
       std::initializer_list<umpire::Allocator> allocators);
 
@@ -98,7 +86,7 @@ public:
    */
   CHAI_HOST_DEVICE ManagedArray(size_t elems, ExecutionSpace space = get_default_space());
 
-  CHAI_HOST_DEVICE ManagedArray(
+  ManagedArray(
       size_t elems,
       std::initializer_list<chai::ExecutionSpace> spaces,
       std::initializer_list<umpire::Allocator> allocators,
@@ -132,7 +120,7 @@ public:
    */
   CHAI_HOST void allocate(size_t elems,
                           ExecutionSpace space = CPU,
-                          UserCallback const& cback =
+                          const UserCallback& cback =
                           [] (const PointerRecord*, Action, ExecutionSpace) {});
 
 
@@ -254,18 +242,6 @@ public:
   CHAI_HOST T* data(ExecutionSpace space, bool do_move = true) const;
 
   /*!
-   * \brief Deprecated! Use the data method instead!
-   *        Return the raw pointer to the data in the given execution
-   *        space. Optionally move the data to that execution space.
-   *
-   * \param space The execution space from which to retrieve the raw pointer.
-   * \param do_move Ensure data at that pointer is live and valid.
-   *
-   * @return A copy of the pointer in the given execution space
-   */
-  CHAI_HOST T* getPointer(ExecutionSpace space, bool do_move = true) const;
-
-  /*!
    * \brief Move data to the current execution space (actually determined
    *        by where the code is executing) and return an iterator to the
    *        beginning of the array.
@@ -298,7 +274,7 @@ public:
 
   CHAI_HOST_DEVICE ManagedArray(T* data,
                                 ArrayManager* array_manager,
-                                size_t m_elems,
+                                size_t elems,
                                 PointerRecord* pointer_record);
 
   ManagedArray<T>& operator=(ManagedArray const & other) = default;
@@ -311,17 +287,12 @@ public:
   CHAI_HOST_DEVICE bool operator==(const ManagedArray<T>& rhs) const;
   CHAI_HOST_DEVICE bool operator!=(const ManagedArray<T>& from) const;
 
-  CHAI_HOST_DEVICE bool operator==(const T* from) const;
-  CHAI_HOST_DEVICE bool operator!=(const T* from) const;
-
   CHAI_HOST_DEVICE bool operator==(std::nullptr_t from) const;
   CHAI_HOST_DEVICE bool operator!=(std::nullptr_t from) const;
 
 
   CHAI_HOST_DEVICE explicit operator bool() const;
 
-
-#if defined(CHAI_ENABLE_PICK)
   /*!
    * \brief Return the value of element i in the ManagedArray.
    * ExecutionSpace space to the current one
@@ -341,47 +312,6 @@ public:
    * \tparam T The type of data value in ManagedArray.
    */
   CHAI_HOST_DEVICE void set(size_t i, T val) const;
-
-  /*!
-   * \brief Increment the value of element i in the ManagedArray.
-   *
-   * \param index The index of the element to be incremented
-   * \tparam T The type of data value in ManagedArray.
-   */
-  CHAI_HOST_DEVICE void incr(size_t i) const;
-
-  /*!
-   * \brief Decrement the value of element i in the ManagedArray.
-   *
-   * \param index The index of the element to be decremented
-   * \tparam T The type of data value in ManagedArray.
-   */
-  CHAI_HOST_DEVICE void decr(size_t i) const;
-#endif
-
-
-#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
-  /*!
-   * \brief Cast the ManagedArray to a raw pointer.
-   *
-   * \return Raw pointer to data.
-   */
-  CHAI_HOST_DEVICE operator T*() const;
-
-  /*!
-   * \brief Construct a ManagedArray from a raw pointer.
-   *
-   * This raw pointer *must* have taken from an existing ManagedArray object.
-   *
-   * \param data Raw pointer to data.
-   * \param enable Boolean argument (unused) added to differentiate constructor.
-   */
-  template <bool Q = false>
-  CHAI_HOST_DEVICE ManagedArray(T* data,
-                                CHAIDISAMBIGUATE test = CHAIDISAMBIGUATE(),
-                                bool foo = Q);
-#endif
-
 
 #ifndef CHAI_DISABLE_RM
   /*!
@@ -436,16 +366,15 @@ public:
     m_active_pointer = other.m_active_pointer;
     m_active_base_pointer = other.m_active_base_pointer;
     m_resource_manager = other.m_resource_manager;
-    m_elems = other.m_elems;
+    m_size = other.m_size;
     m_offset = other.m_offset;
     m_pointer_record = other.m_pointer_record;
     m_is_slice = other.m_is_slice;
 #ifndef CHAI_DISABLE_RM
 #if !defined(CHAI_DEVICE_COMPILE)
-  // if we can, ensure elems is based off the pointer_record size to protect against
-  // casting leading to incorrect size info in m_elems.
+  // if we can, ensure elems is based off the pointer_record size out of paranoia
   if (m_pointer_record != nullptr && !m_is_slice) {
-     m_elems = m_pointer_record->m_size / sizeof(T);
+     m_size = m_pointer_record->m_size;
   }
 #endif
 #endif
@@ -458,7 +387,6 @@ public:
 
 
 private:
-  CHAI_HOST void modify(size_t i, const T& val) const;
   // The following are only used by ManagedArray.inl, but for template
   // shenanigan reasons need to be defined here.
 #if !defined(CHAI_DISABLE_RM)
@@ -469,7 +397,7 @@ private:
             typename std::enable_if<B, int>::type = 0>
   CHAI_HOST bool initInner(size_t start = 0)
   {
-    for (size_t i = start; i < m_elems; ++i) {
+    for (size_t i = start; i < m_size/sizeof(T); ++i) {
       m_active_base_pointer[i] = nullptr;
     }
     return true;
@@ -498,7 +426,7 @@ protected:
   /*!
    * Number of elements in the ManagedArray.
    */
-  mutable size_t m_elems = 0;
+  mutable size_t m_size = 0;
   mutable size_t m_offset = 0;
 
   /*!
@@ -524,6 +452,9 @@ protected:
  * \tparam T Type of the raw data.
  *
  * \return A new ManagedArray containing the raw data pointer.
+ *
+ * \note If using this method on HIP platforms, XNACK must be enabled
+ *       (see https://rocm.docs.amd.com/projects/HIP/en/latest/how-to/hip_runtime_api/memory_management/unified_memory.html).
  */
 template <typename T>
 ManagedArray<T> makeManagedArray(T* data,
@@ -607,7 +538,7 @@ CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T> ManagedArray<T>::slice( size_t offs
     slice.m_active_base_pointer = m_active_base_pointer;
     slice.m_offset = offset + m_offset;
     slice.m_active_pointer = m_active_base_pointer + slice.m_offset;
-    slice.m_elems = elems;
+    slice.m_size = elems*sizeof(T);
     slice.m_is_slice = true;
   }
   return slice;

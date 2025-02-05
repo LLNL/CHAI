@@ -1,4 +1,12 @@
-# CHAI v2022.10.0
+[comment]: # (#################################################################)
+[comment]: # (Copyright 2016-24, Lawrence Livermore National Security, LLC)
+[comment]: # (and CHAI project contributors. See the CHAI LICENSE file for)
+[comment]: # (details.)
+[comment]: # 
+[comment]: # (# SPDX-License-Identifier: BSD-3-Clause)
+[comment]: # (#################################################################)
+
+# CHAI v2024.07.0
 
 [![Azure Build Status](https://dev.azure.com/davidbeckingsale/CHAI/_apis/build/status/LLNL.CHAI?branchName=develop)](https://dev.azure.com/davidbeckingsale/CHAI/_build/latest?definitionId=2&branchName=develop)
 [![Build Status](https://travis-ci.org/LLNL/CHAI.svg?branch=develop)](https://travis-ci.org/LLNL/CHAI)

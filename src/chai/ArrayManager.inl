@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
-// project contributors. See the COPYRIGHT file for details.
+// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+// project contributors. See the CHAI LICENSE file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
@@ -17,7 +17,9 @@
 #include "umpire/ResourceManager.hpp"
 
 #if defined(CHAI_ENABLE_UM)
+#if !defined(CHAI_THIN_GPU_ALLOCATE)
 #include <cuda_runtime_api.h>
+#endif
 #endif
 
 namespace chai {
@@ -44,8 +46,24 @@ void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* point
 
   // Call callback with ACTION_FREE before changing the size
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
-    if (pointer_record->m_pointers[space]) {
-       callback(pointer_record, ACTION_FREE, ExecutionSpace(space));
+    void* space_ptr = pointer_record->m_pointers[space];
+    int actualSpace = space;
+    if (space_ptr) {
+#if defined(CHAI_ENABLE_UM)
+      if (space_ptr == pointer_record->m_pointers[UM]) {
+        actualSpace = UM;
+      } else
+#endif
+#if defined(CHAI_ENABLE_PINNED)
+      if (space_ptr == pointer_record->m_pointers[PINNED]) {
+        actualSpace = PINNED;
+      }
+#endif
+      callback(pointer_record, ACTION_FREE, ExecutionSpace(actualSpace));
+      if (actualSpace == UM || actualSpace == PINNED) {
+        // stop the loop over spaces
+        break;
+      }
     }
   }
 
@@ -58,25 +76,54 @@ void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* point
   size_t num_bytes_to_copy = std::min(old_size, new_size);
 
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
-    void* old_ptr = pointer_record->m_pointers[space];
+    void* space_ptr = pointer_record->m_pointers[space];
+    auto alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[space]);
+    int actualSpace = space;
 
-    if (old_ptr) {
-      void* new_ptr = m_allocators[space]->allocate(new_size);
-      m_resource_manager.copy(new_ptr, old_ptr, num_bytes_to_copy);
-      m_allocators[space]->deallocate(old_ptr);
+    if (space_ptr) {
+#if defined(CHAI_ENABLE_UM)
+      if (space_ptr == pointer_record->m_pointers[UM]) {
+        alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[UM]);
+        actualSpace = UM;
+      } else
+#endif
+#if defined(CHAI_ENABLE_PINNED)
+      if (space_ptr == pointer_record->m_pointers[PINNED]) {
+        alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[PINNED]);
+        actualSpace = PINNED;
+      } else
+#endif
+      {
+        alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[space]);
+      }
+      void* new_ptr = alloc.allocate(new_size);
+#if CHAI_ENABLE_ZERO_INITIALIZED_MEMORY
+      m_resource_manager.memset(new_ptr, 0, new_size);
+#endif
+      m_resource_manager.copy(new_ptr, space_ptr, num_bytes_to_copy);
+      alloc.deallocate(space_ptr);
 
-      pointer_record->m_pointers[space] = new_ptr;
-      callback(pointer_record, ACTION_ALLOC, ExecutionSpace(space));
+      pointer_record->m_pointers[actualSpace] = new_ptr;
+      callback(pointer_record, ACTION_ALLOC, ExecutionSpace(actualSpace));
 
-      m_pointer_map.erase(old_ptr);
+      m_pointer_map.erase(space_ptr);
       m_pointer_map.insert(new_ptr, pointer_record);
+
+      if (actualSpace == UM || actualSpace == PINNED) {
+        for (int aliasedSpace = CPU; aliasedSpace < NUM_EXECUTION_SPACES; ++aliasedSpace) {
+           if (aliasedSpace != UM && aliasedSpace != PINNED) {
+              pointer_record->m_pointers[aliasedSpace] = new_ptr;
+           }
+        }
+        // stop the loop over spaces
+        break;
+      }
     }
   }
 
   return pointer_record->m_pointers[my_space];
 }
 
-#if defined(CHAI_ENABLE_PICK)
 template<typename T>
 CHAI_INLINE
 typename ArrayManager::T_non_const<T> ArrayManager::pick(T* src_ptr, size_t index)
@@ -96,7 +143,6 @@ void ArrayManager::set(T* dst_ptr, size_t index, const T& val)
   m_resource_manager.copy(const_cast<T_non_const<T>*>(dst_ptr+index), const_cast<T_non_const<T>*>(&val), sizeof(T));
   m_resource_manager.deregisterAllocation(const_cast<T_non_const<T>*>(&val));
 }
-#endif
 
 CHAI_INLINE
 void ArrayManager::copy(void * dst, void * src, size_t size) {

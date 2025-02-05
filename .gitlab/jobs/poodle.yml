@@ -1,0 +1,39 @@
+###############################################################################
+# Copyright (c) 2022-24, Lawrence Livermore National Security, LLC and RADIUSS
+# project contributors. See the CHAI LICENSE file for details.
+#
+# SPDX-License-Identifier: (MIT)
+###############################################################################
+
+# Override reproducer section to define projet specific variables.
+.poodle_reproducer_vars:
+  script:
+    - !reference [.reproducer_vars, script]
+
+########################
+# Overridden shared jobs
+########################
+# We duplicate the shared jobs description and add necessary changes for this
+# project. We keep ${PROJECT_<MACHINE>_VARIANTS} and ${PROJECT_<MACHINE>_DEPS}
+# So that the comparison with the original job is easier.
+
+# No overridden jobs so far.
+
+############
+# Extra jobs
+############
+# We do not recommend using ${PROJECT_<MACHINE>_VARIANTS} and
+# ${PROJECT_<MACHINE>_DEPS} in the extra jobs. There is no reason not to fully
+# describe the spec here.
+
+clang_14_0_6_develop_tpls:
+  variables:
+    SPEC: " %clang@14.0.6 ^umpire@develop ^raja@develop ^camp@main"
+  extends: .job_on_poodle
+  allow_failure: true
+
+clang_16_0_6_develop_tpls:
+  variables:
+    SPEC: " %clang@16.0.6 ^umpire@develop ^raja@develop ^camp@main"
+  extends: .job_on_poodle
+  allow_failure: true

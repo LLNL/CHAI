@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
-// project contributors. See the COPYRIGHT file for details.
+// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+// project contributors. See the CHAI LICENSE file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
@@ -11,7 +11,13 @@
   static void gpu_test_##X##Y()
 
 #ifdef NDEBUG
-#define device_assert(EXP) if( !EXP ) asm ("trap;")
+
+#ifdef CHAI_ENABLE_CUDA
+#define device_assert(EXP) if( !(EXP) ) asm ("trap;")
+#else
+#define device_assert(EXP) if( !(EXP) ) asm ("s_trap 1;")
+#endif
+
 #else
 #define device_assert(EXP) assert(EXP)
 #endif
@@ -164,7 +170,6 @@ TEST(ManagedArray, ArrayOfSlices) {
   assert_empty_map(true);
 }
 
-#if defined(CHAI_ENABLE_PICK)
 #if (!defined(CHAI_DISABLE_RM))
 TEST(ManagedArray, PickHostFromHostConst) {
   chai::ManagedArray<int> array(10);
@@ -205,32 +210,6 @@ TEST(ManagedArray, SetHostToHost)
   ASSERT_EQ(array[5], 10);
 
   array.free();
-  assert_empty_map(true);
-}
-
-
-TEST(ManagedArray, IncrementDecrementOnHost)
-{
-  chai::ManagedArray<int> arrayI(10);
-  chai::ManagedArray<int> arrayD(10);
-
-  forall(sequential(), 0, 10, [=](int i) {
-    arrayI[i] = i;
-    arrayD[i] = i;
-  });
-
-  forall(sequential(), 0, 10, [=](int i) {
-    arrayI.incr(i);
-    arrayD.decr(i);
-  });
-
-  forall(sequential(), 0, 10, [=](int i) {
-    ASSERT_EQ(arrayI[i], i + 1);
-    ASSERT_EQ(arrayD[i], i - 1);
-  });
-
-  arrayI.free();
-  arrayD.free();
   assert_empty_map(true);
 }
 
@@ -279,36 +258,9 @@ TEST(ManagedArray, SetHostToHostUM)
   assert_empty_map(true);
 }
 
-TEST(ManagedArray, IncrementDecrementOnHostUM)
-{
-  chai::ManagedArray<int> arrayI(10, chai::UM);
-  chai::ManagedArray<int> arrayD(10, chai::UM);
-
-  forall(sequential(), 0, 10, [=](int i) {
-    arrayI[i] = i;
-    arrayD[i] = i;
-  });
-
-  forall(sequential(), 0, 10, [=](int i) {
-    arrayI.incr(i);
-    arrayD.decr(i);
-  });
-
-  forall(sequential(), 0, 10, [=](int i) {
-    ASSERT_EQ(arrayI[i], i + 1);
-    ASSERT_EQ(arrayD[i], i - 1);
-  });
-
-  arrayI.free();
-  arrayD.free();
-  assert_empty_map(true);
-}
-#endif
-
 #endif
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-#if defined(CHAI_ENABLE_PICK)
 
 #if defined(CHAI_ENABLE_UM)
 GPU_TEST(ManagedArray, PickandSetDeviceToDeviceUM)
@@ -369,51 +321,6 @@ GPU_TEST(ManagedArray, SetHostToDeviceUM)
   array.set(5, temp);
   temp = array.pick(5);
   ASSERT_EQ(temp, 10);
-
-  array.free();
-  assert_empty_map(true);
-}
-
-GPU_TEST(ManagedArray, IncrementDecrementOnDeviceUM)
-{
-  chai::ManagedArray<int> arrayI(10, chai::UM);
-  chai::ManagedArray<int> arrayD(10, chai::UM);
-
-  forall(gpu(), 0, 10, [=] __device__(int i) {
-    arrayI[i] = i;
-    arrayD[i] = i;
-  });
-
-  forall(gpu(), 0, 10, [=] __device__(int i) {
-    arrayI.incr(i);
-    arrayD.decr(i);
-  });
-
-  forall(sequential(), 0, 10, [=](int i) {
-    ASSERT_EQ(arrayI[i], i + 1);
-    ASSERT_EQ(arrayD[i], i - 1);
-  });
-
-  arrayI.free();
-  arrayD.free();
-  assert_empty_map(true);
-}
-
-GPU_TEST(ManagedArray, IncrementDecrementFromHostOnDeviceUM)
-{
-  chai::ManagedArray<int> array(10, chai::UM);
-
-  forall(gpu(), 0, 10, [=] __device__(int i) { array[i] = i; });
-
-  array.incr(5);
-  array.decr(9);
-
-  int temp;
-  temp = array.pick(5);
-  ASSERT_EQ(temp, 6);
-
-  temp = array.pick(9);
-  ASSERT_EQ(temp, 8);
 
   array.free();
   assert_empty_map(true);
@@ -534,51 +441,7 @@ GPU_TEST(ManagedArray, SetHostToDevice)
   array.free();
   assert_empty_map(true);
 }
-GPU_TEST(ManagedArray, IncrementDecrementOnDevice)
-{
-  chai::ManagedArray<int> arrayI(10);
-  chai::ManagedArray<int> arrayD(10);
 
-  forall(gpu(), 0, 10, [=] __device__(int i) {
-    arrayI[i] = i;
-    arrayD[i] = i;
-  });
-
-  forall(gpu(), 0, 10, [=] __device__(int i) {
-    arrayI.incr(i);
-    arrayD.decr(i);
-  });
-
-  forall(sequential(), 0, 10, [=](int i) {
-    ASSERT_EQ(arrayI[i], i + 1);
-    ASSERT_EQ(arrayD[i], i - 1);
-  });
-
-  arrayI.free();
-  arrayD.free();
-  assert_empty_map(true);
-}
-
-GPU_TEST(ManagedArray, IncrementDecrementFromHostOnDevice)
-{
-  chai::ManagedArray<int> array(10);
-
-  forall(gpu(), 0, 10, [=] __device__(int i) { array[i] = i; });
-
-  array.incr(5);
-  array.decr(9);
-
-  int temp;
-  temp = array.pick(5);
-  ASSERT_EQ(temp, 6);
-
-  temp = array.pick(9);
-  ASSERT_EQ(temp, 8);
-
-  array.free();
-  assert_empty_map(true);
-}
-#endif
 #endif
 
 GPU_TEST(ManagedArray, ArrayOfSlicesDevice) {
@@ -774,22 +637,6 @@ TEST(ManagedArray, NullpointerConversions)
   assert_empty_map(true);
 }
 
-#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
-TEST(ManagedArray, ImplicitConversions)
-{
-  chai::ManagedArray<float> a(1);
-  a[0] = 3.14159;
-
-  chai::ManagedArray<float> a2 = a;
-  
-  ASSERT_EQ(a2[0], a[0]);
-
-  a.free();
-  SUCCEED();
-  assert_empty_map(true);
-}
-#endif
-
 TEST(ManagedArray, PodTest)
 {
   chai::ManagedArray<my_point> array(1);
@@ -879,13 +726,10 @@ TEST(ManagedArray, ExternalOwnedFromManagedArray)
   forall(sequential(), 0, 20, [=](int i) { array[i] = 1.0f * i; });
 
   chai::ManagedArray<float> arrayCopy =
-      chai::makeManagedArray<float>(array.getPointer(chai::CPU), 20, chai::CPU, true);
+      chai::makeManagedArray<float>(array.data(chai::CPU), 20, chai::CPU, true);
 
-#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
-  ASSERT_EQ(array, arrayCopy);
-#else
   ASSERT_EQ(array.data(), arrayCopy.data());
-#endif
+
   // should be able to free through the new ManagedArray
   arrayCopy.free();
   assert_empty_map(true);
@@ -898,7 +742,7 @@ TEST(ManagedArray, ExternalUnownedFromManagedArray)
   forall(sequential(), 0, 20, [=](int i) { array[i] = 1.0f * i; });
 
   chai::ManagedArray<float> arrayCopy =
-      chai::makeManagedArray<float>(array.getPointer(chai::CPU), 20, chai::CPU, false);
+      chai::makeManagedArray<float>(array.data(chai::CPU), 20, chai::CPU, false);
 
   forall(sequential(), 0, 20, [=](int i) { ASSERT_EQ(arrayCopy[i], 1.0f * i); });
   // freeing from an unowned pointer should leave the original ManagedArray intact
@@ -965,7 +809,7 @@ GPU_TEST(ManagedArray, dataGPU)
   chai::ManagedArray<int> array;
   array.allocate(length,
                  chai::GPU,
-                 [&] (const chai::PointerRecord* record, chai::Action act, chai::ExecutionSpace s) {
+                 [&] (const chai::PointerRecord*, chai::Action act, chai::ExecutionSpace s) {
                    if (act == chai::ACTION_MOVE) {
                      if (s == chai::CPU) {
                        ++transfersD2H;
@@ -993,7 +837,7 @@ GPU_TEST(ManagedArray, dataGPU)
 
   // Move data to device with touch
   forall(gpu(), 0, length, [=] __device__ (int i) {
-    int* d_data = array.data();
+    array.data();
     array[i] += 1;
   });
 
@@ -1011,7 +855,7 @@ GPU_TEST(ManagedArray, dataGPU)
 
   // Access on device with touch (should not be moved)
   forall(gpu(), 0, length, [=] __device__ (int i) {
-    int* d_data = array.data();
+    array.data();
     array[i] += i;
   });
 
@@ -1062,7 +906,7 @@ GPU_TEST(ManagedArray, cdataGPU)
   chai::ManagedArray<int> array;
   array.allocate(length,
                  chai::GPU,
-                 [&] (const chai::PointerRecord* record, chai::Action act, chai::ExecutionSpace s) {
+                 [&] (const chai::PointerRecord*, chai::Action act, chai::ExecutionSpace s) {
                    if (act == chai::ACTION_MOVE) {
                      if (s == chai::CPU) {
                        ++transfersD2H;
@@ -1957,11 +1801,11 @@ GPU_TEST(ManagedArray, CopyZero)
   array.allocate(0);
   ASSERT_EQ(array.size(), 0u);
 
-  forall(gpu(), 0, 1, [=] __device__ (int i) {
+  forall(gpu(), 0, 1, [=] __device__ (int) {
     (void) array;
   });
 
-  forall(sequential(), 0, 1, [=] (int i) { 
+  forall(sequential(), 0, 1, [=] (int) { 
     (void) array;
   });
 

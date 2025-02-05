@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
-// project contributors. See the COPYRIGHT file for details.
+// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+// project contributors. See the CHAI LICENSE file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
@@ -13,7 +13,9 @@
 #include "camp/resource.hpp"
 
 #if defined(CHAI_ENABLE_UM)
+#if !defined(CHAI_THIN_GPU_ALLOCATE)
 #include <cuda_runtime_api.h>
+#endif
 #endif
 
 struct sequential {
@@ -42,7 +44,9 @@ void forall(sequential, int begin, int end, LOOP_BODY body)
   chai::ArrayManager* rm = chai::ArrayManager::getInstance();
 
 #if defined(CHAI_ENABLE_UM)
+#if !defined(CHAI_THIN_GPU_ALLOCATE)
   cudaDeviceSynchronize();
+#endif
 #endif
 
   rm->setExecutionSpace(chai::CPU);

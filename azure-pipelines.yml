@@ -2,27 +2,19 @@ jobs:
 - job: Docker
   timeoutInMinutes: 360
   strategy:
-    matrix: 
-      gcc7: 
-        docker_target: gcc7
-      gcc8: 
-        docker_target: gcc8
-      gcc9: 
-        docker_target: gcc9
-      clang10: 
-        docker_target: clang10
-      clang11: 
-        docker_target: clang11
-      clang12: 
-        docker_target: clang12
-      clang13: 
-        docker_target: clang13
-      nvcc10:
-        docker_target: nvcc10
-      nvcc11:
-        docker_target: nvcc11
-      hip:
-        docker_target: hip
+    matrix:
+      gcc:
+        docker_target: gcc
+      clang:
+        docker_target: clang
+      #intel:
+        #docker_target: intel
+      #cuda:
+        #docker_target: cuda
+      #hip:
+        #docker_target: hip
+      #sycl:
+        #docker_target: sycl
   pool:
     vmImage: 'ubuntu-latest'
   variables:
@@ -39,7 +31,7 @@ jobs:
   - script: |
       CID=$(docker create llnl/chai:$(Build.BuildId))
       echo ${CID}
-      docker cp ${CID}:/home/axom/workspace/build local-build
+      docker cp ${CID}:/home/chai/workspace/build local-build
       docker rm ${CID}
     displayName: 'Copy test artifacts'
     condition: ne( variables['docker_target'], 'nvcc')

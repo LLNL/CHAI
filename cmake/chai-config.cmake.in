@@ -1,0 +1,33 @@
+##############################################################################
+# Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+# project contributors. See the COPYRIGHT file for details.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+##############################################################################
+
+@PACKAGE_INIT@
+
+# cache the prefix dir (could be overriden by find_dependency)
+set(CHAI_PACKAGE_PREFIX_DIR ${PACKAGE_PREFIX_DIR})
+
+include(CMakeFindDependencyMacro)
+
+include("${CMAKE_CURRENT_LIST_DIR}/BLTSetupTargets.cmake")
+
+if (NOT TARGET umpire)
+  find_dependency(umpire CONFIG NO_DEFAULT_PATH PATHS
+    ${umpire_DIR}
+    @umpire_DIR@
+    ${CHAI_PACKAGE_PREFIX_DIR})
+endif ()
+
+if (@CHAI_ENABLE_RAJA_PLUGIN@ AND NOT TARGET RAJA)
+  find_dependency(raja CONFIG NO_DEFAULT_PATH PATHS
+    ${raja_DIR}
+    @raja_DIR@
+    ${CHAI_PACKAGE_PREFIX_DIR})
+endif ()
+
+include("${CMAKE_CURRENT_LIST_DIR}/chai-targets.cmake")
+
+check_required_components(chai)

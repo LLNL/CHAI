@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-20, Lawrence Livermore National Security, LLC and CHAI
-// project contributors. See the COPYRIGHT file for details.
+// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+// project contributors. See the CHAI LICENSE file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
@@ -53,9 +53,8 @@ class Simple {
 class TestBase {
    public:
       CHAI_HOST_DEVICE TestBase() {}
-      CHAI_HOST_DEVICE virtual ~TestBase() {}
 
-      CHAI_HOST_DEVICE static TestBase* Factory(const int value);
+      CHAI_HOST_DEVICE virtual ~TestBase() {}
 
       CHAI_HOST_DEVICE virtual int getValue() const = 0;
 };
@@ -72,23 +71,6 @@ class TestDerived : public TestBase {
    private:
       int m_value;
 };
-
-CHAI_HOST_DEVICE TestBase* TestBase::Factory(const int value) {
-   return new TestDerived(value);
-}
-
-CHAI_HOST_DEVICE TestBase* Factory(const int value) {
-   return new TestDerived(value);
-}
-
-CHAI_HOST_DEVICE TestBase* OverloadedFactory() {
-   return new TestDerived(-1);
-}
-
-CHAI_HOST_DEVICE TestBase* OverloadedFactory(const int value) {
-   return new TestDerived(value);
-}
-
 
 TEST(managed_ptr, default_constructor)
 {
@@ -766,94 +748,6 @@ GPU_TEST(managed_ptr, gpu_make_managed)
   derived.free();
 }
 
-GPU_TEST(managed_ptr, make_managed_from_factory_function)
-{
-  const int expectedValue = rand();
-
-  auto factory = [] CHAI_HOST_DEVICE (const int value) {
-    return Factory(value);
-  };
-
-  auto derived = chai::make_managed_from_factory<TestBase>(factory, expectedValue);
-
-  EXPECT_EQ((*derived).getValue(), expectedValue);
-
-  EXPECT_NE(derived.get(), nullptr);
-  EXPECT_TRUE(derived);
-  EXPECT_FALSE(derived == nullptr);
-  EXPECT_FALSE(nullptr == derived);
-  EXPECT_TRUE(derived != nullptr);
-  EXPECT_TRUE(nullptr != derived);
-
-  derived.free();
-}
-
-GPU_TEST(managed_ptr, make_managed_from_factory_lambda)
-{
-  const int expectedValue = rand();
-
-  auto factory = [] CHAI_HOST_DEVICE (const int value) {
-    return new TestDerived(value);
-  };
-
-  auto derived = chai::make_managed_from_factory<TestBase>(factory, expectedValue);
-
-  EXPECT_EQ((*derived).getValue(), expectedValue);
-
-  EXPECT_NE(derived.get(), nullptr);
-  EXPECT_TRUE(derived);
-  EXPECT_FALSE(derived == nullptr);
-  EXPECT_FALSE(nullptr == derived);
-  EXPECT_TRUE(derived != nullptr);
-  EXPECT_TRUE(nullptr != derived);
-
-  derived.free();
-}
-
-GPU_TEST(managed_ptr, make_managed_from_overloaded_factory_function)
-{
-  const int expectedValue = rand();
-
-  auto factory = [] CHAI_HOST_DEVICE (const int value) {
-    return OverloadedFactory(value);
-  };
-
-  auto derived = chai::make_managed_from_factory<TestBase>(factory, expectedValue);
-
-  EXPECT_EQ((*derived).getValue(), expectedValue);
-
-  EXPECT_NE(derived.get(), nullptr);
-  EXPECT_TRUE(derived);
-  EXPECT_FALSE(derived == nullptr);
-  EXPECT_FALSE(nullptr == derived);
-  EXPECT_TRUE(derived != nullptr);
-  EXPECT_TRUE(nullptr != derived);
-
-  derived.free();
-}
-
-GPU_TEST(managed_ptr, make_managed_from_factory_static_member_function)
-{
-  const int expectedValue = rand();
-
-  auto factory = [] CHAI_HOST_DEVICE (const int value) {
-    return TestBase::Factory(value);
-  };
-
-  auto derived = chai::make_managed_from_factory<TestBase>(factory, expectedValue);
-
-  EXPECT_EQ((*derived).getValue(), expectedValue);
-
-  EXPECT_NE(derived.get(), nullptr);
-  EXPECT_TRUE(derived);
-  EXPECT_FALSE(derived == nullptr);
-  EXPECT_FALSE(nullptr == derived);
-  EXPECT_TRUE(derived != nullptr);
-  EXPECT_TRUE(nullptr != derived);
-
-  derived.free();
-}
-
 GPU_TEST(managed_ptr, gpu_copy_constructor)
 {
   const int expectedValue = rand();
@@ -1048,48 +942,3 @@ GPU_TEST(managed_ptr, gpu_copy_assignment_operator)
 }
 
 #endif
-
-// Enable the following tests to ensure that proper compiler errors are given
-// for bad arguments since otherwise it is difficult to make sure the template
-// metaprogramming is correct.
-
-#if 0
-
-// Should give something like the following:
-// error: static assertion failed: F is not invocable with the given arguments.
-
-TEST(managed_ptr, bad_function_to_make_managed_from_factory_function)
-{
-  const int expectedValue = rand();
-
-  auto factory = [] CHAI_HOST (const int value) {
-    return new TestDerived(value);
-  };
-
-  auto derived = chai::make_managed_from_factory<TestBase>(expectedValue, factory);
-
-  EXPECT_EQ((*derived).getValue(), expectedValue);
-}
-
-#endif
-
-#if 0
-
-// Should give something like the following:
-// error: static assertion failed: F is not invocable with the given arguments.
-
-TEST(managed_ptr, bad_arguments_to_make_managed_from_factory_function)
-{
-  const int expectedValue = rand();
-
-  auto factory = [] CHAI_HOST (const int value) {
-    return new TestDerived(value);
-  };
-
-  auto derived = chai::make_managed_from_factory<TestBase>(factory, expectedValue, 3);
-
-  EXPECT_EQ((*derived).getValue(), expectedValue);
-}
-
-#endif
-
