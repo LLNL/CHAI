@@ -178,12 +178,6 @@ public:
 
   /*!
    * \brief get access to m_active_pointer
-   * @return a copy of m_active_base_pointer
-   */
-  CHAI_HOST_DEVICE T* getActiveBasePointer() const;
-
-  /*!
-   * \brief get access to m_active_pointer
    * @return a copy of m_active_pointer
    */
   CHAI_HOST_DEVICE T* getActivePointer() const;
@@ -484,7 +478,7 @@ ManagedArray<T> makeManagedArray(T* data,
 template <typename T>
 ManagedArray<T> deepCopy(ManagedArray<T> const& array)
 {
-  T* data_ptr = array.getActiveBasePointer();
+  T* data_ptr = m_active_base_pointer;
 
   ArrayManager* manager = ArrayManager::getInstance();
 
