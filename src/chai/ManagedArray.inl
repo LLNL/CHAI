@@ -413,13 +413,6 @@ CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const Idx i) const {
 
 template<typename T>
 CHAI_HOST_DEVICE T*
-ManagedArray<T>::getActiveBasePointer() const
-{
-  return m_active_base_pointer;
-}
-
-template<typename T>
-CHAI_HOST_DEVICE T*
 ManagedArray<T>::getActivePointer() const
 {
   return m_active_pointer;
