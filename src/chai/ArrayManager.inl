@@ -30,24 +30,24 @@ void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* point
 {
   ExecutionSpace my_space = CPU;
 
-  for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
-    if (pointer_record->m_pointers[space] == pointer) {
-      my_space = static_cast<ExecutionSpace>(space);
+  for (int iSpace = CPU; iSpace < NUM_EXECUTION_SPACES; ++iSpace) {
+    if (pointer_record->m_pointers[iSpace] == pointer) {
+      my_space = static_cast<ExecutionSpace>(iSpace);
       break;
     }
   }
 
-  for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
-    if (!pointer_record->m_owned[space]) {
+  for (int iSpace = CPU; iSpace < NUM_EXECUTION_SPACES; ++iSpace) {
+    if (!pointer_record->m_owned[iSpace]) {
       CHAI_LOG(Debug, "Cannot reallocate unowned pointer");
       return pointer_record->m_pointers[my_space];
     }
   }
 
   // Call callback with ACTION_FREE before changing the size
-  for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
-    void* space_ptr = pointer_record->m_pointers[space];
-    int actualSpace = space;
+  for (int iSpace = CPU; iSpace < NUM_EXECUTION_SPACES; ++iSpace) {
+    void* space_ptr = pointer_record->m_pointers[iSpace];
+    int actualSpace = iSpace;
     if (space_ptr) {
 #if defined(CHAI_ENABLE_UM)
       if (space_ptr == pointer_record->m_pointers[UM]) {
@@ -75,10 +75,10 @@ void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* point
   // only copy however many bytes overlap
   size_t num_bytes_to_copy = std::min(old_size, new_size);
 
-  for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
-    void* space_ptr = pointer_record->m_pointers[space];
-    auto alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[space]);
-    int actualSpace = space;
+  for (int iSpace = CPU; iSpace < NUM_EXECUTION_SPACES; ++iSpace) {
+    void* space_ptr = pointer_record->m_pointers[iSpace];
+    auto alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[iSpace]);
+    int actualSpace = iSpace;
 
     if (space_ptr) {
 #if defined(CHAI_ENABLE_UM)
@@ -94,7 +94,7 @@ void* ArrayManager::reallocate(void* pointer, size_t elems, PointerRecord* point
       } else
 #endif
       {
-        alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[space]);
+        alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[iSpace]);
       }
       void* new_ptr = alloc.allocate(new_size);
 #if CHAI_ENABLE_ZERO_INITIALIZED_MEMORY
@@ -152,6 +152,11 @@ void ArrayManager::copy(void * dst, void * src, size_t size) {
 CHAI_INLINE
 umpire::Allocator ArrayManager::getAllocator(ExecutionSpace space) {
    return *m_allocators[space];
+}
+
+CHAI_INLINE
+umpire::Allocator ArrayManager::getAllocator(int allocator_id) {
+   return m_resource_manager.getAllocator(allocator_id);
 }
 
 CHAI_INLINE
