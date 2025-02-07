@@ -391,6 +391,15 @@ public:
    * \return The allocator for the given space.
    */
   umpire::Allocator getAllocator(ExecutionSpace space);
+
+  /*!
+   * \brief Get the allocator for an allocator id
+   *
+   * \param allocator_id id for the allocator
+   *
+   * \return The allocator for the given allocator id.
+   */
+  umpire::Allocator getAllocator(int allocator_id);
   
  /*!
    * \brief Turn callbacks on.
