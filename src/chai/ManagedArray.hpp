@@ -64,14 +64,65 @@ class ManagedArray : public CHAICopyable
 public:
   using T_non_const = typename std::remove_const<T>::type;
 
-  CHAI_HOST_DEVICE ManagedArray();
+  CHAI_HOST_DEVICE ManagedArray()
+  {
+  }
+
+  /*!
+   * \brief Construct a ManagedArray from a nullptr.
+   */
+  CHAI_HOST_DEVICE ManagedArray(std::nullptr_t other)
+    : ManagedArray()
+  {
+  }
 
   /*!
    * \brief Default constructor creates a ManagedArray with no allocations.
    */
   ManagedArray(
-      std::initializer_list<chai::ExecutionSpace> spaces,
-      std::initializer_list<umpire::Allocator> allocators);
+      std::initializer_list<ExecutionSpace> spaces,
+      std::initializer_list<umpire::Allocator> allocators)
+  {
+    static_assert(spaces.size() == allocators.size(),
+                  "The number of execution spaces and allocators must match.");
+
+    if (spaces.size() == 1) {
+      ExecutionSpace space = *spaces.begin();
+      umpire::Allocator allocator = *allocators.begin();
+
+      if (space == CPU) {
+        m_manager = new HostArrayManager(allocator);
+      }
+      else if (space == GPU) {
+        m_manager = new DeviceArrayManager(allocator);
+      }
+      else if (space == UM) {
+        m_manager = new PageableArrayManager(allocator);
+      }
+      else if (space == PINNED) {
+        m_manager = new PinnedArrayManager(allocator);
+      }
+      else {
+        // throw
+      }
+    }
+    else if (spaces.size() == 2) {
+      ExecutionSpace space1 = *spaces.begin();
+      ExecutionSpace space2 = *(spaces.begin() + 1);
+      umpire::Allocator allocator1 = *allocators.begin();
+      umpire::Allocator allocator2 = *(allocators.begin() + 1);
+
+      if (space1 == CPU && space2 == GPU) {
+        m_manager = new CopyHidingArrayManager(allocator1, allocator2);
+      }
+      else if (space1 == GPU && space2 == CPU) {
+        m_manager = new CopyHidingArrayManager(allocator2, allocator1);
+      }
+      else {
+        // throw
+      }
+    }
+  }
 
   /*!
    * \brief Constructor to create a ManagedArray with specified size, allocated
@@ -84,13 +135,61 @@ public:
    * \param elems Number of elements in the array.
    * \param space Execution space in which to allocate the array.
    */
-  CHAI_HOST_DEVICE ManagedArray(size_t elems, ExecutionSpace space = get_default_space());
+  ManagedArray(size_t elems, ExecutionSpace space = get_default_space())
+    : m_manager{makeDefaultArrayManager()}
+  {
+    m_manager->resize(elems, space);
+  }
 
   ManagedArray(
       size_t elems,
       std::initializer_list<chai::ExecutionSpace> spaces,
       std::initializer_list<umpire::Allocator> allocators,
-      ExecutionSpace space = NONE);
+      ExecutionSpace space = NONE)
+  {
+    static_assert(spaces.size() == allocators.size(),
+                  "The number of execution spaces and allocators must match.");
+
+    if (spaces.size() == 1) {
+      ExecutionSpace space = *spaces.begin();
+      umpire::Allocator allocator = *allocators.begin();
+
+      if (space == CPU) {
+        m_manager = new HostArrayManager(allocator);
+      }
+      else if (space == GPU) {
+        m_manager = new DeviceArrayManager(allocator);
+      }
+      else if (space == UM) {
+        m_manager = new PageableArrayManager(allocator);
+      }
+      else if (space == PINNED) {
+        m_manager = new PinnedArrayManager(allocator);
+      }
+      else {
+        // throw
+      }
+    }
+    else if (spaces.size() == 2) {
+      ExecutionSpace space1 = *spaces.begin();
+      ExecutionSpace space2 = *(spaces.begin() + 1);
+      umpire::Allocator allocator1 = *allocators.begin();
+      umpire::Allocator allocator2 = *(allocators.begin() + 1);
+
+      if (space1 == CPU && space2 == GPU) {
+        m_manager = new CopyHidingArrayManager(allocator1, allocator2);
+      }
+      else if (space1 == GPU && space2 == CPU) {
+        m_manager = new CopyHidingArrayManager(allocator2, allocator1);
+      }
+      else {
+        // throw
+      }
+    }
+
+    m_manager->resize(elems, space);
+    m_size = elems * sizeof(T);
+  }
 
   /*!
    * \brief Copy constructor handles data movement.
@@ -100,14 +199,20 @@ public:
    *
    * \param other ManagedArray being copied.
    */
-  CHAI_HOST_DEVICE ManagedArray(ManagedArray const& other);
+  CHAI_HOST_DEVICE ManagedArray(const ManagedArray& other)
+    : m_data{other.m_data},
+      m_size{other.m_size},
+      m_manager{other.m_manager}
+  {
+#if !defined(CHAI_DEVICE_COMPILE)
+    if (m_manager) {
+      m_manager->update(m_data, !std::is_const<T>::value, getCurrentExecutionSpace());
+    }
+#endif
+  }
 
-  /*!
-   * \brief Construct a ManagedArray from a nullptr.
-   */
-  CHAI_HOST_DEVICE ManagedArray(std::nullptr_t other);
-
-  CHAI_HOST ManagedArray(PointerRecord* record, ExecutionSpace space);
+  // TODO: How to implement? Is this used directly or by makeManagedArray?
+  ManagedArray(PointerRecord* record, ExecutionSpace space);
 
   /*!
    * \brief Allocate data for the ManagedArray in the specified space.
@@ -118,12 +223,20 @@ public:
    * \param space Execution space in which to allocate data.
    * \param cback User defined callback for memory events (alloc, free, move)
    */
-  CHAI_HOST void allocate(size_t elems,
-                          ExecutionSpace space = CPU,
-                          const UserCallback& cback =
-                          [] (const PointerRecord*, Action, ExecutionSpace) {});
+  void allocate(size_t elems,
+                ExecutionSpace space = CPU,
+                const UserCallback& cback =
+                [] (const PointerRecord*, Action, ExecutionSpace) {})
+  {
+    if (!m_manager)
+    {
+      m_manager = makeDefaultArrayManager();
+    }
 
-
+    m_manager->set_callback(cback);
+    m_manager->resize(elems, space);
+    m_size = elems * sizeof(T);
+  }
 
   /*!
    * \brief Reallocate data for the ManagedArray.
@@ -132,12 +245,27 @@ public:
    *
    * \param elems Number of elements to allocate.
    */
-  CHAI_HOST void reallocate(size_t elems);
+  void reallocate(size_t elems)
+  {
+    if (!m_manager)
+    {
+      m_manager = makeDefaultArrayManager();
+    }
+
+    m_manager->resize(elems);
+    m_size = elems * sizeof(T);
+  }
 
   /*!
    * \brief Free all data allocated by this ManagedArray.
    */
-  CHAI_HOST void free(ExecutionSpace space = NONE);
+  void free(ExecutionSpace space = NONE)
+  {
+    m_data = nullptr;
+    m_size = 0;
+    delete m_manager;
+    m_manager = nullptr;
+  }
 
   /*!
    * \brief Reset array state.
@@ -145,24 +273,75 @@ public:
    * The next space that accesses this array will be considered a first touch,
    * and no data will be migrated.
    */
-  CHAI_HOST void reset();
+  void reset()
+  {
+    if (m_manager)
+    {
+      m_manager->reset();
+    }
+  }
 
   /*!
    * \brief Get the number of elements in the array.
    *
    * \return The number of elements in the array
    */
-  CHAI_HOST_DEVICE size_t size() const;
+  CHAI_HOST_DEVICE size_t size() const
+  {
+    return m_size / sizeof(T);
+  }
+
+  /*!
+   * Updates the ManagedArray to be coherent in the given space.
+   * Marks the data as touched in the given space if T is not const.
+   *
+   * If accessing a ManagedArray outside of a RAJA loop,
+   * one of the update or cupdate methods must first be called.
+   *
+   * @param[in]  space  Execution space in which to make the array coherent
+   */
+  void update(ExecutionSpace space) const
+  {
+    if (m_manager) {
+      m_manager->update(m_data, !std::is_const<T>::value, space);
+    }
+  }
+
+  /*!
+   * Updates the ManagedArray to be coherent on the CPU.
+   * Marks the data as touched on the CPU if T is not const.
+   *
+   * If accessing a ManagedArray outside of a RAJA loop,
+   * one of the update or cupdate methods must first be called.
+   */
+  void update() const
+  {
+    update(CPU);
+  }
 
   /*!
    * \brief Register this ManagedArray object as 'touched' in the given space.
    *
    * \param space The space to register a touch.
    */
-  CHAI_HOST void registerTouch(ExecutionSpace space);
+  [[deprecated]]
+  void registerTouch(ExecutionSpace space)
+  {
+    if (m_manager)
+    {
+      m_manager->update(m_data, true, space);
+    }
+  }
 
-  CHAI_HOST void move(ExecutionSpace space=NONE,
-                      bool registerTouch=!std::is_const<T>::value) const;
+  [[deprecated]]
+  void move(ExecutionSpace space=NONE,
+            bool registerTouch=!std::is_const<T>::value) const
+  {
+    if (m_manager)
+    {
+      m_manager->update(m_data, registerTouch, space);
+    }
+  }
 
   CHAI_HOST_DEVICE ManagedArray<T> slice(size_t begin, size_t elems=(size_t)-1) const;
 
@@ -174,36 +353,105 @@ public:
    * \return Reference to i-th element.
    */
   template <typename Idx>
-  CHAI_HOST_DEVICE T& operator[](const Idx i) const;
+  CHAI_HOST_DEVICE T& operator[](const Idx i) const
+  {
+    return m_data[i];
+  }
 
   /*!
    * \brief get access to m_active_pointer
    * @return a copy of m_active_base_pointer
    */
+  [[deprecated]]
   CHAI_HOST_DEVICE T* getActiveBasePointer() const;
 
   /*!
    * \brief get access to m_active_pointer
    * @return a copy of m_active_pointer
    */
-  CHAI_HOST_DEVICE T* getActivePointer() const;
+  [[deprecated]]
+  CHAI_HOST_DEVICE T* getActivePointer() const
+  {
+    return m_data;
+  }
 
   /*!
-   * \brief Move data to the current execution space (actually determined
-   *        by where the code is executing) and return a raw pointer.
+   * Updates the ManagedArray to be coherent in the given space
+   * and returns a raw pointer that is coherent in the given space.
+   * Marks the data as touched in the given space if T is not const.
    *
-   * \return Raw pointer to data in the current execution space
+   * @param[in]  space  Execution space in which to make the array coherent
+   *
+   * @return a raw pointer that is coherent in the given space
    */
-  CHAI_HOST_DEVICE T* data() const;
+  T* data(ExecutionSpace space) const {
+    update(space);
+    return m_data;
+  }
 
   /*!
-   * \brief Move data to the current execution space (actually determined
-   *        by where the code is executing) and return a raw pointer. Do
-   *        not mark data as touched since a pointer to const is returned.
+   * Updates the ManagedArray to be coherent in the current space
+   * (as determined by the execution context) and returns a raw pointer
+   * that is coherent in the current space.
+   * Marks the data as touched in the current space if T is not const.
    *
-   * \return Raw pointer to data in the current execution space
+   * @return a raw pointer that is coherent in the current space
+   *
+   * @note  If on the device, the data should already have been made
+   *        coherent and and marked as touched if appropriate.
    */
-  CHAI_HOST_DEVICE const T* cdata() const;
+  CHAI_HOST_DEVICE T* data() const {
+#if !defined(CHAI_DEVICE_COMPILE)
+    return data(CPU);
+#else
+    return m_data;
+#endif
+  }
+
+  ///
+  /// Updates the ManagedArray to be coherent in the given space
+  /// and returns a raw pointer that is coherent in the given space.
+  /// Does not mark the data as touched in the given space.
+  ///
+  /// @param[in]  space  Execution space in which to make the
+  ///                    array coherent
+  ///
+  /// @return a raw pointer that is coherent in the given space
+  ///
+  const T* cdata(ExecutionSpace space) const {
+    if (m_manager) {
+      if (std::is_const<T>::value) {
+        m_manager->update(m_data, false, space);
+        return m_data;
+      }
+      else {
+        T* result;
+        m_manager->update(result, false, space);
+        return result;
+      }
+    }
+    else {
+      return m_data;
+    }
+  }
+
+  /*!
+   * Updates the ManagedArray to be coherent in the current space
+   * (as determined by the execution context) and returns a raw pointer
+   * that is coherent in the current space.
+   * Does not mark the data as touched in the given space.
+   *
+   * @return a raw pointer that is coherent in the current space
+   *
+   * @note  If on the device, the data should already have been made coherent
+   */
+  CHAI_HOST_DEVICE T* cdata() const {
+#if !defined(CHAI_DEVICE_COMPILE)
+    return cdata(CPU);
+#else
+    return m_data;
+#endif
+  }
 
   /*!
    * \brief Return the raw pointer to the data in the given execution
@@ -214,7 +462,11 @@ public:
    *
    * @return A copy of the pointer in the given execution space
    */
-  CHAI_HOST T* data(ExecutionSpace space, bool do_move = true) const;
+  [[deprecated]]
+  CHAI_HOST T* data(ExecutionSpace space, bool do_move = true) const {
+    // TODO: How to implement?
+
+  }
 
   /*!
    * \brief Move data to the current execution space (actually determined
@@ -224,7 +476,10 @@ public:
    * \return Iterator (as raw pointer) to the start of the array in the
    *         current execution space
    */
-  CHAI_HOST_DEVICE T* begin() const;
+  CHAI_HOST_DEVICE T* begin() const
+  {
+    return data();
+  }
 
   /*!
    * \brief Move data to the current execution space (actually determined
@@ -234,7 +489,10 @@ public:
    * \return Iterator (as raw pointer) to the element after the last element
    *         of the array in the current execution space
    */
-  CHAI_HOST_DEVICE T* end() const;
+  CHAI_HOST_DEVICE T* end() const
+  {
+    return data() + size();
+  }
 
   /*!
    * \brief
@@ -247,6 +505,8 @@ public:
                                    ManagedArray<const U> >::type() const;
 
 
+  // TODO: I believe this is only implemented by makeManagedArray
+  [[deprecated]]
   CHAI_HOST_DEVICE ManagedArray(T* data,
                                 ArrayManager* array_manager,
                                 size_t elems,
@@ -431,6 +691,8 @@ protected:
   mutable PointerRecord* m_pointer_record = nullptr;
 
   mutable bool m_is_slice = false;
+
+  ArrayManager2* m_manager = nullptr;
 };
 
 /*!
