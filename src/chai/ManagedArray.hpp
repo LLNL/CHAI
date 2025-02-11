@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
 // project contributors. See the CHAI LICENSE file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
@@ -103,6 +103,14 @@ public:
   CHAI_HOST_DEVICE ManagedArray(ManagedArray const& other);
 
   /*!
+   * \brief Create a deep copy of the current ManagedArray with a single
+   * allocation in the active space of the current ManagedArray.
+   *
+   * \return A deep copy of the current ManagedArray.
+   */
+  ManagedArray clone();
+
+  /*!
    * \brief Construct a ManagedArray from a nullptr.
    */
   CHAI_HOST_DEVICE ManagedArray(std::nullptr_t other);
@@ -112,14 +120,12 @@ public:
   /*!
    * \brief Allocate data for the ManagedArray in the specified space.
    *
-   * The default space for allocations is the CPU.
-   *
    * \param elems Number of elements to allocate.
    * \param space Execution space in which to allocate data.
    * \param cback User defined callback for memory events (alloc, free, move)
    */
   CHAI_HOST void allocate(size_t elems,
-                          ExecutionSpace space = CPU,
+                          ExecutionSpace space = NONE,
                           const UserCallback& cback =
                           [] (const PointerRecord*, Action, ExecutionSpace) {});
 
@@ -128,7 +134,7 @@ public:
   /*!
    * \brief Reallocate data for the ManagedArray.
    *
-   * Reallocation will happen in all spaces the data exists
+   * Reallocation will happen in all spaces the data exists.
    *
    * \param elems Number of elements to allocate.
    */
@@ -175,12 +181,6 @@ public:
    */
   template <typename Idx>
   CHAI_HOST_DEVICE T& operator[](const Idx i) const;
-
-  /*!
-   * \brief get access to m_active_pointer
-   * @return a copy of m_active_base_pointer
-   */
-  CHAI_HOST_DEVICE T* getActiveBasePointer() const;
 
   /*!
    * \brief get access to m_active_pointer
@@ -268,8 +268,6 @@ public:
 
   CHAI_HOST_DEVICE explicit operator bool() const;
 
-
-#if defined(CHAI_ENABLE_PICK)
   /*!
    * \brief Return the value of element i in the ManagedArray.
    * ExecutionSpace space to the current one
@@ -289,24 +287,6 @@ public:
    * \tparam T The type of data value in ManagedArray.
    */
   CHAI_HOST_DEVICE void set(size_t i, T val) const;
-
-  /*!
-   * \brief Increment the value of element i in the ManagedArray.
-   *
-   * \param index The index of the element to be incremented
-   * \tparam T The type of data value in ManagedArray.
-   */
-  CHAI_HOST_DEVICE void incr(size_t i) const;
-
-  /*!
-   * \brief Decrement the value of element i in the ManagedArray.
-   *
-   * \param index The index of the element to be decremented
-   * \tparam T The type of data value in ManagedArray.
-   */
-  CHAI_HOST_DEVICE void decr(size_t i) const;
-#endif
-
 
 #ifndef CHAI_DISABLE_RM
   /*!
@@ -364,6 +344,7 @@ public:
     m_size = other.m_size;
     m_offset = other.m_offset;
     m_pointer_record = other.m_pointer_record;
+    m_allocator_id = other.m_allocator_id;
     m_is_slice = other.m_is_slice;
 #ifndef CHAI_DISABLE_RM
 #if !defined(CHAI_DEVICE_COMPILE)
@@ -382,7 +363,6 @@ public:
 
 
 private:
-  CHAI_HOST void modify(size_t i, const T& val) const;
   // The following are only used by ManagedArray.inl, but for template
   // shenanigan reasons need to be defined here.
 #if !defined(CHAI_DISABLE_RM)
@@ -430,6 +410,8 @@ protected:
    */
   mutable PointerRecord* m_pointer_record = nullptr;
 
+  mutable int m_allocator_id = -1;
+
   mutable bool m_is_slice = false;
 };
 
@@ -448,6 +430,9 @@ protected:
  * \tparam T Type of the raw data.
  *
  * \return A new ManagedArray containing the raw data pointer.
+ *
+ * \note If using this method on HIP platforms, XNACK must be enabled
+ *       (see https://rocm.docs.amd.com/projects/HIP/en/latest/how-to/hip_runtime_api/memory_management/unified_memory.html).
  */
 template <typename T>
 ManagedArray<T> makeManagedArray(T* data,
@@ -489,6 +474,12 @@ ManagedArray<T> makeManagedArray(T* data,
   return array;
 }
 
+template <typename T>
+CHAI_HOST_DEVICE T* ManagedArray<T>::getActivePointer() const
+{
+  return m_active_pointer;
+}
+
 /*!
  * \brief Create a copy of the given ManagedArray with a single allocation in
  * the active space of the given array.
@@ -500,17 +491,10 @@ ManagedArray<T> makeManagedArray(T* data,
  * \return A copy of the given ManagedArray.
  */
 template <typename T>
+[[deprecated("Use ManagedArray<T>::clone instead.")]]
 ManagedArray<T> deepCopy(ManagedArray<T> const& array)
 {
-  T* data_ptr = array.getActiveBasePointer();
-
-  ArrayManager* manager = ArrayManager::getInstance();
-
-  PointerRecord const* record = manager->getPointerRecord(data_ptr);
-
-  PointerRecord* copy_record = manager->deepCopyRecord(record);
-
-  return ManagedArray<T>(copy_record, copy_record->m_last_space);
+  return array.clone();
 }
 
 template <typename T>
@@ -528,6 +512,7 @@ CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T> ManagedArray<T>::slice( size_t offs
 #endif
   } else {
     slice.m_pointer_record = m_pointer_record;
+    slice.m_allocator_id = m_allocator_id;
     slice.m_active_base_pointer = m_active_base_pointer;
     slice.m_offset = offset + m_offset;
     slice.m_active_pointer = m_active_base_pointer + slice.m_offset;

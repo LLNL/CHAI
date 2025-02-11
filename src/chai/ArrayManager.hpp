@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
 // project contributors. See the CHAI LICENSE file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
@@ -253,13 +253,11 @@ public:
    */
   CHAISHAREDDLL_API void free(PointerRecord* pointer, ExecutionSpace space = NONE);
 
-#if defined(CHAI_ENABLE_PICK)
   template <typename T>
-   T_non_const<T> pick(T* src_ptr, size_t index);
+  T_non_const<T> pick(T* src_ptr, size_t index);
 
   template <typename T>
-   void set(T* dst_ptr, size_t index, const T& val);
-#endif
+  void set(T* dst_ptr, size_t index, const T& val);
 
   /*!
    * \brief Get the size of the given pointer.
@@ -393,6 +391,15 @@ public:
    * \return The allocator for the given space.
    */
   umpire::Allocator getAllocator(ExecutionSpace space);
+
+  /*!
+   * \brief Get the allocator for an allocator id
+   *
+   * \param allocator_id id for the allocator
+   *
+   * \return The allocator for the given allocator id.
+   */
+  umpire::Allocator getAllocator(int allocator_id);
   
  /*!
    * \brief Turn callbacks on.

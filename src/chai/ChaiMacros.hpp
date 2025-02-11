@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
 // project contributors. See the CHAI LICENSE file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
@@ -10,6 +10,10 @@
 #include "chai/config.hpp"
 
 #include "umpire/util/Macros.hpp"
+
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+#define CHAI_ENABLE_DEVICE
+#endif
 
 #if defined(CHAI_ENABLE_CUDA)
 
@@ -91,5 +95,11 @@
 
 #endif
 #endif
+
+namespace chai
+{
+template <typename... T>
+CHAI_HOST_DEVICE CHAI_INLINE void CHAI_UNUSED_VAR(T &&...) noexcept {}
+} // namespace chai
 
 #endif  // CHAI_ChaiMacros_HPP
