@@ -15,6 +15,9 @@ The format of this file is based on [Keep a Changelog](http://keepachangelog.com
 
 ## [Unreleased] - Release date yyyy-mm-dd
 
+### Added
+- Added a ManagedArray::clone function and deprecated chai::deepCopy.
+
 ### Fixed
 - Fixes reallocate when using pinned or unified memory.
 - Adds missing synchronize when using pinned memory.
