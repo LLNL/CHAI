@@ -1703,7 +1703,7 @@ GPU_TEST(ManagedArray, MoveInnerToDeviceAgain)
 #endif  // CHAI_DISABLE_RM
 #endif  // defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 
-TEST(ManagedArray, DeepCopy)
+TEST(ManagedArray, Clone)
 {
   chai::ManagedArray<float> array(10);
   ASSERT_EQ(array.size(), 10u);
@@ -1726,7 +1726,7 @@ TEST(ManagedArray, DeepCopy)
 }
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-GPU_TEST(ManagedArray, DeviceDeepCopy)
+GPU_TEST(ManagedArray, DeviceClone)
 {
   chai::ManagedArray<float> array(10, chai::GPU);
   ASSERT_EQ(array.size(), 10u);
