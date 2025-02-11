@@ -126,14 +126,12 @@ public:
   /*!
    * \brief Allocate data for the ManagedArray in the specified space.
    *
-   * The default space for allocations is the CPU.
-   *
    * \param elems Number of elements to allocate.
    * \param space Execution space in which to allocate data.
    * \param cback User defined callback for memory events (alloc, free, move)
    */
   CHAI_HOST void allocate(size_t elems,
-                          ExecutionSpace space = CPU,
+                          ExecutionSpace space = NONE,
                           const UserCallback& cback =
                           [] (const PointerRecord*, Action, ExecutionSpace) {});
 
@@ -142,7 +140,7 @@ public:
   /*!
    * \brief Reallocate data for the ManagedArray.
    *
-   * Reallocation will happen in all spaces the data exists
+   * Reallocation will happen in all spaces the data exists.
    *
    * \param elems Number of elements to allocate.
    */
@@ -352,6 +350,7 @@ public:
     m_size = other.m_size;
     m_offset = other.m_offset;
     m_pointer_record = other.m_pointer_record;
+    m_allocator_id = other.m_allocator_id;
     m_is_slice = other.m_is_slice;
 #ifndef CHAI_DISABLE_RM
 #if !defined(CHAI_DEVICE_COMPILE)
@@ -417,6 +416,8 @@ protected:
    */
   mutable PointerRecord* m_pointer_record = nullptr;
 
+  mutable int m_allocator_id = -1;
+
   mutable bool m_is_slice = false;
 };
 
@@ -479,6 +480,18 @@ ManagedArray<T> makeManagedArray(T* data,
   return array;
 }
 
+template <typename T>
+CHAI_HOST_DEVICE T* ManagedArray<T>::getActiveBasePointer() const
+{
+  return m_active_base_pointer;
+}
+
+template <typename T>
+CHAI_HOST_DEVICE T* ManagedArray<T>::getActivePointer() const
+{
+  return m_active_pointer;
+}
+
 /*!
  * \brief Create a copy of the given ManagedArray with a single allocation in
  * the active space of the given array.
@@ -511,6 +524,7 @@ CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T> ManagedArray<T>::slice( size_t offs
 #endif
   } else {
     slice.m_pointer_record = m_pointer_record;
+    slice.m_allocator_id = m_allocator_id;
     slice.m_active_base_pointer = m_active_base_pointer;
     slice.m_offset = offset + m_offset;
     slice.m_active_pointer = m_active_base_pointer + slice.m_offset;

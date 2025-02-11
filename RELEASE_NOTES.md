@@ -21,6 +21,8 @@ The format of this file is based on [Keep a Changelog](http://keepachangelog.com
 ### Fixed
 - Fixes reallocate when using pinned or unified memory.
 - Adds missing synchronize when using pinned memory.
+- Fixes possible hangs when evicting data.
+- Now respects allocators passed to ManagedArray constructors when CHAI\_DISABLE\_RM=TRUE.
 
 ### Removed
 - Removes ManagedArray::getActiveBasePointer method.
