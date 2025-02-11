@@ -33,10 +33,6 @@ if (CHAI_ENABLE_CUDA OR CHAI_ENABLE_HIP)
     SOURCES resource-depends.cpp
     DEPENDS_ON ${chai_umpire_example_depends})
   blt_add_executable(
-    NAME resource-simple.exe
-    SOURCES resource-simple.cpp
-    DEPENDS_ON ${chai_umpire_example_depends})
-  blt_add_executable(
     NAME resource-not-managed.exe
     SOURCES resource-not-managed.cpp
     DEPENDS_ON ${chai_umpire_example_depends})

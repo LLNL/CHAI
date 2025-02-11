@@ -19,8 +19,13 @@ int main()
   constexpr std::size_t ARRAY_SIZE{1000};
   int clockrate{get_clockrate()}; 
 
+#ifdef CHAI_ENABLE_CUDA
   camp::resources::Resource dev1{camp::resources::Cuda{}};
   camp::resources::Resource dev2{camp::resources::Cuda{}};
+#elif defined(CHAI_ENABLE_HIP)
+  camp::resources::Resource dev1{camp::resources::Hip{}};
+  camp::resources::Resource dev2{camp::resources::Hip{}};
+#endif
   camp::resources::Resource host{camp::resources::Host{}};
 
   chai::ManagedArray<double> array1(ARRAY_SIZE);

@@ -4,11 +4,11 @@
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
-#include "camp/resource.hpp"
-#include "chai/ManagedArray.hpp"
-
 #include "../src/util/forall.hpp"
 #include "../src/util/gpu_clock.hpp"
+
+#include "chai/ManagedArray.hpp"
+#include "camp/resource.hpp"
 
 #include <vector>
 #include <utility>
@@ -16,35 +16,54 @@
 
 int main()
 {
-  constexpr std::size_t ARRAY_SIZE{1000};
-  int clockrate{get_clockrate()}; 
 
-  chai::ManagedArray<double> array1(ARRAY_SIZE);
+  constexpr int NUM_ARRAYS = 16;
+  constexpr std::size_t ARRAY_SIZE{100};
 
-  camp::resources::Resource dev1{camp::resources::Cuda{}};
-  camp::resources::Resource dev2{camp::resources::Cuda{}};
-
-
-  auto e1 = forall(&dev1, 0, ARRAY_SIZE, [=] CHAI_HOST_DEVICE (int i) {
-      if (i % 2 == 0) {
-        array1[i] = i;
-        gpu_time_wait_for(10, clockrate);
-      }
-  });
-
-  auto e2 = forall(&dev2, 0, ARRAY_SIZE, [=] CHAI_HOST_DEVICE (int i) {
-      if (i % 2 == 1) {
-        gpu_time_wait_for(20, clockrate);
-        array1[i] = i;
-      }
-  });
-
-  array1.move(chai::CPU, &dev1);
-
+  std::vector<chai::ManagedArray<double>> arrays;
   camp::resources::Resource host{camp::resources::Host{}};
 
-  forall(&host, 0, 10, [=] CHAI_HOST_DEVICE (int i) {
-      printf("%f ", array1[i]);
-  });
-  printf("\n");
+
+  int clockrate{get_clockrate()};
+
+  for (std::size_t i = 0; i < NUM_ARRAYS; ++i) {
+    arrays.push_back(chai::ManagedArray<double>(ARRAY_SIZE));
+  }
+
+  for (auto array : arrays) {
+    forall(&host, 0, ARRAY_SIZE, [=] CHAI_HOST_DEVICE (int i) {
+        array[i] = i;
+    }); 
+  }
+
+  for (auto array : arrays) {
+#ifdef CHAI_ENABLE_CUDA
+    camp::resources::Resource resource{camp::resources::Cuda{}};
+#elif defined(CHAI_ENABLE_HIP)
+    camp::resources::Resource resource{camp::resources::Hip{}};
+#endif
+
+    forall(&resource, 0, ARRAY_SIZE, [=] CHAI_HOST_DEVICE (int i) {
+        array[i] = array[i] * 2.0 + i;
+        gpu_time_wait_for(20, clockrate);
+    });
+  }
+
+  for (auto array : arrays) {
+#ifdef CHAI_ENABLE_CUDA
+    camp::resources::Resource resource{camp::resources::Cuda{}};
+#elif defined(CHAI_ENABLE_HIP)
+    camp::resources::Resource resource{camp::resources::Hip{}};
+#endif
+
+    array.move(chai::CPU, &resource);
+  }
+
+  for (auto array : arrays) {
+    forall(&host, 0, ARRAY_SIZE, [=] CHAI_HOST_DEVICE (int i) {
+        if (i == 25) {
+          printf("array[%d] = %f \n", i, array[i]);
+        }
+    }); 
+  }
 }
