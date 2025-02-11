@@ -31,6 +31,10 @@
 #define gpuMemcpyDeviceToDevice cudaMemcpyDeviceToDevice
 #define gpuMemcpyDefault cudaMemcpyDefault
 
+#define gpuDeviceProp_t hipDeviceProp
+#define gpuGetDevice cudaGetDevice
+#define gpuGetDeviceProperties cudaGetDeviceProperties
+
 // NOTE: Cannot have if defined(__HIPCC__) in the condition below, since __HIPCC__ comes from the included header hip_runtime below.
 #elif defined(CHAI_ENABLE_HIP)
 
@@ -47,6 +51,11 @@
 #define gpuMemcpyDeviceToHost hipMemcpyDeviceToHost
 #define gpuMemcpyDeviceToDevice hipMemcpyDeviceToDevice
 #define gpuMemcpyDefault hipMemcpyDefault
+
+#define gpuDeviceProp_t hipDeviceProp_t
+#define gpuGetDevice hipGetDevice
+#define gpuGetDeviceProperties hipGetDeviceProperties
+
 
 #else
 

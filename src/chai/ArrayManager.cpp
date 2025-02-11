@@ -263,14 +263,17 @@ void ArrayManager::resetTouch(PointerRecord* pointer_record)
 /* Not all GPU platform runtimes (notably HIP), will give you asynchronous copies to the device by default, so we leverage
  * umpire's API for asynchronous copies using camp resources in this method, based off of the CHAI destination space
  * */
-static void copy(void * dst_pointer, void * src_pointer, umpire::ResourceManager & manager, ExecutionSpace dst_space, ExecutionSpace src_space) {
+static void copy(void * dst_pointer, void * src_pointer, umpire::ResourceManager & manager, ExecutionSpace dst_space, ExecutionSpace src_space, camp::resources::Resource* res = nullptr) {
 
 #ifdef CHAI_ENABLE_CUDA
-   camp::resources::Resource device_resource(camp::resources::Cuda::get_default());
+   camp::resources::Resource device_resource =
+     (res) ? res->get<camp::resources::Cuda>() : camp::resources::Cuda::get_default();
 #elif defined(CHAI_ENABLE_HIP)
-   camp::resources::Resource device_resource(camp::resources::Hip::get_default());
+   camp::resources::Resource device_resource =
+     (res) ? res->get<camp::resources::Hip>() : camp::resources::Hip::get_default();
 #else
-   camp::resources::Resource device_resource(camp::resources::Host::get_default());
+   camp::resources::Resource device_resource =
+     (res) ? res->get<camp::resources::Host>() : camp::resources::Host::get_default();
 #endif
 
    camp::resources::Resource host_resource(camp::resources::Host::get_default());
@@ -294,7 +297,7 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 
 void ArrayManager::move(PointerRecord* record,
                         ExecutionSpace space,
-                        camp::resources::Resource* )
+                        camp::resources::Resource* resource)
 {
   if (space == NONE) {
     return;
@@ -340,7 +343,7 @@ void ArrayManager::move(PointerRecord* record,
   } else if (dst_pointer != src_pointer) {
     // Exclude the copy if src and dst are the same (can happen for PINNED memory)
     {
-      chai::copy(dst_pointer, src_pointer, m_resource_manager, space, prev_space);
+      chai::copy(dst_pointer, src_pointer, m_resource_manager, space, prev_space, resource);
     }
 
     callback(record, ACTION_MOVE, space);

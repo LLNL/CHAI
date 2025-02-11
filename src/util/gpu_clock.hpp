@@ -17,14 +17,15 @@ gpu_time_wait_for(float time, float clockrate) {
 
 int get_clockrate()
 {
-  int cuda_device = 0;
-  cudaDeviceProp deviceProp;
-  cudaGetDevice(&cuda_device);
-  cudaGetDeviceProperties(&deviceProp, cuda_device);
-  if ((deviceProp.concurrentKernels == 0))
+  //TODO: Generalize this...
+  int gpu_device = 0;
+  gpuDeviceProp_t deviceProp;
+  gpuGetDevice(&gpu_device);
+  gpuGetDeviceProperties(&deviceProp, gpu_device);
+  if (deviceProp.concurrentKernels == 0)
   {
     printf("> GPU does not support concurrent kernel execution\n");
-    printf("  CUDA kernel runs will be serialized\n");
+    printf("  gpu kernel runs will be serialized\n");
   }
   printf("> Detected Compute SM %d.%d hardware with %d multi-processors\n",
       deviceProp.major, deviceProp.minor, deviceProp.multiProcessorCount);

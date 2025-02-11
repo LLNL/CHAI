@@ -21,7 +21,7 @@ int main()
   constexpr std::size_t ARRAY_SIZE{100};
 
   std::vector<chai::ManagedArray<double>> arrays;
-  camp::resources::Resource host{camp::resources::Host{}}; 
+  camp::resources::Resource host{camp::resources::Host{}};
 
 
   int clockrate{get_clockrate()};
@@ -37,12 +37,24 @@ int main()
   }
 
   for (auto array : arrays) {
-    camp::resources::Resource resource{camp::resources::Cuda{}}; 
+#ifdef CHAI_ENABLE_CUDA
+    camp::resources::Resource resource{camp::resources::Cuda{}};
+#elif defined(CHAI_ENABLE_HIP)
+    camp::resources::Resource resource{camp::resources::Hip{}};
+#endif
 
     forall(&resource, 0, ARRAY_SIZE, [=] CHAI_HOST_DEVICE (int i) {
-        array[i] = array[i] * 2.0;
+        array[i] = array[i] * 2.0 + i;
         gpu_time_wait_for(20, clockrate);
     });
+  }
+
+  for (auto array : arrays) {
+#ifdef CHAI_ENABLE_CUDA
+    camp::resources::Resource resource{camp::resources::Cuda{}};
+#elif defined(CHAI_ENABLE_HIP)
+    camp::resources::Resource resource{camp::resources::Hip{}};
+#endif
 
     array.move(chai::CPU, &resource);
   }
