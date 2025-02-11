@@ -31,7 +31,7 @@
 #define gpuMemcpyDeviceToDevice cudaMemcpyDeviceToDevice
 #define gpuMemcpyDefault cudaMemcpyDefault
 
-#define gpuDeviceProp_t hipDeviceProp
+#define gpuDeviceProp_t cudaDeviceProp
 #define gpuGetDevice cudaGetDevice
 #define gpuGetDeviceProperties cudaGetDeviceProperties
 
