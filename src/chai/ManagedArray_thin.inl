@@ -125,12 +125,13 @@ CHAI_INLINE
 ManagedArray<T> ManagedArray<T>::clone()
 {
   ManagedArray<T> result;
-#if 0
-  ArrayManager* manager = ArrayManager::getInstance();
-  const PointerRecord* record = manager->getPointerRecord(m_active_base_pointer);
-  PointerRecord* copy_record = manager->deepCopyRecord(record);
-  return ManagedArray(copy_record, copy_record->m_last_space);
-#endif
+  result.m_allocator_id = m_allocator_id;
+  result.allocate(size());
+  auto arrayManager = ArrayManager::getInstance();
+  arrayManager->syncIfNeeded();
+  arrayManager->copy(result.m_active_pointer, m_active_pointer, m_size);
+  result.registerTouch(chai::GPU);
+  return result;
 }
 
 template <typename T>
