@@ -120,6 +120,19 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data,
    }
 }
 
+template <typename T>
+CHAI_INLINE
+ManagedArray<T> ManagedArray<T>::clone()
+{
+  ManagedArray<T> result;
+  result.m_allocator_id = m_allocator_id;
+  result.allocate(size());
+  auto arrayManager = ArrayManager::getInstance();
+  arrayManager->syncIfNeeded();
+  arrayManager->copy(result.m_active_pointer, m_active_pointer, m_size);
+  result.registerTouch(chai::GPU);
+  return result;
+}
 
 template <typename T>
 CHAI_HOST_DEVICE T* ManagedArray<T>::data() const

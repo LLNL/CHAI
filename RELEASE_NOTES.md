@@ -15,6 +15,9 @@ The format of this file is based on [Keep a Changelog](http://keepachangelog.com
 
 ## [Unreleased] - Release date yyyy-mm-dd
 
+### Added
+- Added a ManagedArray::clone function and deprecated chai::deepCopy.
+
 ### Fixed
 - Fixes reallocate when using pinned or unified memory.
 - Adds missing synchronize when using pinned memory.
@@ -22,6 +25,7 @@ The format of this file is based on [Keep a Changelog](http://keepachangelog.com
 - Now respects allocators passed to ManagedArray constructors when CHAI\_DISABLE\_RM=TRUE.
 
 ### Removed
+- Removes ManagedArray::getActiveBasePointer method.
 - Removes deprecated ManagedArray::getPointer method. Use ManagedArray::data instead.
 - Removes ManagedArray::incr and ManagedArray::decr methods. Use ManagedArray::pick and ManagedArray::set instead.
 - Removes optional support for implicitly casting between raw pointers and ManagedArrays (CHAI\_ENABLE\_IMPLICIT\_CONVERSIONS). Use makeManagedArray and ManagedArray::data to perform explicit conversions instead.

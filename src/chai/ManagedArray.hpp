@@ -103,6 +103,14 @@ public:
   CHAI_HOST_DEVICE ManagedArray(ManagedArray const& other);
 
   /*!
+   * \brief Create a deep copy of the current ManagedArray with a single
+   * allocation in the active space of the current ManagedArray.
+   *
+   * \return A deep copy of the current ManagedArray.
+   */
+  ManagedArray clone();
+
+  /*!
    * \brief Construct a ManagedArray from a nullptr.
    */
   CHAI_HOST_DEVICE ManagedArray(std::nullptr_t other);
@@ -173,12 +181,6 @@ public:
    */
   template <typename Idx>
   CHAI_HOST_DEVICE T& operator[](const Idx i) const;
-
-  /*!
-   * \brief get access to m_active_pointer
-   * @return a copy of m_active_base_pointer
-   */
-  CHAI_HOST_DEVICE T* getActiveBasePointer() const;
 
   /*!
    * \brief get access to m_active_pointer
@@ -473,12 +475,6 @@ ManagedArray<T> makeManagedArray(T* data,
 }
 
 template <typename T>
-CHAI_HOST_DEVICE T* ManagedArray<T>::getActiveBasePointer() const
-{
-  return m_active_base_pointer;
-}
-
-template <typename T>
 CHAI_HOST_DEVICE T* ManagedArray<T>::getActivePointer() const
 {
   return m_active_pointer;
@@ -495,17 +491,10 @@ CHAI_HOST_DEVICE T* ManagedArray<T>::getActivePointer() const
  * \return A copy of the given ManagedArray.
  */
 template <typename T>
+[[deprecated("Use ManagedArray<T>::clone instead.")]]
 ManagedArray<T> deepCopy(ManagedArray<T> const& array)
 {
-  T* data_ptr = array.getActiveBasePointer();
-
-  ArrayManager* manager = ArrayManager::getInstance();
-
-  PointerRecord const* record = manager->getPointerRecord(data_ptr);
-
-  PointerRecord* copy_record = manager->deepCopyRecord(record);
-
-  return ManagedArray<T>(copy_record, copy_record->m_last_space);
+  return array.clone();
 }
 
 template <typename T>
