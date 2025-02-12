@@ -21,6 +21,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
   m_size(0),
   m_offset(0),
   m_pointer_record(nullptr),
+  m_allocator_id(-1),
   m_is_slice(false)
 {
 #if !defined(CHAI_DEVICE_COMPILE)
@@ -89,6 +90,7 @@ CHAI_HOST ManagedArray<T>::ManagedArray(PointerRecord* record, ExecutionSpace sp
   m_size(record->m_size),
   m_offset(0),
   m_pointer_record(record),
+  m_allocator_id(-1),
   m_is_slice(false)
 {
    m_resource_manager = ArrayManager::getInstance();
@@ -107,6 +109,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(ManagedArray const& other):
   m_size(other.m_size),
   m_offset(other.m_offset),
   m_pointer_record(other.m_pointer_record),
+  m_allocator_id(-1),
   m_is_slice(other.m_is_slice)
 {
 #if !defined(CHAI_DEVICE_COMPILE)
@@ -129,6 +132,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
   m_size(elems*sizeof(T)),
   m_offset(0),
   m_pointer_record(pointer_record),
+  m_allocator_id(-1),
   m_is_slice(false)
 {
 #if !defined(CHAI_DEVICE_COMPILE)
@@ -147,6 +151,15 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
 #endif
 }
 
+template <typename T>
+CHAI_INLINE
+ManagedArray<T> ManagedArray<T>::clone()
+{
+  ArrayManager* manager = ArrayManager::getInstance();
+  const PointerRecord* record = manager->getPointerRecord(m_active_base_pointer);
+  PointerRecord* copy_record = manager->deepCopyRecord(record);
+  return ManagedArray(copy_record, copy_record->m_last_space);
+}
 
 template<typename T>
 CHAI_INLINE
@@ -171,14 +184,11 @@ CHAI_HOST void ManagedArray<T>::allocate(
        m_pointer_record->m_user_callback = cback;
        m_size = elems*sizeof(T);
        m_pointer_record->m_size = m_size;
-
-       if (space != NONE) {
-         m_resource_manager->allocate(m_pointer_record, space);
-         m_active_base_pointer = static_cast<T*>(m_pointer_record->m_pointers[space]);
-       } else {
-         m_active_base_pointer = nullptr;
-         m_pointer_record->m_pointers[space] = nullptr;
+       if (space == NONE) {
+         space = chai::ArrayManager::getInstance()->getDefaultAllocationSpace();
        }
+       m_resource_manager->allocate(m_pointer_record, space);
+       m_active_base_pointer = static_cast<T*>(m_pointer_record->m_pointers[space]);
        m_active_pointer = m_active_base_pointer; // Cannot be a slice
 
        // if T is a CHAICopyable, then it is important to initialize all the
@@ -231,8 +241,7 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t elems)
 
       m_size = elems*sizeof(T);
       m_active_base_pointer =
-        static_cast<T*>(m_resource_manager->reallocate<T>(m_active_base_pointer, elems,
-                                                        m_pointer_record));
+        static_cast<T*>(m_resource_manager->reallocate<T>(m_active_base_pointer, elems, m_pointer_record));
       m_active_pointer = m_active_base_pointer; // Cannot be a slice
  
       // if T is a CHAICopyable, then it is important to initialize all the new
@@ -275,11 +284,12 @@ CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
     m_active_pointer = nullptr;
     m_active_base_pointer = nullptr;
 
-    m_size = 0;
-    m_offset = 0;
     // The call to m_resource_manager::free, above, has deallocated m_pointer_record if space == NONE.
+    // It's also freed all pointers, so our size and offset should be reset
     if (space == NONE) {
        m_pointer_record = &ArrayManager::s_null_record;
+       m_size = 0;
+       m_offset = 0;
     }
   } else {
     CHAI_LOG(Debug, "Cannot free a slice!");
@@ -416,20 +426,6 @@ template<typename Idx>
 CHAI_INLINE
 CHAI_HOST_DEVICE T& ManagedArray<T>::operator[](const Idx i) const {
   return m_active_pointer[i];
-}
-
-template<typename T>
-CHAI_HOST_DEVICE T*
-ManagedArray<T>::getActiveBasePointer() const
-{
-  return m_active_base_pointer;
-}
-
-template<typename T>
-CHAI_HOST_DEVICE T*
-ManagedArray<T>::getActivePointer() const
-{
-  return m_active_pointer;
 }
 
 template<typename T>

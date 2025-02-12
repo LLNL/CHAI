@@ -23,12 +23,14 @@ CHAI_INLINE ManagedArray<T>::ManagedArray(
     std::initializer_list<umpire::Allocator> allocators)
     : ManagedArray()
 {
-  if (m_pointer_record) {
-     int i = 0;
-
-     for (const auto& space : spaces) {
-       m_pointer_record->m_allocators[space] = allocators.begin()[i++].getId();
-     }
+  int i = 0;
+  auto allocators_begin = allocators.begin();
+  auto default_space = chai::ArrayManager::getInstance()->getDefaultAllocationSpace();
+  for (const auto& space : spaces) {
+    if (space == default_space) {
+       m_allocator_id = allocators_begin[i].getId();
+    }
+    ++i;
   }
 }
 
@@ -42,7 +44,15 @@ ManagedArray<T>::ManagedArray(
   ManagedArray(spaces, allocators)
 {
   m_size = elems*sizeof(T);
-  this->allocate(elems, space);
+  int i = 0;
+  auto allocators_begin = allocators.begin();
+  for (const auto& s : spaces) {
+     if (s == space) {
+       m_allocator_id = allocators_begin[i].getId();
+     }
+     ++i;
+  }
+  this->allocate(elems);
 }
 
 template<typename T>
@@ -68,6 +78,7 @@ CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t)
       m_size(0),
       m_offset(0),
       m_pointer_record(nullptr),
+      m_allocator_id(-1),
       m_is_slice(false)
 {
 }
@@ -82,6 +93,7 @@ CHAI_HOST ManagedArray<T>::ManagedArray(PointerRecord* record, ExecutionSpace sp
   m_size(record->m_size),
   m_offset(0),
   m_pointer_record(nullptr),
+  m_allocator_id(-1),
   m_is_slice(!record->m_owned[space])
 {
 }
@@ -100,20 +112,26 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data,
   m_active_base_pointer(data),
   m_resource_manager(array_manager),
   m_size(elems*sizeof(T)),
-  m_pointer_record(pointer_record)
+  m_pointer_record(pointer_record),
+  m_allocator_id(-1)
 {
+   if (pointer_record) {
+      m_allocator_id = pointer_record->m_allocators[pointer_record->m_last_space];
+   }
 }
 
 template <typename T>
-CHAI_HOST_DEVICE T* ManagedArray<T>::getActiveBasePointer() const
+CHAI_INLINE
+ManagedArray<T> ManagedArray<T>::clone()
 {
-  return m_active_base_pointer;
-}
-
-template <typename T>
-CHAI_HOST_DEVICE T* ManagedArray<T>::getActivePointer() const
-{
-  return m_active_pointer;
+  ManagedArray<T> result;
+  result.m_allocator_id = m_allocator_id;
+  result.allocate(size());
+  auto arrayManager = ArrayManager::getInstance();
+  arrayManager->syncIfNeeded();
+  arrayManager->copy(result.m_active_pointer, m_active_pointer, m_size);
+  result.registerTouch(chai::GPU);
+  return result;
 }
 
 template <typename T>
@@ -163,24 +181,31 @@ CHAI_HOST void ManagedArray<T>::allocate(size_t elems,
                                          ExecutionSpace space,
                                          const UserCallback&) {
   if (!m_is_slice) {
+     if (m_allocator_id == -1) {
+#if defined(CHAI_THIN_GPU_ALLOCATE)
+       if (space == NONE) {
+          space = chai::ArrayManager::getInstance()->getDefaultAllocationSpace();
+       }
+
+#elif defined(CHAI_ENABLE_UM)
+       space = chai::UM;
+#else
+       space = chai::CPU;
+#endif
+
+       m_allocator_id = chai::ArrayManager::getInstance()->getAllocatorId(space);
+     }
+
      if (elems > 0) {
-       (void) space; // Quiet compiler warning when CHAI_LOG does nothing
        CHAI_LOG(Debug, "Allocating array of size " << elems
                                                    << " in space "
                                                    << space);
 
+       auto allocator = chai::ArrayManager::getInstance()->getAllocator(m_allocator_id);
        m_size = elems*sizeof(T);
-
-     #if defined(CHAI_THIN_GPU_ALLOCATE)
-       m_active_pointer = (T*) chai::ArrayManager::getInstance()->getAllocator(chai::GPU).allocate(m_size);
-     #elif defined(CHAI_ENABLE_UM)
-       gpuMallocManaged(&m_active_pointer, m_size);
-     #else // not CHAI_ENABLE_UM
-       m_active_pointer = static_cast<T*>(malloc(sizeof(T) * elems));
-     #endif
+       m_active_pointer = (T*) allocator.allocate(m_size);
 
        CHAI_LOG(Debug, "m_active_ptr allocated at address: " << m_active_pointer);
-     
      }
      else {
         m_active_pointer = nullptr;
@@ -190,6 +215,7 @@ CHAI_HOST void ManagedArray<T>::allocate(size_t elems,
   else {
     CHAI_LOG(Debug, "Attempted to allocate slice!");
   }
+
   m_active_base_pointer = m_active_pointer;
 }
 
@@ -198,41 +224,36 @@ CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::reallocate(size_t new_elems)
 {
   if (!m_is_slice) {
-    CHAI_LOG(Debug, "Reallocating array of size " << m_size*sizeof(T)
-                                                  << " with new size"
-                                                  << new_elems*sizeof(T));
-
-    T* new_ptr = nullptr;
-
-  #if defined(CHAI_THIN_GPU_ALLOCATE)
-    auto allocator = chai::ArrayManager::getInstance()->getAllocator(chai::GPU);
-    if (new_elems > 0) {
-        new_ptr = (T*) allocator.allocate(sizeof(T) * new_elems);
-        ArrayManager::getInstance()->syncIfNeeded();
-        chai::gpuMemcpy(new_ptr, m_active_pointer, std::min(m_size, new_elems*sizeof(T)), gpuMemcpyDefault);
-        registerTouch(chai::GPU);
+    // reallocating a nullptr is equivalent to an allocate
+    if (m_size == 0 && m_active_base_pointer == nullptr) {
+      return allocate(new_elems);
     }
-    allocator.deallocate(m_active_pointer);
-  #elif defined(CHAI_ENABLE_UM)
-    if (new_elems > 0) {
-       gpuMallocManaged(&new_ptr, sizeof(T) * new_elems);
-       gpuMemcpy(new_ptr, m_active_pointer, std::min(new_elems*sizeof(T), m_size), gpuMemcpyDefault);
-    }
-    gpuFree(m_active_pointer);
-  #else  // not CHAI_ENABLE_UM
-    if (new_elems > 0) {
-       new_ptr = static_cast<T*>(realloc(m_active_pointer, sizeof(T) * new_elems));
-    }
-    else {
-       ::free((void *)m_active_pointer);
-    }
-  #endif
 
-    m_size= new_elems*sizeof(T);
-    m_active_pointer = new_ptr;
-    m_active_base_pointer = m_active_pointer;
+    if (m_size != new_elems*sizeof(T)) {
+       CHAI_LOG(Debug, "Reallocating array of size " << m_size*sizeof(T)
+                                                     << " with new size"
+                                                     << new_elems*sizeof(T));
 
-    CHAI_LOG(Debug, "m_active_ptr reallocated at address: " << m_active_pointer);
+       T* new_ptr = nullptr;
+
+       auto arrayManager = ArrayManager::getInstance();
+       auto allocator = arrayManager->getAllocator(m_allocator_id);
+
+       if (new_elems > 0) {
+           new_ptr = (T*) allocator.allocate(sizeof(T) * new_elems);
+           arrayManager->syncIfNeeded();
+           arrayManager->copy(new_ptr, m_active_pointer, std::min(m_size, new_elems*sizeof(T)));
+           registerTouch(chai::GPU);
+       }
+
+       allocator.deallocate(m_active_pointer);
+
+       m_size = new_elems*sizeof(T);
+       m_active_pointer = new_ptr;
+       m_active_base_pointer = m_active_pointer;
+
+       CHAI_LOG(Debug, "m_active_ptr reallocated at address: " << m_active_pointer);
+    }
   }
   else {
     CHAI_LOG(Debug, "Attempted to realloc slice!");
@@ -240,27 +261,25 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t new_elems)
 }
 
 template <typename T>
-CHAI_INLINE CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
+CHAI_INLINE CHAI_HOST void ManagedArray<T>::free(ExecutionSpace /*space*/ )
 {
-  if (!m_is_slice) {
-    if (space == CPU || space == NONE) {
-#if defined(CHAI_THIN_GPU_ALLOCATE)
-      if (m_active_pointer) {
-         auto allocator = chai::ArrayManager::getInstance()->getAllocator(chai::GPU);
-         allocator.deallocate((void *)m_active_pointer);
-      }
-#elif defined(CHAI_ENABLE_UM)
-      chai::gpuFree(m_active_pointer);
-#else
-      ::free((void *)m_active_pointer);
-#endif
-      m_active_pointer = nullptr;
-      m_active_base_pointer = nullptr;
-      m_size = 0;
-    }
-  }
-  else {
-    CHAI_LOG(Debug, "tried to free slice!");
+  if (m_allocator_id != -1) {
+     if (!m_is_slice) {
+       auto arrayManager = ArrayManager::getInstance();
+
+       if (m_active_pointer) {
+          auto allocator = arrayManager->getAllocator(m_allocator_id);
+          allocator.deallocate((void *)m_active_pointer);
+       }
+
+       m_active_pointer = nullptr;
+       m_active_base_pointer = nullptr;
+       m_size = 0;
+       m_allocator_id = -1;
+     }
+     else {
+       CHAI_LOG(Debug, "tried to free slice!");
+     }
   }
 }
 
@@ -353,6 +372,7 @@ CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>& ManagedArray<T>::operator=(std::nu
   m_active_base_pointer = from;
   m_size = 0;
   m_is_slice = false;
+  m_allocator_id = -1;
   return *this;
 }
 

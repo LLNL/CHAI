@@ -1782,16 +1782,14 @@ GPU_TEST(ManagedArray, MoveInnerToDeviceAgain)
 #endif  // CHAI_DISABLE_RM
 #endif  // defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 
-
-#ifndef CHAI_DISABLE_RM
-TEST(ManagedArray, DeepCopy)
+TEST(ManagedArray, Clone)
 {
   chai::ManagedArray<float> array(10);
   ASSERT_EQ(array.size(), 10u);
 
   forall(sequential(), 0, 10, [=](int i) { array[i] = i; });
 
-  chai::ManagedArray<float> copy = chai::deepCopy(array);
+  chai::ManagedArray<float> copy = array.clone();
   ASSERT_EQ(copy.size(), 10u);
 
   forall(sequential(), 0, 10, [=](int i) { array[i] = -5.5 * i; });
@@ -1805,18 +1803,16 @@ TEST(ManagedArray, DeepCopy)
   copy.free();
   assert_empty_map(true);
 }
-#endif
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-#ifndef CHAI_DISABLE_RM
-GPU_TEST(ManagedArray, DeviceDeepCopy)
+GPU_TEST(ManagedArray, DeviceClone)
 {
   chai::ManagedArray<float> array(10, chai::GPU);
   ASSERT_EQ(array.size(), 10u);
 
   forall(gpu(), 0, 10, [=] __device__(int i) { array[i] = i; });
 
-  chai::ManagedArray<float> copy = chai::deepCopy(array);
+  chai::ManagedArray<float> copy = array.clone();
   ASSERT_EQ(copy.size(), 10u);
 
   forall(gpu(), 0, 10, [=] __device__(int i) { array[i] = -5.5 * i; });
@@ -1831,6 +1827,7 @@ GPU_TEST(ManagedArray, DeviceDeepCopy)
   assert_empty_map(true);
 }
 
+#ifndef CHAI_DISABLE_RM
 GPU_TEST(ManagedArray, CopyConstruct)
 {
   const int expectedValue = rand();
