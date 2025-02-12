@@ -308,7 +308,7 @@ ManagedSharedPtr<Tp> make_shared(Args&&... args) {
   cudaDeviceSynchronize();
 #endif
 #if defined(CHAI_ENABLE_HIP)
-  hipDeviceSynchronize();
+  CHAI_UNUSED_VAR(hipDeviceSynchronize());
 #endif
 
   auto result = ManagedSharedPtr<Tp>({cpu_pointer, gpu_pointer}, {CPU, GPU},
