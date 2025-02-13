@@ -28,12 +28,6 @@
 
 clang_14_0_6_develop_tpls:
   variables:
-    SPEC: " %clang@14.0.6 ^umpire@develop ^raja@develop ^camp@main"
-  extends: .job_on_ruby
-  allow_failure: true
-
-clang_16_0_6_develop_tpls:
-  variables:
-    SPEC: " %clang@16.0.6 ^umpire@develop ^raja@develop ^camp@main"
+    SPEC: " ~shared +raja tests=basic %clang@14.0.6 ^umpire@develop ^raja@develop~examples~exercises ^camp@main"
   extends: .job_on_ruby
   allow_failure: true
