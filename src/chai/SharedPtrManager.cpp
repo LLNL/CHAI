@@ -34,8 +34,8 @@ SharedPtrManager* SharedPtrManager::getInstance()
 SharedPtrManager::SharedPtrManager() :
   m_pointer_map{},
   m_allocators{},
-  m_resource_manager{umpire::ResourceManager::getInstance()},
-  m_callbacks_active{true}
+  m_resource_manager{umpire::ResourceManager::getInstance()}
+ //,m_callbacks_active{true}
 {
   m_pointer_map.clear();
   m_current_execution_space = NONE;
@@ -150,17 +150,17 @@ void SharedPtrManager::deregisterPointer(msp_pointer_record* record, bool deregi
   }
 }
 
-void * SharedPtrManager::frontOfAllocation(void * pointer) {
-  if (pointer) {
-    if (m_resource_manager.hasAllocator(pointer)) {
-       auto allocation_record = m_resource_manager.findAllocationRecord(pointer);
-       if (allocation_record) {
-         return allocation_record->ptr;
-       }
-    }
-  }
-  return nullptr;
-}
+//void * SharedPtrManager::frontOfAllocation(void * pointer) {
+//  if (pointer) {
+//    if (m_resource_manager.hasAllocator(pointer)) {
+//       auto allocation_record = m_resource_manager.findAllocationRecord(pointer);
+//       if (allocation_record) {
+//         return allocation_record->ptr;
+//       }
+//    }
+//  }
+//  return nullptr;
+//}
 
 void SharedPtrManager::setExecutionSpace(ExecutionSpace space)
 {
