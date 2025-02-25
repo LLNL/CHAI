@@ -251,24 +251,24 @@ static void copy(void * dst_pointer, void * src_pointer, umpire::ResourceManager
 #endif
 
 
-  std::cout << "SPtr Manager Copy Call\n";
-  std::cout << "dst_ptr @ " << dst_pointer << std::endl;
-  std::cout << "src_ptr @ " << src_pointer << std::endl;
+  //std::cout << "SPtr Manager Copy Call\n";
+  //std::cout << "dst_ptr @ " << dst_pointer << std::endl;
+  //std::cout << "src_ptr @ " << src_pointer << std::endl;
   camp::resources::Resource host_resource(camp::resources::Host::get_default());
   if (dst_space == GPU || src_space == GPU) {
     // Do the copy using the device resource
-    std::cout << "---- Sptr Manager Device Copy\n";
-    std::cout << "---- dst_ptr @ " << dst_pointer << std::endl;
-    std::cout << "---- src_ptr @ " << src_pointer << std::endl;
+    //std::cout << "---- Sptr Manager Device Copy\n";
+    //std::cout << "---- dst_ptr @ " << dst_pointer << std::endl;
+    //std::cout << "---- src_ptr @ " << src_pointer << std::endl;
     
     if (poly) {
-      std::cout << "---- POLY COPY\n";
+      //std::cout << "---- POLY COPY\n";
       std::size_t vtable_size = sizeof(void*); 
       void* poly_src_ptr = ((char*)src_pointer + vtable_size);
       void* poly_dst_ptr = ((char*)dst_pointer + vtable_size);
       manager.copy(poly_dst_ptr, poly_src_ptr, device_resource);
     } else {
-      std::cout << "---- STD COPY\n";
+      //std::cout << "---- STD COPY\n";
       manager.copy(dst_pointer, src_pointer, device_resource);
     }
 
@@ -399,12 +399,6 @@ void SharedPtrManager::free(msp_pointer_record* pointer_record, ExecutionSpace s
   }
 }
 
-//size_t SharedPtrManager::getSize(void* ptr)
-//{
-//  // TODO
-//  auto pointer_record = getPointerRecord(ptr);
-//  return pointer_record->m_size;
-//}
 
 void SharedPtrManager::setDefaultAllocationSpace(ExecutionSpace space)
 {
@@ -439,7 +433,6 @@ msp_pointer_record* SharedPtrManager::getPointerRecord(void* pointer)
 // TODO: Need a better way of dealing with non-cuda builds here...
 msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void const* c_pointer, void const* c_d_pointer,
                                                           size_t size,
-                                                          //ExecutionSpace space,
                                                           bool owned)
 {
   void* pointer = const_cast<void*>(c_pointer);
@@ -451,21 +444,15 @@ msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void const* c_pointer,
      return &s_null_record ;
   }
 
-  //if (space == NONE) {
-  //  space = getDefaultAllocationSpace();
-  //}
-
   m_resource_manager.registerAllocation(
       pointer,
       {pointer, size, m_allocators[chai::CPU]->getAllocationStrategy()});
-  //std::cout << "m_allocators[chai::CPU] : " << m_allocators[chai::CPU]->getName() << std::endl;
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
   m_resource_manager.registerAllocation(
       d_pointer,
       {d_pointer, size, m_allocators[chai::GPU]->getAllocationStrategy()});
 #endif
-  //std::cout << "m_allocators[chai::GPU] : " << m_allocators[chai::GPU]->getName() << std::endl;
 
   auto pointer_record = getPointerRecord(pointer);
 
@@ -487,7 +474,6 @@ msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void const* c_pointer,
   pointer_record->m_pointers[chai::GPU] = d_pointer;
   pointer_record->m_owned[chai::GPU] = owned;
 #endif
-  //pointer_record->m_size = size;
   //pointer_record->m_user_callback = [] (const msp_pointer_record*, Action, ExecutionSpace) {};
   
   for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
@@ -507,8 +493,6 @@ msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void const* c_pointer,
 msp_pointer_record* SharedPtrManager::deepCopyRecord(msp_pointer_record const* record)
 {
   msp_pointer_record* new_record = new msp_pointer_record{};
-  //const size_t size = record->m_size;
-  //new_record->m_size = size;
   //new_record->m_user_callback = [] (const msp_pointer_record*, Action, ExecutionSpace) {};
 
   const ExecutionSpace last_space = record->m_last_space;
@@ -547,7 +531,7 @@ SharedPtrManager::getPointerMap() const
   return mapCopy;
 }
 
-size_t SharedPtrManager::getTotalNumArrays() const { return m_pointer_map.size(); }
+size_t SharedPtrManager::getTotalNumSharedPtrs() const { return m_pointer_map.size(); }
 
 // TODO: Investigate counting memory allocated in each execution space if
 // possible

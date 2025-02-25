@@ -224,7 +224,7 @@ public:
    *
    * \return The total number of arrays registered with the array manager.
    */
-  CHAISHAREDDLL_API size_t getTotalNumArrays() const;
+  CHAISHAREDDLL_API size_t getTotalNumSharedPtrs() const;
 
   /*!
    * \brief Get the total amount of memory allocated.

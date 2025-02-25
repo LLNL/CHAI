@@ -86,9 +86,7 @@ public:
     , m_resource_manager(rhs.m_resource_manager)
   {
 #if !defined(CHAI_DEVICE_COMPILE)
-    //std::cout << "ManagedSharedPtr Copy Ctor: m_active_pointer @ " << m_active_pointer << std::endl;
-    if (m_active_pointer) move(ArrayManager::getInstance()->getExecutionSpace()); // TODO: Use a generic interface for RAJA queries.
-    //if (m_active_pointer) move(m_resource_manager->getExecutionSpace());
+    if (m_active_pointer) move(ArrayManager::getInstance()->getExecutionSpace());
 #endif
   }
 
@@ -181,14 +179,12 @@ public:
      if (prev_space != GPU && space == GPU) {
         /// Move nested ManagedArrays first, so they are working with a valid m_active_pointer for the host,
         // and so the meta data associated with them are updated before we move the other array down.
-       std::cout << "Pre-move InnerImpl\n";
        moveInnerImpl();
      }
      auto old_pointer = m_active_pointer;
      m_active_pointer = static_cast<Tp*>(m_resource_manager->move(
            (void *)m_active_pointer, m_record_count.m_get_record(), space, is_CHAIPoly<Tp>::value));
      if (old_pointer != m_active_pointer) {
-       std::cout << "m_active_pointer @ " << m_active_pointer << " : def touch behaviour : " << (!std::is_const<Tp>::value || is_CHAICopyable<Tp>::value) << std::endl;
      }
 
      if (registerTouch) {
@@ -197,7 +193,6 @@ public:
      if (space != GPU && prev_space == GPU) {
        /// Move nested ManagedArrays after the move, so they are working with a valid m_active_pointer for the host,
        // and so the meta data associated with them are updated with live GPU data
-       std::cout << "Post-move InnerImpl\n";
        moveInnerImpl();
      }
 
@@ -260,7 +255,6 @@ __global__ void msp_make_on_device(T* gpuPointer, Args&&... args)
 template<typename Tp, typename... Args>
 CHAI_INLINE
 CHAI_HOST Tp* msp_make_on_device(Args&&... args) {
-  std::cout << "msp_make_on_device\n";
   Tp* gpu_ptr = nullptr;
   chai::SharedPtrManager* sptr_manager = chai::SharedPtrManager::getInstance();
 
@@ -276,7 +270,6 @@ CHAI_HOST Tp* msp_make_on_device(Args&&... args) {
 template<typename Tp, typename... Args>
 CHAI_INLINE
 CHAI_HOST Tp* msp_make_on_host(Args&&... args) {
-  std::cout << "msp_make_on_host\n";
   chai::SharedPtrManager* sptr_manager = chai::SharedPtrManager::getInstance();
 
   auto cpu_allocator = sptr_manager->getAllocator(chai::CPU);
@@ -295,15 +288,12 @@ CHAI_INLINE
 CHAI_HOST
 ManagedSharedPtr<Tp> make_shared(Args&&... args) {
   using Tp_non_const = std::remove_const_t<Tp>;
-  std::cout << "make_shared\n";
 
   Tp* cpu_pointer = detail::msp_make_on_host<Tp_non_const>(std::forward<Args>(args)...);
-  std::cout << "CPU pointer @ " << cpu_pointer << std::endl;
 
 #if defined(CHAI_ENABLE_CUDA) or defined(CHAI_ENABLE_HIP)
 
   Tp* gpu_pointer = detail::msp_make_on_device<Tp_non_const>();
-  std::cout << "GPU pointer @ " << gpu_pointer << std::endl; 
 #if defined(CHAI_ENABLE_CUDA)
   cudaDeviceSynchronize();
 #endif
@@ -330,17 +320,8 @@ ManagedSharedPtr<Tp> make_shared(Args&&... args) {
 
 #endif // defined(CHAI_ENABLE_CUDA) or defined(CHAI_ENABLE_HIP)
 
-  std::cout << "End of make_shared\n";
   return result;
 }
-
-//TODO: make_shared_deleter
-//template<typename Tp, typename Deleter, typename... Args>
-//CHAI_INLINE
-//CHAI_HOST
-//ManagedSharedPtr<Tp> make_shared_deleter(Args... args, Deleter d) {
-//.....
-//}
 
 } // namespace chai
 
