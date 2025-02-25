@@ -159,14 +159,6 @@ public:
   CHAI_HOST_DEVICE
   constexpr msp_record_count() noexcept : m_pi(0) {}
 
-  //template<typename Ptr>
-  //explicit msp_record_count(Ptr h_p, Ptr d_p)
-  //: m_pi( new  msp_counted_ptr<Ptr>(h_p, d_p) ) {}
-
-  //template<typename Ptr, typename Deleter>
-  //explicit msp_record_count(Ptr h_p, Ptr d_p, Deleter d)
-  //: m_pi( new  msp_counted_deleter<Ptr, Deleter>(std::initializer_list<Ptr>{h_p, d_p,}, std::initializer_list<ExecutionSpace>{chai::CPU, chai::GPU}, std::move(d)) ) {}
-
   template<typename T, typename Ptrs, typename Spaces, typename Deleter>
   explicit msp_record_count(T, Ptrs&& ptrs, Spaces&& spaces, Deleter d)
   : m_pi( new  msp_counted_deleter<T*, Deleter>(
