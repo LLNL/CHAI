@@ -7,7 +7,7 @@ then
 fi
 
 ##############################################################################
-# Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+# Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
 # project contributors. See the CHAI LICENSE file for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
@@ -28,6 +28,7 @@ job_unique_id=${CI_JOB_ID:-""}
 use_dev_shm=${USE_DEV_SHM:-true}
 spack_debug=${SPACK_DEBUG:-false}
 debug_mode=${DEBUG_MODE:-false}
+push_to_registry=${PUSH_TO_REGISTRY:-true}
 
 # REGISTRY_TOKEN allows you to provide your own personal access token to the CI
 # registry. Be sure to set the token with at least read access to the registry.
@@ -56,6 +57,7 @@ then
     echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
     use_dev_shm=false
     spack_debug=true
+    push_to_registry=false
 fi
 
 if [[ -n ${module_list} ]]
@@ -150,7 +152,7 @@ then
     timed_message "Spack build of dependencies"
     ${uberenv_cmd} --skip-setup-and-env --spec="${spec}" ${prefix_opt}
 
-    if [[ -n ${ci_registry_token} && ${debug_mode} == false ]]
+    if [[ -n ${ci_registry_token} && ${push_to_registry} == true ]]
     then
         timed_message "Push dependencies to buildcache"
         ${spack_cmd} -D ${spack_env_path} buildcache push --only dependencies gitlab_ci
@@ -220,10 +222,6 @@ then
     mkdir -p ${build_dir} && cd ${build_dir}
 
     timed_message "Building CHAI"
-    if [[ "${truehostname}" == "corona" || "${truehostname}" == "tioga" ]]
-    then
-        module unload rocm
-    fi
     $cmake_exe \
       -C ${hostconfig_path} \
       -DCMAKE_INSTALL_PREFIX=${install_dir} \

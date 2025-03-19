@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2022-24, Lawrence Livermore National Security, LLC and RADIUSS
+# Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
 # project contributors. See the CHAI LICENSE file for details.
 #
 # SPDX-License-Identifier: (MIT)
@@ -28,6 +28,6 @@
 
 clang_14_0_6_develop_tpls:
   variables:
-    SPEC: " %clang@14.0.6 ^umpire@develop ^raja@develop ^camp@main"
+    SPEC: " ~shared +raja tests=basic %clang@=14.0.6 ^umpire@develop ^raja@develop~examples~exercises ^camp@main"
   extends: .job_on_poodle
   allow_failure: true

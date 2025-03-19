@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
 // project contributors. See the CHAI LICENSE file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
@@ -481,11 +481,7 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_array_and_callback)
      array[i] = expectedValue;
   });
 
-#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
-  auto cpuPointer = new RawArrayClass(array);
-#else
   auto cpuPointer = new RawArrayClass(array.data());
-#endif
   auto gpuPointer = chai::make_on_device<RawArrayClass>(chai::unpack(array));
 
   auto callback = [=] (chai::Action action, chai::ExecutionSpace space, void*) mutable -> bool {
@@ -526,7 +522,7 @@ GPU_TEST(managed_ptr, gpu_class_with_managed_array)
 
   chai::ManagedArray<int> array(1, chai::CPU);
 
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
      array[0] = expectedValue;
   });
 
@@ -553,7 +549,7 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_ptr)
 
   chai::ManagedArray<int> array(1, chai::CPU);
 
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
      array[0] = expectedValue;
   });
 
@@ -646,7 +642,7 @@ GPU_TEST(managed_ptr, static_pointer_cast)
 
   chai::ManagedArray<int> array(1, chai::CPU);
 
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
      array[0] = expectedValue;
   });
 
@@ -679,7 +675,7 @@ GPU_TEST(managed_ptr, dynamic_pointer_cast)
 
   chai::ManagedArray<int> array(1, chai::CPU);
 
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
      array[0] = expectedValue;
   });
 
@@ -712,7 +708,7 @@ GPU_TEST(managed_ptr, const_pointer_cast)
 
   chai::ManagedArray<int> array(1, chai::CPU);
 
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
      array[0] = expectedValue;
   });
 
@@ -745,7 +741,7 @@ GPU_TEST(managed_ptr, reinterpret_pointer_cast)
 
   chai::ManagedArray<int> array(1, chai::CPU);
 
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
      array[0] = expectedValue;
   });
 
