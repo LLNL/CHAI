@@ -28,6 +28,6 @@ if [ $files_no_license ]; then
   echo "${files_no_license}"
   exit 255
 else
-  print "${GREEN} [Ok] All files have required license info."
+  print "${GREEN} [Ok] All files have required license info.${NOCOLOR}"
   exit 0
 fi
