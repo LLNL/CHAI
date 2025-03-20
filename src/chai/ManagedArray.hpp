@@ -108,7 +108,7 @@ public:
    *
    * \return A deep copy of the current ManagedArray.
    */
-  ManagedArray clone();
+  ManagedArray clone() const;
 
   /*!
    * \brief Construct a ManagedArray from a nullptr.
