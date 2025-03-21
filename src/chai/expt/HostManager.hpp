@@ -15,7 +15,7 @@ namespace expt {
        * \brief Constructs a host array manager.
        */
       HostManager(size_t size, const Allocator& allocator) :
-        m_allocator_id{allocatorID},
+        m_allocator{allocator},
         m_size{size}
       {
         m_data = m_allocator.allocate(size);
