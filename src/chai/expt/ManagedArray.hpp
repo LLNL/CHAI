@@ -1,14 +1,22 @@
 #ifndef CHAI_MANAGED_ARRAY_HPP
 #define CHAI_MANAGED_ARRAY_HPP
 
+#include "chai/ArrayManager.hpp"
+
 namespace chai {
+  /*!
+   * \class ManagedArray
+   *
+   * \brief An array class that manages coherency across the CPU and GPU.
+   *        How the coherence is obtained is controlled by the array manager.
+   *
+   * \tparam T The type of element in the array.
+   */
   template <typename T>
   class ManagedArray {
     public:
       /*!
        * \brief Constructs an empty array without an array manager.
-       *
-       * \note The array takes ownership of the manager.
        */
       ManagedArray() = default;
 
