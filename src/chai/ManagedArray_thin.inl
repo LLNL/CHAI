@@ -122,7 +122,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data,
 
 template <typename T>
 CHAI_INLINE
-ManagedArray<T> ManagedArray<T>::clone()
+ManagedArray<T> ManagedArray<T>::clone() const
 {
   ManagedArray<T> result;
   result.m_allocator_id = m_allocator_id;
