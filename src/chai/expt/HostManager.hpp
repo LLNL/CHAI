@@ -36,7 +36,7 @@ namespace expt {
        *
        * \param data [out] A coherent array in the current execution space.
        */
-      virtual void update(void*& data) {
+      virtual void update(void*& data, bool touch) {
         if (execution_space() == ExecutionSpace::CPU) {
           data = m_data;
         }

@@ -48,7 +48,7 @@ namespace expt {
       {
 #if !defined(CHAI_DEVICE_COMPILE)
         if (m_manager) {
-          m_manager->update(m_size, m_data);
+          m_manager->update(m_data, !std::is_const<T>::value);
         }
       }
 
