@@ -1,11 +1,12 @@
-#ifndef CHAI_MANAGED_ARRAY_HPP
-#define CHAI_MANAGED_ARRAY_HPP
+#ifndef CHAI_ARRAY_HPP
+#define CHAI_ARRAY_HPP
 
-#include "chai/ArrayManager.hpp"
+#include "chai/Manager.hpp"
 
 namespace chai {
+namespace expt {
   /*!
-   * \class ManagedArray
+   * \class Array
    *
    * \brief An array class that manages coherency across the CPU and GPU.
    *        How the coherence is obtained is controlled by the array manager.
@@ -13,12 +14,12 @@ namespace chai {
    * \tparam T The type of element in the array.
    */
   template <typename T>
-  class ManagedArray {
+  class Array {
     public:
       /*!
        * \brief Constructs an empty array without an array manager.
        */
-      ManagedArray() = default;
+      Array() = default;
 
       /*!
        * \brief Constructs an array from a manager.
@@ -27,7 +28,7 @@ namespace chai {
        *
        * \note The array takes ownership of the manager.
        */
-      ManagedArray(ArrayManager* manager) :
+      Array(Manager* manager) :
         m_manager{manager}
       {
       }
@@ -40,7 +41,7 @@ namespace chai {
        *
        * \note This is a shallow copy.
        */
-      CHAI_HOST_DEVICE ManagedArray(const ManagedArray& other) :
+      CHAI_HOST_DEVICE Array(const Array& other) :
         m_size{other.m_size},
         m_data{other.m_data},
         m_manager{other.m_manager}
@@ -100,8 +101,8 @@ namespace chai {
       /*!
        * The array manager controls the coherence of the array.
        */
-      ArrayManager* m_manager = nullptr;
-  };  // class ManagedArray
+      Manager* m_manager = nullptr;
+  };  // class Array
 
   /*!
    * \brief Constructs an array by creating a new manager object.
@@ -112,9 +113,10 @@ namespace chai {
    * \param args The arguments to construct an array manager.
    */
   template <typename Manager, typename... Args>
-  ManagedArray<T> makeManagedArray(Args&&... args) {
-    return ManagedArray<T>(new Manager(std::forward<Args>(args)...));
+  Array<T> makeArray(Args&&... args) {
+    return Array<T>(new Manager(std::forward<Args>(args)...));
   }
+}  // namespace expt
 }  // namespace chai
 
-#endif  // CHAI_MANAGED_ARRAY_HPP
+#endif  // CHAI_ARRAY_HPP
