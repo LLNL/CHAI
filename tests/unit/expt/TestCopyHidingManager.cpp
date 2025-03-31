@@ -58,3 +58,21 @@ TEST_F(CopyHidingManagerTest, Touch)
 {
   EXPECT_EQ(chai::expt::ExecutionContext::NONE, m_manager.getTouch());
 }
+
+TEST_F(CopyHidingManagerTest, DataExecutionContextNoneTouch)
+{
+  EXPECT_EQ(nullptr, m_manager.data(chai::expt::ExecutionContext::NONE, true));
+  EXPECT_EQ(chai::expt::ExecutionContext::NONE, m_manager.getTouch());
+}
+
+TEST_F(CopyHidingManagerTest, DataExecutionContextHostTouch)
+{
+  EXPECT_NE(nullptr, m_manager.data(chai::expt::ExecutionContext::HOST, true));
+  EXPECT_EQ(chai::expt::ExecutionContext::HOST, m_manager.getTouch());
+}
+
+TEST_F(CopyHidingManagerTest, DataExecutionContextDeviceTouch)
+{
+  EXPECT_NE(nullptr, m_manager.data(chai::expt::ExecutionContext::DEVICE, true));
+  EXPECT_EQ(chai::expt::ExecutionContext::DEVICE, m_manager.getTouch());
+}
