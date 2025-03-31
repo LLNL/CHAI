@@ -42,7 +42,7 @@ namespace expt {
        *
        * \param data [out] A coherent array in the current execution space.
        */
-      virtual void update(void*& data, bool touch) override;
+      virtual void* data(ExecutionContext context, bool touch) override;
 
       /*!
        * \brief Get the allocator ID.

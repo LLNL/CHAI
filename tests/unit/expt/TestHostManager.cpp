@@ -7,48 +7,40 @@
 #include "gtest/gtest.h"
 
 #include "chai/config.hpp"
-
 #include "chai/expt/HostManager.hpp"
-
 #include "umpire/ResourceManager.hpp"
 
-TEST(HostManager, Constructor)
+class HostManagerTest : public testing::Test {
+  protected:
+    int m_allocator_id{umpire::ResourceManager::getInstance().getAllocator("HOST").getId()};
+    std::size_t m_size{100};
+    chai::expt::HostManager m_manager{m_allocator_id, m_size};
+};
+
+
+TEST_F(HostManagerTest, AllocatorID)
 {
-  size_t size = 100;
-  int allocatorID = umpire::ResourceManager::getInstance().getAllocator("HOST").getId();
+  EXPECT_EQ(m_allocator_id, m_manager.getAllocatorID());
+}
 
-  chai::expt::HostManager manager(allocatorID, size);
+TEST_F(HostManagerTest, Size)
+{
+  EXPECT_EQ(m_size, m_manager.size());
+}
 
-  ASSERT_EQ(allocatorID, manager.getAllocatorID());
-  ASSERT_EQ(size, manager.size());
+TEST_F(HostManagerTest, DataExecutionContextNone)
+{
+  EXPECT_EQ(nullptr, m_manager.data(chai::expt::ExecutionContext::NONE, false));
+}
 
-  void* data;
-
-  /*
-   * Test chai::expt::ExecutionContext::NONE
-   */
-  manager.execution_context() = chai::expt::ExecutionContext::NONE;
-  manager.update(data, false);
-  ASSERT_EQ(nullptr, data);
-
-  /*
-   * Test chai::expt::ExecutionContext::HOST
-   */
-  manager.execution_context() = chai::expt::ExecutionContext::HOST;
-  manager.update(data, false);
-  ASSERT_NE(nullptr, data);
+TEST_F(HostManagerTest, DataExecutionContextHost)
+{
+  EXPECT_NE(nullptr, m_manager.data(chai::expt::ExecutionContext::HOST, false));
+}
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
-  /*
-   * Test chai::expt::ExecutionContext::DEVICE
-   */
-  manager.execution_context() = chai::expt::ExecutionContext::DEVICE;
-  manager.update(data, false);
-  ASSERT_EQ(nullptr, data);
-#endif
-
-  /*
-   * Reset chai::expt::ExecutionContext
-   */
-  manager.execution_context() = chai::expt::ExecutionContext::NONE;
+TEST_F(HostManagerTest, DataExecutionContextNone)
+{
+  EXPECT_EQ(nullptr, m_manager.data(chai::expt::ExecutionContext::DEVICE, false));
 }
+#endif

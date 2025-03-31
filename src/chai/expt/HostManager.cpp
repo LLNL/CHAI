@@ -19,12 +19,12 @@ namespace expt {
     return m_size;
   }
 
-  void HostManager::update(void*& data, bool /* touch */) {
-    if (execution_context() == ExecutionContext::HOST) {
-      data = m_data;
+  void* HostManager::data(ExecutionContext context, bool /* touch */) {
+    if (context == ExecutionContext::HOST) {
+      return m_data;
     }
     else {
-      data = nullptr;
+      return nullptr;
     }
   }
 

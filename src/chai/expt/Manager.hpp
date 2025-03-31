@@ -29,7 +29,7 @@ namespace expt {
        *
        * \param data [out] A coherent array in the current execution context.
        */
-      virtual void update(void*& data, bool touch) = 0;
+      virtual void* data(ExecutionContext context, bool touch) = 0;
 
       /*!
        * \brief Returns a modifiable reference to the current execution context.
