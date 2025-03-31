@@ -10,10 +10,10 @@ namespace expt {
     /*! Default, no execution space. */
     NONE = 0,
     /*! Executing in CPU space */
-    CPU,
+    HOST,
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
     /*! Executing in GPU space */
-    GPU
+    DEVICE
 #endif
   };  // enum class ExecutionContext
 }  // namespace expt

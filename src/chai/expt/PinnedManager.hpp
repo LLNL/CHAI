@@ -33,6 +33,13 @@ namespace expt {
       }
 
       /*!
+       * \brief Get the number of elements.
+       */
+      virtual size_t size() const {
+        return m_size;
+      }
+
+      /*!
        * \brief Updates the data to be coherent in the current execution space.
        *
        * \param data [out] A coherent array in the current execution space.

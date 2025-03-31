@@ -3,6 +3,8 @@
 
 #include "chai/expt/ExecutionContext.hpp"
 
+#include <cstddef>
+
 namespace chai {
 namespace expt {
   /*!
@@ -16,6 +18,11 @@ namespace expt {
        * \brief Virtual destructor.
        */
       virtual ~Manager() = default;
+
+      /*!
+       * \brief Get the number of elements.
+       */
+      virtual std::size_t size() const = 0;
 
       /*!
        * \brief Updates the data to be coherent in the current execution context.

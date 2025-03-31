@@ -50,3 +50,16 @@ if (CHAI_ENABLE_MANAGED_PTR)
     NAME managed_ptr_unit_test
     COMMAND managed_ptr_unit_tests)
 endif ()
+
+blt_add_executable(
+  NAME TestHostManager
+  SOURCES expt/TestHostManager.cpp
+  DEPENDS_ON ${chai_unit_test_depends})
+
+target_include_directories(
+  TestHostManager
+  PUBLIC ${PROJECT_BINARY_DIR}/include)
+
+blt_add_test(
+  NAME TestHostManager
+  COMMAND TestHostManager)

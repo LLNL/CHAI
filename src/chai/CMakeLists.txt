@@ -37,7 +37,8 @@ endif ()
 
 set (chai_sources
   ArrayManager.cpp
-  expt/Manager.cpp)
+  expt/Manager.cpp
+  expt/HostManager.cpp)
 
 set (chai_depends
   umpire)
