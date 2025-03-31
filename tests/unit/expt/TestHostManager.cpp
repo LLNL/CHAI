@@ -39,7 +39,7 @@ TEST_F(HostManagerTest, DataExecutionContextHost)
 }
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
-TEST_F(HostManagerTest, DataExecutionContextNone)
+TEST_F(HostManagerTest, DataExecutionContextDevice)
 {
   EXPECT_EQ(nullptr, m_manager.data(chai::expt::ExecutionContext::DEVICE, false));
 }

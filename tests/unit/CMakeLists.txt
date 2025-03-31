@@ -63,3 +63,18 @@ target_include_directories(
 blt_add_test(
   NAME TestHostManager
   COMMAND TestHostManager)
+
+if(CHAI_ENABLE_CUDA OR CHAI_ENABLE_HIP OR CHAI_ENABLE_GPU_SIMULATION_MODE)
+  blt_add_executable(
+    NAME TestCopyHidingManager
+    SOURCES expt/TestCopyHidingManager.cpp
+    DEPENDS_ON ${chai_unit_test_depends})
+
+  target_include_directories(
+    TestCopyHidingManager
+    PUBLIC ${PROJECT_BINARY_DIR}/include)
+
+  blt_add_test(
+    NAME TestCopyHidingManager
+    COMMAND TestCopyHidingManager)
+endif()

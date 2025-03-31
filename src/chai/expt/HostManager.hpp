@@ -18,12 +18,12 @@ namespace expt {
       HostManager(int allocatorID, std::size_t size);
 
       /*!
-       * \brief Deleted copy constructor.
+       * \brief Copy constructor is deleted.
        */
       HostManager(const HostManager&) = delete;
 
       /*!
-       * \brief Deleted copy assignment operator.
+       * \brief Copy assignment operator is deleted.
        */
       HostManager& operator=(const HostManager&) = delete;
 

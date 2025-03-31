@@ -1,6 +1,8 @@
 #ifndef CHAI_EXECUTION_CONTEXT_HPP
 #define CHAI_EXECUTION_CONTEXT_HPP
 
+#include "chai/config.hpp"
+
 namespace chai {
 namespace expt {
   /*!

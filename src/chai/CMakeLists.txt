@@ -24,7 +24,6 @@ set (chai_headers
   expt/Array.hpp
   expt/ExecutionContext.hpp
   expt/Manager.hpp
-  expt/CopyHidingManager.hpp
   expt/HostManager.hpp
   expt/PageableManager.hpp
   expt/PinnedManager.hpp)
@@ -39,6 +38,16 @@ set (chai_sources
   ArrayManager.cpp
   expt/Manager.cpp
   expt/HostManager.cpp)
+
+if(CHAI_ENABLE_CUDA OR CHAI_ENABLE_HIP OR CHAI_ENABLE_GPU_SIMULATION_MODE)
+  set(chai_headers
+      ${chai_headers}
+      expt/CopyHidingManager.hpp)
+
+  set(chai_sources
+      ${chai_sources}
+      expt/CopyHidingManager.cpp)
+endif()
 
 set (chai_depends
   umpire)
