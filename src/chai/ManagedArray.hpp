@@ -108,7 +108,7 @@ public:
    *
    * \return A deep copy of the current ManagedArray.
    */
-  ManagedArray clone();
+  ManagedArray clone() const;
 
   /*!
    * \brief Construct a ManagedArray from a nullptr.
@@ -181,6 +181,12 @@ public:
    */
   template <typename Idx>
   CHAI_HOST_DEVICE T& operator[](const Idx i) const;
+
+  /*!
+   * \brief get access to m_active_base_pointer
+   * @return a copy of m_active_base_pointer
+   */
+  CHAI_HOST_DEVICE T* getActiveBasePointer() const;
 
   /*!
    * \brief get access to m_active_pointer
@@ -492,6 +498,12 @@ ManagedArray<T> makeManagedArray(T* data,
 #endif
 
   return array;
+}
+
+template <typename T>
+CHAI_HOST_DEVICE T* ManagedArray<T>::getActiveBasePointer() const
+{
+  return m_active_base_pointer;
 }
 
 template <typename T>

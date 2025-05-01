@@ -153,7 +153,7 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(T* data, ArrayManager* array_mana
 
 template <typename T>
 CHAI_INLINE
-ManagedArray<T> ManagedArray<T>::clone()
+ManagedArray<T> ManagedArray<T>::clone() const
 {
   ArrayManager* manager = ArrayManager::getInstance();
   const PointerRecord* record = manager->getPointerRecord(m_active_base_pointer);
