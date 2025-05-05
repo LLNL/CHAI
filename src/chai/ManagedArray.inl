@@ -155,6 +155,11 @@ template <typename T>
 CHAI_INLINE
 ManagedArray<T> ManagedArray<T>::clone() const
 {
+  // If the ManagedArray hasn't been initialized with any record data
+  // deepCopyRecord will fail, we can just return an empty MA.
+  if (!m_active_base_pointer)
+    return ManagedArray();
+
   ArrayManager* manager = ArrayManager::getInstance();
   const PointerRecord* record = manager->getPointerRecord(m_active_base_pointer);
   PointerRecord* copy_record = manager->deepCopyRecord(record);
@@ -302,6 +307,10 @@ CHAI_HOST void ManagedArray<T>::reset()
 template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE size_t ManagedArray<T>::size() const {
+  #if !defined(CHAI_DEVICE_COMPILE)
+  if (m_pointer_record)
+    return m_pointer_record->m_size/sizeof(T);
+  #endif
   return m_size/sizeof(T);
 }
 
