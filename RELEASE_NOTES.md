@@ -18,6 +18,9 @@ The format of this file is based on [Keep a Changelog](http://keepachangelog.com
 ### Changed
 - Use memcpy instead of umpire copy for CPU-only thin managed array realloc (allows tracking to be disabled).
 
+### Fixed
+- Fixed ManagedArray::set when the initial space is not CPU in the two memory space configuration.
+
 ## [Version 2025.03.0] - Release date 2025-03-19
 
 ### Added
