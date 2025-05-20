@@ -242,7 +242,11 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t new_elems)
        if (new_elems > 0) {
            new_ptr = (T*) allocator.allocate(sizeof(T) * new_elems);
            arrayManager->syncIfNeeded();
+#if !defined(CHAI_THIN_GPU_ALLOCATE)
+           std::memcpy(new_ptr, m_active_pointer, std::min(m_size, new_elems*sizeof(T)));
+#else
            arrayManager->copy(new_ptr, m_active_pointer, std::min(m_size, new_elems*sizeof(T)));
+#endif
            registerTouch(chai::GPU);
        }
 
