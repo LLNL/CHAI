@@ -13,6 +13,11 @@ in this file.
 
 The format of this file is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased] - Release date yyyy-mm-dd
+
+### Changed
+- Use memcpy instead of umpire copy for CPU-only thin managed array realloc (allows tracking to be disabled).
+
 ## [Version 2025.03.0] - Release date 2025-03-19
 
 ### Added
