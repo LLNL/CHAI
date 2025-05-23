@@ -80,6 +80,13 @@ ArrayManager::ArrayManager() :
 #endif
 }
 
+ArrayManager::~ArrayManager() {
+  for (size_t i = 0; i < NUM_EXECUTION_SPACES; ++i) {
+    if (m_allocators[i])
+      delete m_allocators[i];
+  }
+}
+
 void ArrayManager::registerPointer(
    PointerRecord* record,
    ExecutionSpace space,
