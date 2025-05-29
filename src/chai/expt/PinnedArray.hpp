@@ -1,22 +1,22 @@
-#ifndef CHAI_PINNED_MANAGER_HPP
-#define CHAI_PINNED_MANAGER_HPP
+#ifndef CHAI_PINNED_ARRAY_HPP
+#define CHAI_PINNED_ARRAY_HPP
 
 namespace chai {
 namespace expt {
   /*!
-   * \class PinnedManager
+   * \class PinnedArray
    *
    * \brief Controls the coherence of an array on the host and device.
    */
   template <typename Allocator>
-  class PinnedManager : public Manager {
+  class PinnedArray : public Manager {
     public:
-      PinnedManager() noexcept(noexcept(Allocator())) :
-        PinnedManager(Allocator())
+      PinnedArray() noexcept(noexcept(Allocator())) :
+        PinnedArray(Allocator())
       {
       }
 
-      explicit PinnedManager(const Allocator& allocator) :
+      explicit PinnedArray(const Allocator& allocator) :
         m_allocator{allocator}
       {
       }
@@ -24,7 +24,7 @@ namespace expt {
       /*!
        * \brief Constructs a host array manager.
        */
-      PinnedManager(size_t size,
+      PinnedArray(size_t size,
                     const Allocator& allocator = Allocator()) :
         m_size{size},
         m_data{allocator.allocate(size)},
@@ -32,7 +32,7 @@ namespace expt {
       {
       }
 
-      PinnedManager(const PinnedManager& other) :
+      PinnedArray(const PinnedArray& other) :
         m_size{other.m_size},
         m_data{other.m_allocator.allocate(size)},
         m_allocator{other.m_allocator}
@@ -40,7 +40,7 @@ namespace expt {
         // Copy data from other array
       }
 
-      PinnedManager(PinnedManager&& other) :
+      PinnedArray(PinnedArray&& other) :
         m_size{other.m_size},
         m_data{other.m_data},
         m_allocator{other.m_allocator}
@@ -50,12 +50,12 @@ namespace expt {
         other.m_allocator = Allocator();
       }
 
-      PinnedManager& operator=(const PinnedManager&) = delete;
+      PinnedArray& operator=(const PinnedArray&) = delete;
 
       /*!
        * \brief Virtual destructor.
        */
-      virtual ~PinnedManager() {
+      virtual ~PinnedArray() {
         m_allocator.deallocate(m_data);
       }
 
@@ -95,8 +95,8 @@ namespace expt {
       size_t m_size{0};
       T* m_data{nullptr};
       Allocator m_allocator{};
-  };  // class PinnedManager
+  };  // class PinnedArray
 }  // namespace expt
 }  // namespace chai
 
-#endif  // CHAI_PINNED_MANAGER_HPP
+#endif  // CHAI_PINNED_ARRAY_HPP
