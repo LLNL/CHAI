@@ -13,9 +13,10 @@ in this file.
 
 The format of this file is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased] - Release date yyyy-mm-dd
+## [Version 2025.03.1] - Release date 2025-06-23
 
 ### Changed
+- Updated to RAJA v2025.03.2
 - Use memcpy instead of umpire copy for CPU-only thin managed array realloc (allows tracking to be disabled).
 
 ### Fixed
