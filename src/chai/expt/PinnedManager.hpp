@@ -24,11 +24,12 @@ namespace expt {
       /*!
        * \brief Constructs a host array manager.
        */
-      PinnedManager(size_t size,
-                    const Allocator& allocator = Allocator()) :
+      explicit PinnedManager(size_t size,
+                             const Allocator& allocator = Allocator()) :
+        PinnedManager(allocator),
         m_size{size},
+        // TODO: Investigate if allocate should be in body of constructor
         m_data{allocator.allocate(size)},
-        m_allocator{allocator}
       {
       }
 
