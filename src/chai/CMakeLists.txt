@@ -20,7 +20,13 @@ set (chai_headers
   ManagedArray.inl
   managed_ptr.hpp
   PointerRecord.hpp
-  Types.hpp)
+  Types.hpp
+  expt/Array.hpp
+  expt/ExecutionContext.hpp
+  expt/Manager.hpp
+  expt/HostManager.hpp
+  expt/PageableManager.hpp
+  expt/PinnedManager.hpp)
 
 if(CHAI_DISABLE_RM)
   set(chai_headers
@@ -29,7 +35,19 @@ if(CHAI_DISABLE_RM)
 endif ()
 
 set (chai_sources
-  ArrayManager.cpp)
+  ArrayManager.cpp
+  expt/Manager.cpp
+  expt/HostManager.cpp)
+
+if(CHAI_ENABLE_CUDA OR CHAI_ENABLE_HIP OR CHAI_ENABLE_GPU_SIMULATION_MODE)
+  set(chai_headers
+      ${chai_headers}
+      expt/CopyHidingManager.hpp)
+
+  set(chai_sources
+      ${chai_sources}
+      expt/CopyHidingManager.cpp)
+endif()
 
 set (chai_depends
   umpire)

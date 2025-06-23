@@ -50,3 +50,31 @@ if (CHAI_ENABLE_MANAGED_PTR)
     NAME managed_ptr_unit_test
     COMMAND managed_ptr_unit_tests)
 endif ()
+
+blt_add_executable(
+  NAME TestHostManager
+  SOURCES expt/TestHostManager.cpp
+  DEPENDS_ON ${chai_unit_test_depends})
+
+target_include_directories(
+  TestHostManager
+  PUBLIC ${PROJECT_BINARY_DIR}/include)
+
+blt_add_test(
+  NAME TestHostManager
+  COMMAND TestHostManager)
+
+if(CHAI_ENABLE_CUDA OR CHAI_ENABLE_HIP OR CHAI_ENABLE_GPU_SIMULATION_MODE)
+  blt_add_executable(
+    NAME TestCopyHidingManager
+    SOURCES expt/TestCopyHidingManager.cpp
+    DEPENDS_ON ${chai_unit_test_depends})
+
+  target_include_directories(
+    TestCopyHidingManager
+    PUBLIC ${PROJECT_BINARY_DIR}/include)
+
+  blt_add_test(
+    NAME TestCopyHidingManager
+    COMMAND TestCopyHidingManager)
+endif()

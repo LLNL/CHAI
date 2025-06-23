@@ -6,8 +6,8 @@
 ##############################################################################
 
 # Set up software versions
-set(ROCM_VERSION "6.2.0" CACHE PATH "")
-set(GCC_VERSION "12.2.1" CACHE PATH "")
+set(ROCM_VERSION "6.4.1" CACHE PATH "")
+set(GCC_VERSION "13.3.1" CACHE PATH "")
 
 # Set up compilers
 set(COMPILER_BASE "/usr/tce/packages/rocmcc/rocmcc-${ROCM_VERSION}-magic" CACHE PATH "")
