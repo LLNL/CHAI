@@ -6,7 +6,7 @@
 ###############################################################################
 
 # Override reproducer section to define projet specific variables.
-.poodle_reproducer_vars:
+.dane_reproducer_vars:
   script:
     - !reference [.reproducer_vars, script]
 
@@ -29,5 +29,5 @@
 clang_14_0_6_develop_tpls:
   variables:
     SPEC: " ~shared +raja tests=basic %clang@=14.0.6 ^umpire@develop ^raja@develop~examples~exercises ^camp@main"
-  extends: .job_on_poodle
+  extends: .job_on_dane
   allow_failure: true
