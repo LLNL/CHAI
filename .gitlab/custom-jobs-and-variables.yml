@@ -25,10 +25,10 @@ variables:
 
 # Dane
 # Arguments for top level allocation
-  DANE_SHARED_ALLOC: "--exclusive --partition=pdebug --time=7 --nodes=1"
+  DANE_SHARED_ALLOC: "--exclusive --reservation=ci --time=7 --nodes=1"
 # Arguments for job level allocation
 # Note: We repeat the reservation, necessary when jobs are manually re-triggered.
-  DANE_JOB_ALLOC: "--overlap --nodes=1"
+  DANE_JOB_ALLOC: "--overlap --reservation=ci --nodes=1"
 # Project specific variants for dane
   PROJECT_DANE_VARIANTS: "~shared +raja tests=basic "
 # Project specific deps for dane
