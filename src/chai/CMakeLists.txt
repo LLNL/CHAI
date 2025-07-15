@@ -15,6 +15,7 @@ set (chai_headers
   ArrayManager.hpp
   ArrayManager.inl
   ChaiMacros.hpp
+  ChaiManager.hpp
   ExecutionSpaces.hpp
   ManagedArray.hpp
   ManagedArray.inl
@@ -29,6 +30,7 @@ if(CHAI_DISABLE_RM)
 endif ()
 
 set (chai_sources
+  SharedPtrManager.cpp
   ArrayManager.cpp)
 
 set (chai_depends
