@@ -4,6 +4,14 @@
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
+#include "chai/config.hpp"
+
+#include "../src/util/forall.hpp"
+
+#include "chai/ManagedArray.hpp"
+
+#include "umpire/ResourceManager.hpp"
+
 #include "gtest/gtest.h"
 #define GPU_TEST(X, Y)              \
   static void gpu_test_##X##Y();    \
@@ -27,16 +35,6 @@
 #else
 #define assert_empty_map(IGNORED) ASSERT_EQ(chai::ArrayManager::getInstance()->getPointerMap().size(),0)
 #endif
-
-
-#include "chai/config.hpp"
-
-#include "../src/util/forall.hpp"
-
-#include "chai/ManagedArray.hpp"
-
-#include "umpire/ResourceManager.hpp"
-
 
 struct my_point {
   double x;
@@ -593,7 +591,48 @@ TEST(ManagedArray, ReallocateCPU)
   assert_empty_map(true);
 }
 
+TEST(ManagedArray, ReallocateCopyCPU)
+{
+  chai::ManagedArray<float> array(10);
+  chai::ManagedArray<float> array_copy = array;
+  ASSERT_EQ(array.size(), 10u);
+  ASSERT_EQ(array_copy.size(), 10u);
+
+  forall(sequential(), 0, 10, [=](int i) {
+      array[i] = i;
+      ASSERT_EQ(&array[i], &array_copy[i]);
+  });
+
+  array.reallocate(20);
+  
+  // This will be incorrect, a call to move, data or copy needs to 
+  // be exectued in order to update the internal active pointer of
+  // the copied object in order to use operator[] after a reallocation.
+  ASSERT_NE(&array[0], &array_copy[0]);
+
+  // This would work but for the sake of the test we will check
+  // operator[] is correct after lambda capture.
+  //ASSERT_EQ(array.data(), array_copy.data());
+
+  ASSERT_EQ(array.size(), 20u);
+  ASSERT_EQ(array_copy.size(), 20u);
+
+  forall(sequential(), 0, 20, [=](int i) {
+    ASSERT_EQ(&array[i], &array_copy[i]);
+    if (i < 10) {
+      ASSERT_EQ(array[i], i);
+    } else {
+      array_copy[i] = i;
+      ASSERT_EQ(array[i], i);
+    }
+  });
+
+  array_copy.free();
+  assert_empty_map(true);
+}
+
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+
 GPU_TEST(ManagedArray, ReallocateGPU)
 {
   chai::ManagedArray<float> array(10);
@@ -604,12 +643,52 @@ GPU_TEST(ManagedArray, ReallocateGPU)
   array.reallocate(20);
   ASSERT_EQ(array.size(), 20u);
 
-  forall(sequential(), 0, 20, [=](int i) {
+  forall(gpu(), 0, 20, [=]__device__(int i) {
     if (i < 10) {
-      ASSERT_EQ(array[i], i);
+      device_assert(array[i] == i);
     } else {
       array[i] = i;
-      ASSERT_EQ(array[i], i);
+      device_assert(array[i] == i);
+    }
+  });
+
+  array.free();
+  assert_empty_map(true);
+}
+
+GPU_TEST(ManagedArray, ReallocateCopyGPU)
+{
+  chai::ManagedArray<float> array(10);
+  auto array_copy = array;
+  ASSERT_EQ(array.size(), 10u);
+  ASSERT_EQ(array_copy.size(), 10u);
+
+  forall(gpu(), 0, 10, [=] __device__(int i) {
+      array[i] = i;
+      device_assert(array.data()[i] == array_copy.data()[i]);
+  });
+
+  array.reallocate(20);
+  ASSERT_EQ(array.size(), 20u);
+
+  // This will be incorrect, a call to move, data or copy needs to 
+  // be exectued in order to update the internal active pointer of
+  // the copied object in order to use operator[] after a reallocation.
+  ASSERT_NE(&array[0], &array_copy[0]);
+
+  // This would work but for the sake of the test we will check
+  // operator[] is correct after lambda capture.
+  //ASSERT_EQ(array.data(), array_copy.data());
+
+
+  forall(gpu(), 0, 20, [=]__device__(int i) {
+    device_assert(array.size() == array_copy.size());
+    device_assert(array.data()[i] == array_copy.data()[i]);
+    if (i < 10) {
+      device_assert(array[i] == i);
+    } else {
+      array[i] = i;
+      device_assert(array[i] == i);
     }
   });
 
