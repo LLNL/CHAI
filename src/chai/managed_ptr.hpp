@@ -757,7 +757,7 @@ namespace chai {
          ///
          /// @return a new instance of ManagedArrayOfManagedPtrUnpacker
          ///
-         explicit CHAI_HOST ManagedArrayOfManagedPtrUnpacker(const chai::MangedArray<chai::managed_ptr<T>>& arg)
+         explicit CHAI_HOST ManagedArrayOfManagedPtrUnpacker(const chai::ManagedArray<chai::managed_ptr<T>>& arg)
             : m_array{arg}, m_size(arg.size())
          {
             // Extract the CPU raw pointers
