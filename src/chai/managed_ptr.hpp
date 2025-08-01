@@ -736,14 +736,6 @@ namespace chai {
          managed_ptr<T> m_managed_ptr = nullptr; //!< The managed_ptr to unpack
    };
 
-///
-/// @author Peter Robinson
-///
-/// A wrapper used by the make_managed family of functions to indicate when
-/// the internal pointers contained by a ManagedArray of managed_ptr should be extracted.
-/// It is not intended to be used directly, but rather created by unpack.
-///
-template <typename T>
    ///
    /// @author Peter Robinson
    ///
@@ -765,7 +757,7 @@ template <typename T>
          ///
          /// @return a new instance of ManagedArrayOfManagedPtrUnpacker
          ///
-         explicit CHAI_HOST ManagedArrayOfManagedPtrUnpacker(const care::host_device_ptr<chai::managed_ptr<T>>& arg)
+         explicit CHAI_HOST ManagedArrayOfManagedPtrUnpacker(const chai::MangedArray<chai::managed_ptr<T>>& arg)
             : m_array{arg}, m_size(arg.size())
          {
             // Extract the CPU raw pointers
@@ -819,7 +811,7 @@ template <typename T>
          }
 
       private:
-         care::host_device_ptr<chai::managed_ptr<T>> m_array; //!< The ManagedArray of managed_ptr to unpack
+         chai::ManagedArray<chai::managed_ptr<T>> m_array; //!< The ManagedArray of managed_ptr to unpack
          size_t m_size;
          T** m_cpu_ptrs = nullptr; //!< Array of extracted raw CPU pointers
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
@@ -827,22 +819,6 @@ template <typename T>
          T** m_device_ptr_array = nullptr; //!< Device memory array containing GPU pointers
 #endif
    };
-
-   ///
-   /// @author Peter Robinson
-   ///
-   /// Unpacks the pointers contained in the ManagedArray of managed_ptr and passes them
-   /// as a T** array appropriate for the execution context.
-   ///
-   /// @param[in] arg The ManagedArray of managed_ptr to unpack
-   ///
-   /// @return A wrapper used by make_managed for unpacking the internal pointers
-   ///         in the correct space
-   ///
-   template <typename T>
-   CHAI_HOST ManagedArrayOfManagedPtrUnpacker<T> unpack(const care::host_device_ptr<chai::managed_ptr<T>>& arg) {
-      return ManagedArrayOfManagedPtrUnpacker<T>(arg);
-   }
 
    namespace detail {
 
@@ -1009,7 +985,7 @@ template <typename T>
 ///         in the correct space
 ///
 template <typename T>
-CHAI_HOST ManagedArrayOfManagedPtrUnpacker<T> unpack(const chai::managed_array<chai::managed_ptr<T>>& arg) {
+CHAI_HOST ManagedArrayOfManagedPtrUnpacker<T> unpack(const chai::ManagedArray<chai::managed_ptr<T>>& arg) {
    return ManagedArrayOfManagedPtrUnpacker<T>(arg);
 }
 
