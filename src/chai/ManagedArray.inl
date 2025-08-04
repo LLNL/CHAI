@@ -370,7 +370,13 @@ CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const {
     #endif
 
     if (m_pointer_record->m_last_space == NONE) {
-       m_pointer_record->m_last_space = CPU;
+       // Use the first non-null pointer if managed array was not used yet
+       for (int s = CPU; s < NUM_EXECUTION_SPACES; ++s) {
+          if (m_pointer_record->m_pointers[s] != nullptr) {
+             m_pointer_record->m_last_space = static_cast<ExecutionSpace>(s);
+             break;
+          }
+       }
     }
 
     m_pointer_record->m_touched[m_pointer_record->m_last_space] = true;

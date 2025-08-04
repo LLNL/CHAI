@@ -335,6 +335,12 @@ protected:
    */
   ArrayManager();
 
+  /*!
+   * \brief Destruct a new ArrayManager.
+   *
+   * The destructor is a protected member.
+   */
+  ~ArrayManager();
 
 
 private:
