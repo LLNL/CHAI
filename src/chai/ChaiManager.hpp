@@ -23,6 +23,6 @@
 #include "umpire/util/MemoryMap.hpp"
 
 
-#include "chai/util/DeviceHelpers.hpp"
+#include "chai/DeviceHelpers.hpp"
 
 #endif // CHAI_ChaiManager_HPP
