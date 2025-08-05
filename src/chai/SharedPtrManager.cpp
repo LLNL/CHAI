@@ -438,6 +438,8 @@ msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void const* c_pointer,
   void* pointer = const_cast<void*>(c_pointer);
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
   void* d_pointer = const_cast<void*>(c_d_pointer);
+#else
+  CHAI_UNUSED_VAR(c_d_pointer);
 #endif
 
   if (pointer == nullptr) {
