@@ -20,8 +20,12 @@ set (chai_headers
   ExecutionSpaces.hpp
   ManagedArray.hpp
   ManagedArray.inl
+  ManagedSharedPtr.hpp
   managed_ptr.hpp
   PointerRecord.hpp
+  SharedPtrCounter.hpp
+  SharedPtrManager.hpp
+  SharedPtrManager.inl
   Types.hpp)
 
 if(CHAI_DISABLE_RM)
