@@ -16,6 +16,8 @@
 
 namespace chai
 {
+namespace expt
+{
 
 /*!
  * \brief Struct holding details about each pointer.
@@ -53,5 +55,6 @@ struct msp_pointer_record {
 
 
 
+}  // end of namespace expt
 }  // end of namespace chai
 #endif  // CHAI_SharedPointerRecord_HPP

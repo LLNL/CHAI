@@ -12,6 +12,8 @@
 
 namespace chai
 {
+namespace expt
+{
 
 /*!
  * \brief Singleton that manages caching and movement of ManagedArray objects.
@@ -432,6 +434,7 @@ private:
 #endif
 };
 
+}  // end of namespace expt
 }  // end of namespace chai
 
 #include "chai/SharedPtrManager.inl"

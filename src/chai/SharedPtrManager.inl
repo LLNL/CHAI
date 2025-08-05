@@ -25,6 +25,7 @@
 //#endif
 
 namespace chai {
+namespace expt {
 
 template<typename Ptr>
 msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(std::initializer_list<Ptr*> pointers,
@@ -122,6 +123,8 @@ bool SharedPtrManager::syncIfNeeded() {
   }
   return false;
 }
+
+} // end of namespace expt
 } // end of namespace chai
 
 #endif // CHAI_SharedPtrManager_INL

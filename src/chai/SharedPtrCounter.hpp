@@ -16,6 +16,8 @@
 
 namespace chai
 {
+namespace expt
+{
 
 class msp_counted_base {
 public:
@@ -122,7 +124,7 @@ public:
       if (ptr) {
         if (space == chai::CPU) m_impl.m_del()(ptr);
 #if defined(CHAI_GPUCC)
-        if (space == chai::GPU) ::chai::impl::msp_dispose_on_device<<<1,1>>>(ptr, m_impl.m_del());
+        if (space == chai::GPU) ::chai::expt::impl::msp_dispose_on_device<<<1,1>>>(ptr, m_impl.m_del());
 #endif
         SharedPtrManager::getInstance()->free(m_impl.m_record, ExecutionSpace(space));
       }
@@ -225,5 +227,6 @@ public:
 
 
 
+}  // end of namespace expt
 }  // end of namespace chai
 #endif  // CHAI_SharedPointerRecord_HPP

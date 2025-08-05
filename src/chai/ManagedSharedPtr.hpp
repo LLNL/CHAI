@@ -13,6 +13,7 @@
 #include "chai/managed_ptr.hpp"
 
 namespace chai {
+namespace expt {
 
 
 struct CHAIPoly {};
@@ -256,7 +257,7 @@ template<typename Tp, typename... Args>
 CHAI_INLINE
 CHAI_HOST Tp* msp_make_on_device(Args&&... args) {
   Tp* gpu_ptr = nullptr;
-  chai::SharedPtrManager* sptr_manager = chai::SharedPtrManager::getInstance();
+  chai::expt::SharedPtrManager* sptr_manager = chai::expt::SharedPtrManager::getInstance();
 
   auto gpu_allocator = sptr_manager->getAllocator(chai::GPU);
   gpu_ptr = static_cast<Tp*>( gpu_allocator.allocate(1*sizeof(Tp)) );
@@ -270,7 +271,7 @@ CHAI_HOST Tp* msp_make_on_device(Args&&... args) {
 template<typename Tp, typename... Args>
 CHAI_INLINE
 CHAI_HOST Tp* msp_make_on_host(Args&&... args) {
-  chai::SharedPtrManager* sptr_manager = chai::SharedPtrManager::getInstance();
+  chai::expt::SharedPtrManager* sptr_manager = chai::expt::SharedPtrManager::getInstance();
 
   auto cpu_allocator = sptr_manager->getAllocator(chai::CPU);
 
@@ -323,6 +324,7 @@ ManagedSharedPtr<Tp> make_shared(Args&&... args) {
   return result;
 }
 
+} // namespace expt
 } // namespace chai
 
 

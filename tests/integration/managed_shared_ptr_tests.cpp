@@ -59,11 +59,11 @@ inline void gpuErrorCheck(hipError_t code, const char *file, int line, bool abor
 #define assert_empty_sptr_map(IGNORED)
 #else
 #define assert_empty_array_map(IGNORED) ASSERT_EQ(chai::ArrayManager::getInstance()->getPointerMap().size(),0)
-#define assert_empty_sptr_map(IGNORED) ASSERT_EQ(chai::SharedPtrManager::getInstance()->getPointerMap().size(),0)
+#define assert_empty_sptr_map(IGNORED) ASSERT_EQ(chai::expt::SharedPtrManager::getInstance()->getPointerMap().size(),0)
 #endif
 
 
-class C : chai::CHAIPoly
+class C : chai::expt::CHAIPoly
 {
 public:
   CHAI_HOST_DEVICE C(void) { printf("++ C has been constructed\n"); }
@@ -81,7 +81,7 @@ public:
 };
 
 
-class A : chai::CHAIPoly
+class A : chai::expt::CHAIPoly
 {
 public:
   unsigned long long content_A;
@@ -112,11 +112,10 @@ public:
 };
 
 
-class AAbsMem : public chai::CHAICopyable , public chai::CHAIPoly
+class AAbsMem : public chai::CHAICopyable , public chai::expt::CHAIPoly
 {
 public:
-  //chai::ManagedSharedPtr<C> base_member;
-  chai::ManagedSharedPtr<const C> base_member;
+  chai::expt::ManagedSharedPtr<const C> base_member;
   unsigned long long content_A;
 
   CHAI_HOST_DEVICE AAbsMem(void) : content_A(0xAAAAAAAAAAAAAAAAull) { printf("++ A has been constructed\n"); }
@@ -124,8 +123,8 @@ public:
   //template<typename Derived, typename = typename std::enable_if<std::is_base_of<C, Derived>::value>::type >
   template<typename Derived>
   CHAI_HOST AAbsMem(Derived const& base_val)
-    //: base_member(chai::make_shared<const Derived>(base_val))
-    : base_member(chai::make_shared<Derived>(base_val))
+    //: base_member(chai::expt::make_shared<const Derived>(base_val))
+    : base_member(chai::expt::make_shared<Derived>(base_val))
     , content_A(0xAAAAAAAAAAAAAAAAull) 
   { printf("++ A has been constructed\n"); }
 
@@ -175,16 +174,16 @@ GPU_TEST(managed_shared_ptr, shared_ptr_absmem)
   using BaseT = AAbsMem;
 
   D d;
-  chai::ManagedSharedPtr<BaseT> sptr = chai::make_shared<DerivedT>(d);
+  chai::expt::ManagedSharedPtr<BaseT> sptr = chai::expt::make_shared<DerivedT>(d);
 
   GPU_ERROR_CHECK( PeekAtLastError() );
   GPU_ERROR_CHECK( DeviceSynchronize() );
 
-  chai::ManagedSharedPtr<const BaseT> sptr2 = sptr;
+  chai::expt::ManagedSharedPtr<const BaseT> sptr2 = sptr;
   sptr2->function();
   sptr2->d_function();
 
-  std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
+  std::cout << "Map Sz : " << chai::expt::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
 
   std::cout << "GPU CALL...\n";
   forall(gpu(), 0, 1, [=] __device__ (int) {
@@ -213,7 +212,7 @@ GPU_TEST(managed_shared_ptr, shared_ptr_absmem)
   GPU_ERROR_CHECK( DeviceSynchronize() );
 
   }
-  std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
+  std::cout << "Map Sz : " << chai::expt::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
   assert_empty_sptr_map();
 }
 
@@ -226,11 +225,11 @@ GPU_TEST(managed_shared_ptr, shared_ptr_const)
   std::cout << "size of (DerivedT) : " << sizeof(DerivedT) << std::endl;
   std::cout << "size of (BaseT)    : " << sizeof(BaseT)    << std::endl;
 
-  chai::ManagedSharedPtr<BaseT> sptr = chai::make_shared<DerivedT>();
+  chai::expt::ManagedSharedPtr<BaseT> sptr = chai::expt::make_shared<DerivedT>();
 
-  chai::ManagedSharedPtr<const BaseT> sptr2 = sptr;
+  chai::expt::ManagedSharedPtr<const BaseT> sptr2 = sptr;
 
-  std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
+  std::cout << "Map Sz : " << chai::expt::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
 
   std::cout << "GPU CALL...\n";
   forall(gpu(), 0, 1, [=] __device__ (int) {
@@ -260,7 +259,7 @@ GPU_TEST(managed_shared_ptr, shared_ptr_const)
 
   }
   assert_empty_sptr_map();
-  std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
+  std::cout << "Map Sz : " << chai::expt::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
 }
 
 GPU_TEST(managed_shared_ptr, shared_ptr_nv)
@@ -268,11 +267,11 @@ GPU_TEST(managed_shared_ptr, shared_ptr_nv)
   {
   using DerivedT = NV;
 
-  chai::ManagedSharedPtr<DerivedT> sptr = chai::make_shared<DerivedT>();
+  chai::expt::ManagedSharedPtr<DerivedT> sptr = chai::expt::make_shared<DerivedT>();
 
-  chai::ManagedSharedPtr<const DerivedT> sptr2 = sptr;
+  chai::expt::ManagedSharedPtr<const DerivedT> sptr2 = sptr;
 
-  std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
+  std::cout << "Map Sz : " << chai::expt::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
 
   std::cout << "GPU CALL...\n";
   forall(gpu(), 0, 1, [=] __device__ (int) {
@@ -298,7 +297,7 @@ GPU_TEST(managed_shared_ptr, shared_ptr_nv)
 
   }
   assert_empty_sptr_map();
-  std::cout << "Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
+  std::cout << "Map Sz : " << chai::expt::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
 }
 
 
@@ -308,15 +307,15 @@ GPU_TEST(managed_shared_ptr, shared_arr_shared_ptr_absmem)
   using DerivedT = BAbsMem;
   using BaseT = AAbsMem;
 
-  using ElemT = chai::ManagedSharedPtr<BaseT>;
+  using ElemT = chai::expt::ManagedSharedPtr<BaseT>;
   using Container = chai::ManagedArray<ElemT>;
 
-  std::cout << "Sptr Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
+  std::cout << "Sptr Map Sz : " << chai::expt::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
   std::cout << "Arr  Map Sz : " << chai::ArrayManager::getInstance()->getPointerMap().size() << std::endl;
 
   Container arr(1);
   D d;
-  arr[0] = chai::make_shared<DerivedT>(d);
+  arr[0] = chai::expt::make_shared<DerivedT>(d);
   arr.registerTouch(chai::CPU);
 
   std::cout << "GPU CALL...\n";
@@ -345,7 +344,7 @@ GPU_TEST(managed_shared_ptr, shared_arr_shared_ptr_absmem)
   GPU_ERROR_CHECK( PeekAtLastError() );
   GPU_ERROR_CHECK( DeviceSynchronize() );
 
-  std::cout << "Sptr Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
+  std::cout << "Sptr Map Sz : " << chai::expt::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
   std::cout << "Arr  Map Sz : " << chai::ArrayManager::getInstance()->getPointerMap().size() << std::endl;
 
   std::cout << "arr.free()\n";
@@ -354,7 +353,7 @@ GPU_TEST(managed_shared_ptr, shared_arr_shared_ptr_absmem)
   assert_empty_array_map();
 
   }
-  std::cout << "Sptr Map Sz : " << chai::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
+  std::cout << "Sptr Map Sz : " << chai::expt::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
   std::cout << "Arr  Map Sz : " << chai::ArrayManager::getInstance()->getPointerMap().size() << std::endl;
   assert_empty_sptr_map();
 }

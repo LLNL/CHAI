@@ -20,6 +20,9 @@
 
 namespace chai
 {
+namespace expt
+{
+
 thread_local ExecutionSpace SharedPtrManager::m_current_execution_space;
 thread_local bool SharedPtrManager::m_synced_since_last_kernel = false;
 
@@ -304,7 +307,7 @@ void SharedPtrManager::move(msp_pointer_record* record, ExecutionSpace space, bo
   } else if (dst_pointer != src_pointer) {
     // Exclude the copy if src and dst are the same (can happen for PINNED memory)
     {
-      chai::copy(dst_pointer, src_pointer, m_resource_manager, space, prev_space, poly);
+      chai::expt::copy(dst_pointer, src_pointer, m_resource_manager, space, prev_space, poly);
     }
 
     //callback(record, ACTION_MOVE, space);
@@ -515,7 +518,7 @@ msp_pointer_record* SharedPtrManager::deepCopyRecord(msp_pointer_record const* r
   void* dst_pointer = new_record->m_pointers[last_space];
   void* src_pointer = record->m_pointers[last_space];
 
-  chai::copy(dst_pointer, src_pointer, m_resource_manager, last_space, last_space);
+  chai::expt::copy(dst_pointer, src_pointer, m_resource_manager, last_space, last_space);
 
   return new_record;
 }
@@ -619,4 +622,5 @@ void SharedPtrManager::evict(ExecutionSpace space, ExecutionSpace destinationSpa
 }
 
 
+}  // end of namespace expt
 }  // end of namespace chai
