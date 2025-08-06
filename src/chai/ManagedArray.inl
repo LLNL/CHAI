@@ -249,7 +249,7 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t elems)
       // trigger a moveInnerImpl, which expects inner values to be initialized.
       if (initInner(old_size/sizeof(T))) {
         // if we are active on the  GPU, we need to send any newly initialized inner members to the device
-#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
         if (m_pointer_record->m_last_space == GPU && old_size < m_size) {
           umpire::ResourceManager & umpire_rm = umpire::ResourceManager::getInstance();
           void *src = (void *)(((char *)(m_pointer_record->m_pointers[CPU])) + old_size);
