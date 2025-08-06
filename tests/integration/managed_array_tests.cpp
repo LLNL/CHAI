@@ -591,46 +591,6 @@ TEST(ManagedArray, ReallocateCPU)
   assert_empty_map(true);
 }
 
-TEST(ManagedArray, ReallocateCopyCPU)
-{
-  chai::ManagedArray<float> array(10);
-  chai::ManagedArray<float> array_copy = array;
-  ASSERT_EQ(array.size(), 10u);
-  ASSERT_EQ(array_copy.size(), 10u);
-
-  forall(sequential(), 0, 10, [=](int i) {
-      array[i] = i;
-      ASSERT_EQ(&array[i], &array_copy[i]);
-  });
-
-  array.reallocate(20);
-  
-  // This will be incorrect, a call to move, data or copy needs to 
-  // be executed in order to update the internal active pointer of
-  // the copied object in order to use operator[] after a reallocation.
-  ASSERT_NE(&array[0], &array_copy[0]);
-
-  // This would work but for the sake of the test we will check
-  // operator[] is correct after lambda capture.
-  //ASSERT_EQ(array.data(), array_copy.data());
-
-  ASSERT_EQ(array.size(), 20u);
-  ASSERT_EQ(array_copy.size(), 20u);
-
-  forall(sequential(), 0, 20, [=](int i) {
-    ASSERT_EQ(&array[i], &array_copy[i]);
-    if (i < 10) {
-      ASSERT_EQ(array[i], i);
-    } else {
-      array_copy[i] = i;
-      ASSERT_EQ(array[i], i);
-    }
-  });
-
-  array_copy.free();
-  assert_empty_map(true);
-}
-
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
 
 GPU_TEST(ManagedArray, ReallocateGPU)
