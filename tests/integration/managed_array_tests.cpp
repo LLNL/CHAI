@@ -606,7 +606,7 @@ TEST(ManagedArray, ReallocateCopyCPU)
   array.reallocate(20);
   
   // This will be incorrect, a call to move, data or copy needs to 
-  // be exectued in order to update the internal active pointer of
+  // be executed in order to update the internal active pointer of
   // the copied object in order to use operator[] after a reallocation.
   ASSERT_NE(&array[0], &array_copy[0]);
 
