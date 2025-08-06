@@ -57,7 +57,15 @@ public:
     : m_record(SharedPtrManager::getInstance()->makeSharedPtrRecord(h_p, d_p, sizeof(std::remove_pointer<Ptr>), true)) 
   {}
 
-  virtual void m_dispose() noexcept { delete (Ptr)m_record->m_pointers[chai::CPU]; }// TODO : Other Exec spaces...
+  virtual void m_dispose() noexcept { 
+
+    for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
+      Ptr ptr = (Ptr)m_record->m_pointers[space];
+      if (ptr) {
+        SharedPtrManager::getInstance()->free(m_record, ExecutionSpace(space));
+      }
+    }
+  }
   virtual void m_destroy() noexcept { delete this; }
 
   virtual void moveInnerImpl() const {
