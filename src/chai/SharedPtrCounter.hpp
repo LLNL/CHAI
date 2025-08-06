@@ -156,11 +156,11 @@ private:
 class msp_record_count {
 public:
   CHAI_HOST_DEVICE
-  constexpr msp_record_count() noexcept : m_pi(0) {}
+  constexpr msp_record_count() noexcept : m_counted_base(0) {}
 
   template<typename T, typename Ptrs, typename Spaces, typename Deleter>
   explicit msp_record_count(T, Ptrs&& ptrs, Spaces&& spaces, Deleter d)
-  : m_pi( new  msp_counted_deleter<T*, Deleter>(
+  : m_counted_base( new  msp_counted_deleter<T*, Deleter>(
           std::forward<Ptrs>(ptrs)
         , std::forward<Spaces>(spaces)
         , std::move(d)) ) {}
@@ -169,17 +169,17 @@ public:
   ~msp_record_count() noexcept
   { 
 #if !defined(CHAI_DEVICE_COMPILE)
-    if (m_pi) {
-      m_pi->m_release();
+    if (m_counted_base) {
+      m_counted_base->m_release();
     }
 #endif // !defined(CHAI_DEVICE_COMPILE)
   }
 
   CHAI_HOST_DEVICE
-  msp_record_count(msp_record_count const& rhs) noexcept : m_pi(rhs.m_pi)
+  msp_record_count(msp_record_count const& rhs) noexcept : m_counted_base(rhs.m_counted_base)
   { 
 #if !defined(CHAI_DEVICE_COMPILE)
-    if (m_pi) m_pi->m_add_ref_copy(); 
+    if (m_counted_base) m_counted_base->m_add_ref_copy(); 
 #endif // !defined(CHAI_DEVICE_COMPILE)
   }
 
@@ -187,38 +187,38 @@ public:
   msp_record_count& operator=(msp_record_count const& rhs) noexcept {
     CHAI_UNUSED_VAR(rhs);
 #if !defined(CHAI_DEVICE_COMPILE)
-    msp_counted_base* temp = rhs.m_pi;
-    if (temp != m_pi)
+    msp_counted_base* temp = rhs.m_counted_base;
+    if (temp != m_counted_base)
     {
       if (temp) temp->m_add_ref_copy();
-      if (m_pi) m_pi->m_release();
-      m_pi = temp;
+      if (m_counted_base) m_counted_base->m_release();
+      m_counted_base = temp;
     }
 #endif // !defined(CHAI_DEVICE_COMPILE)
     return *this;
   }
 
   void m_swap(msp_record_count& rhs) noexcept {
-    msp_counted_base* temp = rhs.m_pi;
-    rhs.m_pi = m_pi;
-    m_pi = temp;
+    msp_counted_base* temp = rhs.m_counted_base;
+    rhs.m_counted_base = m_counted_base;
+    m_counted_base = temp;
   }
 
   long m_get_use_count() const noexcept 
-  { return m_pi ? m_pi->m_get_use_count() : 0; }
+  { return m_counted_base ? m_counted_base->m_get_use_count() : 0; }
 
   friend inline bool
   operator==(msp_record_count const& a, msp_record_count const& b) noexcept
-  { return a.m_pi == b.m_pi; }
+  { return a.m_counted_base == b.m_counted_base; }
 
-  msp_pointer_record* m_get_record() const noexcept { return m_pi->m_get_record(); }
+  msp_pointer_record* m_get_record() const noexcept { return m_counted_base->m_get_record(); }
 
   template<typename Ptr>
   Ptr* m_get_pointer(chai::ExecutionSpace space) noexcept { return static_cast<Ptr*>(m_get_record()->m_pointers[space]); }
 
-  void moveInnerImpl() const { m_pi->moveInnerImpl(); }
+  void moveInnerImpl() const { m_counted_base->moveInnerImpl(); }
 
-  mutable msp_counted_base* m_pi = nullptr;
+  mutable msp_counted_base* m_counted_base = nullptr;
 
 };
 
