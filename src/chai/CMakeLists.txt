@@ -15,7 +15,6 @@ set (chai_headers
   ArrayManager.hpp
   ArrayManager.inl
   ChaiMacros.hpp
-  ChaiManager.hpp
   DeviceHelpers.hpp
   ExecutionSpaces.hpp
   ManagedArray.hpp

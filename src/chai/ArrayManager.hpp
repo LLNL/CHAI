@@ -7,7 +7,24 @@
 #ifndef CHAI_ArrayManager_HPP
 #define CHAI_ArrayManager_HPP
 
-#include "chai/ChaiManager.hpp"
+#include "chai/ChaiMacros.hpp"
+#include "chai/ExecutionSpaces.hpp"
+#include "chai/Types.hpp"
+
+#include "chai/PointerRecord.hpp"
+
+#if defined(CHAI_ENABLE_RAJA_PLUGIN)
+#include "chai/pluginLinker.hpp"
+#endif
+
+#include <unordered_map>
+
+#include "umpire/Allocator.hpp"
+#include "umpire/util/MemoryMap.hpp"
+
+
+#include "chai/DeviceHelpers.hpp"
+
 
 namespace chai
 {
