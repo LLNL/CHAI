@@ -96,10 +96,8 @@ public:
 
   CHAI_HOST_DEVICE AAbsMem(void) : content_A(0xAAAAAAAAAAAAAAAAull) { printf("++ A has been constructed\n"); }
 
-  //template<typename Derived, typename = typename std::enable_if<std::is_base_of<C, Derived>::value>::type >
   template<typename Derived>
   CHAI_HOST AAbsMem(Derived const& base_val)
-    //: base_member(chai::expt::make_shared<const Derived>(base_val))
     : base_member(chai::expt::make_shared<Derived>(base_val))
     , content_A(0xAAAAAAAAAAAAAAAAull) 
   { printf("++ A has been constructed\n"); }
@@ -143,6 +141,15 @@ public:
   CHAI_HOST_DEVICE void function(void) const { printf("%llX\n", content_NV); }
 };
 
+/*
+ * This test ensures that dynamic dispatch works for types that are polymorphic
+ * who themselves own a polymorphic member.
+ *
+ * - function: exercises dynamic dispatch directly for the Derived type in the
+ *   shared ptr.
+ * - d_function: calls a second level of dynamic dispatch on an owned
+ *   ManagedSharedPtr member.
+ */
 GPU_TEST(managed_shared_ptr, shared_ptr_absmem)
 {
   {
@@ -192,6 +199,10 @@ GPU_TEST(managed_shared_ptr, shared_ptr_absmem)
   assert_empty_sptr_map();
 }
 
+/*
+ * This demonstrates casting / copying ManagedSharedPtr types to const T. We
+ * then call const and non const methods from their respective variable.
+ */
 GPU_TEST(managed_shared_ptr, shared_ptr_const)
 {
   {
@@ -238,6 +249,10 @@ GPU_TEST(managed_shared_ptr, shared_ptr_const)
   std::cout << "Map Sz : " << chai::expt::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
 }
 
+/*
+ * This test ensures ManagedSharedPtr will move a type without a virtual table
+ * correctly between the host and the device.
+ */
 GPU_TEST(managed_shared_ptr, shared_ptr_nv)
 {
   {
@@ -276,7 +291,10 @@ GPU_TEST(managed_shared_ptr, shared_ptr_nv)
   std::cout << "Map Sz : " << chai::expt::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
 }
 
-
+/*
+ * This test checks that ManagedArrays of ManagedSharedPtr types
+ * correctly copy objects between the host and the device.
+ */
 GPU_TEST(managed_shared_ptr, shared_arr_shared_ptr_absmem)
 {
   {

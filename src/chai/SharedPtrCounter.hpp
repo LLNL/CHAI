@@ -19,6 +19,13 @@ namespace chai
 namespace expt
 {
 
+/*
+ * The base type for shared ptr counter types.
+ *
+ * msp_couted_base is responsible for managing the live count of the owned
+ * object. It is also responsible for defining the behavior when a release of
+ * the owned object should be triggered.
+ */
 class msp_counted_base {
 public:
   msp_counted_base() noexcept : m_use_count(1) {}
@@ -50,6 +57,13 @@ private:
   long m_use_count = 0;
 };
 
+/*
+ * The default counter type for a shared ptr.
+ *
+ * msp_counted_ptr maintains the current pointer record and implements the
+ * underlying deallocation behavior for all execution spaces upon release of the
+ * owned object.
+ */
 template<typename Ptr>
 class msp_counted_ptr final : public msp_counted_base {
 public:
@@ -99,6 +113,13 @@ __global__ void msp_dispose_on_device(T* gpuPointer, Deleter d)
 } // namespace impl
 #endif
 
+/*
+ * The counter type when users have defined explicit deleters for an owned type.
+ *
+ * msp_counted_deleter maintains the current pointer record and calls the
+ * user defined deleter for all execution spaces upon release of the
+ * owned object.
+ */
 template<typename Ptr, typename Deleter>
 class msp_counted_deleter final : public msp_counted_base {
 
@@ -161,6 +182,12 @@ private:
 };
 
 
+/*
+ * The interface to a given counter used by ManagedSharePtr.
+ *
+ * msp_record_counter will define the correct counter type based on it's
+ * construction and the existance of a Deleter.
+ */
 class msp_record_count {
 public:
   CHAI_HOST_DEVICE
