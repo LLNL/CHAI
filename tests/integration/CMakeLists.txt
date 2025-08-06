@@ -25,6 +25,7 @@ blt_add_test(
   NAME managed_array_test
   COMMAND managed_array_tests)
 
+if(CHAI_ENABLE_EXPERIMENTAL)
 if (CHAI_ENABLE_CUDA OR CHAI_ENABLE_HIP)
 blt_add_executable(
   NAME managed_shared_ptr_tests
@@ -38,7 +39,8 @@ target_include_directories(
 blt_add_test(
   NAME managed_shared_ptr_test
   COMMAND managed_shared_ptr_tests)
-endif()
+endif() # CHAI_ENABLE_CUDA OR CHAI_ENABLE_HIP
+endif() # CHAI_ENABLE_EXPERIMENTAL
 
 if (CHAI_ENABLE_MANAGED_PTR)
   blt_add_executable(
