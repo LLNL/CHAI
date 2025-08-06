@@ -166,6 +166,12 @@ public:
   CHAI_HOST_DEVICE
   constexpr msp_record_count() noexcept : m_counted_base(0) {}
 
+  template<typename T, typename Ptrs, typename Spaces>
+  explicit msp_record_count(T, Ptrs&& ptrs, Spaces&& spaces)
+  : m_counted_base( new  msp_counted_ptr<T*>(
+          std::forward<Ptrs>(ptrs)
+        , std::forward<Spaces>(spaces)) ) {}
+
   template<typename T, typename Ptrs, typename Spaces, typename Deleter>
   explicit msp_record_count(T, Ptrs&& ptrs, Spaces&& spaces, Deleter d)
   : m_counted_base( new  msp_counted_deleter<T*, Deleter>(
