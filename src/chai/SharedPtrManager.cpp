@@ -117,17 +117,10 @@ void SharedPtrManager::registerPointer(
   record->m_owned[space] = owned;
 
   if (pointer) {
-     // if umpire already knows about this pointer, we want to make sure its records and ours
-     // are consistent
-     if (m_resource_manager.hasAllocator(pointer)) {
-     //    umpire::util::AllocationRecord *allocation_record = const_cast<umpire::util::AllocationRecord *>(m_resource_manager.findAllocationRecord(pointer));
-     //    //allocation_record->size = record->m_size;
-     }
      // register with umpire if it's not there so that umpire can perform data migrations
-     else {
+     if (!m_resource_manager.hasAllocator(pointer)) {
         umpire::util::AllocationRecord new_allocation_record;
         new_allocation_record.ptr = pointer;
-        //new_allocation_record.size = record->m_size;
         new_allocation_record.strategy = m_resource_manager.getAllocator(record->m_allocators[space]).getAllocationStrategy();
 
         m_resource_manager.registerAllocation(pointer, new_allocation_record);
@@ -152,18 +145,6 @@ void SharedPtrManager::deregisterPointer(msp_pointer_record* record, bool deregi
      delete record;
   }
 }
-
-//void * SharedPtrManager::frontOfAllocation(void * pointer) {
-//  if (pointer) {
-//    if (m_resource_manager.hasAllocator(pointer)) {
-//       auto allocation_record = m_resource_manager.findAllocationRecord(pointer);
-//       if (allocation_record) {
-//         return allocation_record->ptr;
-//       }
-//    }
-//  }
-//  return nullptr;
-//}
 
 void SharedPtrManager::setExecutionSpace(ExecutionSpace space)
 {
@@ -528,20 +509,6 @@ SharedPtrManager::getPointerMap() const
 }
 
 size_t SharedPtrManager::getTotalNumSharedPtrs() const { return m_pointer_map.size(); }
-
-// TODO: Investigate counting memory allocated in each execution space if
-// possible
-//size_t SharedPtrManager::getTotalSize() const
-//{
-//  std::lock_guard<std::mutex> lock(m_mutex);
-//  size_t total = 0;
-//
-//  for (const auto& entry : m_pointer_map) {
-//    total += (*entry.second)->m_size;
-//  }
-//
-//  return total;
-//}
 
 //void SharedPtrManager::reportLeaks() const
 //{
