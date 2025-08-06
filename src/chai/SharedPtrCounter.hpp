@@ -64,7 +64,6 @@ public:
     using T = std::remove_pointer_t<Ptr>;
     Ptr host_ptr = (Ptr) m_record->m_pointers[CPU]; 
     // trigger the copy constructor
-    std::cout << "Trigger Inner Copy Ctor @ " << host_ptr << std::endl;
     T inner = T(*host_ptr);
     // ensure the inner type gets the state of the result of the copy
     host_ptr->operator=(inner);
@@ -74,7 +73,7 @@ public:
   msp_counted_ptr& operator=(msp_counted_ptr const&) = delete;
   msp_pointer_record* m_get_record() noexcept { return m_record; }
 private:
-  msp_pointer_record* m_record;
+  msp_pointer_record* m_record = nullptr;
 };
 
 #include <typeinfo>
@@ -139,11 +138,9 @@ public:
     T_non_const* host_ptr = const_cast<T_non_const*>((Ptr)m_impl.m_record->m_pointers[CPU]); 
 
     // trigger the copy constructor
-    std::cout << "Trigger Inner Copy Ctor @ " << host_ptr << std::endl;
     T_non_const inner = T_non_const(*host_ptr);
 
     // ensure the inner type gets the state of the result of the copy
-    //err_func(host_ptr);
     host_ptr->operator=(inner);
   }
 

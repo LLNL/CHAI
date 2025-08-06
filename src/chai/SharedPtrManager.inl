@@ -16,14 +16,6 @@
 
 #include "umpire/ResourceManager.hpp"
 
-//#include <cuda_runtime_api.h>
-
-//#if defined(CHAI_ENABLE_UM)
-//#if !defined(CHAI_THIN_GPU_ALLOCATE)
-//#include <cuda_runtime_api.h>
-//#endif
-//#endif
-
 namespace chai {
 namespace expt {
 

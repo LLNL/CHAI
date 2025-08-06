@@ -100,7 +100,6 @@ public:
   {
 #if !defined(CHAI_DEVICE_COMPILE)
     if (m_active_pointer) move(ArrayManager::getInstance()->getExecutionSpace());
-    //if (m_active_pointer) move(m_resource_manager->getExecutionSpace());
 #endif
   }
 
@@ -160,11 +159,6 @@ public:
   CHAI_HOST_DEVICE
   element_type* operator->() const noexcept { assert(get() != nullptr); return get(); }
 
-private:
-
-  //CHAI_HOST_DEVICE
-  //element_type* m_get() const noexcept { return static_cast<const ManagedSharedPtr<Tp>*>(this)->get(); }
-
 public:
   long use_count() const noexcept { return m_record_count.m_get_use_count(); }
 
@@ -178,8 +172,8 @@ public:
             bool registerTouch=(!std::is_const<Tp>::value || is_CHAICopyable<Tp>::value)) const {
      ExecutionSpace prev_space = m_record_count.m_get_record()->m_last_space;
      if (prev_space != GPU && space == GPU) {
-        /// Move nested ManagedArrays first, so they are working with a valid m_active_pointer for the host,
-        // and so the meta data associated with them are updated before we move the other array down.
+        /// Move nested chai managed types first, so they are working with a valid m_active_pointer for the host,
+        // and so the meta data associated with them are updated before we move the ManagedSharedPtr down.
        moveInnerImpl();
      }
      auto old_pointer = m_active_pointer;
@@ -192,7 +186,7 @@ public:
        m_resource_manager->registerTouch(m_record_count.m_get_record(), space);
      }
      if (space != GPU && prev_space == GPU) {
-       /// Move nested ManagedArrays after the move, so they are working with a valid m_active_pointer for the host,
+       /// Move nested chai managed types after the move, so they are working with a valid m_active_pointer for the host,
        // and so the meta data associated with them are updated with live GPU data
        moveInnerImpl();
      }
@@ -211,7 +205,6 @@ private:
   mutable SharedPtrManager* m_resource_manager = nullptr;
 
   template <bool B = is_CHAICopyable<Tp>::value,
-  //template <bool B = std::is_base_of<CHAICopyable, Tp>::value,
             typename std::enable_if<B, int>::type = 0>
   CHAI_HOST
   void
@@ -221,7 +214,6 @@ private:
   }
 
   template <bool B = is_CHAICopyable<Tp>::value,
-  //template <bool B = std::is_base_of<CHAICopyable, Tp>::value,
             typename std::enable_if<!B, int>::type = 0>
   CHAI_HOST
   void
@@ -316,7 +308,7 @@ ManagedSharedPtr<Tp> make_shared(Args&&... args) {
 #else // defined(CHAI_ENABLE_CUDA) or defined(CHAI_ENABLE_HIP)
 
   auto result = ManagedSharedPtr<Tp>({cpu_pointer}, {CPU},
-      [] CHAI_HOST_DEVICE (Tp* p){p->~Tp();}
+      [] (Tp* p){p->~Tp();}
   );
 
 #endif // defined(CHAI_ENABLE_CUDA) or defined(CHAI_ENABLE_HIP)

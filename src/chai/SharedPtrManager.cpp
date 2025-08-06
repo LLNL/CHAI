@@ -254,24 +254,16 @@ static void copy(void * dst_pointer, void * src_pointer, umpire::ResourceManager
 #endif
 
 
-  //std::cout << "SPtr Manager Copy Call\n";
-  //std::cout << "dst_ptr @ " << dst_pointer << std::endl;
-  //std::cout << "src_ptr @ " << src_pointer << std::endl;
   camp::resources::Resource host_resource(camp::resources::Host::get_default());
   if (dst_space == GPU || src_space == GPU) {
     // Do the copy using the device resource
-    //std::cout << "---- Sptr Manager Device Copy\n";
-    //std::cout << "---- dst_ptr @ " << dst_pointer << std::endl;
-    //std::cout << "---- src_ptr @ " << src_pointer << std::endl;
     
     if (poly) {
-      //std::cout << "---- POLY COPY\n";
       std::size_t vtable_size = sizeof(void*); 
       void* poly_src_ptr = ((char*)src_pointer + vtable_size);
       void* poly_dst_ptr = ((char*)dst_pointer + vtable_size);
       manager.copy(poly_dst_ptr, poly_src_ptr, device_resource);
     } else {
-      //std::cout << "---- STD COPY\n";
       manager.copy(dst_pointer, src_pointer, device_resource);
     }
 
@@ -320,7 +312,6 @@ void SharedPtrManager::allocate(
     msp_pointer_record* pointer_record,
            ExecutionSpace space)
 {
-  //auto size = pointer_record->m_size;
   auto alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[space]);
 
   pointer_record->m_pointers[space] = alloc.allocate(1);

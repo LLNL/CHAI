@@ -34,11 +34,11 @@ struct msp_pointer_record {
   bool m_owned[NUM_EXECUTION_SPACES];
 
   ExecutionSpace m_last_space;
+  // TODO: Iplement user callbacks for ManagedSharedPtr.
   //UserCallback m_user_callback;
 
   int m_allocators[NUM_EXECUTION_SPACES];
 
-  //msp_pointer_record(void* host_p = nullptr, void* device_p = nullptr) :
   msp_pointer_record() :
     m_last_space(CPU) { 
     for (int space = 0; space < NUM_EXECUTION_SPACES; ++space ) {

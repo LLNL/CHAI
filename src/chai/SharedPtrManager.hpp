@@ -16,7 +16,7 @@ namespace expt
 {
 
 /*!
- * \brief Singleton that manages caching and movement of ManagedArray objects.
+ * \brief Singleton that manages caching and movement of ManagedSharedPtr objects.
  *
  * The SharedPtrManager class co-ordinates the allocation and movement of
  * ManagedSharedPtr objects. These objects are cached, and data is only copied
@@ -107,22 +107,6 @@ public:
   CHAISHAREDDLL_API void allocate(msp_pointer_record* pointer_record, ExecutionSpace space = CPU);
 
   /*!
-   * \brief Reallocate data.
-   *
-   * Data is reallocated in all spaces this pointer is associated with.
-   *
-   * \param ptr Pointer to address to reallocate
-   * \param elems The number of elements to allocate.
-   * \tparam T The type of data to allocate.
-   *
-   * \return Pointer to the allocated memory.
-   */
-//  template <typename T>
-//  void* reallocate(void* pointer,
-//                   size_t elems,
-//                   msp_pointer_record* record);
-
-  /*!
    * \brief Set the default space for new ManagedArray allocations.
    *
    * ManagedArrays allocated without an explicit ExecutionSpace argument will
@@ -155,14 +139,6 @@ public:
   template <typename T>
    void set(T* dst_ptr, size_t index, const T& val);
 #endif
-
-  /*!
-   * \brief Get the size of the given pointer.
-   *
-   * \param pointer Pointer to find the size of.
-   * \return Size of pointer.
-   */
-  //CHAISHAREDDLL_API size_t getSize(void* pointer);
 
   template<typename Ptr>
   msp_pointer_record* makeSharedPtrRecord(std::initializer_list<Ptr*> pointers,
@@ -228,13 +204,7 @@ public:
    */
   CHAISHAREDDLL_API size_t getTotalNumSharedPtrs() const;
 
-  /*!
-   * \brief Get the total amount of memory allocated.
-   *
-   * \return The total amount of memory allocated.
-   */
-  //CHAISHAREDDLL_API size_t getTotalSize() const;
-
+  //TODO: define reportLeaks for ManagedSharedPtr.
   /*!
    * \brief Calls callbacks of pointers still in the map with ACTION_LEAKED.
    */
@@ -270,13 +240,6 @@ public:
    * \param deregisterFromUmpire If true, deregister from umpire as well.
    */
   CHAISHAREDDLL_API void deregisterPointer(msp_pointer_record* record, bool deregisterFromUmpire=false);
-
-  /*!
-   * \brief Returns the front of the allocation associated with this pointer, nullptr if allocation not found.
-   *
-   * \param pointer Pointer to address of that we want the front of the allocation for.
-   */
-  //CHAISHAREDDLL_API void * frontOfAllocation(void * pointer);
 
   /*!
    * \brief set the allocator for an execution space.
