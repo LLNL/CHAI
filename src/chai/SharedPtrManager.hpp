@@ -202,10 +202,11 @@ public:
    *  in the active space.
    *
    * \param record The msp_pointer_record to copy.
+   * \param poly true if the underlying type is polymorphic.
    *
    * \return A copy of the given msp_pointer_record, must be free'd with delete.
    */
-  CHAISHAREDDLL_API msp_pointer_record* deepCopyRecord(msp_pointer_record const* record);
+  CHAISHAREDDLL_API msp_pointer_record* deepCopyRecord(msp_pointer_record const* record, bool poly);
 
   /*!
    * \brief Create a copy of the pointer map.

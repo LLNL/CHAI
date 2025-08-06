@@ -486,7 +486,7 @@ msp_pointer_record* SharedPtrManager::makeSharedPtrRecord(void const* c_pointer,
   return pointer_record;
 }
 
-msp_pointer_record* SharedPtrManager::deepCopyRecord(msp_pointer_record const* record)
+msp_pointer_record* SharedPtrManager::deepCopyRecord(msp_pointer_record const* record, bool poly = false)
 {
   msp_pointer_record* new_record = new msp_pointer_record{};
   //new_record->m_user_callback = [] (const msp_pointer_record*, Action, ExecutionSpace) {};
@@ -509,7 +509,7 @@ msp_pointer_record* SharedPtrManager::deepCopyRecord(msp_pointer_record const* r
   void* dst_pointer = new_record->m_pointers[last_space];
   void* src_pointer = record->m_pointers[last_space];
 
-  chai::expt::copy(dst_pointer, src_pointer, m_resource_manager, last_space, last_space);
+  chai::expt::copy(dst_pointer, src_pointer, m_resource_manager, last_space, last_space, poly);
 
   return new_record;
 }
