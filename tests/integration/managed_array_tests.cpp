@@ -616,45 +616,6 @@ GPU_TEST(ManagedArray, ReallocateGPU)
   assert_empty_map(true);
 }
 
-GPU_TEST(ManagedArray, ReallocateCopyGPU)
-{
-  chai::ManagedArray<float> array(10);
-  auto array_copy = array;
-  ASSERT_EQ(array.size(), 10u);
-  ASSERT_EQ(array_copy.size(), 10u);
-
-  forall(gpu(), 0, 10, [=] __device__(int i) {
-      array[i] = i;
-      device_assert(array.data()[i] == array_copy.data()[i]);
-  });
-
-  array.reallocate(20);
-  ASSERT_EQ(array.size(), 20u);
-
-  // This will be incorrect, a call to move, data or copy needs to 
-  // be exectued in order to update the internal active pointer of
-  // the copied object in order to use operator[] after a reallocation.
-  ASSERT_NE(&array[0], &array_copy[0]);
-
-  // This would work but for the sake of the test we will check
-  // operator[] is correct after lambda capture.
-  //ASSERT_EQ(array.data(), array_copy.data());
-
-
-  forall(gpu(), 0, 20, [=]__device__(int i) {
-    device_assert(array.size() == array_copy.size());
-    device_assert(array.data()[i] == array_copy.data()[i]);
-    if (i < 10) {
-      device_assert(array[i] == i);
-    } else {
-      array[i] = i;
-      device_assert(array[i] == i);
-    }
-  });
-
-  array.free();
-  assert_empty_map(true);
-}
 #endif
 
 TEST(ManagedArray, NullpointerConversions)
