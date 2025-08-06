@@ -229,13 +229,6 @@ namespace detail {
 namespace impl {
 
 template <typename T,
-          typename Deleter>
-__global__ void msp_dispose_on_device(T* gpuPointer, Deleter d)
-{
-   d(gpuPointer);
-}
-
-template <typename T,
           typename... Args>
 __global__ void msp_make_on_device(T* gpuPointer, Args&&... args)
 {
