@@ -25,6 +25,7 @@ set (chai_headers
   SharedPtrCounter.hpp
   SharedPtrManager.hpp
   SharedPtrManager.inl
+  SharedPointerRecord.hpp
   Types.hpp)
 
 if(CHAI_DISABLE_RM)
