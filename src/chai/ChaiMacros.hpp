@@ -34,7 +34,9 @@
 #define gpuSuccess cudaSuccess
 #define gpuError_t cudaError_t
 #define gpuGetErrorString cudaGetErrorString
+#define gpuPeekAtLastError cudaPeekAtLastError
 #define gpuDeviceSynchronize cudaDeviceSynchronize
+
 
 // NOTE: Cannot have if defined(__HIPCC__) in the condition below, since __HIPCC__ comes from the included header hip_runtime below.
 #elif defined(CHAI_ENABLE_HIP)
@@ -56,6 +58,7 @@
 #define gpuSuccess hipSuccess
 #define gpuError_t hipError_t
 #define gpuGetErrorString hipGetErrorString
+#define gpuPeekAtLastError hipPeekAtLastError
 #define gpuDeviceSynchronize hipDeviceSynchronize
 
 #else

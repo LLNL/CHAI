@@ -23,36 +23,12 @@
 #include "chai/ManagedArray.hpp"
 #include "chai/managed_ptr.hpp"
 #include "chai/ManagedSharedPtr.hpp"
+#include "chai/DeviceHelpers.hpp"
 
 #include "../src/util/forall.hpp"
 
 // Standard library headers
 #include <cstdlib>
-
-#if defined(CHAI_ENABLE_CUDA)
-inline void gpuErrorCheck(cudaError_t code, const char *file, int line, bool abort=true)
-{
-   if (code != cudaSuccess) {
-      fprintf(stderr, "[CHAI] GPU Error: %s %s %d\n", cudaGetErrorString(code), file, line);
-      if (abort) {
-         exit(code);
-      }
-   }
-}
-#define GPU_ERROR_CHECK(code) { gpuErrorCheck((cuda##code), __FILE__, __LINE__); }
-#elif defined(CHAI_ENABLE_HIP)
-inline void gpuErrorCheck(hipError_t code, const char *file, int line, bool abort=true)
-{
-   if (code != hipSuccess) {
-      fprintf(stderr, "[CHAI] GPU Error: %s %s %d\n", hipGetErrorString(code), file, line);
-      if (abort) {
-         exit(code);
-      }
-   }
-}
-#define GPU_ERROR_CHECK(code) { gpuErrorCheck((hip##code), __FILE__, __LINE__); }
-#endif
-
 
 #ifdef CHAI_DISABLE_RM
 #define assert_empty_array_map(IGNORED)
@@ -176,8 +152,8 @@ GPU_TEST(managed_shared_ptr, shared_ptr_absmem)
   D d;
   chai::expt::ManagedSharedPtr<BaseT> sptr = chai::expt::make_shared<DerivedT>(d);
 
-  GPU_ERROR_CHECK( PeekAtLastError() );
-  GPU_ERROR_CHECK( DeviceSynchronize() );
+  CHAI_GPU_ERROR_CHECK( gpuPeekAtLastError() );
+  CHAI_GPU_ERROR_CHECK( gpuDeviceSynchronize() );
 
   chai::expt::ManagedSharedPtr<const BaseT> sptr2 = sptr;
   sptr2->function();
@@ -191,8 +167,8 @@ GPU_TEST(managed_shared_ptr, shared_ptr_absmem)
     sptr2->function();
     sptr2->d_function();
   });
-  GPU_ERROR_CHECK( PeekAtLastError() );
-  GPU_ERROR_CHECK( DeviceSynchronize() );
+  CHAI_GPU_ERROR_CHECK( gpuPeekAtLastError() );
+  CHAI_GPU_ERROR_CHECK( gpuDeviceSynchronize() );
 
   std::cout << "CPU CALL...\n";
   forall(sequential(), 0, 1, [=] (int) {
@@ -208,8 +184,8 @@ GPU_TEST(managed_shared_ptr, shared_ptr_absmem)
     sptr2->function();
     sptr2->d_function();
   });
-  GPU_ERROR_CHECK( PeekAtLastError() );
-  GPU_ERROR_CHECK( DeviceSynchronize() );
+  CHAI_GPU_ERROR_CHECK( gpuPeekAtLastError() );
+  CHAI_GPU_ERROR_CHECK( gpuDeviceSynchronize() );
 
   }
   std::cout << "Map Sz : " << chai::expt::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
@@ -237,8 +213,8 @@ GPU_TEST(managed_shared_ptr, shared_ptr_const)
     sptr2->function();
     sptr2->d_function();
   });
-  GPU_ERROR_CHECK( PeekAtLastError() );
-  GPU_ERROR_CHECK( DeviceSynchronize() );
+  CHAI_GPU_ERROR_CHECK( gpuPeekAtLastError() );
+  CHAI_GPU_ERROR_CHECK( gpuDeviceSynchronize() );
 
   std::cout << "CPU CALL...\n";
   forall(sequential(), 0, 1, [=] (int) {
@@ -254,8 +230,8 @@ GPU_TEST(managed_shared_ptr, shared_ptr_const)
     sptr2->function();
     sptr2->d_function();
   });
-  GPU_ERROR_CHECK( PeekAtLastError() );
-  GPU_ERROR_CHECK( DeviceSynchronize() );
+  CHAI_GPU_ERROR_CHECK( gpuPeekAtLastError() );
+  CHAI_GPU_ERROR_CHECK( gpuDeviceSynchronize() );
 
   }
   assert_empty_sptr_map();
@@ -278,8 +254,8 @@ GPU_TEST(managed_shared_ptr, shared_ptr_nv)
     printf("GPU Body\n");
     sptr2->function();
   });
-  GPU_ERROR_CHECK( PeekAtLastError() );
-  GPU_ERROR_CHECK( DeviceSynchronize() );
+  CHAI_GPU_ERROR_CHECK( gpuPeekAtLastError() );
+  CHAI_GPU_ERROR_CHECK( gpuDeviceSynchronize() );
 
   std::cout << "CPU CALL...\n";
   forall(sequential(), 0, 1, [=] (int) {
@@ -292,8 +268,8 @@ GPU_TEST(managed_shared_ptr, shared_ptr_nv)
     printf("GPU Body\n");
     sptr2->function();
   });
-  GPU_ERROR_CHECK( PeekAtLastError() );
-  GPU_ERROR_CHECK( DeviceSynchronize() );
+  CHAI_GPU_ERROR_CHECK( gpuPeekAtLastError() );
+  CHAI_GPU_ERROR_CHECK( gpuDeviceSynchronize() );
 
   }
   assert_empty_sptr_map();
@@ -324,8 +300,8 @@ GPU_TEST(managed_shared_ptr, shared_arr_shared_ptr_absmem)
     arr[0]->function();
     arr[0]->d_function();
   });
-  GPU_ERROR_CHECK( PeekAtLastError() );
-  GPU_ERROR_CHECK( DeviceSynchronize() );
+  CHAI_GPU_ERROR_CHECK( gpuPeekAtLastError() );
+  CHAI_GPU_ERROR_CHECK( gpuDeviceSynchronize() );
 
   std::cout << "CPU CALL...\n";
   forall(sequential(), 0, 1, [=] (int) {
@@ -341,8 +317,8 @@ GPU_TEST(managed_shared_ptr, shared_arr_shared_ptr_absmem)
     arr[0]->function();
     arr[0]->d_function();
   });
-  GPU_ERROR_CHECK( PeekAtLastError() );
-  GPU_ERROR_CHECK( DeviceSynchronize() );
+  CHAI_GPU_ERROR_CHECK( gpuPeekAtLastError() );
+  CHAI_GPU_ERROR_CHECK( gpuDeviceSynchronize() );
 
   std::cout << "Sptr Map Sz : " << chai::expt::SharedPtrManager::getInstance()->getPointerMap().size() << std::endl;
   std::cout << "Arr  Map Sz : " << chai::ArrayManager::getInstance()->getPointerMap().size() << std::endl;

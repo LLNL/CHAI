@@ -21,7 +21,7 @@ inline void gpuErrorCheck(gpuError_t code, const char *file, int line, bool abor
    }
 }
 
-#define CHAI_GPU_ERROR_CHECK(code) { gpuErrorCheck((code), __FILE__, __LINE__); }
+#define CHAI_GPU_ERROR_CHECK(code) { ::chai::gpuErrorCheck((code), __FILE__, __LINE__); }
 #else // CHAI_ENABLE_GPU_ERROR_CHECKING
 #define CHAI_GPU_ERROR_CHECK(code) code
 #endif // CHAI_ENABLE_GPU_ERROR_CHECKING
