@@ -2,6 +2,7 @@
 #define CHAI_COPY_HIDING_MANAGER_HPP
 
 #include "chai/expt/Manager.hpp"
+#include "umpire/ResourceManager.hpp"
 
 namespace chai {
 namespace expt {
@@ -13,21 +14,55 @@ namespace expt {
   class CopyHidingManager : public Manager {
     public:
       /*!
-       * \brief Constructs a host array manager.
+       * Constructs a CopyHidingManager with default allocators from Umpire
+       * for the "HOST" and "DEVICE" resources.
        */
-      CopyHidingManager(int hostAllocatorID,
-                        int deviceAllocatorID,
-                        std::size_t size);
+      CopyHidingManager() = default;
 
       /*!
-       * \brief Copy constructor is deleted.
+       * Constructs a CopyHidingManager with the given Umpire allocators.
        */
-      CopyHidingManager(const CopyHidingManager&) = delete;
+      CopyHidingManager(const umpire::Allocator& cpuAllocator,
+                        const umpire::Allocator& gpuAllocator);
 
       /*!
-       * \brief Copy assignment operator is deleted.
+       * Constructs a CopyHidingManager with the given Umpire allocator IDs.
        */
-      CopyHidingManager& operator=(const CopyHidingManager&) = delete;
+      CopyHidingManager(int cpuAllocatorID,
+                        int gpuAllocatorID);
+
+      /*!
+       * Constructs a CopyHidingManager with the given size using default allocators
+       * from Umpire for the "HOST" and "DEVICE" resources.
+       */
+      CopyHidingManager(size_type size);
+
+      /*!
+       * Constructs a CopyHidingManager with the given size using the given Umpire
+       * allocators.
+       */
+      CopyHidingManager(size_type size,
+                        const umpire::Allocator& cpuAllocator,
+                        const umpire::Allocator& gpuAllocator);
+
+      /*!
+       * Constructs a CopyHidingManager with the given size using the given Umpire
+       * allocator IDs.
+       */
+      CopyHidingManager(size_type size,
+                        int cpuAllocatorID,
+                        int gpuAllocatorID);
+
+      /*!
+       * Constructs a deep copy of the given CopyHidingManager.
+       */
+      CopyHidingManager(const CopyHidingManager& other);
+
+      /*!
+       * Constructs a CopyHidingManager that takes ownership of the
+       * resources from the given CopyHidingManager.
+       */
+      CopyHidingManager(CopyHidingManager&& other) noexcept;
 
       /*!
        * \brief Virtual destructor.
@@ -35,38 +70,37 @@ namespace expt {
       virtual ~CopyHidingManager();
 
       /*!
-       * \brief Get the number of elements.
+       * \brief Copy assignment operator.
        */
-      virtual std::size_t size() const override;
+      CopyHidingManager& operator=(const CopyHidingManager& other);
+
+      /*!
+       * \brief Move assignment operator.
+       */
+      CopyHidingManager& operator=(CopyHidingManager&& other);
+
+      /*!
+       * \brief Resize the underlying arrays.
+       */
+      virtual void resize(size_type newSize) override;
+
+      /*!
+       * \brief Get the size of the underlying arrays.
+       */
+      virtual void size() const override;
 
       /*!
        * \brief Updates the data to be coherent in the current execution space.
-       *
-       * \param data [out] A coherent array in the current execution space.
        */
-      virtual void* data(ExecutionContext context, bool touch) override;
-
-      /*!
-       * \brief Get the host allocator ID.
-       */
-      int getHostAllocatorID() const;
-
-      /*!
-       * \brief Get the device allocator ID.
-       */
-      int getDeviceAllocatorID() const;
-
-      /*!
-       * \brief Get the last touch.
-       */
-      ExecutionContext getTouch() const;
+      virtual void* data(bool touch) override;
 
     private:
-      int m_host_allocator_id{-1};
-      int m_device_allocator_id{-1};
-      std::size_t m_size{0};
-      void* m_host_data{nullptr};
-      void* m_device_data{nullptr};
+      umpire::ResourceManager& m_resource_manager{umpire::ResourceManager::getInstance()};
+      umpire::Allocator m_cpu_allocator{m_resource_manager.getAllocator("HOST")};
+      umpire::Allocator m_gpu_allocator{m_resource_manager.getAllocator("DEVICE")};
+      size_type m_size{0};
+      void* m_cpu_data{nullptr};
+      void* m_gpu_data{nullptr};
       ExecutionContext m_touch{ExecutionContext::NONE};
   };  // class CopyHidingManager
 }  // namespace expt
