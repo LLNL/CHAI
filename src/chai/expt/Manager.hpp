@@ -1,8 +1,6 @@
 #ifndef CHAI_MANAGER_HPP
 #define CHAI_MANAGER_HPP
 
-#include "chai/expt/ExecutionContext.hpp"
-
 #include <cstddef>
 
 namespace chai {
@@ -14,27 +12,24 @@ namespace expt {
    */
   class Manager {
     public:
+      using size_type = std::size_t;
+
       /*!
        * \brief Virtual destructor.
        */
       virtual ~Manager() = default;
 
       /*!
-       * \brief Get the number of elements.
+       * \brief Resize the contained array.
        */
-      virtual std::size_t size() const = 0;
+      virtual void resize(size_type newSize) = 0;
 
       /*!
        * \brief Updates the data to be coherent in the current execution context.
        *
        * \param data [out] A coherent array in the current execution context.
        */
-      virtual void* data(ExecutionContext context, bool touch) = 0;
-
-      /*!
-       * \brief Returns a modifiable reference to the current execution context.
-       */
-      static ExecutionContext& execution_context();
+      virtual void* data(bool touch) = 0;
   };  // class Manager
 }  // namespace expt
 }  // namespace chai
