@@ -1,5 +1,5 @@
-#ifndef CHAI_COPY_HIDING_MANAGER_HPP
-#define CHAI_COPY_HIDING_MANAGER_HPP
+#ifndef CHAI_COPY_HIDING_ARRAY_MANAGER_HPP
+#define CHAI_COPY_HIDING_ARRAY_MANAGER_HPP
 
 #include "chai/expt/Manager.hpp"
 #include "umpire/ResourceManager.hpp"
@@ -7,77 +7,77 @@
 namespace chai {
 namespace expt {
   /*!
-   * \class CopyHidingManager
+   * \class CopyHidingArrayManager
    *
    * \brief Controls the coherence of an array on the host and device.
    */
-  class CopyHidingManager : public Manager {
+  class CopyHidingArrayManager : public Manager {
     public:
       /*!
-       * Constructs a CopyHidingManager with default allocators from Umpire
+       * Constructs a CopyHidingArrayManager with default allocators from Umpire
        * for the "HOST" and "DEVICE" resources.
        */
-      CopyHidingManager() = default;
+      CopyHidingArrayManager() = default;
 
       /*!
-       * Constructs a CopyHidingManager with the given Umpire allocators.
+       * Constructs a CopyHidingArrayManager with the given Umpire allocators.
        */
-      CopyHidingManager(const umpire::Allocator& cpuAllocator,
+      CopyHidingArrayManager(const umpire::Allocator& cpuAllocator,
                         const umpire::Allocator& gpuAllocator);
 
       /*!
-       * Constructs a CopyHidingManager with the given Umpire allocator IDs.
+       * Constructs a CopyHidingArrayManager with the given Umpire allocator IDs.
        */
-      CopyHidingManager(int cpuAllocatorID,
+      CopyHidingArrayManager(int cpuAllocatorID,
                         int gpuAllocatorID);
 
       /*!
-       * Constructs a CopyHidingManager with the given size using default allocators
+       * Constructs a CopyHidingArrayManager with the given size using default allocators
        * from Umpire for the "HOST" and "DEVICE" resources.
        */
-      CopyHidingManager(size_type size);
+      CopyHidingArrayManager(size_type size);
 
       /*!
-       * Constructs a CopyHidingManager with the given size using the given Umpire
+       * Constructs a CopyHidingArrayManager with the given size using the given Umpire
        * allocators.
        */
-      CopyHidingManager(size_type size,
+      CopyHidingArrayManager(size_type size,
                         const umpire::Allocator& cpuAllocator,
                         const umpire::Allocator& gpuAllocator);
 
       /*!
-       * Constructs a CopyHidingManager with the given size using the given Umpire
+       * Constructs a CopyHidingArrayManager with the given size using the given Umpire
        * allocator IDs.
        */
-      CopyHidingManager(size_type size,
+      CopyHidingArrayManager(size_type size,
                         int cpuAllocatorID,
                         int gpuAllocatorID);
 
       /*!
-       * Constructs a deep copy of the given CopyHidingManager.
+       * Constructs a deep copy of the given CopyHidingArrayManager.
        */
-      CopyHidingManager(const CopyHidingManager& other);
+      CopyHidingArrayManager(const CopyHidingArrayManager& other);
 
       /*!
-       * Constructs a CopyHidingManager that takes ownership of the
-       * resources from the given CopyHidingManager.
+       * Constructs a CopyHidingArrayManager that takes ownership of the
+       * resources from the given CopyHidingArrayManager.
        */
-      CopyHidingManager(CopyHidingManager&& other) noexcept;
+      CopyHidingArrayManager(CopyHidingArrayManager&& other) noexcept;
 
       /*!
        * \brief Virtual destructor.
        */
-      virtual ~CopyHidingManager();
+      virtual ~CopyHidingArrayManager();
 
       /*!
        * \brief Copy assignment operator.
        */
-      CopyHidingManager& operator=(const CopyHidingManager& other);
+      CopyHidingArrayManager& operator=(const CopyHidingArrayManager& other);
 
       /*!
        * \brief Move assignment operator.
        */
-      CopyHidingManager& operator=(CopyHidingManager&& other);
+      CopyHidingArrayManager& operator=(CopyHidingArrayManager&& other);
 
       /*!
        * \brief Resize the underlying arrays.
@@ -102,8 +102,8 @@ namespace expt {
       void* m_cpu_data{nullptr};
       void* m_gpu_data{nullptr};
       ExecutionContext m_touch{ExecutionContext::NONE};
-  };  // class CopyHidingManager
+  };  // class CopyHidingArrayManager
 }  // namespace expt
 }  // namespace chai
 
-#endif  // CHAI_COPY_HIDING_MANAGER_HPP
+#endif  // CHAI_COPY_HIDING_ARRAY_MANAGER_HPP
