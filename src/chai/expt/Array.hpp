@@ -28,7 +28,7 @@ namespace expt {
        *
        * \note The array takes ownership of the manager.
        */
-      Array(Manager* manager) :
+      explicit Array(Manager* manager) :
         m_manager{manager}
       {
       }
@@ -42,13 +42,30 @@ namespace expt {
        * \note This is a shallow copy.
        */
       CHAI_HOST_DEVICE Array(const Array& other) :
-        m_size{other.m_size},
         m_data{other.m_data},
+        m_size{other.m_size},
         m_manager{other.m_manager}
       {
 #if !defined(CHAI_DEVICE_COMPILE)
         if (m_manager) {
-          m_manager->update(m_data, !std::is_const<T>::value);
+          m_data = static_cast<T*>(m_manager->data(!std::is_const<T>::value));
+        }
+#endif
+      }
+
+      void setManager(Manager* manager)
+      {
+        delete m_manager;
+        m_manager = manager;
+      }
+
+      void resize(size_t newSize) {
+        if (m_manager) {
+          m_size = newSize;
+          m_manager->resize(newSize);
+        }
+        else {
+          throw std::runtime_exception("Unable to resize");
         }
       }
 
@@ -59,11 +76,12 @@ namespace expt {
        *       of this array (since copies are shallow).
        */
       void free() {
-        m_size = 0;
         m_data = nullptr;
+        m_size = 0;
         delete m_manager;
         m_manager = nullptr;
       }
+
 
       /*!
        * \brief Get the number of elements in the array.
@@ -73,6 +91,15 @@ namespace expt {
        */
       CHAI_HOST_DEVICE size_t size() const {
         return m_size;
+      }
+
+      CHAI_HOST_DEVICE T* data() const {
+#if !defined(CHAI_DEVICE_COMPILE)
+        if (m_manager) {
+          m_data = static_cast<T*>(m_manager->data(!std::is_const<T>::value));
+        }
+#endif
+        return m_data;
       }
 
       /*!
@@ -89,14 +116,14 @@ namespace expt {
 
     private:
       /*!
-       * The number of elements in the array.
-       */
-      size_t m_size = 0;
-
-      /*!
        * The array that is coherent in the current execution space.
        */
       T* m_data = nullptr;
+
+      /*!
+       * The number of elements in the array.
+       */
+      size_t m_size = 0;
 
       /*!
        * The array manager controls the coherence of the array.
@@ -112,7 +139,7 @@ namespace expt {
    *
    * \param args The arguments to construct an array manager.
    */
-  template <typename Manager, typename... Args>
+  template <typename T, typename Manager, typename... Args>
   Array<T> makeArray(Args&&... args) {
     return Array<T>(new Manager(std::forward<Args>(args)...));
   }
