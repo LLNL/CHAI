@@ -23,13 +23,13 @@ namespace expt {
        * Constructs a CopyHidingArrayManager with the given Umpire allocators.
        */
       CopyHidingArrayManager(const umpire::Allocator& cpuAllocator,
-                        const umpire::Allocator& gpuAllocator);
+                             const umpire::Allocator& gpuAllocator);
 
       /*!
        * Constructs a CopyHidingArrayManager with the given Umpire allocator IDs.
        */
       CopyHidingArrayManager(int cpuAllocatorID,
-                        int gpuAllocatorID);
+                             int gpuAllocatorID);
 
       /*!
        * Constructs a CopyHidingArrayManager with the given size using default allocators
@@ -42,16 +42,16 @@ namespace expt {
        * allocators.
        */
       CopyHidingArrayManager(size_type size,
-                        const umpire::Allocator& cpuAllocator,
-                        const umpire::Allocator& gpuAllocator);
+                             const umpire::Allocator& cpuAllocator,
+                             const umpire::Allocator& gpuAllocator);
 
       /*!
        * Constructs a CopyHidingArrayManager with the given size using the given Umpire
        * allocator IDs.
        */
       CopyHidingArrayManager(size_type size,
-                        int cpuAllocatorID,
-                        int gpuAllocatorID);
+                             int cpuAllocatorID,
+                             int gpuAllocatorID);
 
       /*!
        * Constructs a deep copy of the given CopyHidingArrayManager.
