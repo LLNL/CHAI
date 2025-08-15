@@ -2,6 +2,7 @@
 #define CHAI_ARRAY_HPP
 
 #include "chai/Manager.hpp"
+#include <cstddef>
 
 namespace chai {
 namespace expt {
@@ -31,6 +32,23 @@ namespace expt {
       explicit Array(Manager* manager) :
         m_manager{manager}
       {
+        if (m_manager)
+        {
+          m_size = m_manager->size();
+        }
+      }
+
+      Array(std::size_t size, Manager* manager) :
+        m_size{size}
+        m_manager{manager}
+      {
+        if (m_manager) {
+          m_size = newSize;
+          m_manager->resize(newSize);
+        }
+        else {
+          throw std::runtime_exception("Unable to resize");
+        }
       }
 
       /*!
@@ -48,7 +66,7 @@ namespace expt {
       {
 #if !defined(CHAI_DEVICE_COMPILE)
         if (m_manager) {
-          m_data = static_cast<T*>(m_manager->data(!std::is_const<T>::value));
+          m_data = static_cast<T*>(m_manager->data(ContextManager::getInstance()::getContext(), !std::is_const<T>::value));
         }
 #endif
       }
@@ -59,7 +77,7 @@ namespace expt {
         m_manager = manager;
       }
 
-      void resize(size_t newSize) {
+      void resize(std::size_t newSize) {
         if (m_manager) {
           m_size = newSize;
           m_manager->resize(newSize);
@@ -89,14 +107,23 @@ namespace expt {
        * \pre The copy constructor has been called with the execution space
        *      set to CPU or GPU (e.g. by the RAJA plugin).
        */
-      CHAI_HOST_DEVICE size_t size() const {
+      CHAI_HOST_DEVICE std::size_t size() const {
         return m_size;
       }
 
       CHAI_HOST_DEVICE T* data() const {
 #if !defined(CHAI_DEVICE_COMPILE)
         if (m_manager) {
-          m_data = static_cast<T*>(m_manager->data(!std::is_const<T>::value));
+          m_data = static_cast<T*>(m_manager->data(ExecutionContext::HOST, !std::is_const<T>::value));
+        }
+#endif
+        return m_data;
+      }
+
+      CHAI_HOST_DEVICE T* data(ExecutionContext context) const {
+#if !defined(CHAI_DEVICE_COMPILE)
+        if (m_manager) {
+          m_data = static_cast<T*>(m_manager->data(context, !std::is_const<T>::value));
         }
 #endif
         return m_data;
@@ -110,7 +137,7 @@ namespace expt {
        * \pre The copy constructor has been called with the execution space
        *      set to CPU or GPU (e.g. by the RAJA plugin).
        */
-      CHAI_HOST_DEVICE T& operator[](size_t i) const {
+      CHAI_HOST_DEVICE T& operator[](std::size_t i) const {
         return m_data[i];
       }
 
@@ -123,7 +150,7 @@ namespace expt {
       /*!
        * The number of elements in the array.
        */
-      size_t m_size = 0;
+      std::size_t m_size = 0;
 
       /*!
        * The array manager controls the coherence of the array.
