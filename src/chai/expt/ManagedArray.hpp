@@ -154,6 +154,24 @@ namespace expt {
         return m_data[i];
       }
 
+      ElementT get(std::size_t i) const {
+        if (m_array_manager) {
+          return m_array_manager->get(i);
+        }
+        else {
+          throw std::runtime_exception("Unable to get element");
+        }
+      }
+
+      void set(std::size_t i, const ElementT& value) {
+        if (m_array_manager) {
+          m_array_manager->set(i, value);
+        }
+        else {
+          throw std::runtime_exception("Unable to set element");
+        }
+      }
+
       ArrayManager<ElementT>* manager() const {
         return m_array_manager;
       }
