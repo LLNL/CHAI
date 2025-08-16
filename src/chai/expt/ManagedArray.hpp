@@ -1,26 +1,27 @@
-#ifndef CHAI_ARRAY_HPP
-#define CHAI_ARRAY_HPP
+#ifndef CHAI_MANAGED_ARRAY_HPP
+#define CHAI_MANAGED_ARRAY_HPP
 
-#include "chai/Manager.hpp"
+#include "chai/expt/ArrayManager.hpp"
+#include "chai/expt/ContextManager.hpp"
 #include <cstddef>
 
 namespace chai {
 namespace expt {
   /*!
-   * \class Array
+   * \class ManagedArray
    *
    * \brief An array class that manages coherency across the CPU and GPU.
    *        How the coherence is obtained is controlled by the array manager.
    *
-   * \tparam T The type of element in the array.
+   * \tparam ElementT The type of element in the array.
    */
-  template <typename T>
-  class Array {
+  template <typename ElementT>
+  class ManagedArray {
     public:
       /*!
        * \brief Constructs an empty array without an array manager.
        */
-      Array() = default;
+      ManagedArray() = default;
 
       /*!
        * \brief Constructs an array from a manager.
@@ -29,22 +30,22 @@ namespace expt {
        *
        * \note The array takes ownership of the manager.
        */
-      explicit Array(Manager* manager) :
-        m_manager{manager}
+      explicit ManagedArray(ArrayManager<ElementT>* manager) :
+        m_array_manager{manager}
       {
-        if (m_manager)
+        if (m_array_manager)
         {
-          m_size = m_manager->size();
+          m_size = m_array_manager->size();
         }
       }
 
-      Array(std::size_t size, Manager* manager) :
+      ManagedArray(std::size_t size, ArrayManager<ElementT>* manager) :
         m_size{size}
-        m_manager{manager}
+        m_array_manager{manager}
       {
-        if (m_manager) {
+        if (m_array_manager) {
           m_size = newSize;
-          m_manager->resize(newSize);
+          m_array_manager->resize(newSize);
         }
         else {
           throw std::runtime_exception("Unable to resize");
@@ -59,28 +60,28 @@ namespace expt {
        *
        * \note This is a shallow copy.
        */
-      CHAI_HOST_DEVICE Array(const Array& other) :
+      CHAI_HOST_DEVICE ManagedArray(const ManagedArray& other) :
         m_data{other.m_data},
         m_size{other.m_size},
-        m_manager{other.m_manager}
+        m_array_manager{other.m_array_manager}
       {
 #if !defined(CHAI_DEVICE_COMPILE)
-        if (m_manager) {
-          m_data = static_cast<T*>(m_manager->data(ContextManager::getInstance()::getContext(), !std::is_const<T>::value));
+        if (m_array_manager) {
+          m_data = m_array_manager->data(ContextManager::getInstance()::getContext(), !std::is_const<ElementT>::value));
         }
 #endif
       }
 
-      void setManager(Manager* manager)
+      void setManager(ArrayManager<ElementT>* manager)
       {
-        delete m_manager;
-        m_manager = manager;
+        delete m_array_manager;
+        m_array_manager = manager;
       }
 
       void resize(std::size_t newSize) {
-        if (m_manager) {
+        if (m_array_manager) {
           m_size = newSize;
-          m_manager->resize(newSize);
+          m_array_manager->resize(newSize);
         }
         else {
           throw std::runtime_exception("Unable to resize");
@@ -96,8 +97,8 @@ namespace expt {
       void free() {
         m_data = nullptr;
         m_size = 0;
-        delete m_manager;
-        m_manager = nullptr;
+        delete m_array_manager;
+        m_array_manager = nullptr;
       }
 
 
@@ -111,21 +112,33 @@ namespace expt {
         return m_size;
       }
 
-      CHAI_HOST_DEVICE T* data() const {
+      CHAI_HOST_DEVICE ElementT* data() const {
 #if !defined(CHAI_DEVICE_COMPILE)
-        if (m_manager) {
-          m_data = static_cast<T*>(m_manager->data(ExecutionContext::HOST, !std::is_const<T>::value));
-        }
+        return data(HOST);
 #endif
         return m_data;
       }
 
-      CHAI_HOST_DEVICE T* data(ExecutionContext context) const {
+      CHAI_HOST_DEVICE const ElementT* cdata() const {
 #if !defined(CHAI_DEVICE_COMPILE)
-        if (m_manager) {
-          m_data = static_cast<T*>(m_manager->data(context, !std::is_const<T>::value));
-        }
+        return cdata(HOST);
 #endif
+        return m_data;
+      }
+
+      ElementT* data(Context context) const {
+        if (m_array_manager) {
+          m_data = m_array_manager->data(context, !std::is_const<ElementT>::value);
+        }
+
+        return m_data;
+      }
+
+      const ElementT* cdata(Context context) const {
+        if (m_array_manager) {
+          m_data = m_array_manager->data(context, false);
+        }
+
         return m_data;
       }
 
@@ -137,15 +150,19 @@ namespace expt {
        * \pre The copy constructor has been called with the execution space
        *      set to CPU or GPU (e.g. by the RAJA plugin).
        */
-      CHAI_HOST_DEVICE T& operator[](std::size_t i) const {
+      CHAI_HOST_DEVICE ElementT& operator[](std::size_t i) const {
         return m_data[i];
+      }
+
+      ArrayManager<ElementT>* manager() const {
+        return m_array_manager;
       }
 
     private:
       /*!
        * The array that is coherent in the current execution space.
        */
-      T* m_data = nullptr;
+      ElementT* m_data = nullptr;
 
       /*!
        * The number of elements in the array.
@@ -155,22 +172,22 @@ namespace expt {
       /*!
        * The array manager controls the coherence of the array.
        */
-      Manager* m_manager = nullptr;
-  };  // class Array
+      ArrayManager<ElementT>* m_array_manager = nullptr;
+  };  // class ManagedArray
 
   /*!
    * \brief Constructs an array by creating a new manager object.
    *
-   * \tparam Manager The type of array manager.
+   * \tparam ArrayManager<ElementT> The type of array manager.
    * \tparam Args The type of the arguments used to construct the array manager.
    *
    * \param args The arguments to construct an array manager.
    */
-  template <typename T, typename Manager, typename... Args>
-  Array<T> makeArray(Args&&... args) {
-    return Array<T>(new Manager(std::forward<Args>(args)...));
+  template <typename ElementT, typename ArrayManager<ElementT>, typename... Args>
+  ManagedArray<ElementT> makeArray(Args&&... args) {
+    return ManagedArray<ElementT>(new ArrayManager<ElementT>(std::forward<Args>(args)...));
   }
 }  // namespace expt
 }  // namespace chai
 
-#endif  // CHAI_ARRAY_HPP
+#endif  // CHAI_MANAGED_ARRAY_HPP
