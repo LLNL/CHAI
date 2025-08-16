@@ -60,8 +60,8 @@ namespace expt {
           m_size{size}
       {
         // TODO: Exception handling
-        m_host_data = m_host_allocator.allocate(size);
-        m_device_data = m_device_allocator.allocate(size);
+        m_host_data = static_cast<ElementT*>(m_host_allocator.allocate(size*sizeof(ElementT));
+        m_device_data = static_cast<ElementT*>(m_device_allocator.allocate(size*sizeof(ElementT));
       }
 
       /*!
@@ -112,13 +112,13 @@ namespace expt {
         if (other.m_host_data)
         {
           m_host_data = m_host_allocator.allocate(m_size);
-          m_resource_manager.copy(m_host_data, other.m_host_data, m_size);
+          m_resource_manager.copy(m_host_data, other.m_host_data, m_size*sizeof(ElementT));
         }
 
         if (other.m_device_data)
         {
           m_device_data = m_device_allocator.allocate(m_size);
-          m_resource_manager.copy(m_device_data, other.m_device_data, m_size);
+          m_resource_manager.copy(m_device_data, other.m_device_data, m_size*sizeof(ElementT));
         }
       }
 
@@ -138,7 +138,7 @@ namespace expt {
         other.m_size = 0;
         other.m_host_data = nullptr;
         other.m_device_data = nullptr;
-        other.m_touch = ExecutionContext::NONE;
+        other.m_touch = NONE;
       }
 
       /*!
@@ -173,13 +173,13 @@ namespace expt {
           if (other.m_host_data)
           {
             new_host_data = m_host_allocator.allocate(other.m_size);
-            m_resource_manager.copy(new_host_data, other.m_host_data, other.m_size);
+            m_resource_manager.copy(new_host_data, other.m_host_data, other.m_size*sizeof(ElementT));
           }
 
           if (other.m_device_data)
           {
             new_device_data = m_device_allocator.allocate(other.m_size);
-            m_resource_manager.copy(new_device_data, other.m_device_data, other.m_size);
+            m_resource_manager.copy(new_device_data, other.m_device_data, other.m_size*sizeof(ElementT));
           }
 
           // Clean up old resources
@@ -233,7 +233,7 @@ namespace expt {
           other.m_host_data = nullptr;
           other.m_device_data = nullptr;
           other.m_size = 0;
-          other.m_touch = ExecutionContext::NONE;
+          other.m_touch = NONE;
         }
         return *this;
       }
@@ -245,7 +245,7 @@ namespace expt {
       {
         if (newSize != m_size)
         {
-          if (m_touch == ExecutionContext::CPU)
+          if (m_touch == HOST)
           {
             m_resource_manager.reallocate(m_host_data, newSize);
 
@@ -255,7 +255,7 @@ namespace expt {
               m_device_data = m_device_allocator.allocate(newSize);
             }
           }
-          else if (m_touch == ExecutionContext::GPU)
+          else if (m_touch == DEVICE)
           {
             m_resource_manager.reallocate(m_device_data, newSize);
 
@@ -294,45 +294,45 @@ namespace expt {
        */
       virtual ElementT* data(Context context, bool touch) override
       {
-        if (context == ExecutionContext::CPU)
+        if (context == HOST)
         {
           if (!m_host_data)
           {
-            m_host_data = m_host_allocator.allocate(m_size);
+            m_host_data = static_cast<ElementT*>(m_host_allocator.allocate(m_size*sizeof(ElementT)));
           }
 
-          if (m_touch == ExecutionContext::GPU)
+          if (m_touch == DEVICE)
           {
-            m_resource_manager.copy(m_host_data, m_device_data, m_size);
-            m_touch = ExecutionContext::NONE;
+            m_resource_manager.copy(m_host_data, m_device_data, m_size*sizeof(ElementT));
+            m_touch = NONE;
           }
 
           if (touch)
           {
-            m_touch = ExecutionContext::CPU;
+            m_touch = HOST;
           }
 
-          return static_cast<ElementT*>(m_host_data);
+          return m_host_data;
         }
-        else if (context == ExecutionContext::GPU)
+        else if (context == DEVICE)
         {
           if (!m_device_data)
           {
             m_device_data = m_device_allocator.allocate(m_size);
           }
 
-          if (m_touch == ExecutionContext::CPU)
+          if (m_touch == HOST)
           {
-            m_resource_manager.copy(m_device_data, m_host_data, m_size);
-            m_touch = ExecutionContext::NONE;
+            m_resource_manager.copy(m_device_data, m_host_data, m_size*sizeof(ElementT));
+            m_touch = NONE;
           }
 
           if (touch)
           {
-            m_touch = ExecutionContext::GPU;
+            m_touch = DEVICE;
           }
 
-          return static_cast<ElementT*>(m_device_data);
+          return m_device_data;
         }
         else
         {
@@ -348,34 +348,62 @@ namespace expt {
        * \param i The index of the element to get.
        * \return The value at index i.
        */
-       virtual ElementT get(std::size_t i) const override
-       {
-         // Implementation needed
-         // For now, just returning a default value
-         return ElementT{};
-       }
+      virtual ElementT get(std::size_t i) const override {
+        ElementT result;
 
-       /*!
-        * \brief Sets the value at index i to the specified value.
-        *
-        * Note: Use this function sparingly as it may be slow.
-        *
-        * \param i The index of the element to set.
-        * \param value The value to set at index i.
-        */
-       virtual void set(std::size_t i, const ElementT& value) override
-       {
-         // Implementation needed
-       }
+        if (m_touch == HOST) {
+          return m_host_data[i];
+        }
+        else if (m_touch == DEVICE) {
+          m_resource_manager.copy(&result, m_device_data + i, sizeof(ElementT));
+        }
+        else {
+          if (m_host_data) {
+            return m_host_data[i];
+          }
+          else {
+            throw std::runtime_exception("Reading uninitialized memory");
+          }
+        }
+         
+        return ElementT{};
+      }
+
+      /*!
+       * \brief Sets the value at index i to the specified value.
+       *
+       * Note: Use this function sparingly as it may be slow.
+       *
+       * \param i The index of the element to set.
+       * \param value The value to set at index i.
+       */
+      virtual void set(std::size_t i, const ElementT& value) override
+      {
+        if (m_touch == HOST) {
+          m_host_data[i] = value;
+        }
+        else if (m_touch == DEVICE) {
+          m_resource_manager.copy(m_device_data + i, &value, sizeof(ElementT));
+        }
+        else {
+          if (m_host_data) {
+            m_host_data[i] = value;
+          }
+
+          if (m_device_data) {
+            m_resource_manager.copy(m_device_data + i, &value, sizeof(ElementT));
+          }
+        }
+      }
 
     private:
       umpire::ResourceManager& m_resource_manager{umpire::ResourceManager::getInstance()};
       umpire::Allocator m_host_allocator{m_resource_manager.getAllocator("HOST")};
       umpire::Allocator m_device_allocator{m_resource_manager.getAllocator("DEVICE")};
       std::size_t m_size{0};
-      void* m_host_data{nullptr};
-      void* m_device_data{nullptr};
-      ExecutionContext m_touch{ExecutionContext::NONE};
+      ElementT* m_host_data{nullptr};
+      ElementT* m_device_data{nullptr};
+      ExecutionContext m_touch{NONE};
   };  // class CopyHidingArrayManager
 }  // namespace expt
 }  // namespace chai
