@@ -47,8 +47,8 @@ namespace expt {
        *
        * \return The current context.
        */
-      ExecutionContext getContext() const {
-        return m_current_context;
+      ExecutionContext getExecutionContext() const {
+        return m_execution_context;
       }
 
       /*!
@@ -56,8 +56,8 @@ namespace expt {
        *
        * \param context The new context to set.
        */
-      void setContext(ExecutionContext context) {
-        m_current_context = context;
+      void setExecutionContext(ExecutionContext context) {
+        m_execution_context = context;
       }
 
     private:
@@ -69,7 +69,7 @@ namespace expt {
       /*!
        * \brief The current execution context.
        */
-      ExecutionContext m_current_context = NONE;
+      ExecutionContext m_execution_context = NONE;
   };  // class ExecutionContextManager
 }  // namespace expt
 }  // namespace chai
