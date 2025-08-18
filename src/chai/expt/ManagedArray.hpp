@@ -2,7 +2,7 @@
 #define CHAI_MANAGED_ARRAY_HPP
 
 #include "chai/expt/ArrayManager.hpp"
-#include "chai/expt/ContextManager.hpp"
+#include "chai/expt/ExecutionContextManager.hpp"
 #include <cstddef>
 
 namespace chai {
@@ -54,7 +54,7 @@ namespace expt {
       {
 #if !defined(CHAI_DEVICE_COMPILE)
         if (m_array_manager) {
-          m_data = m_array_manager->data(ContextManager::getInstance()::getContext(), !std::is_const<ElementT>::value));
+          m_data = m_array_manager->data(ExecutionContextManager::getInstance()::getContext(), !std::is_const<ElementT>::value));
         }
 #endif
       }
@@ -129,7 +129,7 @@ namespace expt {
        *
        * \return A pointer to the element data in the specified context.
        */
-      ElementT* data(Context context) const {
+      ElementT* data(ExecutionContext context) const {
         if (m_array_manager) {
           m_data = m_array_manager->data(context, !std::is_const<ElementT>::value);
         }
@@ -144,7 +144,7 @@ namespace expt {
        *
        * \return A const pointer to the element data in the specified context.
        */
-      const ElementT* cdata(Context context) const {
+      const ElementT* cdata(ExecutionContext context) const {
         if (m_array_manager) {
           m_data = m_array_manager->data(context, false);
         }
