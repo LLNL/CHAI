@@ -20,6 +20,7 @@ option(CHAI_ENABLE_MANAGED_PTR "Enable managed_ptr" On)
 option(CHAI_DEBUG "Enable Debug Logging." Off)
 option(CHAI_ENABLE_RAJA_NESTED_TEST "Enable raja-chai-nested-tests, which fails to build on Debug CUDA builds." On)
 option(CHAI_ENABLE_MANAGED_PTR_ON_GPU "Enable managed_ptr on GPU" On)
+option(CHAI_ENABLE_EXPERIMENTAL "Enable experimental features" On)
 
 option(CHAI_ENABLE_TESTS "Enable CHAI tests" On)
 option(CHAI_ENABLE_BENCHMARKS "Enable benchmarks" Off)

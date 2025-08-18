@@ -51,7 +51,7 @@ if (CHAI_ENABLE_MANAGED_PTR)
     COMMAND managed_ptr_unit_tests)
 endif ()
 
-if (CHAI_ENABLE_EXPT)
+if (CHAI_ENABLE_EXPERIMENTAL)
   blt_add_executable(NAME ExecutionContextManagerTests
                      SOURCES ExecutionContextManagerTests.cpp
                      DEPENDS_ON chai)
