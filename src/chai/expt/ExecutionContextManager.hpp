@@ -69,7 +69,7 @@ namespace expt {
       /*!
        * \brief The current execution context.
        */
-      ExecutionContext m_execution_context = NONE;
+      ExecutionContext m_execution_context = ExecutionContext::NONE;
   };  // class ExecutionContextManager
 }  // namespace expt
 }  // namespace chai
