@@ -39,19 +39,6 @@ namespace expt {
         }
       }
 
-      ManagedArray(std::size_t size, ArrayManager<ElementT>* manager) :
-        m_size{size}
-        m_array_manager{manager}
-      {
-        if (m_array_manager) {
-          m_size = newSize;
-          m_array_manager->resize(newSize);
-        }
-        else {
-          throw std::runtime_exception("Unable to resize");
-        }
-      }
-
       /*!
        * \brief Constructs a shallow copy of an array from another and makes
        *        the data coherent in the current execution space.
@@ -72,12 +59,36 @@ namespace expt {
 #endif
       }
 
-      void setManager(ArrayManager<ElementT>* manager)
-      {
-        delete m_array_manager;
-        m_array_manager = manager;
+      /*!
+       * \brief Sets the array manager for this ManagedArray.
+       *
+       * \param manager The new array manager to be set.
+       *
+       * \post The ManagedArray takes ownership of the new manager objet.
+       */
+       void setManager(ArrayManager<ElementT>* manager)
+       {
+         delete m_array_manager;
+         m_array_manager = manager;
+       }
+
+      /*!
+       * \brief Get the array manager associated with this ManagedArray.
+       *
+       * \return A pointer to the array manager.
+       */
+      ArrayManager<ElementT>* getManager() const {
+        return m_array_manager;
       }
 
+      /*!
+       * \brief Resizes the array to the specified new size.
+       *
+       * \param newSize The new size to resize the array to.
+       *
+       * \note This method updates the size of the array and triggers a resize operation in the array manager if it exists.
+       *       If no array manager is associated, an exception is thrown.
+       */
       void resize(std::size_t newSize) {
         if (m_array_manager) {
           m_size = newSize;
@@ -101,7 +112,6 @@ namespace expt {
         m_array_manager = nullptr;
       }
 
-
       /*!
        * \brief Get the number of elements in the array.
        *
@@ -112,20 +122,13 @@ namespace expt {
         return m_size;
       }
 
-      CHAI_HOST_DEVICE ElementT* data() const {
-#if !defined(CHAI_DEVICE_COMPILE)
-        return data(HOST);
-#endif
-        return m_data;
-      }
-
-      CHAI_HOST_DEVICE const ElementT* cdata() const {
-#if !defined(CHAI_DEVICE_COMPILE)
-        return cdata(HOST);
-#endif
-        return m_data;
-      }
-
+      /*!
+       * \brief Get a pointer to the element data in the specified context.
+       *
+       * \param context The context in which to retrieve the element data.
+       *
+       * \return A pointer to the element data in the specified context.
+       */
       ElementT* data(Context context) const {
         if (m_array_manager) {
           m_data = m_array_manager->data(context, !std::is_const<ElementT>::value);
@@ -134,11 +137,42 @@ namespace expt {
         return m_data;
       }
 
+      /*!
+       * \brief Get a const pointer to the element data in the specified context.
+       *
+       * \param context The context in which to retrieve the const element data.
+       *
+       * \return A const pointer to the element data in the specified context.
+       */
       const ElementT* cdata(Context context) const {
         if (m_array_manager) {
           m_data = m_array_manager->data(context, false);
         }
 
+        return m_data;
+      }
+
+      /*!
+       * \brief Get a pointer to the element data in the current execution space.
+       *
+       * \return A pointer to the element data in the current execution space.
+       */
+      CHAI_HOST_DEVICE ElementT* data() const {
+#if !defined(CHAI_DEVICE_COMPILE)
+        return data(HOST);
+#endif
+        return m_data;
+      }
+
+      /*!
+       * \brief Get a const pointer to the element data in the current execution space.
+       *
+       * \return A const pointer to the element data in the current execution space.
+       */
+      CHAI_HOST_DEVICE const ElementT* cdata() const {
+#if !defined(CHAI_DEVICE_COMPILE)
+        return cdata(HOST);
+#endif
         return m_data;
       }
 
@@ -154,6 +188,15 @@ namespace expt {
         return m_data[i];
       }
 
+      /*!
+       * \brief Get the value of the element at the specified index.
+       *
+       * \param i The index of the element to retrieve.
+       *
+       * \return The value of the element at the specified index.
+       *
+       * \throw std::runtime_exception if unable to retrieve the element.
+       */
       ElementT get(std::size_t i) const {
         if (m_array_manager) {
           return m_array_manager->get(i);
@@ -163,6 +206,14 @@ namespace expt {
         }
       }
 
+      /*!
+       * \brief Set a value at a specified index in the array.
+       *
+       * \param i The index where the value is to be set.
+       * \param value The value to set at the specified index.
+       *
+       * \throw std::runtime_exception if the array manager is not associated with the ManagedArray.
+       */
       void set(std::size_t i, const ElementT& value) {
         if (m_array_manager) {
           m_array_manager->set(i, value);
@@ -170,10 +221,6 @@ namespace expt {
         else {
           throw std::runtime_exception("Unable to set element");
         }
-      }
-
-      ArrayManager<ElementT>* manager() const {
-        return m_array_manager;
       }
 
     private:
