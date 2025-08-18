@@ -53,8 +53,8 @@ endif ()
 
 if (CHAI_ENABLE_EXPERIMENTAL)
   blt_add_executable(NAME ExecutionContextManagerTests
-                     SOURCES ExecutionContextManagerTests.cpp
-                     DEPENDS_ON chai)
+                     SOURCES expt/ExecutionContextManagerTests.cpp
+                     DEPENDS_ON chai gtest)
 
   target_include_directories(ExecutionContextManagerTests
                              PUBLIC ${PROJECT_BINARY_DIR}/include)

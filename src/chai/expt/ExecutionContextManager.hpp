@@ -28,7 +28,7 @@ namespace expt {
        * \return The singleton instance.
        */
       static ExecutionContextManager& getInstance() {
-        static inline ExecutionContextManager s_instance;
+        static ExecutionContextManager s_instance;
         return s_instance;
       }
 
