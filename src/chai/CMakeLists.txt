@@ -22,6 +22,13 @@ set (chai_headers
   PointerRecord.hpp
   Types.hpp)
 
+if(CHAI_ENABLE_EXPERIMENTAL)
+  set(chai_headers
+      ${chai_headers}
+      expt/ExecutionContext.hpp
+      expt/ExecutionContextManager.hpp)
+endif()
+
 if(CHAI_DISABLE_RM)
   set(chai_headers
     ${chai_headers}

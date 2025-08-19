@@ -50,3 +50,15 @@ if (CHAI_ENABLE_MANAGED_PTR)
     NAME managed_ptr_unit_test
     COMMAND managed_ptr_unit_tests)
 endif ()
+
+if (CHAI_ENABLE_EXPERIMENTAL)
+  blt_add_executable(NAME ExecutionContextManagerTests
+                     SOURCES expt/ExecutionContextManagerTests.cpp
+                     DEPENDS_ON chai gtest)
+
+  target_include_directories(ExecutionContextManagerTests
+                             PUBLIC ${PROJECT_BINARY_DIR}/include)
+
+  blt_add_test(NAME ExecutionContextManagerTests
+               COMMAND ExecutionContextManagerTests)
+endif ()
