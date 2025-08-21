@@ -736,7 +736,7 @@ namespace chai {
          managed_ptr<T> m_managed_ptr = nullptr; //!< The managed_ptr to unpack
    };
 
-   ///
+   /// 
    /// @author Peter Robinson
    ///
    /// A wrapper used by the make_managed family of functions to indicate when
@@ -758,7 +758,7 @@ namespace chai {
          /// @return a new instance of ManagedArrayOfManagedPtrUnpacker
          ///
          explicit CHAI_HOST ManagedArrayOfManagedPtrUnpacker(const chai::ManagedArray<chai::managed_ptr<T>>& arg)
-            : m_array{arg}, m_size(arg.size())
+            : m_array{arg}, m_size(arg.size()), m_ownsData(true)
          {
             // Extract the CPU raw pointers
             m_cpu_ptrs = new T*[m_size];
@@ -780,19 +780,112 @@ namespace chai {
             m_device_ptr_array = device_ptr_array;
 #endif
          }
+
+         /// Copy constructor - copies pointers but doesn't take ownership
+         CHAI_HOST ManagedArrayOfManagedPtrUnpacker(const ManagedArrayOfManagedPtrUnpacker& other)
+            : m_array(other.m_array),
+              m_size(other.m_size),
+              m_cpu_ptrs(other.m_cpu_ptrs),
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+              m_gpu_ptrs(other.m_gpu_ptrs),
+              m_device_ptr_array(other.m_device_ptr_array),
+#endif
+              m_ownsData(false) // Copy doesn't own the data
+         {
+         }
+         
+         /// Move constructor - takes ownership of resources
+         CHAI_HOST ManagedArrayOfManagedPtrUnpacker(ManagedArrayOfManagedPtrUnpacker&& other) noexcept
+            : m_array(std::move(other.m_array)),
+              m_size(other.m_size),
+              m_cpu_ptrs(other.m_cpu_ptrs),
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+              m_gpu_ptrs(other.m_gpu_ptrs),
+              m_device_ptr_array(other.m_device_ptr_array),
+#endif
+              m_ownsData(other.m_ownsData)
+         {
+            // Transfer ownership
+            other.m_ownsData = false;
+            other.m_cpu_ptrs = nullptr;
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+            other.m_gpu_ptrs = nullptr;
+            other.m_device_ptr_array = nullptr;
+#endif
+         }
          
          ///
          /// @author Peter Robinson
          ///
-         /// Destructor - clean up the arrays of raw pointers
+         /// Destructor - clean up the arrays of raw pointers only if this owns the data
          ///
          CHAI_HOST ~ManagedArrayOfManagedPtrUnpacker() {
-            delete[] m_cpu_ptrs;
+            if (m_ownsData) {
+               delete[] m_cpu_ptrs;
             
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-            delete[] m_gpu_ptrs;
-            gpuFree(m_device_ptr_array);
+               delete[] m_gpu_ptrs;
+               gpuFree(m_device_ptr_array);
 #endif
+            }
+         }
+         
+         /// Assignment operator - doesn't take ownership
+         CHAI_HOST ManagedArrayOfManagedPtrUnpacker& operator=(const ManagedArrayOfManagedPtrUnpacker& other) {
+            if (this != &other) {
+               // Clean up own resources if we own them
+               if (m_ownsData) {
+                  delete[] m_cpu_ptrs;
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+                  delete[] m_gpu_ptrs;
+                  gpuFree(m_device_ptr_array);
+#endif
+               }
+               
+               // Copy data from other
+               m_array = other.m_array;
+               m_size = other.m_size;
+               m_cpu_ptrs = other.m_cpu_ptrs;
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+               m_gpu_ptrs = other.m_gpu_ptrs;
+               m_device_ptr_array = other.m_device_ptr_array;
+#endif
+               m_ownsData = false; // Assignment doesn't take ownership
+            }
+            return *this;
+         }
+         
+         /// Move assignment - takes ownership
+         CHAI_HOST ManagedArrayOfManagedPtrUnpacker& operator=(ManagedArrayOfManagedPtrUnpacker&& other) noexcept {
+            if (this != &other) {
+               // Clean up own resources if we own them
+               if (m_ownsData) {
+                  delete[] m_cpu_ptrs;
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+                  delete[] m_gpu_ptrs;
+                  gpuFree(m_device_ptr_array);
+#endif
+               }
+               
+               // Move data from other
+               m_array = std::move(other.m_array);
+               m_size = other.m_size;
+               m_cpu_ptrs = other.m_cpu_ptrs;
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+               m_gpu_ptrs = other.m_gpu_ptrs;
+               m_device_ptr_array = other.m_device_ptr_array;
+#endif
+               m_ownsData = other.m_ownsData;
+               
+               // Clear other's ownership
+               other.m_ownsData = false;
+               other.m_cpu_ptrs = nullptr;
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+               other.m_gpu_ptrs = nullptr;
+               other.m_device_ptr_array = nullptr;
+#endif
+            }
+            return *this;
          }
 
          ///
@@ -818,8 +911,8 @@ namespace chai {
          T** m_gpu_ptrs = nullptr; //!< Host copy of extracted raw GPU pointers
          T** m_device_ptr_array = nullptr; //!< Device memory array containing GPU pointers
 #endif
+         bool m_ownsData = false; //!< Flag indicating if this object owns the data and should clean up
    };
-
    namespace detail {
 
       ///
