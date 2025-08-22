@@ -15,12 +15,23 @@ set (chai_headers
   ArrayManager.hpp
   ArrayManager.inl
   ChaiMacros.hpp
+  DeviceHelpers.hpp
   ExecutionSpaces.hpp
   ManagedArray.hpp
   ManagedArray.inl
   managed_ptr.hpp
   PointerRecord.hpp
   Types.hpp)
+
+if(CHAI_ENABLE_EXPERIMENTAL)
+  set(chai_headers
+    ${chai_headers}
+    ManagedSharedPtr.hpp
+    SharedPtrCounter.hpp
+    SharedPtrManager.hpp
+    SharedPtrManager.inl
+    SharedPointerRecord.hpp)
+endif()
 
 if(CHAI_DISABLE_RM)
   set(chai_headers
@@ -30,6 +41,12 @@ endif ()
 
 set (chai_sources
   ArrayManager.cpp)
+
+if(CHAI_ENABLE_EXPERIMENTAL)
+  set (chai_sources
+    ${chai_sources}
+    SharedPtrManager.cpp)
+endif ()
 
 set (chai_depends
   umpire)

@@ -25,6 +25,23 @@ blt_add_test(
   NAME managed_array_test
   COMMAND managed_array_tests)
 
+if(CHAI_ENABLE_EXPERIMENTAL)
+if (CHAI_ENABLE_CUDA OR CHAI_ENABLE_HIP)
+blt_add_executable(
+  NAME managed_shared_ptr_tests
+  SOURCES managed_shared_ptr_tests.cpp
+  DEPENDS_ON ${chai_integration_test_depends})
+
+target_include_directories(
+  managed_shared_ptr_tests
+  PUBLIC ${PROJECT_BINARY_DIR}/include)
+
+blt_add_test(
+  NAME managed_shared_ptr_test
+  COMMAND managed_shared_ptr_tests)
+endif() # CHAI_ENABLE_CUDA OR CHAI_ENABLE_HIP
+endif() # CHAI_ENABLE_EXPERIMENTAL
+
 if (CHAI_ENABLE_MANAGED_PTR)
   blt_add_executable(
     NAME managed_ptr_tests
