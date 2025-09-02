@@ -78,28 +78,28 @@ namespace expt {
       constexpr UnifiedMemoryPointer() noexcept = default;
 
       explicit UnifiedMemoryPointer(const umpire::Allocator& allocator)
-        : m_manager{new UnifiedMemoryArray(allocator)}
+        : m_manager{new UnifiedMemoryManager(allocator)}
       {
       }
 
       UnifiedMemoryPointer(std::size_t size, const umpire::Allocator& allocator)
         : m_size{size},
-          m_manager{new UnifiedMemoryArray(size * sizeof(T), allocator)}
+          m_manager{new UnifiedMemoryManager(size * sizeof(T), allocator)}
       {
       }
 
       explicit UnifiedMemoryPointer(int allocatorID)
-        : m_manager{new UnifiedMemoryArray(allocatorID)}
+        : m_manager{new UnifiedMemoryManager(allocatorID)}
       {
       }
 
       UnifiedMemoryPointer(std::size_t size, int allocatorID)
         : m_size{size},
-          m_manager{new UnifiedMemoryArray(size * sizeof(T), allocatorID)}
+          m_manager{new UnifiedMemoryManager(size * sizeof(T), allocatorID)}
       {
       }
 
-      explicit UnifiedMemoryPointer(UnifiedMemoryArray* manager)
+      explicit UnifiedMemoryPointer(UnifiedMemoryManager* manager)
         : m_manager{manager}
       {
         if (m_manager)
@@ -133,7 +133,7 @@ namespace expt {
        *
        * \post The UnifiedMemoryPointer takes ownership of the new manager objet.
        */
-      void setManager(UnifiedMemoryArray* manager)
+      void setManager(UnifiedMemoryManager* manager)
       {
         delete m_manager;
         m_manager = manager;
@@ -149,7 +149,7 @@ namespace expt {
        *
        * \return A pointer to the array manager.
        */
-      UnifiedMemoryArray* getManager() const
+      UnifiedMemoryManager* getManager() const
       {
         return m_manager;
       }
@@ -169,7 +169,7 @@ namespace expt {
           m_manager->resize(newSize * sizeof(T));
         }
         else {
-          m_manager = new UnifiedMemoryArray(newSize * sizeof(T));
+          m_manager = new UnifiedMemoryManager(newSize * sizeof(T));
         }
       }
 
@@ -202,7 +202,7 @@ namespace expt {
 #if !defined(CHAI_DEVICE_COMPILE)
         if (m_manager) {
           m_data = static_cast<T*>(m_manager->data(!std::is_const<T>::value));
-          m_size = m_manager->size() / sizeof(T);
+          // m_size = m_manager->size() / sizeof(T);
         }
 #endif
       }
@@ -294,7 +294,7 @@ namespace expt {
       /*!
        * The array manager controls the coherence of the array.
        */
-      UnifiedMemoryArray* m_manager{nullptr};
+      UnifiedMemoryManager* m_manager{nullptr};
   };  // class UnifiedMemoryPointer
 }  // namespace expt
 }  // namespace chai
