@@ -1,8 +1,7 @@
 #ifndef CHAI_UNIFIED_MEMORY_POINTER_HPP
 #define CHAI_UNIFIED_MEMORY_POINTER_HPP
 
-#include "chai/expt/ArrayManager.hpp"
-#include "chai/expt/ExecutionContextManager.hpp"
+#include "chai/expt/UnifiedMemoryManager.hpp"
 
 #include <cstddef>
 #include <stdexcept>
