@@ -13,9 +13,9 @@ namespace expt {
    * \brief An array class that manages coherency across the CPU and GPU.
    *        How the coherence is obtained is controlled by the array manager.
    *
-   * \tparam ElementT The type of element in the array.
+   * \tparam ElementType The type of element in the array.
    */
-  template <typename ElementT>
+  template <typename ElementType>
   class ManagedArray {
     public:
       /*!
@@ -30,12 +30,12 @@ namespace expt {
        *
        * \note The array takes ownership of the manager.
        */
-      explicit ManagedArray(ArrayManager<ElementT>* manager) :
-        m_array_manager{manager}
+      explicit ManagedArray(ArrayManager<ElementType>* manager)
+        : m_manager{manager}
       {
-        if (m_array_manager)
+        if (m_manager)
         {
-          m_size = m_array_manager->size();
+          m_size = m_manager->size();
         }
       }
 
@@ -50,11 +50,11 @@ namespace expt {
       CHAI_HOST_DEVICE ManagedArray(const ManagedArray& other) :
         m_data{other.m_data},
         m_size{other.m_size},
-        m_array_manager{other.m_array_manager}
+        m_manager{other.m_manager}
       {
 #if !defined(CHAI_DEVICE_COMPILE)
-        if (m_array_manager) {
-          m_data = m_array_manager->data(ExecutionContextManager::getInstance()::getContext(), !std::is_const<ElementT>::value));
+        if (m_manager) {
+          m_data = m_manager->data(ExecutionContextManager::getInstance()::getContext(), !std::is_const<ElementType>::value));
         }
 #endif
       }
@@ -66,10 +66,10 @@ namespace expt {
        *
        * \post The ManagedArray takes ownership of the new manager objet.
        */
-       void setManager(ArrayManager<ElementT>* manager)
+       void setManager(ArrayManager<ElementType>* manager)
        {
-         delete m_array_manager;
-         m_array_manager = manager;
+         delete m_manager;
+         m_manager = manager;
        }
 
       /*!
@@ -77,8 +77,8 @@ namespace expt {
        *
        * \return A pointer to the array manager.
        */
-      ArrayManager<ElementT>* getManager() const {
-        return m_array_manager;
+      ArrayManager<ElementType>* getManager() const {
+        return m_manager;
       }
 
       /*!
@@ -90,9 +90,9 @@ namespace expt {
        *       If no array manager is associated, an exception is thrown.
        */
       void resize(std::size_t newSize) {
-        if (m_array_manager) {
+        if (m_manager) {
           m_size = newSize;
-          m_array_manager->resize(newSize);
+          m_manager->resize(newSize);
         }
         else {
           throw std::runtime_exception("Unable to resize");
@@ -108,8 +108,8 @@ namespace expt {
       void free() {
         m_data = nullptr;
         m_size = 0;
-        delete m_array_manager;
-        m_array_manager = nullptr;
+        delete m_manager;
+        m_manager = nullptr;
       }
 
       /*!
@@ -129,9 +129,9 @@ namespace expt {
        *
        * \return A pointer to the element data in the specified context.
        */
-      ElementT* data(ExecutionContext context) const {
-        if (m_array_manager) {
-          m_data = m_array_manager->data(context, !std::is_const<ElementT>::value);
+      ElementType* data(ExecutionContext context) const {
+        if (m_manager) {
+          m_data = m_manager->data(context, !std::is_const<ElementType>::value);
         }
 
         return m_data;
@@ -144,9 +144,9 @@ namespace expt {
        *
        * \return A const pointer to the element data in the specified context.
        */
-      const ElementT* cdata(ExecutionContext context) const {
-        if (m_array_manager) {
-          m_data = m_array_manager->data(context, false);
+      const ElementType* cdata(ExecutionContext context) const {
+        if (m_manager) {
+          m_data = m_manager->data(context, false);
         }
 
         return m_data;
@@ -157,7 +157,7 @@ namespace expt {
        *
        * \return A pointer to the element data in the current execution space.
        */
-      CHAI_HOST_DEVICE ElementT* data() const {
+      CHAI_HOST_DEVICE ElementType* data() const {
 #if !defined(CHAI_DEVICE_COMPILE)
         return data(HOST);
 #endif
@@ -169,7 +169,7 @@ namespace expt {
        *
        * \return A const pointer to the element data in the current execution space.
        */
-      CHAI_HOST_DEVICE const ElementT* cdata() const {
+      CHAI_HOST_DEVICE const ElementType* cdata() const {
 #if !defined(CHAI_DEVICE_COMPILE)
         return cdata(HOST);
 #endif
@@ -184,7 +184,7 @@ namespace expt {
        * \pre The copy constructor has been called with the execution space
        *      set to CPU or GPU (e.g. by the RAJA plugin).
        */
-      CHAI_HOST_DEVICE ElementT& operator[](std::size_t i) const {
+      CHAI_HOST_DEVICE ElementType& operator[](std::size_t i) const {
         return m_data[i];
       }
 
@@ -197,9 +197,9 @@ namespace expt {
        *
        * \throw std::runtime_exception if unable to retrieve the element.
        */
-      ElementT get(std::size_t i) const {
-        if (m_array_manager) {
-          return m_array_manager->get(i);
+      ElementType get(std::size_t i) const {
+        if (m_manager) {
+          return m_manager->get(i);
         }
         else {
           throw std::runtime_exception("Unable to get element");
@@ -214,9 +214,9 @@ namespace expt {
        *
        * \throw std::runtime_exception if the array manager is not associated with the ManagedArray.
        */
-      void set(std::size_t i, const ElementT& value) {
-        if (m_array_manager) {
-          m_array_manager->set(i, value);
+      void set(std::size_t i, const ElementType& value) {
+        if (m_manager) {
+          m_manager->set(i, value);
         }
         else {
           throw std::runtime_exception("Unable to set element");
@@ -227,7 +227,7 @@ namespace expt {
       /*!
        * The array that is coherent in the current execution space.
        */
-      ElementT* m_data = nullptr;
+      ElementType* m_data = nullptr;
 
       /*!
        * The number of elements in the array.
@@ -237,20 +237,20 @@ namespace expt {
       /*!
        * The array manager controls the coherence of the array.
        */
-      ArrayManager<ElementT>* m_array_manager = nullptr;
+      ArrayManager<ElementType>* m_manager = nullptr;
   };  // class ManagedArray
 
   /*!
    * \brief Constructs an array by creating a new manager object.
    *
-   * \tparam ArrayManager<ElementT> The type of array manager.
+   * \tparam ArrayManager<ElementType> The type of array manager.
    * \tparam Args The type of the arguments used to construct the array manager.
    *
    * \param args The arguments to construct an array manager.
    */
-  template <typename ElementT, typename ArrayManager<ElementT>, typename... Args>
-  ManagedArray<ElementT> makeArray(Args&&... args) {
-    return ManagedArray<ElementT>(new ArrayManager<ElementT>(std::forward<Args>(args)...));
+  template <typename ElementType, typename ArrayManager<ElementType>, typename... Args>
+  ManagedArray<ElementType> makeArray(Args&&... args) {
+    return ManagedArray<ElementType>(new ArrayManager<ElementType>(std::forward<Args>(args)...));
   }
 }  // namespace expt
 }  // namespace chai
