@@ -54,9 +54,26 @@ namespace expt {
       {
 #if !defined(CHAI_DEVICE_COMPILE)
         if (m_manager) {
-          m_data = m_manager->data(ExecutionContextManager::getInstance()::getContext(), !std::is_const<ElementType>::value));
+          m_data = m_manager->data(!std::is_const<ElementType>::value));
         }
 #endif
+      }
+
+      /*!
+       * \brief Constructs a ManagedArray<const T> from a ManagedArray<T>.
+       *
+       * \param other The non-const array to convert from.
+       *
+       * \note This is a converting constructor that enables implicit conversion
+       *       from ManagedArray<T> to ManagedArray<const T>.
+       */
+      template <typename OtherElementType, 
+                std::enable_if_t<std::is_convertible_v<OtherElementType (*)[], ElementType (*)[]>* = nullptr>
+      CHAI_HOST_DEVICE ManagedArray(const ManagedArray<OtherElementType>& other)
+        : m_data{other.m_data},
+          m_size{other.m_size},
+          m_manager{other.m_manager}
+      {
       }
 
       /*!
