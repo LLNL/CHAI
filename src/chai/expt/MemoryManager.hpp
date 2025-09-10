@@ -51,7 +51,7 @@ namespace expt {
        *
        * \param data [out] A coherent array in the current execution context.
        */
-      virtual void* data(bool touch) = 0;
+      virtual T* data(Context context, bool touch) = 0;
 
       /*!
        * \brief Returns the value at index i.
@@ -61,7 +61,7 @@ namespace expt {
        * \param i The index of the element to get.
        * \return The value at index i.
        */
-      virtual void* get(std::size_t offset, std::size_t size) const = 0;
+      virtual T get(std::size_t i) const = 0;
 
       /*!
        * \brief Sets the value at index i to the specified value.
@@ -71,7 +71,7 @@ namespace expt {
        * \param i The index of the element to set.
        * \param value The value to set at index i.
        */
-      virtual void set(std::size_t offset, std::size_t size, const void* value) = 0;
+      virtual void set(std::size_t i, const T& value) = 0;
   };  // class ArrayManager
 }  // namespace expt
 }  // namespace chai

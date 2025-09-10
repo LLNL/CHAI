@@ -2,6 +2,7 @@
 #define CHAI_MANAGED_ARRAY_HPP
 
 #include "chai/expt/ArrayManager.hpp"
+#include "chai/expt/ExecutionContextManager.hpp"
 #include <cstddef>
 
 namespace chai {
@@ -29,9 +30,14 @@ namespace expt {
        *
        * \note The array takes ownership of the manager.
        */
-      explicit ManagedArray(ArrayManager* manager)
+      explicit ManagedArray(ArrayManager<ElementType>* manager)
         : m_manager{manager}
-      {}
+      {
+        if (m_manager)
+        {
+          m_size = m_manager->size();
+        }
+      }
 
       /*!
        * \brief Constructs a shallow copy of an array from another and makes
@@ -46,7 +52,11 @@ namespace expt {
         m_size{other.m_size},
         m_manager{other.m_manager}
       {
-        update();
+#if !defined(CHAI_DEVICE_COMPILE)
+        if (m_manager) {
+          m_data = m_manager->data(!std::is_const<ElementType>::value));
+        }
+#endif
       }
 
       /*!
@@ -73,7 +83,7 @@ namespace expt {
        *
        * \post The ManagedArray takes ownership of the new manager objet.
        */
-       void setManager(ArrayManager* manager)
+       void setManager(ArrayManager<ElementType>* manager)
        {
          delete m_manager;
          m_manager = manager;
@@ -84,7 +94,7 @@ namespace expt {
        *
        * \return A pointer to the array manager.
        */
-      ArrayManager* getManager() const {
+      ArrayManager<ElementType>* getManager() const {
         return m_manager;
       }
 
@@ -129,22 +139,6 @@ namespace expt {
         return m_size;
       }
 
-      CHAI_HOST_DEVICE void update() const {
-#if !defined(CHAI_DEVICE_COMPILE)
-        if (m_manager) {
-          m_data = m_manager->data(!std::is_const_v<ElementType>);
-        }
-#endif
-      }
-
-      CHAI_HOST_DEVICE void cupdate() const {
-#if !defined(CHAI_DEVICE_COMPILE)
-        if (m_manager) {
-          m_data = m_manager->data(false);
-        }
-#endif
-      }
-
       /*!
        * \brief Get a pointer to the element data in the specified context.
        *
@@ -152,8 +146,11 @@ namespace expt {
        *
        * \return A pointer to the element data in the specified context.
        */
-      CHAI_HOST_DEVICE ElementType* data() const {
-        update();
+      ElementType* data(ExecutionContext context) const {
+        if (m_manager) {
+          m_data = m_manager->data(context, !std::is_const<ElementType>::value);
+        }
+
         return m_data;
       }
 
@@ -164,8 +161,35 @@ namespace expt {
        *
        * \return A const pointer to the element data in the specified context.
        */
+      const ElementType* cdata(ExecutionContext context) const {
+        if (m_manager) {
+          m_data = m_manager->data(context, false);
+        }
+
+        return m_data;
+      }
+
+      /*!
+       * \brief Get a pointer to the element data in the current execution space.
+       *
+       * \return A pointer to the element data in the current execution space.
+       */
+      CHAI_HOST_DEVICE ElementType* data() const {
+#if !defined(CHAI_DEVICE_COMPILE)
+        return data(HOST);
+#endif
+        return m_data;
+      }
+
+      /*!
+       * \brief Get a const pointer to the element data in the current execution space.
+       *
+       * \return A const pointer to the element data in the current execution space.
+       */
       CHAI_HOST_DEVICE const ElementType* cdata() const {
-        cupdate();
+#if !defined(CHAI_DEVICE_COMPILE)
+        return cdata(HOST);
+#endif
         return m_data;
       }
 
@@ -192,7 +216,7 @@ namespace expt {
        */
       ElementType get(std::size_t i) const {
         if (m_manager) {
-          return *(static_cast<ElementType*>(m_manager->get(i*sizeof(ElementType), sizeof(ElementType))));
+          return m_manager->get(i);
         }
         else {
           throw std::runtime_exception("Unable to get element");
@@ -209,7 +233,7 @@ namespace expt {
        */
       void set(std::size_t i, const ElementType& value) {
         if (m_manager) {
-          m_manager->set(i*sizeof(ElementType), sizeof(ElementType), static_cast<void*>(std::addressof(value)));
+          m_manager->set(i, value);
         }
         else {
           throw std::runtime_exception("Unable to set element");
@@ -230,7 +254,7 @@ namespace expt {
       /*!
        * The array manager controls the coherence of the array.
        */
-      ArrayManager* m_manager = nullptr;
+      ArrayManager<ElementType>* m_manager = nullptr;
   };  // class ManagedArray
 
   /*!
@@ -241,9 +265,9 @@ namespace expt {
    *
    * \param args The arguments to construct an array manager.
    */
-  template <typename ElementType, typename ArrayManager, typename... Args>
+  template <typename ElementType, typename ArrayManager<ElementType>, typename... Args>
   ManagedArray<ElementType> makeArray(Args&&... args) {
-    return ManagedArray<ElementType>(new ArrayManager(std::forward<Args>(args)...));
+    return ManagedArray<ElementType>(new ArrayManager<ElementType>(std::forward<Args>(args)...));
   }
 }  // namespace expt
 }  // namespace chai

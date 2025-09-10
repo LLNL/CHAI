@@ -1,33 +1,34 @@
-#ifndef CHAI_UNIFIED_MEMORY_MANAGER_HPP
-#define CHAI_UNIFIED_MEMORY_MANAGER_HPP
+#ifndef CHAI_UNIFIED_ARRAY_MANAGER_HPP
+#define CHAI_UNIFIED_ARRAY_MANAGER_HPP
 
+#include "chai/expt/ArrayManager.hpp"
 #include "chai/expt/ExecutionContext.hpp"
 #include "umpire/ResourceManager.hpp"
 
 namespace chai {
 namespace expt {
-  class UnifiedMemoryManager
+  class UnifiedArrayManager : public ArrayManager {
     public:
-      UnifiedMemoryManager() = default;
+      UnifiedArrayManager() = default;
 
-      explicit UnifiedMemoryManager(const umpire::Allocator& allocator) :
+      explicit UnifiedArrayManager(const umpire::Allocator& allocator) :
         m_allocator{allocator}
       {
       }
 
-      UnifiedMemoryManager(std::size_t size, const umpire::Allocator& allocator) :
+      UnifiedArrayManager(std::size_t size, const umpire::Allocator& allocator) :
         m_allocator{allocator},
         m_size{size},
         m_data{m_allocator.allocate(m_size)}
       {
       }
 
-      explicit UnifiedMemoryManager(int allocatorID) :
+      explicit UnifiedArrayManager(int allocatorID) :
         m_allocator{m_resource_manager.getAllocator(allocatorID)}
       {
       }
 
-      UnifiedMemoryManager(std::size_t size, int allocatorID) :
+      UnifiedArrayManager(std::size_t size, int allocatorID) :
         m_allocator{m_resource_manager.getAllocator(allocatorID)},
         m_size{size},
         m_data{m_allocator.allocate(m_size)}
@@ -35,7 +36,7 @@ namespace expt {
         m_data = m_allocator.allocate(size);
       }
 
-      UnifiedMemoryManager(const UnifiedMemoryManager& other) :
+      UnifiedArrayManager(const UnifiedArrayManager& other) :
         m_size{other.m_size},
         m_allocator{other.m_allocator}
       {
@@ -46,7 +47,7 @@ namespace expt {
         m_modified = ExecutionContext::DEVICE;
       }
 
-      UnifiedMemoryManager(UnifiedMemoryManager&& other) :
+      UnifiedArrayManager(UnifiedArrayManager&& other) :
         m_data{other.m_data},
         m_size{other.m_size},
         m_modified{other.m_modified},
@@ -58,7 +59,7 @@ namespace expt {
         other.m_allocator = umpire::Allocator();
       }
 
-      UnifiedMemoryManager& operator=(const UnifiedMemoryManager& other) {
+      UnifiedArrayManager& operator=(const UnifiedArrayManager& other) {
         if (&other != this) { // Prevent self-assignment
           m_allocator.deallocate(m_data);
 
@@ -74,7 +75,7 @@ namespace expt {
         return *this;
       }
 
-      UnifiedMemoryManager& operator=(UnifiedMemoryManager&& other) {
+      UnifiedArrayManager& operator=(UnifiedArrayManager&& other) {
         if (&other != this) {
           m_allocator.deallocate(m_data);
 
@@ -95,7 +96,7 @@ namespace expt {
       /*!
        * \brief Destructor.
        */
-      ~UnifiedMemoryManager() {
+      ~UnifiedArrayManager() {
         m_allocator.deallocate(m_data);
       }
 
@@ -161,8 +162,8 @@ namespace expt {
       
       ExecutionContextManager& m_execution_context_manager{ExecutionContextManager::getInstance()};
       
-  };  // class UnifiedMemoryManager
+  };  // class UnifiedArrayManager
 }  // namespace expt
 }  // namespace chai
 
-#endif  // CHAI_UNIFIED_MEMORY_MANAGER_HPP
+#endif  // CHAI_UNIFIED_ARRAY_MANAGER_HPP
