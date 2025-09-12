@@ -1,12 +1,12 @@
-###############################################################################
+##############################################################################
 # Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
 # project contributors. See the CHAI LICENSE file for details.
 #
 # SPDX-License-Identifier: (MIT)
-###############################################################################
+##############################################################################
 
 # Override reproducer section to define project specific variables.
-.ruby_reproducer_vars:
+.tuolumne_reproducer_vars:
   script:
     - !reference [.reproducer_vars, script]
 
@@ -25,9 +25,3 @@
 # We do not recommend using ${PROJECT_<MACHINE>_VARIANTS} and
 # ${PROJECT_<MACHINE>_DEPS} in the extra jobs. There is no reason not to fully
 # describe the spec here.
-
-clang_14_0_6_develop_tpls:
-  variables:
-    SPEC: " ~shared +raja tests=basic %clang@14.0.6 ^umpire@develop ^raja@develop~examples~exercises ^camp@main"
-  extends: .job_on_ruby
-  allow_failure: true

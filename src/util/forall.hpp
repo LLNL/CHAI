@@ -44,7 +44,7 @@ void forall(sequential, int begin, int end, LOOP_BODY body)
 
 #if defined(CHAI_ENABLE_UM)
 #if !defined(CHAI_THIN_GPU_ALLOCATE)
-  cudaDeviceSynchronize();
+  (void)cudaDeviceSynchronize();
 #endif
 #endif
 
@@ -118,7 +118,7 @@ void forall(gpu, int begin, int end, LOOP_BODY&& body)
 #elif defined(CHAI_ENABLE_HIP)
   hipLaunchKernelGGL(forall_kernel_gpu, dim3(gridSize), dim3(blockSize), 0, 0,
                      begin, end - begin, body);
-  hipDeviceSynchronize();
+  (void)hipDeviceSynchronize();
 #endif
   
   rm->setExecutionSpace(chai::NONE);

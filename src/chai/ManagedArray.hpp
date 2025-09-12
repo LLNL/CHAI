@@ -373,14 +373,14 @@ private:
   // shenanigan reasons need to be defined here.
 #if !defined(CHAI_DISABLE_RM)
   // if T is a CHAICopyable, then it is important to initialize all the
-  // ManagedArrays to nullptr at allocation, since it is extremely easy to
+  // elements with default constructors, since it is extremely easy to
   // trigger a moveInnerImpl, which expects inner values to be initialized.
   template <bool B = std::is_base_of<CHAICopyable, T>::value,
             typename std::enable_if<B, int>::type = 0>
   CHAI_HOST bool initInner(size_t start = 0)
   {
     for (size_t i = start; i < m_size/sizeof(T); ++i) {
-      m_active_base_pointer[i] = nullptr;
+      new (&m_active_base_pointer[i]) T();
     }
     return true;
   }
@@ -389,6 +389,26 @@ private:
   template <bool B = std::is_base_of<CHAICopyable, T>::value,
             typename std::enable_if<!B, int>::type = 0>
   CHAI_HOST bool initInner(size_t = 0)
+  {
+    return false;
+  }
+
+  // if T is a CHAICopyable, then it is important to free all the
+  // CHAICopyable containers, which expect inner values to be initialized.
+  template <bool B = std::is_base_of<CHAICopyable, T>::value,
+            typename std::enable_if<B, int>::type = 0>
+  CHAI_HOST bool freeInner(size_t start = 0)
+  {
+    for (size_t i = start; i < m_size/sizeof(T); ++i) {
+      m_active_base_pointer[i].~T();
+    }
+    return true;
+  }
+
+  // Do not deep initialize if T is not a CHAICopyable.
+  template <bool B = std::is_base_of<CHAICopyable, T>::value,
+            typename std::enable_if<!B, int>::type = 0>
+  CHAI_HOST bool freeInner(size_t = 0)
   {
     return false;
   }

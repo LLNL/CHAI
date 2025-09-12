@@ -4,19 +4,20 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
+
+cmake_minimum_required(VERSION 3.23)
+
 cmake_policy(SET CMP0057 NEW)
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0025 NEW)
+cmake_policy(SET CMP0096 OLD) # Required when building Umpire submodule
 
 include(CMakeDependentOption)
 include(CMakePackageConfigHelpers)
 
-project(Chai LANGUAGES C CXX VERSION 2025.03.1)
-cmake_minimum_required(VERSION 3.23)
+project(Chai LANGUAGES C CXX VERSION 2025.09.0)
 
 include(cmake/SetupChaiOptions.cmake)
-
-set(BLT_CXX_STD c++14 CACHE STRING "")
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")
   message(STATUS "Setting CMAKE_CXX_EXTENSIONS to ON for PGI Compiler")
@@ -28,6 +29,14 @@ message(STATUS "Using CMake version ${CMAKE_VERSION}")
 ################################
 # BLT
 ################################
+set(BLT_CXX_STD c++17 CACHE STRING "")
+
+if(("${BLT_CXX_STD}" STREQUAL "c++98") OR
+   ("${BLT_CXX_STD}" STREQUAL "c++11") OR
+   ("${BLT_CXX_STD}" STREQUAL "c++14"))
+   message(FATAL_ERROR "CHAI requires a minimum C++ standard of c++17. Please set BLT_CXX_STD appropriately.")
+endif()
+
 if (NOT BLT_LOADED)
   if (DEFINED BLT_SOURCE_DIR)
     if (NOT EXISTS ${BLT_SOURCE_DIR}/SetupBLT.cmake)

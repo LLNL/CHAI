@@ -249,12 +249,14 @@ CHAI_HOST void ManagedArray<T>::reallocate(size_t elems)
       // trigger a moveInnerImpl, which expects inner values to be initialized.
       if (initInner(old_size/sizeof(T))) {
         // if we are active on the  GPU, we need to send any newly initialized inner members to the device
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
         if (m_pointer_record->m_last_space == GPU && old_size < m_size) {
           umpire::ResourceManager & umpire_rm = umpire::ResourceManager::getInstance();
           void *src = (void *)(((char *)(m_pointer_record->m_pointers[CPU])) + old_size);
           void *dst = (void *)(((char *)(m_pointer_record->m_pointers[GPU])) + old_size);
           umpire_rm.copy(dst,src,m_size-old_size);
         }
+#endif
       }
 
       CHAI_LOG(Debug, "m_active_ptr reallocated at address: " << m_active_pointer);
@@ -276,6 +278,8 @@ CHAI_HOST void ManagedArray<T>::free(ExecutionSpace space)
     if (m_pointer_record == &ArrayManager::s_null_record) {
        m_pointer_record = m_resource_manager->makeManaged((void *)m_active_base_pointer,m_size,space,true);
     }
+    freeInner();
+
     m_resource_manager->free(m_pointer_record, space);
     m_active_pointer = nullptr;
     m_active_base_pointer = nullptr;
