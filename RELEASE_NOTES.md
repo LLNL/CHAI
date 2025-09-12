@@ -13,6 +13,21 @@ in this file.
 
 The format of this file is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Version 2025.09.0] - Release date 2025-09-12
+
+### Fixed
+- Improved support for non-trivial element types in `ManagedArray`.
+
+### Changed
+- CHAI now requires C++17 as the minimum C++ standard.
+- CHAI now requires CUDA 11 as the minimum CUDA version.
+- Updated BLT to v0.7.1.
+- Updated Umpire to v2025.09.0.
+- Updated RAJA to v2025.09.0.
+
+### Experimental
+- Added a `ManagedSharedPtr` class similar to `managed_ptr` that acts like `std::shared_ptr` on the host and a view on the device.
+
 ## [Version 2025.03.1] - Release date 2025-06-23
 
 ### Changed
