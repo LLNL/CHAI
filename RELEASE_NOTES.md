@@ -13,6 +13,12 @@ in this file.
 
 The format of this file is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Version 2025.09.0] - Release date 2025-09-12
+
+### Changed
+- CHAI now requires C++17 as the minimum C++ standard.
+- CHAI now requires CUDA 11 as the minimum CUDA version.
+
 ## [Version 2025.03.1] - Release date 2025-06-23
 
 ### Changed

@@ -4,6 +4,9 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
+
+cmake_minimum_required(VERSION 3.23)
+
 cmake_policy(SET CMP0057 NEW)
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0025 NEW)
@@ -11,8 +14,7 @@ cmake_policy(SET CMP0025 NEW)
 include(CMakeDependentOption)
 include(CMakePackageConfigHelpers)
 
-project(Chai LANGUAGES C CXX VERSION 2025.03.1)
-cmake_minimum_required(VERSION 3.23)
+project(Chai LANGUAGES C CXX VERSION 2025.09.0)
 
 include(cmake/SetupChaiOptions.cmake)
 
