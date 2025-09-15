@@ -329,9 +329,9 @@ void SharedPtrManager::free(msp_pointer_record* pointer_record, ExecutionSpace s
 #endif
 #if defined(CHAI_ENABLE_PINNED)
           if (space_ptr == pointer_record->m_pointers[PINNED]) {
-            callback(pointer_record,
-                     ACTION_FREE,
-                     ExecutionSpace(PINNED));
+            //callback(pointer_record,
+            //         ACTION_FREE,
+            //         ExecutionSpace(PINNED));
 
             auto alloc = m_resource_manager.getAllocator(
                 pointer_record->m_allocators[PINNED]);
