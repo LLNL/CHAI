@@ -107,7 +107,7 @@ namespace chai::expt
 
             if constexpr (std::is_trivially_copyable_v<T>)
             {
-              std::memcpy(newData, m_data, std::min(newSizeBytes, m_size * sizeof(T));
+              std::memcpy(newData, m_data, std::min(newSizeBytes, m_size * sizeof(T)));
             }
             else
             {
