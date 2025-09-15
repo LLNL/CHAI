@@ -15,7 +15,7 @@ cmake_policy(SET CMP0096 OLD) # Required when building Umpire submodule
 include(CMakeDependentOption)
 include(CMakePackageConfigHelpers)
 
-project(Chai LANGUAGES C CXX VERSION 2025.09.0)
+project(Chai LANGUAGES C CXX VERSION 2025.09.1)
 
 include(cmake/SetupChaiOptions.cmake)
 

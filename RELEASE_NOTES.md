@@ -13,6 +13,14 @@ in this file.
 
 The format of this file is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Version 2025.09.1] - Release date 2025-09-15
+
+### Fixed
+- Fixed build error when `CHAI_ENABLE_EXPERIMENTAL` was set to ON.
+
+### Changed
+- Turned off `CHAI_ENABLE_EXPERIMENTAL` by default.
+
 ## [Version 2025.09.0] - Release date 2025-09-12
 
 ### Fixed
@@ -27,6 +35,7 @@ The format of this file is based on [Keep a Changelog](http://keepachangelog.com
 
 ### Experimental
 - Added a `ManagedSharedPtr` class similar to `managed_ptr` that acts like `std::shared_ptr` on the host and a view on the device.
+- Added `CHAI_ENABLE_EXPERIMENTAL` CMake option for enabling experimental features. Defaults to ON.
 
 ## [Version 2025.03.1] - Release date 2025-06-23
 
