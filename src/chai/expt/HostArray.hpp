@@ -14,7 +14,7 @@ namespace chai::expt
     public:
       HostArray() = default;
 
-      HostArray(const umpire::Allocator& allocator)
+      explicit HostArray(const umpire::Allocator& allocator)
         : m_allocator{allocator}
       {
       }
