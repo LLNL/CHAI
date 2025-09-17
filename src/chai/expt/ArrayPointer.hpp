@@ -2,20 +2,27 @@
 #define CHAI_ARRAY_POINTER_HPP
 
 #include "chai/config.hpp"
+#include <type_traits>
 
 namespace chai::expt
 {
-  template <typename T, template <typename> ArrayType>
+  template <typename ElementType, template <typename> typename ArrayType>
   class ArrayPointer
   {
     public:
-      using Array = std::conditional_t<std::is_const_v<T>, const <std::remove_cv_t<T>>, ArrayType<std::remove_cv_t<T>>>;
+      using Array = std::conditional_t<std::is_const_v<ElementType>, const <std::remove_cv_t<ElementType>>, ArrayType<std::remove_cv_t<ElementType>>>;
       
       ArrayPointer() = default;
+
+      CHAI_HOST_DEVICE ArrayPointer(std::nullptr_t)
+        : ArrayPointer()
+      {
+      }
 
       explicit ArrayPointer(Array* array)
         : m_array{array}
       {
+        update();
       }
 
       CHAI_HOST_DEVICE ArrayPointer(const ArrayPointer& other)
@@ -27,15 +34,37 @@ namespace chai::expt
       }
 
       template <typename OtherT, 
-                std::enable_if_t<std::is_convertible_v<OtherT (*)[], T (*)[]>* = nullptr>
-      CHAI_HOST_DEVICE Array(const Array<OtherElementType>& other)
+                std::enable_if_t<std::is_convertible_v<OtherT (*)[], ElementType (*)[]>* = nullptr>
+      CHAI_HOST_DEVICE ArrayPointer(const ArrayPointer<OtherT>& other)
         : m_data{other.m_data},
           m_size{other.m_size},
           m_array{other.m_array}
       {
+        update();
       }
 
-      ArrayPointer& operator=(const ArrayPointer& other) = default;
+      CHAI_HOST_DEVICE ArrayPointer& operator=(const ArrayPointer& other)
+      {
+        if (&other != this)
+        {
+          m_data = other.m_data;
+          m_size = other.m_size;
+          m_array = other.m_array;
+
+          update();
+        }
+
+        return *this;
+      }
+
+      CHAI_HOST_DEVICE ArrayPointer& operator=(std::nullptr_t)
+      {
+        m_data = nullptr;
+        m_size = 0;
+        m_array = nullptr;
+
+        return *this;
+      }
 
       void resize(std::size_t newSize)
       {
@@ -47,6 +76,8 @@ namespace chai::expt
         m_data = nullptr;
         m_size = newSize;
         m_array->resize(newSize);
+
+        update();
       }
 
       void free()
@@ -67,34 +98,76 @@ namespace chai::expt
 #if !defined(CHAI_DEVICE_COMPILE)
         if (m_array)
         {
-          m_data = m_array->data();
+          if (ElementType* data = m_array->data(); data)
+          {
+            m_data = data;
+          }
+
+          m_size = m_array->size();
         }
 #endif
       }
 
-      CHAI_HOST_DEVICE T* data() const
+      CHAI_HOST_DEVICE void cupdate() const
+      {
+#if !defined(CHAI_DEVICE_COMPILE)
+        if (m_array)
+        {
+          const Array* array = m_array;
+
+          if (ElementType* data = array->data(); data)
+          {
+            m_data = data;
+          }
+
+          m_size = array->size();
+        }
+#endif
+      }
+
+      CHAI_HOST_DEVICE ElementType* data() const
       {
         update();
         return m_data;
       }
 
-      CHAI_HOST_DEVICE T& operator[](std::size_t i) const
+      CHAI_HOST_DEVICE ElementType* cdata() const
+      {
+        cupdate();
+        return m_data;
+      }
+
+      CHAI_HOST_DEVICE ElementType& operator[](std::size_t i) const
       {
         return m_data[i];
       }
 
-      T get(std::size_t i) const
+      ElementType get(std::size_t i) const
       {
-        return m_array->get(i);
+        if (m_array && i < m_array->size())
+        {
+          return m_array->get(i);
+        }
+        else
+        {
+          throw std::out_of_range("Array index out of bounds");
+        }
       }
 
-      void set(std::size_t i, T value) const
+      void set(std::size_t i, ElementType value) const
       {
-        m_array->set(i, value);
+        if (m_array && i < m_array->size())
+        {
+          m_array->set(i, value);
+        }
+        else
+        {
+          throw std::out_of_range("Array index out of bounds");
+        }
       }
 
     private:
-      T* m_data{nullptr};
+      ElementType* m_data{nullptr};
       std::size_t m_size{0};
       Array* m_array{nullptr};
   };  // class ArrayPointer
