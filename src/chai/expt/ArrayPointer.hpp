@@ -1,6 +1,8 @@
 #ifndef CHAI_ARRAY_POINTER_HPP
 #define CHAI_ARRAY_POINTER_HPP
 
+#include "chai/config.hpp"
+
 namespace chai::expt
 {
   template <typename T, template <typename> ArrayType>
@@ -16,7 +18,7 @@ namespace chai::expt
       {
       }
 
-      ArrayPointer(const ArrayPointer& other)
+      CHAI_HOST_DEVICE ArrayPointer(const ArrayPointer& other)
         : m_data{other.m_data},
           m_size{other.m_size},
           m_array{other.m_array}
@@ -24,18 +26,24 @@ namespace chai::expt
         update();
       }
 
-      ArrayPointer& operator=(const ArrayPointer& other) = default;
-
-      void update() const
+      template <typename OtherT, 
+                std::enable_if_t<std::is_convertible_v<OtherT (*)[], T (*)[]>* = nullptr>
+      CHAI_HOST_DEVICE Array(const Array<OtherElementType>& other)
+        : m_data{other.m_data},
+          m_size{other.m_size},
+          m_array{other.m_array}
       {
-        if (m_array)
-        {
-          m_data = m_array->data();
-        }
       }
+
+      ArrayPointer& operator=(const ArrayPointer& other) = default;
 
       void resize(std::size_t newSize)
       {
+        if (m_array == nullptr)
+        {
+          m_array = new Array();
+        }
+
         m_data = nullptr;
         m_size = newSize;
         m_array->resize(newSize);
@@ -49,18 +57,28 @@ namespace chai::expt
         m_array = nullptr;
       }
 
-      std::size_t size() const
+      CHAI_HOST_DEVICE std::size_t size() const
       {
         return m_size;
       }
 
-      T* data() const
+      CHAI_HOST_DEVICE void update() const
+      {
+#if !defined(CHAI_DEVICE_COMPILE)
+        if (m_array)
+        {
+          m_data = m_array->data();
+        }
+#endif
+      }
+
+      CHAI_HOST_DEVICE T* data() const
       {
         update();
         return m_data;
       }
 
-      T& operator[](std::size_t i) const
+      CHAI_HOST_DEVICE T& operator[](std::size_t i) const
       {
         return m_data[i];
       }
