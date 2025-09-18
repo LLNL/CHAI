@@ -8,7 +8,15 @@
 #ifndef CHAI_CONTEXT_MANAGER_HPP
 #define CHAI_CONTEXT_MANAGER_HPP
 
+#include "chai/config.hpp"
 #include "chai/expt/Context.hpp"
+#include <unordered_map>
+
+#if defined(CHAI_ENABLE_CUDA)
+#include <cuda_runtime.h>
+#elif defined(CHAI_ENABLE_HIP)
+#include <hip/hip_runtime.h>
+#endif
 
 namespace chai {
 namespace expt {
@@ -70,18 +78,6 @@ namespace expt {
         auto it = m_synchronized.find(context);
 
         if (it != m_synchronized.end()) {
-          #if defined(CHAI_ENABLE_DEVICE)
-          if (context == Context::DEVICE) {
-#if defined(CHAI_ENABLE_CUDA)
-            cudaDeviceSynchronize();
-#elif defined(CHAI_ENABLE_HIP)
-            hipDeviceSynchronize();
-#endif
-          }
-        }
-        bool& unsynchronized = m_unsynchronized[context];
-
-        if (unsynchronized) {
 #if defined(CHAI_ENABLE_DEVICE)
           if (context == Context::DEVICE) {
 #if defined(CHAI_ENABLE_CUDA)
@@ -90,8 +86,7 @@ namespace expt {
             hipDeviceSynchronize();
 #endif
           }
-
-          unsynchronized = false;
+#endif
         }
       }
 
@@ -127,7 +122,7 @@ namespace expt {
       /*!
        * \brief Private constructor for singleton pattern.
        */
-      constexpr ContextManager() noexcept = default;
+      ContextManager() = default;
 
       /*!
        * \brief The current context.
