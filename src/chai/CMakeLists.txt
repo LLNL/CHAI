@@ -32,7 +32,8 @@ if (CHAI_ENABLE_EXPERIMENTAL)
   set(chai_headers
       ${chai_headers}
       expt/Context.hpp
-      expt/ContextManager.hpp)
+      expt/ContextManager.hpp
+      expt/DualArray.hpp)
 endif ()
 
 set (chai_sources

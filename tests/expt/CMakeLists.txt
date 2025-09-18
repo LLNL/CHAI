@@ -14,3 +14,13 @@ blt_add_executable(
 blt_add_test(
   NAME ContextManagerTests
   COMMAND ContextManagerTests)
+
+blt_add_executable(
+  NAME DualArrayTests
+  SOURCES DualArrayTests.cpp
+  INCLUDES ${PROJECT_BINARY_DIR}/include
+  DEPENDS_ON chai gtest)
+
+blt_add_test(
+  NAME DualArrayTests
+  COMMAND DualArrayTests)

@@ -9,6 +9,9 @@
 
 #include "chai/expt/Context.hpp"
 #include "chai/expt/ContextManager.hpp"
+#include "umpire/Allocator.hpp"
+#include "umpire/ResourceManager.hpp"
+#include <cstddef>
 
 namespace chai::expt
 {
@@ -25,8 +28,8 @@ namespace chai::expt
       }
 
       explicit DualArray(std::size_t size,
-                         const umpire::Allocator& allocator = umpire::ResourceManager::getInstance().getAllocator("HOST"),
-                         const umpire::Allocator& allocator = umpire::ResourceManager::getInstance().getAllocator("DEVICE"))
+                         const umpire::Allocator& host_allocator = umpire::ResourceManager::getInstance().getAllocator("HOST"),
+                         const umpire::Allocator& device_allocator = umpire::ResourceManager::getInstance().getAllocator("DEVICE"))
         : m_host_allocator{host_allocator},
           m_device_allocator{device_allocator}
       {
@@ -38,7 +41,7 @@ namespace chai::expt
           m_device_allocator{other.m_device_allocator}
       {
         resize(other.m_size);
-        umpire::ResourceManager::getInstance().copy(other.m_data, m_device_data, m_size * sizeof(T));
+        umpire::ResourceManager::getInstance().copy(other.m_device_data, m_device_data, m_size * sizeof(T));
       }
 
       DualArray(DualArray&& other)
@@ -52,7 +55,7 @@ namespace chai::expt
         other.m_host_data = nullptr;
         other.m_device_data = nullptr;
         other.m_size = 0;
-        other.m_modified = NONE;
+        other.m_modified = Context::NONE;
       }
 
       ~DualArray()
@@ -78,7 +81,7 @@ namespace chai::expt
 
           resize(other.m_size);
           // TODO: Fix the copy
-          umpire::ResourceManager::getInstance().copy(other.m_data, m_data, m_size * sizeof(T));
+          umpire::ResourceManager::getInstance().copy(other.m_device_data, m_device_data, m_size * sizeof(T));
         }
 
         return *this;
@@ -111,7 +114,7 @@ namespace chai::expt
       {
         if (new_size != m_size)
         {
-          std::size_t old_size_bytes = old_size * sizeof(T);
+          std::size_t old_size_bytes = m_size   * sizeof(T);
           std::size_t new_size_bytes = new_size * sizeof(T);
 
           if (m_modified == Context::HOST ||
@@ -185,10 +188,10 @@ namespace chai::expt
 
       T* data()
       {
-        Context execution_context =
-          ContextManager::getInstance()::getContext();
+        Context context =
+          ContextManager::getInstance().getContext();
 
-        if (execution_context == Context::DEVICE)
+        if (context == Context::DEVICE)
         {
           if (m_device_data == nullptr)
           {
@@ -203,7 +206,7 @@ namespace chai::expt
           m_modified = Context::DEVICE;
           return m_device_data;
         }
-        else if (execution_context == Context::HOST)
+        else if (context == Context::HOST)
         {
           if (m_host_data == nullptr)
           {
@@ -226,10 +229,10 @@ namespace chai::expt
 
       const T* data() const
       {
-        Context execution_context =
-          ContextManager::getInstance()::getContext();
+        Context context =
+          ContextManager::getInstance().getContext();
 
-        if (execution_context == Context::DEVICE)
+        if (context == Context::DEVICE)
         {
           if (m_device_data == nullptr)
           {
@@ -244,7 +247,7 @@ namespace chai::expt
 
           return m_device_data;
         }
-        else if (execution_context == Context::HOST)
+        else if (context == Context::HOST)
         {
           if (m_host_data == nullptr)
           {
@@ -325,12 +328,12 @@ namespace chai::expt
       }
 
     private:
-      T* m_host_data{nullptr};
-      T* m_device_data{nullptr};
+      mutable T* m_host_data{nullptr};
+      mutable T* m_device_data{nullptr};
       std::size_t m_size{0};
-      Context m_execution_context{Context::NONE};
-      umpire::Allocator m_host_allocator{umpire::ResourceManager::getInstance().getAllocator("HOST")};
-      umpire::Allocator m_device_allocator{umpire::ResourceManager::getInstance().getAllocator("DEVICE")};
+      mutable Context m_modified{Context::NONE};
+      mutable umpire::Allocator m_host_allocator{umpire::ResourceManager::getInstance().getAllocator("HOST")};
+      mutable umpire::Allocator m_device_allocator{umpire::ResourceManager::getInstance().getAllocator("DEVICE")};
   };  // class DualArray
 }  // namespace chai::expt
 
