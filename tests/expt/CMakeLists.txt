@@ -5,10 +5,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
 
-add_subdirectory(install)
-add_subdirectory(unit)
-add_subdirectory(integration)
+blt_add_executable(
+  NAME ContextManagerTests
+  SOURCES ContextManagerTests.cpp
+  INCLUDES ${PROJECT_BINARY_DIR}/include
+  DEPENDS_ON chai gtest)
 
-if(CHAI_ENABLE_EXPERIMENTAL)
-  add_subdirectory(expt)
-endif()
+blt_add_test(
+  NAME ContextManagerTests
+  COMMAND ContextManagerTests)

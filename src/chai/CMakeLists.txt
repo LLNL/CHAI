@@ -28,6 +28,13 @@ if(CHAI_DISABLE_RM)
     ManagedArray_thin.inl)
 endif ()
 
+if (CHAI_ENABLE_EXPERIMENTAL)
+  set(chai_headers
+      ${chai_headers}
+      expt/Context.hpp
+      expt/ContextManager.hpp)
+endif ()
+
 set (chai_sources
   ArrayManager.cpp)
 
