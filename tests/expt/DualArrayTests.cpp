@@ -19,91 +19,120 @@ enum class ContextManagerState
 class DualArrayTest : public ::testing::Test
 {
   protected:
+    static chai::expt::ContextManager& GetContextManager()
+    {
+      static chai::expt::ContextManager& s_context_manager =
+        chai::expt::ContextManager::getInstance();
+
+      return s_context_manager;
+    }
+
+    static umpire::ResourceManager& GetResourceManager()
+    {
+      static umpire::ResourceManager& s_resource_manager =
+        umpire::ResourceManager::getInstance();
+
+      return s_resource_manager;
+    }
+
+    static umpire::Allocator& GetDefaultHostAllocator()
+    {
+      static umpire::Allocator s_default_host_allocator =
+        GetResourceManager().getAllocator("HOST");
+
+      return s_default_host_allocator;
+    }
+
+    static umpire::Allocator& GetDefaultDeviceAllocator()
+    {
+      static umpire::Allocator s_default_device_allocator =
+        GetResourceManager().getAllocator("DEVICE");
+
+      return s_default_device_allocator;
+    }
+
+    static umpire::Allocator& GetCustomHostAllocator()
+    {
+      static umpire::Allocator s_custom_host_allocator =
+        GetResourceManager().makeAllocator<umpire::strategy::QuickPool>(
+          "HOST_CUSTOM", GetDefaultHostAllocator());
+
+      return s_custom_host_allocator;
+    }
+
+    static umpire::Allocator& GetCustomDeviceAllocator()
+    {
+      static umpire::Allocator s_custom_device_allocator =
+        GetResourceManager().makeAllocator<umpire::strategy::QuickPool>(
+          "DEVICE_CUSTOM", GetDefaultDeviceAllocator());
+
+      return s_custom_device_allocator;
+    }
+
+    static const std::array<ContextManagerState, 6>& GetContextManagerStates()
+    {
+      static constexpr std::array<ContextManagerState, 6> s_context_manager_states{
+        ContextManagerState::CONTEXT_NONE_SYNCHRONIZED_DEVICE,
+        ContextManagerState::CONTEXT_HOST_SYNCHRONIZED_DEVICE,
+        ContextManagerState::CONTEXT_DEVICE_SYNCHRONIZED_DEVICE,
+        ContextManagerState::CONTEXT_NONE_UNSYNCHRONIZED_DEVICE,
+        ContextManagerState::CONTEXT_HOST_UNSYNCHRONIZED_DEVICE,
+        ContextManagerState::CONTEXT_DEVICE_UNSYNCHRONIZED_DEVICE
+      };
+
+      return s_context_manager_states;
+    }
+
     void SetUp() override
     {
-      m_context_manager.reset();
+      GetContextManager().reset();
+    }
+
+    void TearDown() override
+    {
+      GetContextManager().reset();
     }
 
     void SetContextManagerState(ContextManagerState state)
     {
-      m_context_manager.reset();
+      chai::expt::ContextManager& context_manager = GetContextManager();
+      context_manager.reset();
 
       if (state == ContextManagerState::CONTEXT_NONE_SYNCHRONIZED_DEVICE)
       {
-        m_context_manager.setContext(chai::expt::Context::NONE);
-        m_context_manager.setSynchronized(chai::expt::Context::DEVICE, true);
+        context_manager.setContext(chai::expt::Context::NONE);
       }
       else if (state == ContextManagerState::CONTEXT_HOST_SYNCHRONIZED_DEVICE)
       {
-        m_context_manager.setContext(chai::expt::Context::HOST);
-        m_context_manager.setSynchronized(chai::expt::Context::DEVICE, true);
+        context_manager.setContext(chai::expt::Context::HOST);
       }
       else if (state == ContextManagerState::CONTEXT_DEVICE_SYNCHRONIZED_DEVICE)
       {
-        m_context_manager.setContext(chai::expt::Context::DEVICE);
-        m_context_manager.setSynchronized(chai::expt::Context::DEVICE, true);
+        context_manager.setContext(chai::expt::Context::DEVICE);
+        context_manager.synchronize(chai::expt::Context::DEVICE);
       }
       else if (state == ContextManagerState::CONTEXT_NONE_UNSYNCHRONIZED_DEVICE)
       {
-        m_context_manager.setContext(chai::expt::Context::NONE);
-        m_context_manager.setSynchronized(chai::expt::Context::DEVICE, false);
+        context_manager.setContext(chai::expt::Context::DEVICE);
+        context_manager.setContext(chai::expt::Context::NONE);
       }
       else if (state == ContextManagerState::CONTEXT_HOST_UNSYNCHRONIZED_DEVICE)
       {
-        m_context_manager.setContext(chai::expt::Context::HOST);
-        m_context_manager.setSynchronized(chai::expt::Context::DEVICE, false);
+        context_manager.setContext(chai::expt::Context::DEVICE);
+        context_manager.setContext(chai::expt::Context::HOST);
       }
       else if (state == ContextManagerState::CONTEXT_DEVICE_UNSYNCHRONIZED_DEVICE)
       {
-        m_context_manager.setContext(chai::expt::Context::DEVICE);
-        m_context_manager.setSynchronized(chai::expt::Context::DEVICE, false);
+        context_manager.setContext(chai::expt::Context::DEVICE);
       }
     }
 
-    static chai::expt::ContextManager& m_context_manager;
-    static umpire::ResourceManager& m_resource_manager;
-
-    static umpire::Allocator m_default_host_allocator;
-    static umpire::Allocator m_default_device_allocator;
-    
-    static umpire::Allocator m_custom_host_allocator;
-    static umpire::Allocator m_custom_device_allocator;
-
     std::size_t m_size = 10;
-
-    static constexpr std::array<ContextManagerState, 6> m_context_manager_states{
-      ContextManagerState::CONTEXT_NONE_SYNCHRONIZED_DEVICE,
-      ContextManagerState::CONTEXT_HOST_SYNCHRONIZED_DEVICE,
-      ContextManagerState::CONTEXT_DEVICE_SYNCHRONIZED_DEVICE,
-      ContextManagerState::CONTEXT_NONE_UNSYNCHRONIZED_DEVICE,
-      ContextManagerState::CONTEXT_HOST_UNSYNCHRONIZED_DEVICE,
-      ContextManagerState::CONTEXT_DEVICE_UNSYNCHRONIZED_DEVICE
-    };
 };
-
-chai::expt::ContextManager& DualArrayTest::m_context_manager =
-  chai::expt::ContextManager::getInstance();
-
-umpire::ResourceManager& DualArrayTest::m_resource_manager =
-  umpire::ResourceManager::getInstance();
-
-umpire::Allocator DualArrayTest::m_default_host_allocator =
-  umpire::ResourceManager::getInstance().getAllocator("HOST");
-
-umpire::Allocator DualArrayTest::m_default_device_allocator =
-  umpire::ResourceManager::getInstance().getAllocator("DEVICE");
-
-umpire::Allocator DualArrayTest::m_custom_host_allocator =
-  umpire::ResourceManager::getInstance().makeAllocator<umpire::strategy::QuickPool>(
-    "HOST_CUSTOM", umpire::ResourceManager::getInstance().getAllocator("HOST"));
-
-umpire::Allocator DualArrayTest::m_custom_device_allocator =
-  umpire::ResourceManager::getInstance().makeAllocator<umpire::strategy::QuickPool>(
-    "DEVICE_CUSTOM", umpire::ResourceManager::getInstance().getAllocator("DEVICE"));
 
 TEST_F(DualArrayTest, DefaultConstructor)
 {
-  for (ContextManagerState context_manager_state : m_context_manager_states)
+  for (ContextManagerState context_manager_state : GetContextManagerStates())
   {
     SetContextManagerState(context_manager_state);
     chai::expt::DualArray<int> array;
@@ -111,29 +140,29 @@ TEST_F(DualArrayTest, DefaultConstructor)
     EXPECT_EQ(array.modified(), chai::expt::Context::NONE);
     EXPECT_EQ(array.host_data(), nullptr);
     EXPECT_EQ(array.device_data(), nullptr);
-    EXPECT_EQ(array.host_allocator().getId(), m_default_host_allocator.getId());
-    EXPECT_EQ(array.device_allocator().getId(), m_default_device_allocator.getId());
+    EXPECT_EQ(array.host_allocator().getId(), GetDefaultHostAllocator().getId());
+    EXPECT_EQ(array.device_allocator().getId(), GetDefaultDeviceAllocator().getId());
   }
 }
 
 TEST_F(DualArrayTest, AllocatorConstructor)
 {
-  for (ContextManagerState context_manager_state : m_context_manager_states)
+  for (ContextManagerState context_manager_state : GetContextManagerStates())
   {
     SetContextManagerState(context_manager_state);
-    chai::expt::DualArray<int> array(m_custom_host_allocator, m_custom_device_allocator);
+    chai::expt::DualArray<int> array(GetCustomHostAllocator(), GetCustomDeviceAllocator());
     EXPECT_EQ(array.size(), 0);
     EXPECT_EQ(array.modified(), chai::expt::Context::NONE);
     EXPECT_EQ(array.host_data(), nullptr);
     EXPECT_EQ(array.device_data(), nullptr);
-    EXPECT_EQ(array.host_allocator().getId(), m_custom_host_allocator.getId());
-    EXPECT_EQ(array.device_allocator().getId(), m_custom_device_allocator.getId());
+    EXPECT_EQ(array.host_allocator().getId(), GetCustomHostAllocator().getId());
+    EXPECT_EQ(array.device_allocator().getId(), GetCustomDeviceAllocator().getId());
   }
 }
 
 TEST_F(DualArrayTest, SizeConstructor)
 {
-  for (ContextManagerState context_manager_state : m_context_manager_states)
+  for (ContextManagerState context_manager_state : GetContextManagerStates())
   {
     SetContextManagerState(context_manager_state);
     chai::expt::DualArray<int> array(m_size);
@@ -150,8 +179,8 @@ TEST_F(DualArrayTest, SizeConstructor)
              context_manager_state == ContextManagerState::CONTEXT_HOST_UNSYNCHRONIZED_DEVICE)
     {
       EXPECT_NE(array.host_data(), nullptr);
-      ASSERT_TRUE(m_resource_manager.hasAllocator(array.host_data()));
-      EXPECT_EQ(m_resource_manager.getAllocator(array.host_data()).getId(), m_default_host_allocator.getId());
+      ASSERT_TRUE(GetResourceManager().hasAllocator(array.host_data()));
+      EXPECT_EQ(GetResourceManager().getAllocator(array.host_data()).getId(), GetDefaultHostAllocator().getId());
       EXPECT_EQ(array.device_data(), nullptr);
     }
     else if (context_manager_state == ContextManagerState::CONTEXT_DEVICE_SYNCHRONIZED_DEVICE ||
@@ -159,19 +188,19 @@ TEST_F(DualArrayTest, SizeConstructor)
     {
       EXPECT_EQ(array.host_data(), nullptr);
       EXPECT_NE(array.device_data(), nullptr);
-      ASSERT_TRUE(m_resource_manager.hasAllocator(array.device_data()));
-      EXPECT_EQ(m_resource_manager.getAllocator(array.device_data()).getId(), m_default_device_allocator.getId());
+      ASSERT_TRUE(GetResourceManager().hasAllocator(array.device_data()));
+      EXPECT_EQ(GetResourceManager().getAllocator(array.device_data()).getId(), GetDefaultDeviceAllocator().getId());
     }
   }
 }
 
 TEST_F(DualArrayTest, SizeAndAllocatorConstructor)
 {
-  for (auto context_manager_state : m_context_manager_states)
+  for (auto context_manager_state : GetContextManagerStates())
   {
     chai::expt::DualArray<int> array(m_size,
-                                     m_custom_host_allocator,
-                                     m_custom_device_allocator);
+                                     GetCustomHostAllocator(),
+                                     GetCustomDeviceAllocator());
 
     EXPECT_EQ(array.size(), m_size);
     EXPECT_EQ(array.modified(), chai::expt::Context::NONE);
@@ -186,8 +215,8 @@ TEST_F(DualArrayTest, SizeAndAllocatorConstructor)
              context_manager_state == ContextManagerState::CONTEXT_HOST_UNSYNCHRONIZED_DEVICE)
     {
       EXPECT_NE(array.host_data(), nullptr);
-      ASSERT_TRUE(m_resource_manager.hasAllocator(array.host_data()));
-      EXPECT_EQ(m_resource_manager.getAllocator(array.host_data()).getId(), m_custom_host_allocator.getId());
+      ASSERT_TRUE(GetResourceManager().hasAllocator(array.host_data()));
+      EXPECT_EQ(GetResourceManager().getAllocator(array.host_data()).getId(), GetCustomHostAllocator().getId());
       EXPECT_EQ(array.device_data(), nullptr);
     }
     else if (context_manager_state == ContextManagerState::CONTEXT_DEVICE_SYNCHRONIZED_DEVICE ||
@@ -195,15 +224,15 @@ TEST_F(DualArrayTest, SizeAndAllocatorConstructor)
     {
       EXPECT_EQ(array.host_data(), nullptr);
       EXPECT_NE(array.device_data(), nullptr);
-      ASSERT_TRUE(m_resource_manager.hasAllocator(array.device_data()));
-      EXPECT_EQ(m_resource_manager.getAllocator(array.device_data()).getId(), m_custom_device_allocator.getId());
+      ASSERT_TRUE(GetResourceManager().hasAllocator(array.device_data()));
+      EXPECT_EQ(GetResourceManager().getAllocator(array.device_data()).getId(), GetCustomDeviceAllocator().getId());
     }
   }
 }
 
 TEST_F(DualArrayTest, CopyConstructor) {
   const size_t size = 5;
-  chai::expt::DualArray<int> array1(size, m_custom_host_allocator, m_custom_device_allocator);
+  chai::expt::DualArray<int> array1(size, GetCustomHostAllocator(), GetCustomDeviceAllocator());
   
   // Set some data in array1
   chai::expt::ContextManager::getInstance().setContext(chai::expt::Context::HOST);
@@ -224,7 +253,7 @@ TEST_F(DualArrayTest, CopyConstructor) {
 
 TEST_F(DualArrayTest, MoveConstructor) {
   const size_t size = 5;
-  chai::expt::DualArray<int> array1(size, m_custom_host_allocator, m_custom_device_allocator);
+  chai::expt::DualArray<int> array1(size, GetCustomHostAllocator(), GetCustomDeviceAllocator());
   
   // Set some data in array1
   chai::expt::ContextManager::getInstance().setContext(chai::expt::Context::HOST);
@@ -248,7 +277,7 @@ TEST_F(DualArrayTest, MoveConstructor) {
 
 TEST_F(DualArrayTest, CopyAssignment) {
   const size_t size = 5;
-  chai::expt::DualArray<int> array1(size, m_custom_host_allocator, m_custom_device_allocator);
+  chai::expt::DualArray<int> array1(size, GetCustomHostAllocator(), GetCustomDeviceAllocator());
   
   // Set some data in array1
   chai::expt::ContextManager::getInstance().setContext(chai::expt::Context::HOST);
@@ -270,7 +299,7 @@ TEST_F(DualArrayTest, CopyAssignment) {
 
 TEST_F(DualArrayTest, MoveAssignment) {
   const size_t size = 5;
-  chai::expt::DualArray<int> array1(size, m_custom_host_allocator, m_custom_device_allocator);
+  chai::expt::DualArray<int> array1(size, GetCustomHostAllocator(), GetCustomDeviceAllocator());
   
   // Set some data in array1
   chai::expt::ContextManager::getInstance().setContext(chai::expt::Context::HOST);
@@ -294,7 +323,7 @@ TEST_F(DualArrayTest, MoveAssignment) {
 }
 
 TEST_F(DualArrayTest, Resize) {
-  chai::expt::DualArray<int> array(5, m_custom_host_allocator, m_custom_device_allocator);
+  chai::expt::DualArray<int> array(5, GetCustomHostAllocator(), GetCustomDeviceAllocator());
   EXPECT_EQ(array.size(), 5);
   
   // Resize larger
@@ -312,7 +341,7 @@ TEST_F(DualArrayTest, Resize) {
 
 TEST_F(DualArrayTest, ResizeWithData) {
   const size_t initial_size = 5;
-  chai::expt::DualArray<int> array(initial_size, m_custom_host_allocator, m_custom_device_allocator);
+  chai::expt::DualArray<int> array(initial_size, GetCustomHostAllocator(), GetCustomDeviceAllocator());
   
   // Set some data
   chai::expt::ContextManager::getInstance().setContext(chai::expt::Context::HOST);
@@ -340,7 +369,7 @@ TEST_F(DualArrayTest, ResizeWithData) {
 }
 
 TEST_F(DualArrayTest, Free) {
-  chai::expt::DualArray<int> array(5, m_custom_host_allocator, m_custom_device_allocator);
+  chai::expt::DualArray<int> array(5, GetCustomHostAllocator(), GetCustomDeviceAllocator());
   
   array.free();
   EXPECT_EQ(array.size(), 0);
@@ -351,7 +380,7 @@ TEST_F(DualArrayTest, Free) {
 
 TEST_F(DualArrayTest, DataAndModified) {
   const size_t size = 5;
-  chai::expt::DualArray<int> array(size, m_custom_host_allocator, m_custom_device_allocator);
+  chai::expt::DualArray<int> array(size, GetCustomHostAllocator(), GetCustomDeviceAllocator());
   
   // Test host context
   chai::expt::ContextManager::getInstance().setContext(chai::expt::Context::HOST);
@@ -368,7 +397,7 @@ TEST_F(DualArrayTest, DataAndModified) {
 
 TEST_F(DualArrayTest, ConstData) {
   const size_t size = 5;
-  chai::expt::DualArray<int> array(size, m_custom_host_allocator, m_custom_device_allocator);
+  chai::expt::DualArray<int> array(size, GetCustomHostAllocator(), GetCustomDeviceAllocator());
   
   // Set some data
   chai::expt::ContextManager::getInstance().setContext(chai::expt::Context::HOST);
@@ -392,7 +421,7 @@ TEST_F(DualArrayTest, ConstData) {
 
 TEST_F(DualArrayTest, GetAndSet) {
   const size_t size = 5;
-  chai::expt::DualArray<int> array(size, m_custom_host_allocator, m_custom_device_allocator);
+  chai::expt::DualArray<int> array(size, GetCustomHostAllocator(), GetCustomDeviceAllocator());
   
   // Set values in host context
   chai::expt::ContextManager::getInstance().setContext(chai::expt::Context::HOST);
