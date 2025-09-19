@@ -1,43 +1,173 @@
-#include "gtest/gtest.h"
 #include "chai/expt/DualArray.hpp"
 #include "chai/expt/Context.hpp"
 #include "chai/expt/ContextManager.hpp"
 #include "umpire/ResourceManager.hpp"
+#include "gtest/gtest.h"
 
-namespace chai::expt {
-
-class DualArrayTest : public ::testing::Test {
-protected:
-  void SetUp() override {
-    m_host_allocator = umpire::ResourceManager::getInstance().getAllocator("HOST");
-    m_device_allocator = umpire::ResourceManager::getInstance().getAllocator("DEVICE");
-  }
-
-  umpire::Allocator m_host_allocator;
-  umpire::Allocator m_device_allocator;
+enum class ContextState
+{
+  CONTEXT_NONE_DEVICE_SYNCHRONIZED,
+  CONTEXT_HOST_DEVICE_SYNCHRONIZED,
+  CONTEXT_DEVICE_DEVICE_SYNCHRONIZED,
+  CONTEXT_NONE_DEVICE_UNSYNCHRONIZED,
+  CONTEXT_HOST_DEVICE_UNSYNCHRONIZED,
+  CONTEXT_DEVICE_DEVICE_UNSYNCHRONIZED
 };
 
-TEST_F(DualArrayTest, DefaultConstructor) {
-  DualArray<int> array;
-  EXPECT_EQ(array.size(), 0);
-  EXPECT_EQ(array.modified(), Context::NONE);
-  EXPECT_EQ(array.host_data(), nullptr);
-  EXPECT_EQ(array.device_data(), nullptr);
+class ContextIterator
+{
+  public:
+
+  private:
+    chai::expt::ContextManager& m_context_manager{chai::expt::ContextManager::getInstance()};
+    ContextState m_context_state = CONTEXT_NONE_DEVICE_SYNCHRONIZED;
+
+};
+
+class DualArrayTest : public ::testing::Test
+{
+  protected:
+    static void SetUpTestSuite()
+    {
+      auto& rm = umpire::ResourceManager::getInstance();
+
+      m_default_host_allocator = rm.getAllocator("HOST");
+      m_default_device_allocator = rm.getAllocator("DEVICE");
+
+      m_custom_host_allocator =
+        rm.makeAllocator<umpire::strategy::QuickPool>(
+          "HOST_CUSTOM", m_default_host_allocator);
+
+      m_custom_device_allocator =
+        rm.makeAllocator<umpire::strategy::QuickPool>(
+          "DEVICE_CUSTOM", m_default_device_allocator);
+    }
+
+    void SetUp() override {
+      m_context_manager.reset();
+    }
+
+    void SetContext(chai::expt::Context context, bool device_synchronized)
+    {
+      m_context_manager.setContext(context);
+      m_context_manager.setSynchronized(chai::expt::Context::DEVICE, device_synchronized);
+    }
+
+    umpire::Allocator m_default_host_allocator;
+    umpire::Allocator m_default_device_allocator;
+    
+    umpire::Allocator m_custom_host_allocator;
+    umpire::Allocator m_custom_device_allocator;
+
+    chai::expt::ContextManager& m_context_manager{chai::expt::ContextManager::getInstance()};
+
+    m_size = 10;
+
+    std::array<std::pair<chai::expt::Context, bool>, 6> m_context_states = {{
+      {chai::expt::Context::NONE,   false},
+      {chai::expt::Context::HOST,   false},
+      {chai::expt::Context::DEVICE, false}
+      {chai::expt::Context::NONE,   true},
+      {chai::expt::Context::HOST,   true},
+      {chai::expt::Context::DEVICE, true}
+    }};
+};
+
+TEST_F(DualArrayTest, DefaultConstructor)
+{
+  for (auto context_state : m_context_states)
+  {
+    chai::expt::DualArray<int> array;
+    EXPECT_EQ(array.size(), 0);
+    EXPECT_EQ(array.modified(), Context::NONE);
+    EXPECT_EQ(array.host_data(), nullptr);
+    EXPECT_EQ(array.device_data(), nullptr);
+    EXPECT_EQ(array.host_allocator.getId(), m_default_host_allocator.getId());
+    EXPECT_EQ(array.device_allocator.getId(), m_default_device_allocator.getId());
+  }
 }
 
-TEST_F(DualArrayTest, AllocatorConstructor) {
-  DualArray<int> array(m_host_allocator, m_device_allocator);
-  EXPECT_EQ(array.size(), 0);
-  EXPECT_EQ(array.modified(), Context::NONE);
-  EXPECT_EQ(array.host_data(), nullptr);
-  EXPECT_EQ(array.device_data(), nullptr);
+TEST_F(DualArrayTest, AllocatorConstructor)
+{
+  for (auto context_state : m_context_states)
+  {
+    chai::expt::DualArray<int> array(m_custom_host_allocator, m_custom_device_allocator);
+    EXPECT_EQ(array.size(), 0);
+    EXPECT_EQ(array.modified(), Context::NONE);
+    EXPECT_EQ(array.host_data(), nullptr);
+    EXPECT_EQ(array.device_data(), nullptr);
+    EXPECT_EQ(array.host_allocator.getId(), m_custom_host_allocator.getId());
+    EXPECT_EQ(array.device_allocator.getId(), m_custom_device_allocator.getId());
+  }
 }
 
-TEST_F(DualArrayTest, SizeAndAllocatorConstructor) {
-  const size_t size = 10;
-  DualArray<int> array(size, m_host_allocator, m_device_allocator);
-  EXPECT_EQ(array.size(), size);
-  EXPECT_EQ(array.modified(), Context::NONE);
+TEST_F(DualArrayTest, SizeConstructor)
+{
+  for (auto context_state : m_context_states)
+  {
+    chai::expt::DualArray<int> array(m_size);
+    EXPECT_EQ(array.size(), m_size);
+    EXPECT_EQ(array.modified(), Context::NONE);
+
+    if (context_state == ContextState::CONTEXT_NONE_DEVICE_SYNCHRONIZED ||
+        context_state == ContextState::CONTEXT_NONE_DEVICE_UNSYNCHRONIZED)
+    {
+      EXPECT_EQ(array.host_data(), nullptr);
+      EXPECT_EQ(array.device_data(), nullptr);
+    }
+    else if (context_state == ContextState::CONTEXT_HOST_DEVICE_SYNCHRONIZED ||
+             context_state == ContextState::CONTEXT_HOST_DEVICE_UNSYNCHRONIZED)
+    {
+      EXPECT_NE(array.host_data(), nullptr);
+      ASSERT_TRUE(m_resource_manager.hasAllocator(array.host_data()));
+      EXPECT_EQ(m_resource_manager.getAllocator(array.host_data().getID(), m_default_host_allocator.getID()));
+      EXPECT_EQ(array.device_data(), nullptr);
+    }
+    else if (context_state == ContextState::CONTEXT_DEVICE_DEVICE_SYNCHRONIZED ||
+             context_state == ContextState::CONTEXT_DEVICE_DEVICE_UNSYNCHRONIZED)
+    {
+      EXPECT_EQ(array.host_data(), nullptr);
+      EXPECT_NE(array.device_data(), nullptr);
+      ASSERT_TRUE(m_resource_manager.hasAllocator(array.device_data()));
+      EXPECT_EQ(m_resource_manager.getAllocator(array.device_data().getID(), m_default_device_allocator.getID()));
+    }
+  }
+}
+
+TEST_F(DualArrayTest, SizeAndAllocatorConstructor)
+{
+  for (auto context_state : m_context_states)
+  {
+    chai::expt::DualArray<int> array(m_size,
+                                     m_custom_host_allocator,
+                                     m_custom_device_allocator);
+
+    EXPECT_EQ(array.size(), m_size);
+    EXPECT_EQ(array.modified(), Context::NONE);
+
+    if (context_state == ContextState::CONTEXT_NONE_DEVICE_SYNCHRONIZED ||
+        context_state == ContextState::CONTEXT_NONE_DEVICE_UNSYNCHRONIZED)
+    {
+      EXPECT_EQ(array.host_data(), nullptr);
+      EXPECT_EQ(array.device_data(), nullptr);
+    }
+    else if (context_state == ContextState::CONTEXT_HOST_DEVICE_SYNCHRONIZED ||
+             context_state == ContextState::CONTEXT_HOST_DEVICE_UNSYNCHRONIZED)
+    {
+      EXPECT_NE(array.host_data(), nullptr);
+      ASSERT_TRUE(m_resource_manager.hasAllocator(array.host_data()));
+      EXPECT_EQ(m_resource_manager.getAllocator(array.host_data().getID(), m_default_host_allocator.getID()));
+      EXPECT_EQ(array.device_data(), nullptr);
+    }
+    else if (context_state == ContextState::CONTEXT_DEVICE_DEVICE_SYNCHRONIZED ||
+             context_state == ContextState::CONTEXT_DEVICE_DEVICE_UNSYNCHRONIZED)
+    {
+      EXPECT_EQ(array.host_data(), nullptr);
+      EXPECT_NE(array.device_data(), nullptr);
+      ASSERT_TRUE(m_resource_manager.hasAllocator(array.device_data()));
+      EXPECT_EQ(m_resource_manager.getAllocator(array.device_data().getID(), m_default_device_allocator.getID()));
+    }
+  }
 }
 
 TEST_F(DualArrayTest, CopyConstructor) {
@@ -254,5 +384,3 @@ TEST_F(DualArrayTest, GetAndSet) {
     EXPECT_EQ(array.get(i), static_cast<int>(i * 10));
   }
 }
-
-} // namespace chai::expt
