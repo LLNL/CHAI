@@ -18,8 +18,7 @@
 #include <hip/hip_runtime.h>
 #endif
 
-namespace chai {
-namespace expt {
+namespace chai::expt {
   /*!
    * \class ContextManager
    *
@@ -28,14 +27,16 @@ namespace expt {
    * This class provides a centralized way to get and set the current
    * context across the application.
    */
-  class ContextManager {
+  class ContextManager
+  {
     public:
       /*!
        * \brief Get the singleton instance of ContextManager.
        *
        * \return The singleton instance.
        */
-      static ContextManager& getInstance() {
+      static ContextManager& getInstance()
+      {
         static ContextManager s_instance;
         return s_instance;
       }
@@ -55,7 +56,8 @@ namespace expt {
        *
        * \return The current context.
        */
-      Context getContext() const {
+      Context getContext() const
+      {
         return m_context;
       }
 
@@ -64,29 +66,31 @@ namespace expt {
        *
        * \param context The new context to set.
        */
-      void setContext(Context context) {
+      void setContext(Context context)
+      {
         m_context = context;
-        m_synchronized[context] = false;
+
+        if (context == Context::DEVICE)
+        {
+          m_device_synchronized = false;
+        }
       }
 
       /*!
-       * \brief Synchronize the given  context.
+       * \brief Synchronize the given context.
        *
        * \param context The context that needs synchronization.
        */
-      void synchronize(Context context) {
-        auto it = m_synchronized.find(context);
-
-        if (it != m_synchronized.end()) {
-#if defined(CHAI_ENABLE_DEVICE)
-          if (context == Context::DEVICE) {
+      void synchronize(Context context)
+      {
+        if (context == Context::DEVICE && !m_device_synchronized)
+        {
 #if defined(CHAI_ENABLE_CUDA)
-            cudaDeviceSynchronize();
+          cudaDeviceSynchronize();
 #elif defined(CHAI_ENABLE_HIP)
-            hipDeviceSynchronize();
+          hipDeviceSynchronize();
 #endif
-          }
-#endif
+          m_device_synchronized = true;
         }
       }
 
@@ -96,15 +100,9 @@ namespace expt {
        * \param context The  context to check.
        * \return True if the context needs synchronization, false otherwise.
        */
-      bool isSynchronized(Context context) const {
-        auto it = m_synchronized.find(context);
-
-        if (it == m_synchronized.end()) {
-          return true;
-        }
-        else {
-          return it->second;
-        }
+      bool isSynchronized(Context context) const
+      {
+        return context == Context::DEVICE ? m_device_synchronized : true;
       }
 
       /*!
@@ -114,8 +112,18 @@ namespace expt {
        *
        * \param context The context to clear the synchronization flag for.
        */
-      void markSynchronized(Context context) {
-        m_synchronized[context] = true;
+      void setSynchronized(Context context, bool synchronized)
+      {
+        if (context == Context::DEVICE)
+        {
+          m_device_synchronized = synchronized;
+        }
+      }
+
+      void reset()
+      {
+        m_context = Context::NONE;
+        m_device_synchronized = true;
       }
 
     private:
@@ -127,14 +135,13 @@ namespace expt {
       /*!
        * \brief The current context.
        */
-      Context m_context = Context::NONE;
+      Context m_context{Context::NONE}
 
       /*!
        * \brief Map for tracking which contexts are synchronized.
        */
-      std::unordered_map<Context, bool> m_synchronized;
+      bool m_device_synchronized{true};
   };  // class ContextManager
-}  // namespace expt
-}  // namespace chai
+}  // namespace chai::expt
 
 #endif  // CHAI_CONTEXT_MANAGER_HPP
