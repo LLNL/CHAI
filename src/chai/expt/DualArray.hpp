@@ -302,12 +302,12 @@ namespace chai::expt
         }
       }
 
-      const T* host_data() const
+      T* host_data()
       {
         return m_host_data;
       }
 
-      const T* device_data() const
+      T* device_data()
       {
         return m_device_data;
       }

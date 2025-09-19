@@ -135,7 +135,7 @@ namespace chai::expt {
       /*!
        * \brief The current context.
        */
-      Context m_context{Context::NONE}
+      Context m_context{Context::NONE};
 
       /*!
        * \brief Map for tracking which contexts are synchronized.
