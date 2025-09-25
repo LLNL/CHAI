@@ -1080,8 +1080,11 @@ TEST(managed_ptr, polymorphic_with_ManagedArray_unpacker)
       array_of_objects[i] = chai::make_managed<TestArrayObject>(0);
    }
    
-   // Create derived object directly with unpacker
-   chai::managed_ptr<ABase> poly_ptr = chai::make_managed<BDerived>(chai::unpack(array_of_objects));
+   // Create unpacker and keep it alive for the duration of the test
+   auto unpacker = chai::unpack(array_of_objects);
+   
+   // Create derived object with the unpacker
+   chai::managed_ptr<ABase> poly_ptr = chai::make_managed<BDerived>(unpacker.data());
    
    // Verify correct polymorphic behavior
    EXPECT_EQ(poly_ptr->getTypeID(), 1);
