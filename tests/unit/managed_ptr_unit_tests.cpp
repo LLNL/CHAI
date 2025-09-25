@@ -956,10 +956,10 @@ private:
    int m_value;
 };
 
-TEST(managed_ptr, managed_array_of_managed_ptr_unpacker)
+TEST(managed_ptr, ManagedArray_of_managed_ptr_unpacker)
 {
   const int size = 5;
-  care::host_device_ptr<chai::managed_ptr<TestArrayObject>> array_of_ptrs(size);
+  chai::ManagedArray<chai::managed_ptr<TestArrayObject>> array_of_ptrs(size);
   
   // Fill with some test values
   for (int i = 0; i < size; i++) {
@@ -988,10 +988,10 @@ TEST(managed_ptr, managed_array_of_managed_ptr_unpacker)
 
 #ifdef CHAI_GPUCC
 
-GPU_TEST(managed_ptr, gpu_managed_array_of_managed_ptr_unpacker)
+GPU_TEST(managed_ptr, gpu_ManagedArray_of_managed_ptr_unpacker)
 {
   const int size = 5;
-  care::host_device_ptr<chai::managed_ptr<TestArrayObject>> array_of_ptrs(size);
+  chai::ManagedArray<chai::managed_ptr<TestArrayObject>> array_of_ptrs(size);
   
   // Fill with some test values
   for (int i = 0; i < size; i++) {
@@ -1000,6 +1000,8 @@ GPU_TEST(managed_ptr, gpu_managed_array_of_managed_ptr_unpacker)
   
   // Create results array to verify GPU access
   chai::ManagedArray<int> results(size, chai::GPU);
+  // Create results array to verify GPU access
+  chai::ManagedArray<int> results2(size, chai::GPU);
   
   // Test on GPU
   auto unpacker = chai::unpack(array_of_ptrs);
@@ -1010,19 +1012,22 @@ GPU_TEST(managed_ptr, gpu_managed_array_of_managed_ptr_unpacker)
     
     // Modify through raw pointers on device
     raw_ptrs[i]->setValue(i * 20);
+    results2[i] = raw_ptrs[i]->getValue();
   });
   
   // Verify results
   results.move(chai::CPU);
+  results2.move(chai::CPU);
   for (int i = 0; i < size; i++) {
     EXPECT_EQ(results[i], i * 10);
     
     // After GPU execution, check that values were modified
-    EXPECT_EQ(array_of_ptrs[i]->getValue(), i * 20);
+    EXPECT_EQ(results2[i], i * 20);
   }
   
   // Clean up
   results.free();
+  results2.free();
   for (int i = 0; i < size; i++) {
     array_of_ptrs[i].free();
   }
@@ -1064,11 +1069,11 @@ private:
    TestArrayObject** m_objects; // Member array of TestArrayObject pointers
 };
 
-TEST(managed_ptr, polymorphic_with_managed_array_unpacker)
+TEST(managed_ptr, polymorphic_with_ManagedArray_unpacker)
 {
    // Create array of managed pointers
    const int size = 5;
-   care::host_device_ptr<chai::managed_ptr<TestArrayObject>> array_of_objects(size);
+   chai::ManagedArray<chai::managed_ptr<TestArrayObject>> array_of_objects(size);
    
    // Initialize array
    for (int i = 0; i < size; i++) {
@@ -1100,11 +1105,11 @@ TEST(managed_ptr, polymorphic_with_managed_array_unpacker)
 
 #ifdef CHAI_GPUCC
 
-GPU_TEST(managed_ptr, gpu_polymorphic_with_managed_array_unpacker)
+GPU_TEST(managed_ptr, gpu_polymorphic_with_ManagedArray_unpacker)
 {
    // Create array of managed pointers
    const int size = 5;
-   care::host_device_ptr<chai::managed_ptr<TestArrayObject>> array_of_objects(size);
+   chai::ManagedArray<chai::managed_ptr<TestArrayObject>> array_of_objects(size);
    
    // Initialize array
    for (int i = 0; i < size; i++) {
