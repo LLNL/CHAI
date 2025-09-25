@@ -1115,12 +1115,15 @@ GPU_TEST(managed_ptr, gpu_polymorphic_with_ManagedArray_unpacker)
    chai::ManagedArray<chai::managed_ptr<TestArrayObject>> array_of_objects(size);
    
    // Initialize array
-   for (int i = 0; i < size; i++) {
+   forall( sequential(), 0, size ,[=](int i ) {
       array_of_objects[i] = chai::make_managed<TestArrayObject>(0);
-   }
+   });
    
-   // Create derived object directly with unpacker
-   chai::managed_ptr<ABase> poly_ptr = chai::make_managed<BDerived>(chai::unpack(array_of_objects));
+   // Create unpacker and keep it alive for the duration of the test
+   auto unpacker = chai::unpack(array_of_objects);
+   
+   // Create derived object with the unpacker
+   chai::managed_ptr<ABase> poly_ptr = chai::make_managed<BDerived>(unpacker);
    
    // Use virtual function on device
    const int base_value = 10;
@@ -1132,10 +1135,10 @@ GPU_TEST(managed_ptr, gpu_polymorphic_with_ManagedArray_unpacker)
    });
    
    // Test results on device
-   auto unpacker = chai::unpack(array_of_objects);
+   auto results_unpacker = chai::unpack(array_of_objects);
    
    forall(gpu(), 0, size, [=] __device__ (int i) {
-      TestArrayObject** raw_ptrs = unpacker.data();
+      TestArrayObject** raw_ptrs = results_unpacker.data();
       results[i] = raw_ptrs[i]->getValue();
    });
    
