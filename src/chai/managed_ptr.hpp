@@ -768,16 +768,15 @@ namespace chai {
             
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
             // Extract the GPU raw pointers
-            m_gpu_ptrs = new T*[m_size];
+            auto gpu_ptrs = new T*[m_size];
             for (size_t i = 0; i < m_size; i++) {
-               m_gpu_ptrs[i] = m_array[i].get(GPU);
+               gpu_ptrs[i] = m_array[i].get(GPU);
             }
             
             // Allocate and copy device pointers to GPU memory
-            T** device_ptr_array;
-            gpuMalloc((void**)&device_ptr_array, m_size * sizeof(T*));
-            gpuMemcpy(device_ptr_array, m_gpu_ptrs, m_size * sizeof(T*), gpuMemcpyHostToDevice);
-            m_device_ptr_array = device_ptr_array;
+            gpuMalloc((void**)&m_gpu_ptrs, m_size * sizeof(T*));
+            gpuMemcpy(m_gpu_ptrs, gpu_ptrs, m_size * sizeof(T*), gpuMemcpyHostToDevice);
+            delete[] gpu_ptrs;
 #endif
          }
 
@@ -788,7 +787,6 @@ namespace chai {
               m_cpu_ptrs(other.m_cpu_ptrs),
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
               m_gpu_ptrs(other.m_gpu_ptrs),
-              m_device_ptr_array(other.m_device_ptr_array),
 #endif
               m_ownsData(false) // Copy doesn't own the data
          {
@@ -801,7 +799,6 @@ namespace chai {
               m_cpu_ptrs(other.m_cpu_ptrs),
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
               m_gpu_ptrs(other.m_gpu_ptrs),
-              m_device_ptr_array(other.m_device_ptr_array),
 #endif
               m_ownsData(other.m_ownsData)
          {
@@ -810,7 +807,6 @@ namespace chai {
             other.m_cpu_ptrs = nullptr;
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
             other.m_gpu_ptrs = nullptr;
-            other.m_device_ptr_array = nullptr;
 #endif
          }
          
@@ -824,8 +820,7 @@ namespace chai {
                delete[] m_cpu_ptrs;
             
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-               delete[] m_gpu_ptrs;
-               gpuFree(m_device_ptr_array);
+               gpuFree(m_gpu_ptrs);
 #endif
             }
          }
@@ -837,8 +832,7 @@ namespace chai {
                if (m_ownsData) {
                   delete[] m_cpu_ptrs;
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-                  delete[] m_gpu_ptrs;
-                  gpuFree(m_device_ptr_array);
+                  gpuFree(m_gpu_ptrs);
 #endif
                }
                
@@ -848,7 +842,6 @@ namespace chai {
                m_cpu_ptrs = other.m_cpu_ptrs;
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
                m_gpu_ptrs = other.m_gpu_ptrs;
-               m_device_ptr_array = other.m_device_ptr_array;
 #endif
                m_ownsData = false; // Assignment doesn't take ownership
             }
@@ -862,8 +855,7 @@ namespace chai {
                if (m_ownsData) {
                   delete[] m_cpu_ptrs;
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-                  delete[] m_gpu_ptrs;
-                  gpuFree(m_device_ptr_array);
+                  gpuFree(m_gpu_ptrs);
 #endif
                }
                
@@ -873,7 +865,6 @@ namespace chai {
                m_cpu_ptrs = other.m_cpu_ptrs;
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
                m_gpu_ptrs = other.m_gpu_ptrs;
-               m_device_ptr_array = other.m_device_ptr_array;
 #endif
                m_ownsData = other.m_ownsData;
                
@@ -882,7 +873,6 @@ namespace chai {
                other.m_cpu_ptrs = nullptr;
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
                other.m_gpu_ptrs = nullptr;
-               other.m_device_ptr_array = nullptr;
 #endif
             }
             return *this;
@@ -897,7 +887,7 @@ namespace chai {
          ///
          CHAI_HOST_DEVICE T** data() const {
 #if defined(CHAI_DEVICE_COMPILE) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-            return m_device_ptr_array;
+            return m_gpu_ptrs;
 #else
             return m_cpu_ptrs;
 #endif
@@ -908,8 +898,7 @@ namespace chai {
          size_t m_size;
          T** m_cpu_ptrs = nullptr; //!< Array of extracted raw CPU pointers
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-         T** m_gpu_ptrs = nullptr; //!< Host copy of extracted raw GPU pointers
-         T** m_device_ptr_array = nullptr; //!< Device memory array containing GPU pointers
+         T** m_gpu_ptrs = nullptr; //!< Device memory array containing GPU pointers
 #endif
          bool m_ownsData = false; //!< Flag indicating if this object owns the data and should clean up
    };
