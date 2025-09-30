@@ -339,7 +339,7 @@ CHAI_GLOBAL void deviceDelete(T** arr) {
    delete[] *arr;
 }
 
-CHAI_GLOBAL void passObjectToKernel(chai::ManagedArray<int> arr) {
+CHAI_GLOBAL void passObjectToKernel(const chai::ManagedArray<int> arr) {
    arr[0] = -1;
 }
 
@@ -440,6 +440,8 @@ GPU_TEST(managed_ptr, pass_object_to_kernel)
   chai::ArrayManager* manager = chai::ArrayManager::getInstance();
   manager->setExecutionSpace(chai::GPU);
   passObjectToKernel<<<1, 1>>>(array);
+  manager->setExecutionSpace(chai::CPU);
+  manager->syncIfNeeded();
   array.move(chai::CPU);
   ASSERT_EQ(array[0], -1);
 
@@ -791,7 +793,7 @@ TEST(managed_ptr, ManagedArray_of_managed_ptr_unpacker)
   // Fill with some test values
   forall(sequential(), 0, size, [=] (int i) {
     array_of_ptrs[i] = chai::make_managed<TestArrayObject>(i * 10);
-  };);
+  });
   
   // Test unpack operation
   auto unpacker = chai::unpack(array_of_ptrs);
@@ -809,7 +811,7 @@ TEST(managed_ptr, ManagedArray_of_managed_ptr_unpacker)
   // Clean up
   forall(sequential(), 0, size, [=] (int i) {
     array_of_ptrs[i].free();
-  };);
+  });
   array_of_ptrs.free();
 }
 
@@ -823,7 +825,7 @@ GPU_TEST(managed_ptr, gpu_ManagedArray_of_managed_ptr_unpacker)
   // Fill with some test values
   forall(sequential(), 0, size, [=] (int i) {
     array_of_ptrs[i] = chai::make_managed<TestArrayObject>(i * 10);
-  };);
+  });
   
   // Create results array to verify GPU access
   chai::ManagedArray<int> results(size, chai::GPU);
@@ -848,14 +850,14 @@ GPU_TEST(managed_ptr, gpu_ManagedArray_of_managed_ptr_unpacker)
     
     // After GPU execution, check that values were modified
     EXPECT_EQ(results2[i], i * 20);
-  };);
+  });
   
   // Clean up
   results.free();
   results2.free();
   forall(sequential(), 0, size, [=] (int i) {
     array_of_ptrs[i].free();
-  };);
+  });
   array_of_ptrs.free();
 }
 
@@ -901,9 +903,9 @@ TEST(managed_ptr, polymorphic_with_ManagedArray_unpacker)
    chai::ManagedArray<chai::managed_ptr<TestArrayObject>> array_of_objects(size);
    
    // Initialize array
-   for (int i = 0; i < size; i++) {
+   forall( sequential(), 0, size ,[=](int i ) {
       array_of_objects[i] = chai::make_managed<TestArrayObject>(0);
-   }
+   });
    
    // Create unpacker and keep it alive for the duration of the test
    auto unpacker = chai::unpack(array_of_objects);
@@ -924,9 +926,9 @@ TEST(managed_ptr, polymorphic_with_ManagedArray_unpacker)
    }
    
    // Cleanup
-   for (int i = 0; i < size; i++) {
+   forall( sequential(), 0, size ,[=](int i ) {
       array_of_objects[i].free();
-   }
+   });
    array_of_objects.free();
    poly_ptr.free();
 }
@@ -968,16 +970,15 @@ GPU_TEST(managed_ptr, gpu_polymorphic_with_ManagedArray_unpacker)
    });
    
    // Verify results
-   results.move(chai::CPU);
-   for (int i = 0; i < size; i++) {
+   forall( sequential(), 0, size ,[=](int i ) {
       EXPECT_EQ(results[i], base_value * (i + 1));
-   }
+   });
    
    // Cleanup
    results.free();
-   for (int i = 0; i < size; i++) {
+   forall( sequential(), 0, size ,[=](int i ) {
       array_of_objects[i].free();
-   }
+   });
    array_of_objects.free();
    poly_ptr.free();
 }

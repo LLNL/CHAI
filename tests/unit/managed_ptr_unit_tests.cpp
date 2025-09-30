@@ -942,4 +942,3 @@ GPU_TEST(managed_ptr, gpu_copy_assignment_operator)
 }
 
 #endif
-
