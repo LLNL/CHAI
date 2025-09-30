@@ -800,13 +800,13 @@ TEST(managed_ptr, ManagedArray_of_managed_ptr_unpacker)
   TestArrayObject** raw_ptrs = unpacker.data();
   
   // Verify values can be accessed through the raw pointers
-  for (int i = 0; i < size; i++) {
+  forall(sequential(), 0, size, [=] (int i) {
     EXPECT_EQ(raw_ptrs[i]->getValue(), i * 10);
     
     // Test modification through raw pointers
     raw_ptrs[i]->setValue(i * 20);
     EXPECT_EQ(array_of_ptrs[i]->getValue(), i * 20);
-  }
+  });
   
   // Clean up
   forall(sequential(), 0, size, [=] (int i) {
@@ -841,7 +841,7 @@ GPU_TEST(managed_ptr, gpu_ManagedArray_of_managed_ptr_unpacker)
     
     // Modify through raw pointers on device
     raw_ptrs[i]->setValue(i * 20);
-    results2[i] = raw_ptrs[i]->getValue();
+    results2[i] = array_of_ptrs[i]->getValue();
   });
   
   // Verify results
@@ -918,12 +918,14 @@ TEST(managed_ptr, polymorphic_with_ManagedArray_unpacker)
    
    // Use virtual function to modify array through the member pointer
    const int base_value = 10;
-   poly_ptr->setArrayValues(size, base_value);
-   
+   forall( sequential(), 0, 1,[=](int i ) {
+      poly_ptr->setArrayValues(size, base_value);
+   });
+
    // Verify values set by polymorphic method
-   for (int i = 0; i < size; i++) {
+   forall( sequential(), 0, size ,[=](int i ) {
       EXPECT_EQ(array_of_objects[i]->getValue(), base_value * (i + 1));
-   }
+   });
    
    // Cleanup
    forall( sequential(), 0, size ,[=](int i ) {
@@ -954,7 +956,6 @@ GPU_TEST(managed_ptr, gpu_polymorphic_with_ManagedArray_unpacker)
    
    // Use virtual function on device
    const int base_value = 10;
-   chai::ManagedArray<int> results(size, chai::GPU);
    
    forall(gpu(), 0, 1, [=] __device__ (int) {
       // Call polymorphic method on device to modify the array through member pointer
@@ -963,6 +964,7 @@ GPU_TEST(managed_ptr, gpu_polymorphic_with_ManagedArray_unpacker)
    
    // Test results on device
    auto results_unpacker = chai::unpack(array_of_objects);
+   chai::ManagedArray<int> results(size, chai::GPU);
    
    forall(gpu(), 0, size, [=] __device__ (int i) {
       TestArrayObject** raw_ptrs = results_unpacker.data();
