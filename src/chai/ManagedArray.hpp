@@ -43,6 +43,20 @@ class CHAICopyable
 };
 
 /*!
+ * \class DefaultCallback
+ *
+ * \brief A functor object that serves as the default no-op callback.
+ *
+ * \note Previously, a lambda was used as the default argument for the
+ *       callback, but that tripped up some compilers and led to errors
+ *       of the following form:
+ *         redefinition of ‘const char _ZTSZN4chai12ManagedArrayIdE8allocateEmNS_14ExecutionSpaceERKSt8functionIFvPKNS_13PointerRecordENS_6ActionES2_EEEd_UlS6_S7_S2_E_ []’
+ */
+struct DefaultCallback {
+  void operator()(const PointerRecord*, Action, ExecutionSpace) const {}
+};
+
+/*!
  * \class ManagedArray
  *
  * \brief Provides an array-like class that automatically transfers data
@@ -126,10 +140,7 @@ public:
    */
   CHAI_HOST void allocate(size_t elems,
                           ExecutionSpace space = NONE,
-                          const UserCallback& cback =
-                          [] (const PointerRecord*, Action, ExecutionSpace) {});
-
-
+                          const UserCallback& cback = DefaultCallback());
 
   /*!
    * \brief Reallocate data for the ManagedArray.
