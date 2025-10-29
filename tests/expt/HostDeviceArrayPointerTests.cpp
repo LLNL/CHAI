@@ -1,3 +1,4 @@
+#include "chai/config.hpp"
 #include "chai/expt/ArrayPointer.hpp"
 #include "chai/expt/HostDeviceArrayManager.hpp"
 #include <gtest/gtest.h>
@@ -191,6 +192,20 @@ TEST_F(HostDeviceArrayPointerTest, ExceptionHandling) {
   // Test out-of-bounds access with set()
   EXPECT_THROW(ptr.set(10, 42), std::out_of_range);
   
+  ptr.free();
+}
+
+TEST_F(HostDeviceArrayPointerTest, LambdaCapture) {
+  HostDeviceArrayPointer<int> ptr;
+  ptr.resize(5);
+
+  // Initialize array
+  auto f = [=] (std::size_t i) { ptr[i] = i; };
+
+  for (std::size_t i = 0; i < ptr.size(); ++i) {
+    f(i);
+  }
+
   ptr.free();
 }
 

@@ -138,7 +138,7 @@ namespace chai::expt
         return m_data;
       }
 
-      CHAI_HOST_DEVICE ElementType& operator[](std::size_t i)
+      CHAI_HOST_DEVICE ElementType& operator[](std::size_t i) const
       {
         return m_data[i];
       }
