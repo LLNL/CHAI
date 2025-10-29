@@ -96,7 +96,7 @@ namespace chai::expt
         return m_size;
       }
 
-      CHAI_HOST_DEVICE void update()
+      CHAI_HOST_DEVICE void update() const
       {
 #if !defined(CHAI_DEVICE_COMPILE)
         if (m_manager)
@@ -111,7 +111,7 @@ namespace chai::expt
 #endif
       }
 
-      CHAI_HOST_DEVICE void cupdate()
+      CHAI_HOST_DEVICE void cupdate() const
       {
 #if !defined(CHAI_DEVICE_COMPILE)
         if (m_manager)
@@ -126,13 +126,13 @@ namespace chai::expt
 #endif
       }
 
-      CHAI_HOST_DEVICE ElementType* data()
+      CHAI_HOST_DEVICE ElementType* data() const
       {
         update();
         return m_data;
       }
 
-      CHAI_HOST_DEVICE ElementType* cdata()
+      CHAI_HOST_DEVICE const ElementType* cdata() const
       {
         cupdate();
         return m_data;
@@ -168,8 +168,8 @@ namespace chai::expt
       }
 
     private:
-      ElementType* m_data{nullptr};
-      std::size_t m_size{0};
+      mutable ElementType* m_data{nullptr};
+      mutable std::size_t m_size{0};
       Manager* m_manager{nullptr};
   };  // class ArrayPointer
 }  // namespace chai::expt
