@@ -16,6 +16,17 @@ blt_add_test(
   COMMAND ContextManagerTests)
 
 blt_add_executable(
+  NAME HostDeviceArrayPointerTests
+  SOURCES HostDeviceArrayPointerTests.cpp
+  INCLUDES ${PROJECT_BINARY_DIR}/include
+  DEPENDS_ON chai gtest)
+
+blt_add_test(
+  NAME HostDeviceArrayPointerTests
+  COMMAND HostDeviceArrayPointerTests)
+
+if(0)
+blt_add_executable(
   NAME DualArrayTests
   SOURCES DualArrayTests.cpp
   INCLUDES ${PROJECT_BINARY_DIR}/include
@@ -24,3 +35,4 @@ blt_add_executable(
 blt_add_test(
   NAME DualArrayTests
   COMMAND DualArrayTests)
+endif()
