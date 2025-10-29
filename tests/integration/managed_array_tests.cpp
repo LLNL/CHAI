@@ -4,6 +4,14 @@
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
+#include "chai/config.hpp"
+
+#include "../src/util/forall.hpp"
+
+#include "chai/ManagedArray.hpp"
+
+#include "umpire/ResourceManager.hpp"
+
 #include "gtest/gtest.h"
 #define GPU_TEST(X, Y)              \
   static void gpu_test_##X##Y();    \
@@ -27,16 +35,6 @@
 #else
 #define assert_empty_map(IGNORED) ASSERT_EQ(chai::ArrayManager::getInstance()->getPointerMap().size(),0)
 #endif
-
-
-#include "chai/config.hpp"
-
-#include "../src/util/forall.hpp"
-
-#include "chai/ManagedArray.hpp"
-
-#include "umpire/ResourceManager.hpp"
-
 
 struct my_point {
   double x;
@@ -594,6 +592,7 @@ TEST(ManagedArray, ReallocateCPU)
 }
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+
 GPU_TEST(ManagedArray, ReallocateGPU)
 {
   chai::ManagedArray<float> array(10);
@@ -604,18 +603,19 @@ GPU_TEST(ManagedArray, ReallocateGPU)
   array.reallocate(20);
   ASSERT_EQ(array.size(), 20u);
 
-  forall(sequential(), 0, 20, [=](int i) {
+  forall(gpu(), 0, 20, [=]__device__(int i) {
     if (i < 10) {
-      ASSERT_EQ(array[i], i);
+      device_assert(array[i] == i);
     } else {
       array[i] = i;
-      ASSERT_EQ(array[i], i);
+      device_assert(array[i] == i);
     }
   });
 
   array.free();
   assert_empty_map(true);
 }
+
 #endif
 
 TEST(ManagedArray, NullpointerConversions)
