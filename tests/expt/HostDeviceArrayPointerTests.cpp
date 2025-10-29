@@ -48,7 +48,6 @@ TEST_F(HostDeviceArrayPointerTest, CopyConstructor) {
   ptr1.free();
 }
 
-#if 0
 TEST_F(HostDeviceArrayPointerTest, ConvertingConstructor) {
   auto* manager = new chai::expt::HostDeviceArrayManager<int>(5);
   HostDeviceArrayPointer<int> ptr1(manager);
@@ -59,7 +58,6 @@ TEST_F(HostDeviceArrayPointerTest, ConvertingConstructor) {
   
   ptr2.free();
 }
-#endif
 
 TEST_F(HostDeviceArrayPointerTest, CopyAssignment) {
   auto* manager1 = new chai::expt::HostDeviceArrayManager<int>(5);

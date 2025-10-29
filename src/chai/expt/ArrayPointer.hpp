@@ -34,7 +34,6 @@ namespace chai::expt
         update();
       }
 
-#if 0
       template <typename OtherElementType, 
                 typename = std::enable_if_t<std::is_convertible_v<OtherElementType (*)[], ElementType (*)[]>>>
       CHAI_HOST_DEVICE ArrayPointer(const ArrayPointer<OtherElementType, ManagerType>& other)
@@ -44,7 +43,6 @@ namespace chai::expt
       {
         update();
       }
-#endif
 
       CHAI_HOST_DEVICE ArrayPointer& operator=(const ArrayPointer& other)
       {
@@ -171,6 +169,10 @@ namespace chai::expt
       mutable ElementType* m_data{nullptr};
       mutable std::size_t m_size{0};
       Manager* m_manager{nullptr};
+
+      /// Needed for the converting constructor
+      template <typename OtherElementType, template <typename> typename OtherManagerType>
+      friend class ArrayPointer;
   };  // class ArrayPointer
 }  // namespace chai::expt
 
