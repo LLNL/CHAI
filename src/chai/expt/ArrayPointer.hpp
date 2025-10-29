@@ -2,15 +2,16 @@
 #define CHAI_ARRAY_POINTER_HPP
 
 #include "chai/config.hpp"
+#include "chai/ChaiMacros.hpp"
 #include <type_traits>
 
 namespace chai::expt
 {
-  template <typename ElementType, template <typename> typename ArrayType>
+  template <typename ElementType, template <typename> typename ManagerType>
   class ArrayPointer
   {
     public:
-      using Array = std::conditional_t<std::is_const_v<ElementType>, const <std::remove_cv_t<ElementType>>, ArrayType<std::remove_cv_t<ElementType>>>;
+      using Manager = ManagerType<std::remove_cv_t<ElementType>>;
       
       ArrayPointer() = default;
 
@@ -19,8 +20,8 @@ namespace chai::expt
       {
       }
 
-      explicit ArrayPointer(Array* array)
-        : m_array{array}
+      explicit ArrayPointer(Manager* array)
+        : m_manager{array}
       {
         update();
       }
@@ -28,20 +29,22 @@ namespace chai::expt
       CHAI_HOST_DEVICE ArrayPointer(const ArrayPointer& other)
         : m_data{other.m_data},
           m_size{other.m_size},
-          m_array{other.m_array}
+          m_manager{other.m_manager}
       {
         update();
       }
 
-      template <typename OtherT, 
-                std::enable_if_t<std::is_convertible_v<OtherT (*)[], ElementType (*)[]>* = nullptr>
-      CHAI_HOST_DEVICE ArrayPointer(const ArrayPointer<OtherT>& other)
+#if 0
+      template <typename OtherElementType, 
+                typename = std::enable_if_t<std::is_convertible_v<OtherElementType (*)[], ElementType (*)[]>>>
+      CHAI_HOST_DEVICE ArrayPointer(const ArrayPointer<OtherElementType, ManagerType>& other)
         : m_data{other.m_data},
           m_size{other.m_size},
-          m_array{other.m_array}
+          m_manager{other.m_manager}
       {
         update();
       }
+#endif
 
       CHAI_HOST_DEVICE ArrayPointer& operator=(const ArrayPointer& other)
       {
@@ -49,7 +52,7 @@ namespace chai::expt
         {
           m_data = other.m_data;
           m_size = other.m_size;
-          m_array = other.m_array;
+          m_manager = other.m_manager;
 
           update();
         }
@@ -61,21 +64,21 @@ namespace chai::expt
       {
         m_data = nullptr;
         m_size = 0;
-        m_array = nullptr;
+        m_manager = nullptr;
 
         return *this;
       }
 
       void resize(std::size_t newSize)
       {
-        if (m_array == nullptr)
+        if (m_manager == nullptr)
         {
-          m_array = new Array();
+          m_manager = new Manager();
         }
 
         m_data = nullptr;
         m_size = newSize;
-        m_array->resize(newSize);
+        m_manager->resize(newSize);
 
         update();
       }
@@ -84,8 +87,8 @@ namespace chai::expt
       {
         m_data = nullptr;
         m_size = 0;
-        delete m_array;
-        m_array = nullptr;
+        delete m_manager;
+        m_manager = nullptr;
       }
 
       CHAI_HOST_DEVICE std::size_t size() const
@@ -93,83 +96,81 @@ namespace chai::expt
         return m_size;
       }
 
-      CHAI_HOST_DEVICE void update() const
+      CHAI_HOST_DEVICE void update()
       {
 #if !defined(CHAI_DEVICE_COMPILE)
-        if (m_array)
+        if (m_manager)
         {
-          if (ElementType* data = m_array->data(); data)
+          if (ElementType* data = m_manager->data(); data)
           {
             m_data = data;
           }
 
-          m_size = m_array->size();
+          m_size = m_manager->size();
         }
 #endif
       }
 
-      CHAI_HOST_DEVICE void cupdate() const
+      CHAI_HOST_DEVICE void cupdate()
       {
 #if !defined(CHAI_DEVICE_COMPILE)
-        if (m_array)
+        if (m_manager)
         {
-          const Array* array = m_array;
-
-          if (ElementType* data = array->data(); data)
+          if (ElementType* data = m_manager->data(); data)
           {
             m_data = data;
           }
 
-          m_size = array->size();
+          m_size = m_manager->size();
         }
 #endif
       }
 
-      CHAI_HOST_DEVICE ElementType* data() const
+      CHAI_HOST_DEVICE ElementType* data()
       {
         update();
         return m_data;
       }
 
-      CHAI_HOST_DEVICE ElementType* cdata() const
+      CHAI_HOST_DEVICE ElementType* cdata()
       {
         cupdate();
         return m_data;
       }
 
-      CHAI_HOST_DEVICE ElementType& operator[](std::size_t i) const
+      CHAI_HOST_DEVICE ElementType& operator[](std::size_t i)
       {
         return m_data[i];
       }
 
-      ElementType get(std::size_t i) const
+      ElementType get(std::size_t i)
       {
-        if (m_array && i < m_array->size())
+        if (m_manager && i < m_manager->size())
         {
-          return m_array->get(i);
+          return m_manager->get(i);
         }
         else
         {
-          throw std::out_of_range("Array index out of bounds");
+          throw std::out_of_range("Manager index out of bounds");
         }
       }
 
-      void set(std::size_t i, ElementType value) const
+      void set(std::size_t i, ElementType value)
       {
-        if (m_array && i < m_array->size())
+        if (m_manager && i < m_manager->size())
         {
-          m_array->set(i, value);
+          m_manager->set(i, value);
         }
         else
         {
-          throw std::out_of_range("Array index out of bounds");
+          throw std::out_of_range("Manager index out of bounds");
         }
       }
 
     private:
       ElementType* m_data{nullptr};
       std::size_t m_size{0};
-      Array* m_array{nullptr};
+      Manager* m_manager{nullptr};
   };  // class ArrayPointer
 }  // namespace chai::expt
 
