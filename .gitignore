@@ -8,3 +8,4 @@ Win32/.vs/
 Win32/x64/
 *.aps
 *.orig
+*.code-workspace
