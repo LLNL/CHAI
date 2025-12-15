@@ -13,6 +13,11 @@ in this file.
 
 The format of this file is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased] = Release date yyyy-mm-dd
+
+### Changed
+- Added `CHAI_VERSION_*` macros to chai/config.hpp.
+
 ## [Version 2025.09.1] - Release date 2025-09-15
 
 ### Fixed
