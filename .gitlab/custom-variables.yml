@@ -19,6 +19,7 @@ variables:
 
   # Dane (SLURM) allocation settings
   DANE_SHARED_ALLOC: "--exclusive --reservation=ci --time=7 --nodes=1"
+# Note: We repeat the reservation, necessary when jobs are manually re-triggered.
   DANE_JOB_ALLOC: "--overlap --reservation=ci --nodes=1"
   # Project specific variants for dane
   PROJECT_DANE_VARIANTS: "~shared +raja tests=basic "
@@ -27,6 +28,7 @@ variables:
 
   # Matrix (SLURM) allocation settings
   MATRIX_SHARED_ALLOC: "--exclusive --partition=pdebug --time=7 --nodes=1"
+# Note: We repeat the reservation, necessary when jobs are manually re-triggered.
   MATRIX_JOB_ALLOC: "--partition=pdebug --overlap --nodes=1"
   # Project specific variants for matrix
   PROJECT_MATRIX_VARIANTS: "~shared +raja tests=basic +cuda cuda_arch=75"
