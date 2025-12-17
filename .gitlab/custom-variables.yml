@@ -27,11 +27,11 @@ variables:
   PROJECT_DANE_DEPS: "^raja~examples~exercises "
 
   # Matrix (SLURM) allocation settings
-  MATRIX_SHARED_ALLOC: "--exclusive --partition=pdebug --time=7 --nodes=1"
+  MATRIX_SHARED_ALLOC: "--exclusive --partition=pci --time=7 --nodes=1"
 # Note: We repeat the reservation, necessary when jobs are manually re-triggered.
-  MATRIX_JOB_ALLOC: "--partition=pdebug --overlap --nodes=1"
+  MATRIX_JOB_ALLOC: "--partition=pci --overlap --nodes=1"
   # Project specific variants for matrix
-  PROJECT_MATRIX_VARIANTS: "~shared +raja tests=basic +cuda cuda_arch=75"
+  PROJECT_MATRIX_VARIANTS: "~shared +raja tests=basic +cuda cuda_arch=90"
   # Project specific deps for matrix
   PROJECT_MATRIX_DEPS: "^raja~examples~exercises "
 
