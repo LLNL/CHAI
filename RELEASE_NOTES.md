@@ -13,10 +13,19 @@ in this file.
 
 The format of this file is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased] = Release date yyyy-mm-dd
+## [Version 2025.12.0] = Release date 2025-12-22
+
+### Fixed
+- Fixed compiler error related to using a lambda as a default function argument.
+- Fixed thin version of a ManagedArray constructor.
 
 ### Changed
+- Updated Umpire to v2025.12.0.
+- Updated RAJA to v2025.12.0.
+
+### Added
 - Added `CHAI_VERSION_*` macros to chai/config.hpp.
+- Added overload of `chai::unpack` for `ManagedArray<managed_ptr<T>>` for use in calls to `chai::make_managed`.
 
 ## [Version 2025.09.1] - Release date 2025-09-15
 
