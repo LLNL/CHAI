@@ -1,0 +1,60 @@
+###############################################################################
+# Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
+# project contributors. See the CHAI LICENSE file for details.
+#
+# SPDX-License-Identifier: (MIT)
+###############################################################################
+
+# This file defines project-specific VARIABLES ONLY.
+# It is included in the PARENT pipeline (.gitlab-ci.yml) to provide
+# variables that are passed as component inputs and forwarded to child pipelines.
+
+###############################################################################
+# MACHINE-SPECIFIC ALLOCATION VARIABLES
+###############################################################################
+
+variables:
+  # Allocation name (used for shared allocations)
+  ALLOC_NAME: ${CI_PROJECT_NAME}_ci_${CI_PIPELINE_ID}
+
+  # Dane (SLURM) allocation settings
+  DANE_SHARED_ALLOC: "--exclusive --reservation=ci --time=7 --nodes=1"
+# Note: We repeat the reservation, necessary when jobs are manually re-triggered.
+  DANE_JOB_ALLOC: "--overlap --reservation=ci --nodes=1"
+  # Project specific variants for dane
+  PROJECT_DANE_VARIANTS: "~shared +raja tests=basic "
+  # Project specific deps for dane
+  PROJECT_DANE_DEPS: "^raja~examples~exercises "
+
+  # Matrix (SLURM) allocation settings
+  MATRIX_SHARED_ALLOC: "--exclusive --partition=pci --time=7 --nodes=1"
+# Note: We repeat the reservation, necessary when jobs are manually re-triggered.
+  MATRIX_JOB_ALLOC: "--partition=pci --overlap --nodes=1"
+  # Project specific variants for matrix
+  PROJECT_MATRIX_VARIANTS: "~shared +raja tests=basic +cuda cuda_arch=90"
+  # Project specific deps for matrix
+  PROJECT_MATRIX_DEPS: "^raja~examples~exercises "
+
+  # Corona (flux) allocation settings
+  CORONA_SHARED_ALLOC: "--exclusive --time-limit=9m --nodes=1"
+  CORONA_JOB_ALLOC: "--nodes=1 --begin-time=+5s"
+  # Project specific variants for corona
+  PROJECT_CORONA_VARIANTS: "~shared +raja tests=basic "
+  # Project specific deps for corona
+  PROJECT_CORONA_DEPS: "^raja~examples~exercises "
+
+  # Tioga (flux) allocation settings
+  TIOGA_SHARED_ALLOC: "--queue=pci --exclusive --time-limit=16m --nodes=1"
+  TIOGA_JOB_ALLOC: "--nodes=1 --begin-time=+5s"
+  # Project specific variants for tioga
+  PROJECT_TIOGA_VARIANTS: "~shared +raja tests=basic "
+  # Project specific deps for tioga
+  PROJECT_TIOGA_DEPS: "^raja~examples~exercises "
+
+  # Tuolumne (flux) allocation settings
+  TUOLUMNE_SHARED_ALLOC: "--queue=pci --exclusive --time-limit=16m --nodes=1"
+  TUOLUMNE_JOB_ALLOC: "--nodes=1 --begin-time=+5s"
+  # Project specific variants for tuolumne
+  PROJECT_TUOLUMNE_VARIANTS: "~shared +raja tests=basic "
+  # Project specific deps for tuolumne
+  PROJECT_TUOLUMNE_DEPS: "^raja~examples~exercises "
