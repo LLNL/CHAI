@@ -1,4 +1,5 @@
 #!/bin/bash
+
 ##############################################################################
 # Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
 # project contributors. See the CHAI LICENSE file for details.
@@ -6,8 +7,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
 
-TAR_CMD=gtar
-VERSION=2025.12.0
+TAR_CMD=`which tar`
+VERSION=`git describe --tags`
 
 git archive --prefix=chai-${VERSION}/ -o chai-${VERSION}.tar HEAD 2> /dev/null
 
