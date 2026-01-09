@@ -35,7 +35,7 @@ Note: It is much faster for `ContextManager` to track synchronization than to re
 
    #include "chai/expt/ContextManager.hpp"
    
-   auto& contextManager = ::chai::expt::ContextManager::getInstance();
+   ::chai::expt::ContextManager& contextManager = ::chai::expt::ContextManager::getInstance();
 
    contextManager.setContext(::chai::expt::Context::HOST);
    // Use CHAI data structures in the HOST context...
@@ -58,12 +58,12 @@ the active context and then resets it upon destruction. This is the recommended 
    #include "chai/expt/ContextGuard.hpp"
 
    {
-     ::chai::expt::ContextGuard contextGuard{chai::expt::Context::HOST};
+     ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::HOST};
      // Use CHAI data structures in the HOST context...
    }
 
    {
-     ::chai::expt::ContextGuard contextGuard{chai::expt::Context::DEVICE};
+     ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::DEVICE};
      // Use CHAI data structures in the DEVICE context...
    }
 
@@ -80,13 +80,13 @@ before `main` is called.
 
    #include "RAJA/RAJA.hpp"
    
-   ::RAJA::forall<RAJA::seq_exec(RAJA::TypedRangeSegment<int>(0, N), [=] (int i) {
+   ::RAJA::forall<::RAJA::seq_exec>(::RAJA::TypedRangeSegment<int>(0, N), [=] (int i) {
      // Use CHAI data structures in the HOST context...
    });
 
    constexpr int BLOCK_SIZE = 256;
    constexpr bool ASYNCHRONOUS = true;
 
-   RAJA::forall<RAJA::cuda_exec<BLOCK_SIZE, ASYNCHRONOUS>>(RAJA::TypedRangeSegment<int>(0, N), [=] __device__ (int i) {
+   ::RAJA::forall<::RAJA::cuda_exec<BLOCK_SIZE, ASYNCHRONOUS>>(::RAJA::TypedRangeSegment<int>(0, N), [=] __device__ (int i) {
      // Use CHAI data structures in the DEVICE context...
    });

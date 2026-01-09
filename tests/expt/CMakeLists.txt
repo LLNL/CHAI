@@ -24,3 +24,15 @@ blt_add_executable(
 blt_add_test(
   NAME ContextGuardTests
   COMMAND ContextGuardTests)
+
+if(CHAI_ENABLE_EXPERIMENTAL_RAJA_PLUGIN)
+  blt_add_executable(
+    NAME ContextRAJAPluginTests
+    SOURCES ContextRAJAPluginTests.cpp
+    INCLUDES ${PROJECT_BINARY_DIR}/include
+    DEPENDS_ON chai gtest)
+
+  blt_add_test(
+    NAME ContextRAJAPluginTests
+    COMMAND ContextRAJAPluginTests)
+endif()
