@@ -11,23 +11,35 @@
 #include "chai/expt/Context.hpp"
 #include "chai/expt/ContextManager.hpp"
 
-namespace chai {
-namespace expt {
+namespace chai::expt {
+  /*!
+   * \brief RAII guard that temporarily sets the active Context and restores the
+   *        previously active Context upon destruction.
+   */
   class ContextGuard {
     public:
+      /*!
+       * \brief Sets the active Context for the lifetime of this guard.
+       * \param context The Context to set as active.
+       */
       explicit ContextGuard(Context context) {
         m_context_manager.setContext(context);
       }
 
+      /*!
+       * \brief Restores the Context that was active when this guard was created.
+       */
       ~ContextGuard() {
         m_context_manager.setContext(m_saved_context);
       }
 
     private:
+      //! Reference to the global ContextManager instance.
       ContextManager& m_context_manager{ContextManager::getInstance()};
+
+      //! Context that was active at guard construction time.
       Context m_saved_context{m_context_manager.getContext()};
-  };
-}  // namespace expt
-}  // namespace chai
+  };  // class ContextGuard
+}  // namespace chai::expt
 
 #endif  // CHAI_CONTEXT_GUARD_HPP

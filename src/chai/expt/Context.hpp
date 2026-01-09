@@ -18,7 +18,7 @@ namespace chai::expt
     NONE = 0,   /*!< No context. */
     HOST = 1,   /*!< Host (CPU) context. */
     DEVICE = 2  /*!< Device (GPU/accelerator) context. */
-  };
+  };  // enum class Context
 }  // namespace chai::expt
 
 #endif  // CHAI_CONTEXT_HPP
