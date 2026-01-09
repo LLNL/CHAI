@@ -10,11 +10,14 @@
 
 namespace chai::expt
 {
+  /*!
+   * \brief Execution context identifier.
+   */
   enum class Context
   {
-    NONE = 0,
-    HOST = 1,
-    DEVICE = 2
+    NONE = 0,   /*!< No context. */
+    HOST = 1,   /*!< Host (CPU) context. */
+    DEVICE = 2  /*!< Device (GPU/accelerator) context. */
   };
 }  // namespace chai::expt
 
