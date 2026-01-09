@@ -68,11 +68,13 @@ if (CHAI_ENABLE_RAJA_PLUGIN)
     ${chai_headers}
     pluginLinker.hpp
     ManagedArrayView.hpp
-    RajaExecutionSpacePlugin.hpp)
+    RajaExecutionSpacePlugin.hpp
+    expt/ContextRAJAPlugin.hpp)
 
   set (chai_sources
     ${chai_sources}
-    RajaExecutionSpacePlugin.cpp)
+    RajaExecutionSpacePlugin.cpp
+    expt/ContextRAJAPlugin.cpp)
 
   set (chai_depends
     ${chai_depends}
