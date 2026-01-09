@@ -8,7 +8,7 @@
 #include "chai/config.hpp"
 #include "chai/expt/ContextRAJAPlugin.hpp"
 
-namespace chai:expt {
+namespace chai::expt {
   void ContextRAJAPlugin::preCapture(const ::RAJA::util::PluginContext& p)
   {
     switch (p.platform) {

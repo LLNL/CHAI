@@ -15,7 +15,7 @@ TEST(ContextGuard, ContextGuard) {
   chai::expt::Context context = contextManager.getContext();
 
   {
-    chai::expt::Context tempContext = chai::expt::Context::HOST
+    chai::expt::Context tempContext = chai::expt::Context::HOST;
     chai::expt::ContextGuard contextGuard(tempContext);
     EXPECT_EQ(contextManager.getContext(), tempContext);
   }
