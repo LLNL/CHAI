@@ -34,10 +34,14 @@ namespace chai::expt {
       }
 
     private:
-      //! Reference to the global ContextManager instance.
+      /*!
+       * \brief Reference to the global ContextManager instance.
+       */
       ContextManager& m_context_manager{ContextManager::getInstance()};
 
-      //! Context that was active at guard construction time.
+      /*!
+       * Context that was active at guard construction time.
+       */
       Context m_saved_context{m_context_manager.getContext()};
   };  // class ContextGuard
 }  // namespace chai::expt
