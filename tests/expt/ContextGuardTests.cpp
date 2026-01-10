@@ -11,12 +11,12 @@
 // Test that ContextGuard updates the current context in scope
 // and restores the previous context on destruction.
 TEST(ContextGuard, ContextGuard) {
-  chai::expt::ContextManager& contextManager = chai::expt::ContextManager::getInstance();
-  chai::expt::Context context = contextManager.getContext();
+  ::chai::expt::ContextManager& contextManager = ::chai::expt::ContextManager::getInstance();
+  ::chai::expt::Context context = contextManager.getContext();
 
   {
-    chai::expt::Context tempContext = chai::expt::Context::HOST;
-    chai::expt::ContextGuard contextGuard(tempContext);
+    ::chai::expt::Context tempContext = ::chai::expt::Context::HOST;
+    ::chai::expt::ContextGuard contextGuard(tempContext);
     EXPECT_EQ(contextManager.getContext(), tempContext);
   }
 

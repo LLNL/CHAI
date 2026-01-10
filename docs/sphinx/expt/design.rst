@@ -17,7 +17,7 @@ Context
 -------
 
 Currently, there are two execution contexts that are handled by CHAI. These are represented in the `Context` enum class.
-The `HOST`` enum value represents synchronous execution on a CPU. The `DEVICE`` enum value represents asynchronous execution on a GPU.
+The `HOST` enum value represents synchronous execution on a CPU. The `DEVICE` enum value represents asynchronous execution on a GPU.
 Both NVIDIA and AMD GPUs are supported.
 
 --------------
