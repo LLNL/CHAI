@@ -36,4 +36,3 @@ if(CHAI_ENABLE_EXPERIMENTAL_RAJA_PLUGIN)
     NAME ContextRAJAPluginTests
     COMMAND ContextRAJAPluginTests)
 endif()
-
