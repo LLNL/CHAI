@@ -8,7 +8,6 @@
 #ifndef CHAI_CONTEXT_RAJA_PLUGIN_HPP
 #define CHAI_CONTEXT_RAJA_PLUGIN_HPP
 
-#include "chai/expt/ContextManager.hpp"
 #include "RAJA/util/PluginStrategy.hpp"
 
 namespace chai::expt {
@@ -40,12 +39,6 @@ namespace chai::expt {
        * \param p RAJA plugin context for the capture.
        */
       void postCapture(const ::RAJA::util::PluginContext& p) override;
-
-    private:
-      /*!
-       * \brief Reference to the singleton ContextManager instance.
-       */
-      ContextManager& m_context_manager{ContextManager::getInstance()};
   };  // class ContextRAJAPlugin
 }  // namespace chai::expt
 

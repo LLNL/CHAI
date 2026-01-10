@@ -6,38 +6,37 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include "chai/config.hpp"
+#include "chai/expt/Context.hpp"
+#include "chai/expt/ContextManager.hpp"
 #include "chai/expt/ContextRAJAPlugin.hpp"
 
 namespace chai::expt {
-  void ContextRAJAPlugin::preCapture(const ::RAJA::util::PluginContext& p)
-  {
+  void ContextRAJAPlugin::preCapture(const ::RAJA::util::PluginContext& p) {
+    Context context = Context::NONE;
+
     switch (p.platform) {
       case ::RAJA::Platform::host:
-        m_context_manager.setContext(Context::HOST);
+        context = Context::HOST;
         break;
 #if defined(CHAI_ENABLE_CUDA)
       case ::RAJA::Platform::cuda:
-        m_context_manager.setContext(Context::DEVICE);
+        context = Context::DEVICE;
         break;
 #endif
 #if defined(CHAI_ENABLE_HIP)
       case ::RAJA::Platform::hip:
-        m_context_manager.setContext(Context::DEVICE);
+        context = Context::DEVICE;
         break;
 #endif
       default:
-        m_context_manager.setContext(Context::NONE);
+        context = Context::NONE;
         break;
     }
+
+    ContextManager::getInstance().setContext(context);
   }
 
-  void ContextRAJAPlugin::postCapture(const ::RAJA::util::PluginContext&)
-  {
-    m_context_manager.setContext(Context::NONE);
+  void ContextRAJAPlugin::postCapture(const ::RAJA::util::PluginContext&) {
+    ContextManager::getInstance().setContext(Context::NONE);
   }
-}
-
-// Pre-main registration of plugin with RAJA
-static ::RAJA::util::PluginRegistry::add<chai::expt::ContextRAJAPlugin> P(
-  "CHAIContextPlugin",
-  "Plugin that integrates CHAI context management with RAJA.");
+}  // namespace chai::expt

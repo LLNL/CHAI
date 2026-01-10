@@ -7,8 +7,14 @@
 
 #include "chai/expt/Context.hpp"
 #include "chai/expt/ContextManager.hpp"
+#include "chai/expt/ContextRAJAPlugin.hpp"
 #include "RAJA/RAJA.hpp"
 #include "gtest/gtest.h"
+
+// Pre-main registration of plugin with RAJA
+static ::RAJA::util::PluginRegistry::add<chai::expt::ContextRAJAPlugin> P(
+  "CHAIContextPlugin",
+  "Plugin that integrates CHAI context management with RAJA.");
 
 /*!
  * \brief Tests whether the plugin was actually called.
