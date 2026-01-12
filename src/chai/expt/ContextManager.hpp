@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
+// Copyright (c) 2016-26, Lawrence Livermore National Security, LLC and CHAI
 // project contributors. See the CHAI LICENSE file for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
@@ -10,7 +10,7 @@
 
 #include "chai/config.hpp"
 #include "chai/expt/Context.hpp"
-#include <unordered_map>
+#include "camp/helpers.hpp"
 
 #if defined(CHAI_ENABLE_CUDA)
 #include <cuda_runtime.h>
@@ -20,20 +20,14 @@
 
 namespace chai::expt {
   /*!
-   * \class ContextManager
-   *
-   * \brief Singleton class for managing the current context.
-   *
-   * This class provides a centralized way to get and set the current
-   * context across the application.
+   * \brief Singleton class for managing the current context
+   *        and context synchronization across the application.
    */
   class ContextManager
   {
     public:
       /*!
-       * \brief Get the singleton instance of ContextManager.
-       *
-       * \return The singleton instance.
+       * \brief Get the singleton instance.
        */
       static ContextManager& getInstance()
       {
@@ -42,19 +36,21 @@ namespace chai::expt {
       }
 
       /*!
-       * \brief Deleted copy constructor to prevent copying.
+       * \brief Disable copy construction.
+       *
+       * ContextManager is a singleton and must not be copied.
        */
       ContextManager(const ContextManager&) = delete;
 
       /*!
-       * \brief Deleted assignment operator to prevent assignment.
+       * \brief Disable copy assignment.
+       *
+       * ContextManager is a singleton and must not be assigned.
        */
       ContextManager& operator=(const ContextManager&) = delete;
 
       /*!
        * \brief Get the current context.
-       *
-       * \return The current context.
        */
       Context getContext() const
       {
@@ -64,7 +60,7 @@ namespace chai::expt {
       /*!
        * \brief Set the current context.
        *
-       * \param context The new context to set.
+       * Setting the context to DEVICE marks the device as not synchronized.
        */
       void setContext(Context context)
       {
@@ -77,28 +73,23 @@ namespace chai::expt {
       }
 
       /*!
-       * \brief Synchronize the given context.
-       *
-       * \param context The context that needs synchronization.
+       * \brief Synchronize the requested context (no-op if already synchronized).
        */
       void synchronize(Context context)
       {
         if (context == Context::DEVICE && !m_device_synchronized)
         {
 #if defined(CHAI_ENABLE_CUDA)
-          cudaDeviceSynchronize();
+          CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
 #elif defined(CHAI_ENABLE_HIP)
-          hipDeviceSynchronize();
+          CAMP_HIP_API_INVOKE_AND_CHECK(hipDeviceSynchronize);
 #endif
           m_device_synchronized = true;
         }
       }
 
       /*!
-       * \brief Check if a specific context needs synchronization.
-       *
-       * \param context The  context to check.
-       * \return True if the context needs synchronization, false otherwise.
+       * \brief Query whether the requested context is synchronized.
        */
       bool isSynchronized(Context context) const
       {
@@ -106,20 +97,16 @@ namespace chai::expt {
       }
 
       /*!
-       * \brief Mark the given context as synchronized.
-       *
-       * This should only be called after synchronization has been performed.
-       *
-       * \param context The context to clear the synchronization flag for.
+       * \brief Explicitly set the synchronization state for the DEVICE context.
        */
-      void setSynchronized(Context context, bool synchronized)
+      void setDeviceSynchronized(bool synchronized)
       {
-        if (context == Context::DEVICE)
-        {
-          m_device_synchronized = synchronized;
-        }
+        m_device_synchronized = synchronized;
       }
 
+      /*!
+       * \brief Reset manager state to defaults.
+       */
       void reset()
       {
         m_context = Context::NONE;
@@ -128,17 +115,24 @@ namespace chai::expt {
 
     private:
       /*!
-       * \brief Private constructor for singleton pattern.
+       * \brief Default constructor.
+       *
+       * Private to enforce singleton access via getInstance().
        */
       ContextManager() = default;
 
       /*!
-       * \brief The current context.
+       * \brief Current context for the application.
+       *
+       * Defaults to NONE until explicitly set.
        */
       Context m_context{Context::NONE};
 
       /*!
-       * \brief Map for tracking which contexts are synchronized.
+       * \brief Device synchronization state.
+       *
+       * True if the device context has been synchronized since the last time the
+       * context was set to DEVICE.
        */
       bool m_device_synchronized{true};
   };  // class ContextManager
