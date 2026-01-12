@@ -35,7 +35,11 @@ class ContextRAJAPluginTester {
       : m_context{other.m_context}
     {
 #if !defined(CHAI_DEVICE_COMPILE)
-      m_context = ::chai::expt::ContextManager::getInstance().getContext();
+      ::chai::expt::Context context = ::chai::expt::ContextManager::getInstance().getContext();
+
+      if (context != ::chai::expt::Context::NONE) {
+        m_context = context;
+      }
 #endif
     }
 
@@ -76,18 +80,18 @@ TEST(ContextRAJAPlugin, CUDA) {
   EXPECT_EQ(tester.getContext(), ::chai::expt::Context::NONE);
 
   ::chai::expt::Context* result = nullptr;
-  CAMP_HIP_API_INVOKE_AND_CHECK(cudaMallocHost, (void**)&result, sizeof(::chai::expt::Context));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMallocHost, (void**)&result, sizeof(::chai::expt::Context));
 
-  ::RAJA::forall<::RAJA::cuda_exec<256, true>>(::RAJA::TypedRangeSegment<int>(0, 1), [=] __device__ (int) {
+  ::RAJA::forall<::RAJA::cuda_exec_async<256>>(::RAJA::TypedRangeSegment<int>(0, 1), [=] __device__ (int) {
     *results = tester.getContext();
   });
 
-  CAMP_HIP_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
 
   EXPECT_EQ(*results, ::chai::expt::Context::DEVICE);
   EXPECT_EQ(tester.getContext(), ::chai::expt::Context::NONE);
 
-  CAMP_HIP_API_INVOKE_AND_CHECK(cudaFreeHost);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaFreeHost);
 }
 #endif
 
@@ -98,9 +102,9 @@ TEST(ContextRAJAPlugin, HIP) {
   EXPECT_EQ(tester.getContext(), ::chai::expt::Context::NONE);
 
   ::chai::expt::Context* result = nullptr;
-  CAMP_HIP_API_INVOKE_AND_CHECK(hipHostMalloc, (void**)&result, sizeof(::chai::expt::Context));
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipMallocManaged, (void**)&result, sizeof(::chai::expt::Context));
 
-  ::RAJA::forall<::RAJA::hip_exec<256, true>>(::RAJA::TypedRangeSegment<int>(0, 1), [=] __device__ (int) {
+  ::RAJA::forall<::RAJA::hip_exec_async<256>>(::RAJA::TypedRangeSegment<int>(0, 1), [=] __device__ (int) {
     *result = tester.getContext();
   });
 
@@ -109,6 +113,6 @@ TEST(ContextRAJAPlugin, HIP) {
   EXPECT_EQ(*result, ::chai::expt::Context::DEVICE);
   EXPECT_EQ(tester.getContext(), ::chai::expt::Context::NONE);
 
-  CAMP_HIP_API_INVOKE_AND_CHECK(hipHostFree, (void*) result);
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipFree, (void*) result);
 }
 #endif
