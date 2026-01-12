@@ -10,6 +10,7 @@
 
 #include "chai/config.hpp"
 #include "chai/expt/Context.hpp"
+#include "camp/helpers.hpp"
 
 #if defined(CHAI_ENABLE_CUDA)
 #include <cuda_runtime.h>
@@ -79,9 +80,9 @@ namespace chai::expt {
         if (context == Context::DEVICE && !m_device_synchronized)
         {
 #if defined(CHAI_ENABLE_CUDA)
-          cudaDeviceSynchronize();
+          CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
 #elif defined(CHAI_ENABLE_HIP)
-          hipDeviceSynchronize();
+          CAMP_HIP_API_INVOKE_AND_CHECK(hipDeviceSynchronize);
 #endif
           m_device_synchronized = true;
         }

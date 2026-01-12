@@ -5,11 +5,27 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
 
+set(chai_expt_test_depends
+    chai
+    gtest)
+
+if(ENABLE_CUDA)
+  set(chai_expt_test_depends
+      ${chai_expt_test_depends}
+      cuda)
+endif()
+
+if(ENABLE_HIP)
+  set(chai_expt_test_depends
+      ${chai_expt_test_depends}
+      blt::hip)
+endif()
+
 blt_add_executable(
   NAME ContextManagerTests
   SOURCES ContextManagerTests.cpp
   INCLUDES ${PROJECT_BINARY_DIR}/include
-  DEPENDS_ON chai gtest)
+  DEPENDS_ON ${chai_expt_test_depends})
 
 blt_add_test(
   NAME ContextManagerTests
@@ -19,7 +35,7 @@ blt_add_executable(
   NAME ContextGuardTests
   SOURCES ContextGuardTests.cpp
   INCLUDES ${PROJECT_BINARY_DIR}/include
-  DEPENDS_ON chai gtest)
+  DEPENDS_ON ${chai_expt_test_depends})
 
 blt_add_test(
   NAME ContextGuardTests
@@ -30,7 +46,7 @@ if(CHAI_ENABLE_EXPERIMENTAL_RAJA_PLUGIN)
     NAME ContextRAJAPluginTests
     SOURCES ContextRAJAPluginTests.cpp
     INCLUDES ${PROJECT_BINARY_DIR}/include
-    DEPENDS_ON chai gtest)
+    DEPENDS_ON ${chai_expt_test_depends})
 
   blt_add_test(
     NAME ContextRAJAPluginTests
