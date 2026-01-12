@@ -5,6 +5,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
 
+#include "chai/config.hpp"
 #include "chai/expt/ContextManager.hpp"
 #include "gtest/gtest.h"
 
@@ -15,16 +16,30 @@ TEST(ContextManager, SingletonInstance) {
   EXPECT_EQ(&contextManager1, &contextManager2);
 }
 
-// Test that the default execution context is NONE
+// Test that the default context is NONE
 TEST(ContextManager, DefaultContext) {
   ::chai::expt::ContextManager& contextManager = ::chai::expt::ContextManager::getInstance();
   EXPECT_EQ(contextManager.getContext(), ::chai::expt::Context::NONE);
 }
 
-// Test setting and getting the execution context
-TEST(ContextManager, Context) {
+// Test setting the HOST context
+TEST(ContextManager, HOST) {
   ::chai::expt::ContextManager& contextManager = ::chai::expt::ContextManager::getInstance();
   ::chai::expt::Context context = ::chai::expt::Context::HOST;
   contextManager.setContext(context);
   EXPECT_EQ(contextManager.getContext(), context);
+  EXPECT_EQ(contextManager.isSynchronized(context), true);
+  contextManager.setContext(::chai::expt::Context::NONE);
+}
+
+// Test setting the DEVICE context
+TEST(ContextManager, DEVICE) {
+  ::chai::expt::ContextManager& contextManager = ::chai::expt::ContextManager::getInstance();
+  ::chai::expt::Context context = ::chai::expt::Context::DEVICE;
+  contextManager.setContext(context);
+  EXPECT_EQ(contextManager.getContext(), context);
+  EXPECT_EQ(contextManager.isSynchronized(context), false);
+  contextManager.setDeviceSynchronized(true);
+  EXPECT_EQ(contextManager.isSynchronized(context), true);
+  contextManager.setContext(::chai::expt::Context::NONE);
 }

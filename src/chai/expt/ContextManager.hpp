@@ -99,12 +99,9 @@ namespace chai::expt {
       /*!
        * \brief Explicitly set the synchronization state for the requested context.
        */
-      void setSynchronized(Context context, bool synchronized)
+      void setDeviceSynchronized(bool synchronized)
       {
-        if (context == Context::DEVICE)
-        {
-          m_device_synchronized = synchronized;
-        }
+        m_device_synchronized = synchronized;
       }
 
       /*!
