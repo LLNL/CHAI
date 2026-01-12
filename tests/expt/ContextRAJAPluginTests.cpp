@@ -5,6 +5,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
 
+#include "chai/config.hpp"
+#include "chai/ChaiMacros.hpp"
 #include "chai/expt/Context.hpp"
 #include "chai/expt/ContextManager.hpp"
 #include "chai/expt/ContextRAJAPlugin.hpp"
@@ -12,7 +14,7 @@
 #include "gtest/gtest.h"
 
 // Pre-main registration of plugin with RAJA
-static ::RAJA::util::PluginRegistry::add<chai::expt::ContextRAJAPlugin> P(
+static ::RAJA::util::PluginRegistry::add<::chai::expt::ContextRAJAPlugin> P(
   "CHAIContextPlugin",
   "Plugin that integrates CHAI context management with RAJA.");
 
@@ -29,9 +31,12 @@ class ContextRAJAPluginTester {
     /*!
      * @brief Copy-construct and capture the current ContextManager context.
      */
-    ContextRAJAPluginTester(const ContextRAJAPluginTester&)
-      : m_context{::chai::expt::ContextManager::getInstance().getContext()}
+    CHAI_HOST_DEVICE ContextRAJAPluginTester(const ContextRAJAPluginTester& other)
+      : m_context{other.m_context}
     {
+#if !defined(CHAI_DEVICE_COMPILE)
+      m_context = ::chai::expt::ContextManager::getInstance().getContext();
+#endif
     }
 
     /*!
@@ -39,7 +44,7 @@ class ContextRAJAPluginTester {
      *
      * @return The stored ::chai::expt::Context value.
      */
-    ::chai::expt::Context getContext() const {
+    CHAI_HOST_DEVICE ::chai::expt::Context getContext() const {
       return m_context;
     }
 
@@ -52,7 +57,7 @@ class ContextRAJAPluginTester {
 
 // Test that the tester object got the updated context and that the current context
 // is NONE inside the loop.
-TEST(ContextRAJAPlugin, ContextRAJAPlugin) {
+TEST(ContextRAJAPlugin, HOST) {
   ContextRAJAPluginTester tester{};
   EXPECT_EQ(tester.getContext(), ::chai::expt::Context::NONE);
 
@@ -63,3 +68,47 @@ TEST(ContextRAJAPlugin, ContextRAJAPlugin) {
 
   EXPECT_EQ(tester.getContext(), ::chai::expt::Context::NONE);
 }
+
+#if defined(CHAI_ENABLE_CUDA)
+// Test that the tester object got the updated context.
+TEST(ContextRAJAPlugin, CUDA) {
+  ContextRAJAPluginTester tester{};
+  EXPECT_EQ(tester.getContext(), ::chai::expt::Context::NONE);
+
+  ::chai::expt::Context* result = nullptr;
+  CAMP_HIP_API_INVOKE_AND_CHECK(cudaMallocHost, (void**)&result, sizeof(::chai::expt::Context));
+
+  ::RAJA::forall<::RAJA::cuda_exec<256, true>>(::RAJA::TypedRangeSegment<int>(0, 1), [=] __device__ (int) {
+    *results = tester.getContext();
+  });
+
+  CAMP_HIP_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
+
+  EXPECT_EQ(*results, ::chai::expt::Context::DEVICE);
+  EXPECT_EQ(tester.getContext(), ::chai::expt::Context::NONE);
+
+  CAMP_HIP_API_INVOKE_AND_CHECK(cudaFreeHost);
+}
+#endif
+
+#if defined(CHAI_ENABLE_HIP)
+// Test that the tester object got the updated context.
+TEST(ContextRAJAPlugin, HIP) {
+  ContextRAJAPluginTester tester{};
+  EXPECT_EQ(tester.getContext(), ::chai::expt::Context::NONE);
+
+  ::chai::expt::Context* result = nullptr;
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipHostMalloc, (void**)&result, sizeof(::chai::expt::Context));
+
+  ::RAJA::forall<::RAJA::hip_exec<256, true>>(::RAJA::TypedRangeSegment<int>(0, 1), [=] __device__ (int) {
+    *result = tester.getContext();
+  });
+
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipDeviceSynchronize);
+
+  EXPECT_EQ(*result, ::chai::expt::Context::DEVICE);
+  EXPECT_EQ(tester.getContext(), ::chai::expt::Context::NONE);
+
+  CAMP_HIP_API_INVOKE_AND_CHECK(hipHostFree, (void*) result);
+}
+#endif
