@@ -23,15 +23,8 @@ set (chai_headers
   PointerRecord.hpp
   Types.hpp)
 
-if(CHAI_ENABLE_EXPERIMENTAL)
-  set(chai_headers
-    ${chai_headers}
-    ManagedSharedPtr.hpp
-    SharedPtrCounter.hpp
-    SharedPtrManager.hpp
-    SharedPtrManager.inl
-    SharedPointerRecord.hpp)
-endif()
+set (chai_sources
+  ArrayManager.cpp)
 
 if(CHAI_DISABLE_RM)
   set(chai_headers
@@ -39,14 +32,22 @@ if(CHAI_DISABLE_RM)
     ManagedArray_thin.inl)
 endif ()
 
-set (chai_sources
-  ArrayManager.cpp)
-
 if(CHAI_ENABLE_EXPERIMENTAL)
+  set(chai_headers
+    ${chai_headers}
+    expt/Context.hpp
+    expt/ContextGuard.hpp
+    expt/ContextManager.hpp
+    ManagedSharedPtr.hpp
+    SharedPtrCounter.hpp
+    SharedPtrManager.hpp
+    SharedPtrManager.inl
+    SharedPointerRecord.hpp)
+
   set (chai_sources
     ${chai_sources}
     SharedPtrManager.cpp)
-endif ()
+endif()
 
 set (chai_depends
   umpire)
@@ -83,6 +84,16 @@ if (CHAI_ENABLE_RAJA_PLUGIN)
       cuda)
   endif ()
 endif ()
+
+if (CHAI_ENABLE_EXPERIMENTAL_RAJA_PLUGIN)
+  set (chai_headers
+    ${chai_headers}
+    expt/ContextRAJAPlugin.hpp)
+
+  set (chai_sources
+    ${chai_sources}
+    expt/ContextRAJAPlugin.cpp)
+endif()
 
 blt_add_library(
   NAME chai
