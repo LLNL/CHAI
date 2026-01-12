@@ -52,7 +52,7 @@ ManagedArray<T>::ManagedArray(
      }
      ++i;
   }
-  this->allocate(elems);
+  this->allocate(elems, space);
 }
 
 template<typename T>
