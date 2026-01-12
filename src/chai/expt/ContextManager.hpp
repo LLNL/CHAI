@@ -97,7 +97,7 @@ namespace chai::expt {
       }
 
       /*!
-       * \brief Explicitly set the synchronization state for the requested context.
+       * \brief Explicitly set the synchronization state for the DEVICE context.
        */
       void setDeviceSynchronized(bool synchronized)
       {

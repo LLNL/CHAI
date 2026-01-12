@@ -90,8 +90,7 @@ may be handled by CHAI.
   });
 
   constexpr int BLOCK_SIZE = 256;
-  constexpr bool ASYNCHRONOUS = true;
 
-  ::RAJA::forall<::RAJA::cuda_exec<BLOCK_SIZE, ASYNCHRONOUS>>(::RAJA::TypedRangeSegment<int>(0, N), [=] __device__ (int i) {
+  ::RAJA::forall<::RAJA::cuda_exec_async<BLOCK_SIZE>>(::RAJA::TypedRangeSegment<int>(0, N), [=] __device__ (int i) {
     // Use CHAI data structures in the DEVICE context...
   });
