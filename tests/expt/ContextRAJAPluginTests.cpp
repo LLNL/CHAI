@@ -12,6 +12,7 @@
 #include "chai/expt/ContextRAJAPlugin.hpp"
 #include "RAJA/RAJA.hpp"
 #include "gtest/gtest.h"
+#include "TestHelpers.hpp"
 
 // Pre-main registration of plugin with RAJA
 static ::RAJA::util::PluginRegistry::add<::chai::expt::ContextRAJAPlugin> P(
@@ -75,23 +76,23 @@ TEST(ContextRAJAPlugin, HOST) {
 
 #if defined(CHAI_ENABLE_CUDA)
 // Test that the tester object got the updated context.
-TEST(ContextRAJAPlugin, CUDA) {
+CUDA_TEST(ContextRAJAPlugin, CUDA) {
   ContextRAJAPluginTester tester{};
   EXPECT_EQ(tester.getContext(), ::chai::expt::Context::NONE);
 
   ::chai::expt::Context* result = nullptr;
-  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMallocHost, (void**)&result, sizeof(::chai::expt::Context));
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMallocManaged, (void**)&result, sizeof(::chai::expt::Context));
 
   ::RAJA::forall<::RAJA::cuda_exec_async<256>>(::RAJA::TypedRangeSegment<int>(0, 1), [=] __device__ (int) {
-    *results = tester.getContext();
+    *result = tester.getContext();
   });
 
   CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
 
-  EXPECT_EQ(*results, ::chai::expt::Context::DEVICE);
+  EXPECT_EQ(*result, ::chai::expt::Context::DEVICE);
   EXPECT_EQ(tester.getContext(), ::chai::expt::Context::NONE);
 
-  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaFreeHost);
+  CAMP_CUDA_API_INVOKE_AND_CHECK(cudaFree, (void*) result);
 }
 #endif
 
