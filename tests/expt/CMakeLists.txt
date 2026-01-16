@@ -58,3 +58,14 @@ if(CHAI_ENABLE_EXPERIMENTAL_RAJA_PLUGIN)
     NAME ContextRAJAPluginTests
     COMMAND ContextRAJAPluginTests)
 endif()
+
+blt_add_executable(
+  NAME DualMemoryManagerTests
+  SOURCES DualMemoryManagerTests.cpp
+  HEADERS ${chai_expt_test_headers}
+  INCLUDES ${PROJECT_BINARY_DIR}/include
+  DEPENDS_ON ${chai_expt_test_depends})
+
+blt_add_test(
+  NAME DualMemoryManagerTests
+  COMMAND DualMemoryManagerTests)
