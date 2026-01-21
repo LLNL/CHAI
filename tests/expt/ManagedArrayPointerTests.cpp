@@ -19,7 +19,7 @@ namespace
    * Requirements satisfied (as used by ManagedArrayPointer):
    *  - void resize(std::size_t)
    *  - std::size_t size() const
-   *  - T* data()   (and const overload for convenience)
+   *  - void* data()
    *
    * Owns storage on host via std::vector.
    */
