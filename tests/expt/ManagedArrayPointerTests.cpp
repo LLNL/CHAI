@@ -21,7 +21,7 @@ namespace
    *  - std::size_t size_bytes() const
    *  - void* data()
    *
-   * Owns storage on host via std::vector.
+   * Owns storage on host via std::realloc.
    */
   class TestArrayManager
   {
