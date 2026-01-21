@@ -10,7 +10,6 @@
 
 #include <cstddef>
 #include <cstdlib>
-#include <vector>
 
 namespace
 {
