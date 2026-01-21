@@ -156,6 +156,15 @@ namespace chai::expt
         return m_size;
       }
 
+      /*!
+       * @brief Returns the cached pointer to the managed array's data.
+       *
+       * @return Pointer to the first element of the underlying managed array, or nullptr.
+       *
+       * @details On host builds, if a manager is present and provides a non-null data pointer,
+       * refreshes the cached pointer `m_data` from `m_manager->data()`. On device builds
+       * (CHAI_DEVICE_COMPILE), returns the cached pointer without querying the manager.
+       */
       CHAI_HOST_DEVICE ElementType* data() const
       {
 #if !defined(CHAI_DEVICE_COMPILE)

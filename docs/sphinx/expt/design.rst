@@ -105,3 +105,31 @@ which allows this object to be passed by value to a CUDA or HIP kernel. When cop
 constructed, it queries the array manager to update the cached size and pointer
 from the array manager. The array must be explicitly freed from only one of the
 shallow copies.
+
+.. code-block:: cpp
+
+  #include "chai/expt/ContextRAJAPlugin.hpp"
+  #include "chai/expt/ManagedArrayPointer.hpp"
+  #include "RAJA/RAJA.hpp"
+
+  static ::RAJA::util::PluginRegistry::add<chai::expt::ContextRAJAPlugin> P(
+    "CHAIContextPlugin",
+    "Plugin that integrates CHAI context management with RAJA.");
+
+  // It's recommended to use an alias so that it is easy to swap out the array manager.
+  template <typename T>
+  using ManagedArrayPointer = ::chai::expt::ManagedArrayPointer<T, UnifiedArrayManager>;
+
+  const std::size_t N = 1000000;
+  ManagedArrayPointer<int> a;
+  a.resize(N);
+
+  ::RAJA::forall<::RAJA::seq_exec>(::RAJA::TypedRangeSegment<int>(0, N), [=] (int i) {
+    a[i] = i;  // Use CHAI data structures in the HOST context...
+  });
+
+  constexpr int BLOCK_SIZE = 256;
+
+  ::RAJA::forall<::RAJA::cuda_exec_async<BLOCK_SIZE>>(::RAJA::TypedRangeSegment<int>(0, N), [=] __device__ (int i) {
+    a[i] -= 1;  // Use CHAI data structures in the DEVICE context...
+  });
