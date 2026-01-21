@@ -34,7 +34,7 @@ namespace chai::expt
        * @details The ArrayPointer assumes pointer ownership semantics, meaning
        * this ArrayPointer or any copy of this ArrayPointer can delete the manager.
        */
-      explicit ArrayPointer(Manager* manager)
+      explicit ArrayPointer(ManagerType* manager)
         : m_manager{manager}
       {
       }
@@ -103,7 +103,7 @@ namespace chai::expt
       {
         if (m_manager == nullptr)
         {
-          m_manager = new Manager();
+          m_manager = new ManagerType();
         }
 
         m_data = nullptr;
@@ -145,6 +145,43 @@ namespace chai::expt
         return m_size;
       }
 
+      CHAI_HOST_DEVICE ElementType* data() const
+      {
+#if !defined(CHAI_DEVICE_COMPILE)
+        if (m_manager)
+        {
+          if (ElementType* data = static_cast<ElementType*>(m_manager->data()); data)
+          {
+            m_data = data;
+          }
+        }
+#endif
+        return m_data;
+      }
+
+      /*!
+       * @brief Synchronizes the cached pointer and size from the manager.
+       *
+       * @details On host builds, if a manager is present, refreshes `m_data` from
+       * `m_manager->data()` (when non-null) and updates `m_size` from
+       * `m_manager->size()`. On device builds (CHAI_DEVICE_COMPILE), this function
+       * is a no-op and the cached values are returned as-is.
+       */
+      CHAI_HOST_DEVICE void update() const
+      {
+#if !defined(CHAI_DEVICE_COMPILE)
+        if (m_manager)
+        {
+          if (ElementType* data = static_cast<ElementType*>(m_manager->data()); data)
+          {
+            m_data = data;
+          }
+
+          m_size = m_manager->size();
+        }
+#endif
+      }
+
       /*!
        * @brief Unchecked element access.
        *
@@ -183,33 +220,10 @@ namespace chai::expt
        * @details Ownership semantics are raw-pointer based: copies share this pointer,
        * and free() may delete it.
        */
-      Manager* m_manager{nullptr};
-
-      /*!
-       * @brief Synchronizes the cached pointer and size from the manager.
-       *
-       * @details On host builds, if a manager is present, refreshes `m_data` from
-       * `m_manager->data()` (when non-null) and updates `m_size` from
-       * `m_manager->size()`. On device builds (CHAI_DEVICE_COMPILE), this function
-       * is a no-op and the cached values are returned as-is.
-       */
-      CHAI_HOST_DEVICE void update() const
-      {
-#if !defined(CHAI_DEVICE_COMPILE)
-        if (m_manager)
-        {
-          if (ElementType* data = m_manager->data(); data)
-          {
-            m_data = data;
-          }
-
-          m_size = m_manager->size();
-        }
-#endif
-      }
+      ManagerType* m_manager{nullptr};
 
       /// Needed for the converting constructor
-      template <typename OtherElementType, template <typename> typename OtherManagerType>
+      template <typename OtherElementType, typename OtherManagerType>
       friend class ArrayPointer;
   };  // class ArrayPointer
 }  // namespace chai::expt

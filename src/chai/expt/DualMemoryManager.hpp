@@ -212,6 +212,64 @@ namespace chai::expt
       }
 
       /*!
+       * \brief Convenience overload that returns a pointer to the managed data in the current context.
+       *
+       * Uses the active context provided by ContextManager::getInstance().getContext() and forwards
+       * to data(Context, bool) to perform any required allocation and synchronization.
+       *
+       * \param touch Whether the caller intends to modify the returned data.
+       *
+       * \return Pointer to data in the current context, or nullptr if the current context is Context::NONE.
+       */
+      T* data(bool touch)
+      {
+        return data(ContextManager::getInstance().getContext(), touch);
+      }
+
+    private:
+      /*!
+       * \brief Pointer to data in the HOST context.
+       */
+      T* m_host_data{nullptr};
+
+      /*!
+       * \brief Pointer to data in the DEVICE context.
+       */
+      T* m_device_data{nullptr};
+
+      /*!
+       * \brief Number of elements currently managed by this DualMemoryManager.
+       */
+      std::size_t m_size{0};
+
+      /*!
+       * \brief Indicates which memory context (HOST or DEVICE) currently holds the authoritative
+       *        (most recently modified) copy of the data.
+       *
+       * Context::NONE indicates that neither context is considered authoritative.
+       */
+      Context m_modified{Context::NONE};
+
+      /*!
+       * \brief Allocator used for host memory allocations.
+       */
+      umpire::Allocator m_host_allocator{umpire::ResourceManager::getInstance().getAllocator("HOST")};
+
+      /*!
+       * \brief Allocator used for device memory allocations.
+       *
+       * If CHAI is built with CUDA or HIP enabled, this defaults to the "DEVICE" allocator.
+       * Otherwise, it falls back to the "HOST" allocator.
+       */
+      umpire::Allocator m_device_allocator{
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+        umpire::ResourceManager::getInstance().getAllocator("DEVICE")
+#else
+        umpire::ResourceManager::getInstance().getAllocator("HOST")
+#endif
+      };
+
+      /*!
        * \brief Returns a pointer to the managed data in the requested memory context, performing
        *        allocation and synchronization as needed.
        *
@@ -283,64 +341,6 @@ namespace chai::expt
           return nullptr;
         }
       }
-
-      /*!
-       * \brief Convenience overload that returns a pointer to the managed data in the current context.
-       *
-       * Uses the active context provided by ContextManager::getInstance().getContext() and forwards
-       * to data(Context, bool) to perform any required allocation and synchronization.
-       *
-       * \param touch Whether the caller intends to modify the returned data.
-       *
-       * \return Pointer to data in the current context, or nullptr if the current context is Context::NONE.
-       */
-      T* data(bool touch = true)
-      {
-        return data(ContextManager::getInstance().getContext(), touch);
-      }
-
-    private:
-      /*!
-       * \brief Pointer to data in the HOST context.
-       */
-      T* m_host_data{nullptr};
-
-      /*!
-       * \brief Pointer to data in the DEVICE context.
-       */
-      T* m_device_data{nullptr};
-
-      /*!
-       * \brief Number of elements currently managed by this DualMemoryManager.
-       */
-      std::size_t m_size{0};
-
-      /*!
-       * \brief Indicates which memory context (HOST or DEVICE) currently holds the authoritative
-       *        (most recently modified) copy of the data.
-       *
-       * Context::NONE indicates that neither context is considered authoritative.
-       */
-      Context m_modified{Context::NONE};
-
-      /*!
-       * \brief Allocator used for host memory allocations.
-       */
-      umpire::Allocator m_host_allocator{umpire::ResourceManager::getInstance().getAllocator("HOST")};
-
-      /*!
-       * \brief Allocator used for device memory allocations.
-       *
-       * If CHAI is built with CUDA or HIP enabled, this defaults to the "DEVICE" allocator.
-       * Otherwise, it falls back to the "HOST" allocator.
-       */
-      umpire::Allocator m_device_allocator{
-#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-        umpire::ResourceManager::getInstance().getAllocator("DEVICE")
-#else
-        umpire::ResourceManager::getInstance().getAllocator("HOST")
-#endif
-      };
   };  // class DualMemoryManager
 }  // namespace chai::expt
 
