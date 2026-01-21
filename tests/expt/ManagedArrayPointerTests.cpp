@@ -17,8 +17,8 @@ namespace
    * Minimal "ManagerType" for exercising ManagedArrayPointer in unit tests.
    *
    * Requirements satisfied (as used by ManagedArrayPointer):
-   *  - void resize(std::size_t)
-   *  - std::size_t size() const
+   *  - void resize_bytes(std::size_t)
+   *  - std::size_t size_bytes() const
    *  - void* data()
    *
    * Owns storage on host via std::vector.
@@ -28,15 +28,15 @@ namespace
     public:
       TestArrayManager() = default;
 
-      void resize(std::size_t bytes)
+      void resize_bytes(std::size_t bytes)
       {
-        m_size = bytes;
+        m_size_bytes = bytes;
         m_data = std::realloc(m_data, bytes);
       }
 
-      std::size_t size() const
+      std::size_t size_bytes() const
       {
-        return m_size;
+        return m_size_bytes;
       }
 
       void* data()
@@ -45,7 +45,7 @@ namespace
       }
 
     private:
-      std::size_t m_size{0};
+      std::size_t m_size_bytes{0};
       void* m_data{nullptr};
   };  // class TestArrayManager
 }  // namespace
