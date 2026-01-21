@@ -35,10 +35,10 @@ endif ()
 if(CHAI_ENABLE_EXPERIMENTAL)
   set(chai_headers
     ${chai_headers}
-    expt/ArrayPointer.hpp
     expt/Context.hpp
     expt/ContextGuard.hpp
     expt/ContextManager.hpp
+    expt/ManagedArrayPointer.hpp
     ManagedSharedPtr.hpp
     SharedPtrCounter.hpp
     SharedPtrManager.hpp
