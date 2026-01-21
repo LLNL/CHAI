@@ -102,6 +102,6 @@ ManagedArrayPointer
 This class provides a uniform interface for working with different types of memory
 across multiple backends. It has pointer semantics, meaning that copies are shallow,
 which allows this object to be passed by value to a CUDA or HIP kernel. When copy
-constructed, it queries the array manager to update the cached size and pointer.
+constructed, it queries the array manager to update the cached size and pointer
 from the array manager. The array must be explicitly freed from only one of the
 shallow copies.
