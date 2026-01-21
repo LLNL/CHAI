@@ -114,3 +114,26 @@ TEST(ManagedArrayPointer, data) {
     EXPECT_EQ(data[i], i);
   }
 }
+
+TEST(ManagedArrayPointer, capture) {
+  const std::size_t n = 10;
+  ::chai::expt::ManagedArrayPointer<int, TestArrayManager> a;
+  a.resize(n);
+
+  auto f = [=] (std::size_t i)
+  {
+    a[i] = i;
+  };
+
+  for (std::size_t i = 0; i < n; ++i)
+  {
+    f(i);
+  }
+
+  int* data = a.data();
+
+  for (std::size_t i = 0; i < n; ++i)
+  {
+    EXPECT_EQ(data[i], i);
+  }
+}
