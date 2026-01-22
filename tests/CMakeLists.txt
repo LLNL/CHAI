@@ -8,3 +8,7 @@
 add_subdirectory(install)
 add_subdirectory(unit)
 add_subdirectory(integration)
+
+if(CHAI_ENABLE_EXPERIMENTAL)
+  add_subdirectory(expt)
+endif()
