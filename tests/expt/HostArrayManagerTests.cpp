@@ -1,0 +1,178 @@
+//////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2016-26, Lawrence Livermore National Security, LLC and CHAI
+// project contributors. See the CHAI LICENSE file for details.
+//
+// SPDX-License-Identifier: BSD-3-Clause
+//////////////////////////////////////////////////////////////////////////////
+
+#include "chai/expt/ContextGuard.hpp"
+#include "chai/expt/HostArrayManager.hpp"
+#include "gtest/gtest.h"
+
+#include <cstddef>
+#include <cstdlib>
+
+TEST(ManagedArrayPointer, DefaultConstructor) {
+  ::chai::expt::HostArrayManager<int> a;
+  EXPECT_EQ(a.size(), 0);
+  EXPECT_EQ(a.data(), nullptr);
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::NONE};
+    EXPECT_EQ(a.size(), 0);
+    EXPECT_EQ(a.data(), nullptr);
+  }
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::HOST};
+    EXPECT_EQ(a.size(), 0);
+    EXPECT_EQ(a.data(), nullptr);
+  }
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::DEVICE};
+    EXPECT_EQ(a.size(), 0);
+    EXPECT_EQ(a.data(), nullptr);
+  }
+}
+
+TEST(ManagedArrayPointer, AllocatorConstructor) {
+  ::chai::expt::HostArrayManager<int> a{umpire::ResourceManager::getInstance().getAllocator("HOST")};
+  EXPECT_EQ(a.size(), 0);
+  EXPECT_EQ(a.data(), nullptr);
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::NONE};
+    EXPECT_EQ(a.size(), 0);
+    EXPECT_EQ(a.data(), nullptr);
+  }
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::HOST};
+    EXPECT_EQ(a.size(), 0);
+    EXPECT_EQ(a.data(), nullptr);
+  }
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::DEVICE};
+    EXPECT_EQ(a.size(), 0);
+    EXPECT_EQ(a.data(), nullptr);
+  }
+}
+
+TEST(ManagedArrayPointer, SizeConstructor) {
+  const std::size_t size = 10;
+  ::chai::expt::HostArrayManager<int> a{size};
+  EXPECT_EQ(a.size(), size);
+  EXPECT_EQ(a.data(), nullptr);
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::NONE};
+    EXPECT_EQ(a.size(), size);
+    EXPECT_EQ(a.data(), nullptr);
+  }
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::HOST};
+    EXPECT_EQ(a.size(), size);
+    EXPECT_NE(a.data(), nullptr);
+  }
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::DEVICE};
+    EXPECT_EQ(a.size(), size);
+    EXPECT_EQ(a.data(), nullptr);
+  }
+}
+
+TEST(ManagedArrayPointer, SizeAndAllocatorConstructor) {
+  const std::size_t size = 10;
+  ::chai::expt::HostArrayManager<int> a{size, umpire::ResourceManager::getInstance().getAllocator("HOST")};
+  EXPECT_EQ(a.size(), size);
+  EXPECT_EQ(a.data(), nullptr);
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::NONE};
+    EXPECT_EQ(a.size(), size);
+    EXPECT_EQ(a.data(), nullptr);
+  }
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::HOST};
+    EXPECT_EQ(a.size(), size);
+    EXPECT_NE(a.data(), nullptr);
+  }
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::DEVICE};
+    EXPECT_EQ(a.size(), size);
+    EXPECT_EQ(a.data(), nullptr);
+  }
+}
+
+TEST(ManagedArrayPointer, CopyConstructor) {
+  const std::size_t size = 10;
+  ::chai::expt::HostArrayManager<int> a{size, umpire::ResourceManager::getInstance().getAllocator("HOST")};
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::HOST};
+    int* data = a.data();
+
+    for (std::size_t i = 0; i < size; ++i)
+    {
+      data[i] = i;
+    }
+  }
+
+  ::chai::expt::HostArrayManager<int> b{a};
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::HOST};
+    EXPECT_EQ(a.size(), b.size());
+
+    const int* a_data = a.data();
+    const int* b_data = b.data();
+
+    EXPECT_NE(a_data, b_data);
+
+    for (std::size_t i = 0; i < size; ++i)
+    {
+      EXPECT_EQ(a_data[i], i);
+      EXPECT_EQ(b_data[i], i);
+    }
+  }
+}
+
+TEST(ManagedArrayPointer, MoveConstructor) {
+  const std::size_t size = 10;
+  ::chai::expt::HostArrayManager<int> a{size, umpire::ResourceManager::getInstance().getAllocator("HOST")};
+
+  int* data = nullptr;
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::HOST};
+    data = a.data();
+
+    for (std::size_t i = 0; i < size; ++i)
+    {
+      data[i] = i;
+    }
+  }
+
+  ::chai::expt::HostArrayManager<int> b{std::move(a)};
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::HOST};
+    EXPECT_EQ(a.size(), 0);
+    EXPECT_EQ(a.data(), nullptr);
+
+    EXPECT_EQ(b.size(), size);
+    const int* b_data = b.data();
+    EXPECT_EQ(b_data, data);
+
+    for (std::size_t i = 0; i < size; ++i)
+    {
+      EXPECT_EQ(b_data[i], i);
+    }
+  }
+}
