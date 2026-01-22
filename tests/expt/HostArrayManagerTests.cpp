@@ -143,6 +143,48 @@ TEST(ManagedArrayPointer, CopyConstructor) {
   }
 }
 
+TEST(ManagedArrayPointer, CopyAssignmentOperator) {
+  const std::size_t size = 10;
+  ::chai::expt::HostArrayManager<int> a{size, umpire::ResourceManager::getInstance().getAllocator("HOST")};
+
+  int* data = nullptr;
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::HOST};
+    data = a.data();
+
+    for (std::size_t i = 0; i < size; ++i)
+    {
+      data[i] = i;
+    }
+  }
+
+  ::chai::expt::HostArrayManager<int> b;
+  b = a;
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::HOST};
+    EXPECT_EQ(a.size(), size);
+    const int* a_data = a.data();
+    EXPECT_EQ(a_data, data);
+
+    for (std::size_t i = 0; i < size; ++i)
+    {
+      EXPECT_EQ(a_data[i], i);
+    }
+
+    EXPECT_EQ(b.size(), size);
+    const int* b_data = b.data();
+    EXPECT_NE(b_data, nullptr);
+    EXPECT_NE(b_data, a_data);
+
+    for (std::size_t i = 0; i < size; ++i)
+    {
+      EXPECT_EQ(b_data[i], i);
+    }
+  }
+}
+
 TEST(ManagedArrayPointer, MoveConstructor) {
   const std::size_t size = 10;
   ::chai::expt::HostArrayManager<int> a{size, umpire::ResourceManager::getInstance().getAllocator("HOST")};
@@ -173,6 +215,83 @@ TEST(ManagedArrayPointer, MoveConstructor) {
     for (std::size_t i = 0; i < size; ++i)
     {
       EXPECT_EQ(b_data[i], i);
+    }
+  }
+}
+
+TEST(ManagedArrayPointer, MoveAssignmentOperator) {
+  const std::size_t size = 10;
+  ::chai::expt::HostArrayManager<int> a{size, umpire::ResourceManager::getInstance().getAllocator("HOST")};
+
+  int* data = nullptr;
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::HOST};
+    data = a.data();
+
+    for (std::size_t i = 0; i < size; ++i)
+    {
+      data[i] = i;
+    }
+  }
+
+  ::chai::expt::HostArrayManager<int> b;
+  b = std::move(a);
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::HOST};
+    EXPECT_EQ(a.size(), 0);
+    EXPECT_EQ(a.data(), nullptr);
+
+    EXPECT_EQ(b.size(), size);
+    const int* b_data = b.data();
+    EXPECT_EQ(b_data, data);
+
+    for (std::size_t i = 0; i < size; ++i)
+    {
+      EXPECT_EQ(b_data[i], i);
+    }
+  }
+}
+
+TEST(ManagedArrayPointer, Resize) {
+  const std::size_t size = 10;
+  ::chai::expt::HostArrayManager<int> a{size, umpire::ResourceManager::getInstance().getAllocator("HOST")};
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::HOST};
+    int* data = a.data();
+
+    for (std::size_t i = 0; i < size; ++i)
+    {
+      data[i] = i;
+    }
+  }
+
+  const int new_size = 5;
+  a.resize(new_size);
+  EXPECT_EQ(a.size(), new_size);
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::HOST};
+    int* data = a.data();
+
+    for (std::size_t i = 0; i < new_size; ++i)
+    {
+      EXPECT_EQ(data[i], i);
+    }
+  }
+
+  a.resize(size);
+  EXPECT_EQ(a.size(), size);
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::HOST};
+    int* data = a.data();
+
+    for (std::size_t i = 0; i < new_size; ++i)
+    {
+      EXPECT_EQ(data[i], i);
     }
   }
 }
