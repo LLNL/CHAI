@@ -12,7 +12,7 @@
 #include <cstddef>
 #include <cstdlib>
 
-TEST(ManagedArrayPointer, DefaultConstructor) {
+TEST(HostArrayManager, DefaultConstructor) {
   ::chai::expt::HostArrayManager<int> a;
   EXPECT_EQ(a.size(), 0);
   EXPECT_EQ(a.data(), nullptr);
@@ -36,7 +36,7 @@ TEST(ManagedArrayPointer, DefaultConstructor) {
   }
 }
 
-TEST(ManagedArrayPointer, AllocatorConstructor) {
+TEST(HostArrayManager, AllocatorConstructor) {
   ::chai::expt::HostArrayManager<int> a{umpire::ResourceManager::getInstance().getAllocator("HOST")};
   EXPECT_EQ(a.size(), 0);
   EXPECT_EQ(a.data(), nullptr);
@@ -60,7 +60,7 @@ TEST(ManagedArrayPointer, AllocatorConstructor) {
   }
 }
 
-TEST(ManagedArrayPointer, SizeConstructor) {
+TEST(HostArrayManager, SizeConstructor) {
   const std::size_t size = 10;
   ::chai::expt::HostArrayManager<int> a{size};
   EXPECT_EQ(a.size(), size);
@@ -85,7 +85,7 @@ TEST(ManagedArrayPointer, SizeConstructor) {
   }
 }
 
-TEST(ManagedArrayPointer, SizeAndAllocatorConstructor) {
+TEST(HostArrayManager, SizeAndAllocatorConstructor) {
   const std::size_t size = 10;
   ::chai::expt::HostArrayManager<int> a{size, umpire::ResourceManager::getInstance().getAllocator("HOST")};
   EXPECT_EQ(a.size(), size);
@@ -110,7 +110,7 @@ TEST(ManagedArrayPointer, SizeAndAllocatorConstructor) {
   }
 }
 
-TEST(ManagedArrayPointer, CopyConstructor) {
+TEST(HostArrayManager, CopyConstructor) {
   const std::size_t size = 10;
   ::chai::expt::HostArrayManager<int> a{size, umpire::ResourceManager::getInstance().getAllocator("HOST")};
 
@@ -143,7 +143,7 @@ TEST(ManagedArrayPointer, CopyConstructor) {
   }
 }
 
-TEST(ManagedArrayPointer, CopyAssignmentOperator) {
+TEST(HostArrayManager, CopyAssignmentOperator) {
   const std::size_t size = 10;
   ::chai::expt::HostArrayManager<int> a{size, umpire::ResourceManager::getInstance().getAllocator("HOST")};
 
@@ -185,7 +185,7 @@ TEST(ManagedArrayPointer, CopyAssignmentOperator) {
   }
 }
 
-TEST(ManagedArrayPointer, MoveConstructor) {
+TEST(HostArrayManager, MoveConstructor) {
   const std::size_t size = 10;
   ::chai::expt::HostArrayManager<int> a{size, umpire::ResourceManager::getInstance().getAllocator("HOST")};
 
@@ -219,7 +219,7 @@ TEST(ManagedArrayPointer, MoveConstructor) {
   }
 }
 
-TEST(ManagedArrayPointer, MoveAssignmentOperator) {
+TEST(HostArrayManager, MoveAssignmentOperator) {
   const std::size_t size = 10;
   ::chai::expt::HostArrayManager<int> a{size, umpire::ResourceManager::getInstance().getAllocator("HOST")};
 
@@ -254,7 +254,7 @@ TEST(ManagedArrayPointer, MoveAssignmentOperator) {
   }
 }
 
-TEST(ManagedArrayPointer, Resize) {
+TEST(HostArrayManager, Resize) {
   const std::size_t size = 10;
   ::chai::expt::HostArrayManager<int> a{size, umpire::ResourceManager::getInstance().getAllocator("HOST")};
 
