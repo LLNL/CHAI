@@ -72,15 +72,7 @@ namespace chai::expt
 
       ElementType* data()
       {
-        // TODO: Consider throwing if Context::DEVICE
-        if (ContextManager::getInstance().getContext() == Context::HOST)
-        {
-          return m_storage.data();
-        }
-        else
-        {
-          return nullptr;
-        }
+        return m_storage.empty() ? nullptr : m_storage.data();
       }
 
     private:

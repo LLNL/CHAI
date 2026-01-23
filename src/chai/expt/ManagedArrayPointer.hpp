@@ -45,8 +45,10 @@ namespace chai::expt
        * @details The ManagedArrayPointer assumes pointer ownership semantics, meaning
        * this ManagedArrayPointer or any copy of this ManagedArrayPointer can delete the manager.
        */
-      explicit ManagedArrayPointer(ManagerType* manager)
-        : m_manager{manager}
+      explicit ManagedArrayPointer(ManagerType manager)
+        : m_data{manager.data()},
+          m_size{manager.size()},
+          m_manager{new ManagerType(std::move(manager))}
       {
       }
 
@@ -117,9 +119,9 @@ namespace chai::expt
           m_manager = new ManagerType();
         }
 
-        m_data = nullptr;
-        m_size = new_size;
         m_manager->resize(new_size);
+        m_data = m_manager->data();
+        m_size = new_size;
       }
 
       /*!
