@@ -30,20 +30,35 @@ namespace chai::expt
   class ManagedArrayPointer
   {
     public:
+      /**
+      * \brief Factory that constructs a ManagerType then wraps it in a ManagedArrayPointer.
+      *
+      * \tparam Args Argument types used to construct ManagerType.
+      * \param args Arguments forwarded to ManagerType's constructor.
+      * \return A ManagedArrayPointer owning a newly constructed ManagerType.
+      */
+      template <typename... Args>
+      static ManagedArrayPointer make(Args&&... args)
+      {
+        return ManagedArrayPointer{
+          ManagerType{std::forward<Args>(args)...}
+        };
+      }
+
       /*!
-       * @brief Constructs a default ManagedArrayPointer.
+       * \brief Constructs a default ManagedArrayPointer.
        *
-       * @details Creates a null pointer with size 0 and no associated manager.
+       * \details Creates a null pointer with size zero and no associated manager.
        */
       ManagedArrayPointer() = default;
 
       /*!
-       * @brief Constructs an ManagedArrayPointer from an existing manager.
+       * \brief Constructs an ManagedArrayPointer from an existing manager.
        *
-       * @param manager Pointer to a manager that owns/manages the underlying array.
+       * \param manager An object that owns/manages the underlying array.
        *
-       * @details The ManagedArrayPointer assumes pointer ownership semantics, meaning
-       * this ManagedArrayPointer or any copy of this ManagedArrayPointer can delete the manager.
+       * \note Deep copies of the ManagerType object can and should be avoided
+       *       by passing a temporary or an rvalue reference to this constructor.
        */
       explicit ManagedArrayPointer(ManagerType manager)
         : m_data{manager.data()},
@@ -53,11 +68,11 @@ namespace chai::expt
       }
 
       /*!
-       * @brief Copy-constructs an ManagedArrayPointer from another ManagedArrayPointer.
+       * \brief Copy-constructs an ManagedArrayPointer from another ManagedArrayPointer.
        *
-       * @param other The ManagedArrayPointer to copy.
+       * \param other The ManagedArrayPointer to copy.
        *
-       * @details Copies the cached pointer, size, and manager pointer. Ownership
+       * \details Copies the cached pointer, size, and manager pointer. Ownership
        * semantics are preserved (the manager pointer is shared). The internal
        * cached pointer/size are synchronized by calling update().
        */
@@ -70,14 +85,14 @@ namespace chai::expt
       }
 
       /*!
-       * @brief Converting copy-constructor from a non-const ManagedArrayPointer to a const ManagedArrayPointer.
+       * \brief Converting copy-constructor from a non-const ManagedArrayPointer to a const ManagedArrayPointer.
        *
-       * @tparam OtherElementType The source element type; must be non-const, and this
+       * \tparam OtherElementType The source element type; must be non-const, and this
        *         ManagedArrayPointer's ElementType must be const-qualified version of it.
        *
-       * @param other The source ManagedArrayPointer to copy from.
+       * \param other The source ManagedArrayPointer to copy from.
        *
-       * @details This constructor is enabled only when converting from
+       * \details This constructor is enabled only when converting from
        * ManagedArrayPointer<T, ManagerType> to ManagedArrayPointer<const T, ManagerType>. The manager
        * pointer is shared (ownership semantics are preserved).
        */
@@ -92,23 +107,23 @@ namespace chai::expt
       }
 
       /*!
-       * @brief Copy-assigns from another ManagedArrayPointer.
+       * \brief Copy-assigns from another ManagedArrayPointer.
        *
-       * @param other The ManagedArrayPointer to copy from.
+       * \param other The ManagedArrayPointer to copy from.
        *
-       * @return Reference to this ManagedArrayPointer.
+       * \return Reference to this ManagedArrayPointer.
        *
-       * @details Copies the cached pointer, size, and manager pointer. Ownership
+       * \details Copies the cached pointer, size, and manager pointer. Ownership
        * semantics are preserved (the manager pointer is shared).
        */
       ManagedArrayPointer& operator=(const ManagedArrayPointer& other) = default;
 
       /*!
-       * @brief Resizes the underlying managed array.
+       * \brief Resizes the underlying managed array.
        *
-       * @param new_size New number of elements.
+       * \param new_size New number of elements.
        *
-       * @details If no manager is associated with this ManagedArrayPointer, a new manager is
+       * \details If no manager is associated with this ManagedArrayPointer, a new manager is
        * default-constructed. The cached pointer and size are invalidated (set to nullptr
        * and zero, respectively), and the resize request is forwarded to the manager.
        */
@@ -125,9 +140,9 @@ namespace chai::expt
       }
 
       /*!
-       * @brief Frees the owned manager and resets this ManagedArrayPointer to null/empty.
+       * \brief Frees the owned manager and resets this ManagedArrayPointer to null/empty.
        *
-       * @details Sets the cached data pointer to nullptr, size to 0, deletes the
+       * \details Sets the cached data pointer to nullptr, size to 0, deletes the
        * associated manager (if any), and clears the manager pointer. After calling
        * free(), this ManagedArrayPointer is equivalent to default-constructed.
        */
@@ -140,11 +155,11 @@ namespace chai::expt
       }
 
       /*!
-       * @brief Returns the number of elements in the underlying managed array.
+       * \brief Returns the number of elements in the underlying managed array.
        *
-       * @return The number of elements.
+       * \return The number of elements.
        *
-       * @details On host builds, synchronizes the cached size from the manager (if present).
+       * \details On host builds, synchronizes the cached size from the manager (if present).
        * On device builds (CHAI_DEVICE_COMPILE), returns the last cached size.
        */
       CHAI_HOST_DEVICE std::size_t size() const
@@ -159,11 +174,11 @@ namespace chai::expt
       }
 
       /*!
-       * @brief Returns the cached pointer to the managed array's data.
+       * \brief Returns the cached pointer to the managed array's data.
        *
-       * @return Pointer to the first element of the underlying managed array, or nullptr.
+       * \return Pointer to the first element of the underlying managed array, or nullptr.
        *
-       * @details On host builds, if a manager is present and provides a non-null data pointer,
+       * \details On host builds, if a manager is present and provides a non-null data pointer,
        * refreshes the cached pointer `m_data` from `m_manager->data()`. On device builds
        * (CHAI_DEVICE_COMPILE), returns the cached pointer without querying the manager.
        */
@@ -182,9 +197,9 @@ namespace chai::expt
       }
 
       /*!
-       * @brief Synchronizes the cached pointer and size from the manager.
+       * \brief Synchronizes the cached pointer and size from the manager.
        *
-       * @details On host builds, if a manager is present, refreshes `m_data` from
+       * \details On host builds, if a manager is present, refreshes `m_data` from
        * `m_manager->data()` (when non-null) and updates `m_size` from
        * `m_manager->size()`. On device builds (CHAI_DEVICE_COMPILE), this function
        * is a no-op and the cached values are returned as-is.
@@ -205,14 +220,14 @@ namespace chai::expt
       }
 
       /*!
-       * @brief Unchecked element access.
+       * \brief Unchecked element access.
        *
-       * @param i Element index.
+       * \param i Element index.
        *
-       * @return Reference to element i in the cached data pointer.
+       * \return Reference to element i in the cached data pointer.
        *
-       * @note No bounds checking is performed.
-       * @note Uses the cached pointer `m_data` and does not call update().
+       * \note No bounds checking is performed.
+       * \note Uses the cached pointer `m_data` and does not call update().
        */
       CHAI_HOST_DEVICE ElementType& operator[](std::size_t i) const
       {
@@ -221,25 +236,25 @@ namespace chai::expt
 
     private:
       /*!
-       * @brief Cached pointer to the managed array.
+       * \brief Cached pointer to the managed array.
        *
-       * @details This value is synchronized from the manager by update()/cupdate().
+       * \details This value is synchronized from the manager by update()/cupdate().
        * It is marked mutable to allow cache refresh in const member functions.
        */
       mutable ElementType* m_data{nullptr};
 
       /*!
-       * @brief Cached number of elements in the managed array.
+       * \brief Cached number of elements in the managed array.
        *
-       * @details This value is synchronized from the manager by size()/update()/cupdate().
+       * \details This value is synchronized from the manager by size()/update()/cupdate().
        * It is marked mutable to allow cache refresh in const member functions.
        */
       mutable std::size_t m_size{0};
 
       /*!
-       * @brief Pointer to the manager that owns/manages the underlying array.
+       * \brief Pointer to the manager that owns/manages the underlying array.
        *
-       * @details Ownership semantics are raw-pointer based: copies share this pointer,
+       * \details Ownership semantics are raw-pointer based: copies share this pointer,
        * and free() may delete it.
        */
       ManagerType* m_manager{nullptr};

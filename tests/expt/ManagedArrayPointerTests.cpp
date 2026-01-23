@@ -67,6 +67,13 @@ TEST(ManagedArrayPointer, ManagerConstructor) {
   a.free();
 }
 
+TEST(ManagedArrayPointer, MakeManagerConstructor) {
+  TestArrayPointer<int> a = TestArrayPointer<int>::make();
+  EXPECT_EQ(a.size(), 0);
+  EXPECT_EQ(a.data(), nullptr);
+  a.free();
+}
+
 TEST(ManagedArrayPointer, CopyConstructor) {
   TestArrayPointer<int> a{TestArrayManager<int>()};
   TestArrayPointer<int> b(a);

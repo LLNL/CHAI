@@ -33,9 +33,31 @@ TEST(HostArrayPointer, ManagerDefaultConstructor) {
   a.free();
 }
 
+TEST(HostArrayPointer, MakeManagerDefaultConstructor) {
+  HostArrayPointer<int> a = HostArrayPointer<int>::make();
+  EXPECT_EQ(a.size(), 0);
+  EXPECT_EQ(a.data(), nullptr);
+  a.free();
+}
+
 TEST(HostArrayPointer, ManagerSizeConstructor) {
   const std::size_t N = 10;
   HostArrayPointer<int> a{HostArrayManager<int>(N)};
+  EXPECT_EQ(a.size(), N);
+  ASSERT_NE(a.data(), nullptr);
+
+  // For memory checking tools, use the allocated array.
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    a[i] = i;
+  }
+
+  a.free();
+}
+
+TEST(HostArrayPointer, MakeManagerSizeConstructor) {
+  const std::size_t N = 10;
+  HostArrayPointer<int> a = HostArrayPointer<int>::make(N);
   EXPECT_EQ(a.size(), N);
   ASSERT_NE(a.data(), nullptr);
 
