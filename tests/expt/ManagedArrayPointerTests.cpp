@@ -11,8 +11,6 @@
 #include <cstddef>
 #include <cstdlib>
 
-namespace
-{
   /**
    * Minimal "ManagerType" for exercising ManagedArrayPointer in unit tests.
    *
@@ -49,57 +47,62 @@ namespace
       std::size_t m_size{0};
       ElementType* m_data{nullptr};
   };  // class TestArrayManager
-}  // namespace
+
+template <typename ElementType>
+using TestArrayPointer = ::chai::expt::ManagedArrayPointer<ElementType, TestArrayManager<ElementType>>;
+
+template <typename ElementType>
+using ConstTestArrayPointer = ::chai::expt::ManagedArrayPointer<const ElementType, TestArrayManager<ElementType>>;
 
 TEST(ManagedArrayPointer, DefaultConstructor) {
-  ::chai::expt::ManagedArrayPointer<int, TestArrayManager<int>> a;
+  TestArrayPointer<int> a;
   EXPECT_EQ(a.size(), 0);
   EXPECT_EQ(a.data(), nullptr);
 }
 
 TEST(ManagedArrayPointer, ManagerConstructor) {
-  ::chai::expt::ManagedArrayPointer<int, TestArrayManager<int>> a(new TestArrayManager<int>());
+  TestArrayPointer<int> a{TestArrayManager<int>{}};
   EXPECT_EQ(a.size(), 0);
   EXPECT_EQ(a.data(), nullptr);
   a.free();
 }
 
 TEST(ManagedArrayPointer, CopyConstructor) {
-  ::chai::expt::ManagedArrayPointer<int, TestArrayManager<int>> a(new TestArrayManager<int>());
-  ::chai::expt::ManagedArrayPointer<int, TestArrayManager<int>> b(a);
+  TestArrayPointer<int> a{TestArrayManager<int>()};
+  TestArrayPointer<int> b(a);
   EXPECT_EQ(b.size(), 0);
   EXPECT_EQ(b.data(), nullptr);
   b.free();
 }
 
 TEST(ManagedArrayPointer, ConvertingConstructor) {
-  ::chai::expt::ManagedArrayPointer<int, TestArrayManager<int>> a(new TestArrayManager<int>());
-  ::chai::expt::ManagedArrayPointer<const int, TestArrayManager<int>> b(a);
+  TestArrayPointer<int> a{TestArrayManager<int>()};
+  ConstTestArrayPointer<int> b(a);
   EXPECT_EQ(b.size(), 0);
   EXPECT_EQ(b.data(), nullptr);
   b.free();
 }
 
 TEST(ManagedArrayPointer, CopyAssignmentOperator) {
-  ::chai::expt::ManagedArrayPointer<int, TestArrayManager<int>> a;
-  a = ::chai::expt::ManagedArrayPointer<int, TestArrayManager<int>>(new TestArrayManager<int>());
+  TestArrayPointer<int> a;
+  a = TestArrayPointer<int>(TestArrayManager<int>());
   EXPECT_EQ(a.size(), 0);
   EXPECT_EQ(a.data(), nullptr);
   a.free();
 }
 
-TEST(ManagedArrayPointer, resize) {
+TEST(ManagedArrayPointer, Resize) {
   const std::size_t n = 10;
-  ::chai::expt::ManagedArrayPointer<int, TestArrayManager<int>> a;
+  TestArrayPointer<int> a;
   a.resize(n);
   EXPECT_EQ(a.size(), n);
   EXPECT_NE(a.data(), nullptr);
   a.free();
 }
 
-TEST(ManagedArrayPointer, data) {
+TEST(ManagedArrayPointer, Data) {
   const std::size_t n = 10;
-  ::chai::expt::ManagedArrayPointer<int, TestArrayManager<int>> a;
+  TestArrayPointer<int> a;
   a.resize(n);
   a.update();
 
@@ -114,11 +117,13 @@ TEST(ManagedArrayPointer, data) {
   {
     EXPECT_EQ(data[i], i);
   }
+
+  a.free();
 }
 
-TEST(ManagedArrayPointer, capture) {
+TEST(ManagedArrayPointer, LambdaCapture) {
   const std::size_t n = 10;
-  ::chai::expt::ManagedArrayPointer<int, TestArrayManager<int>> a;
+  TestArrayPointer<int> a;
   a.resize(n);
 
   auto f = [=] (std::size_t i)
@@ -137,4 +142,6 @@ TEST(ManagedArrayPointer, capture) {
   {
     EXPECT_EQ(data[i], i);
   }
+
+  a.free();
 }
