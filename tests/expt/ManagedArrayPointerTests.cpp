@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <cstdlib>
 
+namespace {
   /**
    * Minimal "ManagerType" for exercising ManagedArrayPointer in unit tests.
    *
@@ -47,6 +48,7 @@
       std::size_t m_size{0};
       ElementType* m_data{nullptr};
   };  // class TestArrayManager
+}  // anonymous namespace
 
 template <typename ElementType>
 using TestArrayPointer = ::chai::expt::ManagedArrayPointer<ElementType, TestArrayManager<ElementType>>;
