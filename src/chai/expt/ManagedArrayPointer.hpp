@@ -104,13 +104,13 @@ namespace chai::expt
       /*!
        * @brief Resizes the underlying managed array.
        *
-       * @param newSize New number of elements.
+       * @param new_size New number of elements.
        *
        * @details If no manager is associated with this ManagedArrayPointer, a new manager is
        * default-constructed. The cached pointer and size are invalidated (set to nullptr
        * and zero, respectively), and the resize request is forwarded to the manager.
        */
-      void resize(std::size_t newSize)
+      void resize(std::size_t new_size)
       {
         if (m_manager == nullptr)
         {
@@ -119,7 +119,7 @@ namespace chai::expt
 
         m_data = nullptr;
         m_size = 0;
-        m_manager->resize_bytes(newSize*sizeof(ElementType));
+        m_manager->resize(new_size);
       }
 
       /*!
@@ -150,7 +150,7 @@ namespace chai::expt
 #if !defined(CHAI_DEVICE_COMPILE)
         if (m_manager)
         {
-          m_size = m_manager->size_bytes()/sizeof(ElementType);
+          m_size = m_manager->size();
         }
 #endif
         return m_size;
@@ -184,7 +184,7 @@ namespace chai::expt
        *
        * @details On host builds, if a manager is present, refreshes `m_data` from
        * `m_manager->data()` (when non-null) and updates `m_size` from
-       * `m_manager->size_bytes()`. On device builds (CHAI_DEVICE_COMPILE), this function
+       * `m_manager->size()`. On device builds (CHAI_DEVICE_COMPILE), this function
        * is a no-op and the cached values are returned as-is.
        */
       CHAI_HOST_DEVICE void update() const
@@ -197,7 +197,7 @@ namespace chai::expt
             m_data = data;
           }
 
-          m_size = m_manager->size_bytes()/sizeof(ElementType);
+          m_size = m_manager->size()/sizeof(ElementType);
         }
 #endif
       }

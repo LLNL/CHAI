@@ -80,3 +80,14 @@ blt_add_executable(
 blt_add_test(
   NAME HostArrayManagerTests
   COMMAND HostArrayManagerTests)
+
+blt_add_executable(
+  NAME HostArrayPointerTests
+  SOURCES HostArrayPointerTests.cpp
+  HEADERS ${chai_expt_test_headers}
+  INCLUDES ${PROJECT_BINARY_DIR}/include
+  DEPENDS_ON ${chai_expt_test_depends})
+
+blt_add_test(
+  NAME HostArrayPointerTests
+  COMMAND HostArrayPointerTests)
