@@ -13,7 +13,10 @@
 #include <cstdlib>
 
 template <typename ElementType>
-using HostArrayPointer = ::chai::expt::ManagedArrayPointer<ElementType, ::chai::expt::HostArrayManager<ElementType>>;
+using HostArrayManager = ::chai::expt::HostArrayManager<ElementType>;
+
+template <typename ElementType>
+using HostArrayPointer = ::chai::expt::ManagedArrayPointer<ElementType, HostArrayManager<ElementType>>;
 
 TEST(HostArrayPointer, DefaultConstructor) {
   HostArrayPointer<int> a;
@@ -34,6 +37,50 @@ TEST(HostArrayPointer, DefaultConstructor) {
     for (std::size_t i = 0; i < N; ++i)
     {
       data[i] = i;
+    }
+  }
+
+  a.free();
+}
+
+TEST(HostArrayPointer, ManagerConstructor) {
+  const std::size_t N = 10;
+  HostArrayPointer<float> a(new HostArrayManager<float>(N));
+  EXPECT_EQ(a.size(), N);
+  EXPECT_EQ(a.data(), nullptr);
+  a.free();
+}
+
+TEST(HostArrayPointer, CopyConstructor) {
+  const std::size_t size = 10;
+  HostArrayPointer<int> a(new HostArrayManager<int>(size));
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::HOST};
+    a.update();
+
+    for (std::size_t i = 0; i < size; ++i)
+    {
+      a[i] = i;
+    }
+  }
+
+  HostArrayPointer<int> b{a};
+
+  {
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::HOST};
+    b.update();
+    EXPECT_EQ(a.size(), b.size());
+
+    const int* a_data = a.data();
+    const int* b_data = b.data();
+
+    EXPECT_EQ(a_data, b_data);
+
+    for (std::size_t i = 0; i < size; ++i)
+    {
+      EXPECT_EQ(a_data[i], i);
+      EXPECT_EQ(b_data[i], i);
     }
   }
 }

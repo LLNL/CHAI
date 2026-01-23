@@ -118,7 +118,7 @@ namespace chai::expt
         }
 
         m_data = nullptr;
-        m_size = 0;
+        m_size = new_size;
         m_manager->resize(new_size);
       }
 
@@ -197,7 +197,7 @@ namespace chai::expt
             m_data = data;
           }
 
-          m_size = m_manager->size()/sizeof(ElementType);
+          m_size = m_manager->size();
         }
 #endif
       }
