@@ -134,6 +134,49 @@ shallow copies.
     a[i] -= 1;  // Use CHAI data structures in the DEVICE context...
   });
 
+  a.free();
+
+-------------------------
+ManagedArraySharedPointer
+-------------------------
+
+This class provides a uniform interface for working with different types of memory
+across multiple backends. It has shared pointer semantics, meaning that copies are
+shallow, which allows this object to be passed by value to a CUDA or HIP kernel.
+When copy constructed, it queries the array manager to update the cached size and
+pointer from the array manager. Similar to std::shared_ptr, all host copies have
+shared ownership such that when the last host copy is destroyed, it will trigger
+clean up of the underlying resources. Note that device copies are not reference
+counted since clean up cannot be triggered from the device.
+
+.. code-block:: cpp
+
+  #include "chai/expt/ContextRAJAPlugin.hpp"
+  #include "chai/expt/ManagedArraySharedPointer.hpp"
+  #include "RAJA/RAJA.hpp"
+
+  static ::RAJA::util::PluginRegistry::add<chai::expt::ContextRAJAPlugin> P(
+    "CHAIContextPlugin",
+    "Plugin that integrates CHAI context management with RAJA.");
+
+  // It's recommended to use an alias so that it is easy to swap out the array manager.
+  template <typename T>
+  using ManagedArraySharedPointer = ::chai::expt::ManagedArraySharedPointer<T, UnifiedArrayManager>;
+
+  const std::size_t N = 1000000;
+  ManagedArraySharedPointer<int> a;
+  a.resize(N);
+
+  ::RAJA::forall<::RAJA::seq_exec>(::RAJA::TypedRangeSegment<int>(0, N), [=] (int i) {
+    a[i] = i;  // Use CHAI data structures in the HOST context...
+  });
+
+  constexpr int BLOCK_SIZE = 256;
+
+  ::RAJA::forall<::RAJA::cuda_exec_async<BLOCK_SIZE>>(::RAJA::TypedRangeSegment<int>(0, N), [=] __device__ (int i) {
+    a[i] -= 1;  // Use CHAI data structures in the DEVICE context...
+  });
+
 ----------------
 HostArrayManager
 ----------------

@@ -39,7 +39,9 @@ if(CHAI_ENABLE_EXPERIMENTAL)
     expt/ContextGuard.hpp
     expt/ContextManager.hpp
     expt/HostArrayManager.hpp
+    expt/HostSharedPointer.hpp
     expt/ManagedArrayPointer.hpp
+    expt/ManagedArraySharedPointer.hpp
     ManagedSharedPtr.hpp
     SharedPtrCounter.hpp
     SharedPtrManager.hpp
