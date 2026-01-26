@@ -144,8 +144,10 @@ This class provides a uniform interface for working with different types of memo
 across multiple backends. It has shared pointer semantics, meaning that copies are
 shallow, which allows this object to be passed by value to a CUDA or HIP kernel.
 When copy constructed, it queries the array manager to update the cached size and
-pointer from the array manager. Like with std::shared_ptr, the underlying memory
-will be cleaned up automatically once the last host copy is destroyed.
+pointer from the array manager. Similar to std::shared_ptr, all host copies have
+shared ownership such that when the last host copy is destroyed, it will trigger
+clean up of the underlying resources. Note that device copies are not reference
+counted since clean up cannot be triggered from the device.
 
 .. code-block:: cpp
 
