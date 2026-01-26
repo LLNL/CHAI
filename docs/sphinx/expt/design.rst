@@ -133,3 +133,43 @@ shallow copies.
   ::RAJA::forall<::RAJA::cuda_exec_async<BLOCK_SIZE>>(::RAJA::TypedRangeSegment<int>(0, N), [=] __device__ (int i) {
     a[i] -= 1;  // Use CHAI data structures in the DEVICE context...
   });
+
+----------------
+HostArrayManager
+----------------
+
+This class manages a host array. It is designed for use with ManagedArrayPointer.
+
+HostArrayManager performs value initialization of each array element.
+That is to say, numeric types will be initialized to zero and nontrivial
+types will be default constructed. In the future, this behavior may
+change to default initialization for performance reasons, such that
+numeric types will be left in an indeterminate state and nontrivial
+types will be default constructed.
+
+HostArrayManager does not rely on ContextManager, so it will behave
+differently than other array managers. The major difference is that
+when used with ManagedArrayPointer, the ManagedArrayPointer does not
+need the update method called or to be copy constructed before it can
+be used on the host. Since it will not respect the current Context,
+be extra careful to avoid using it on the device.
+
+.. code-block:: cpp
+
+  #include "chai/expt/HostArrayManager.hpp"
+  #include "chai/expt/ManagedArrayPointer.hpp"
+
+  // It's recommended to use an alias so that it is easy to swap out the array manager.
+  template <typename T>
+  using HostArrayManager = ::chai::expt::HostArrayManager<T>;
+
+  template <typename T>
+  using ManagedArrayPointer = ::chai::expt::ManagedArrayPointer<T, HostArrayManager<T>>;
+
+  const std::size_t N = 1000000;
+  ManagedArrayPointer<int> a{HostArrayManager<int>(N)};
+
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    a[i] = i;
+  }
