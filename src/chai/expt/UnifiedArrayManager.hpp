@@ -15,50 +15,43 @@
 namespace chai::expt
 {
   /*!
-   * \brief This class manages a host array. It is designed for use with
-   *        ManagedArrayPointer.
+   * \brief This class manages a unified memory array. It is designed for use
+   *        with ManagedArrayPointer.
    *
    * \tparam ElementType The type of elements contained in this array.
    *
    * \note UnifiedArrayManager performs value initialization of each array element.
    *       That is to say, numeric types will be initialized to zero and nontrivial
-   *       types will be default constructed. In the future, this behavior may
-   *       change to default initialization for performance reasons, such that
-   *       numeric types will be left in an indeterminate state and nontrivial
-   *       types will be default constructed.
-   *
-   * \note UnifiedArrayManager does not rely on ContextManager, so it will behave
-   *       differently than other array managers. The major difference is that
-   *       when used with ManagedArrayPointer, the ManagedArrayPointer does not
-   *       need the update method called or to be copy constructed before it can
-   *       be used on the host. Since it will not respect the current Context,
-   *       be extra careful to avoid using it on the device.
+   *       types will be default constructed. This initialization occurs on the host.
+   *       In the future, this behavior may change to default initialization for
+   *       performance reasons, such that numeric types will be left in an
+   *       indeterminate state and nontrivial types will be default constructed.
    */
   template <typename ElementType>
   class UnifiedArrayManager {
     private:
       /*!
-       * \brief Allocator used by the managed host storage.
+       * \brief Allocator used by the managed unified memory storage.
        */
       using AllocatorType = ::umpire::TypedAllocator<ElementType>;
 
       /*!
-       * \brief Underlying contiguous host storage type for managed elements.
+       * \brief Underlying contiguous unified memory storage type for managed elements.
        */
       using StorageType = std::vector<ElementType, AllocatorType>;
 
     public:
       /*!
        * \brief Default-constructs a UnifiedArrayManager with zero elements
-       *        and a default allocator for host memory allocations.
+       *        and a default allocator for unified memory allocations.
        */
       UnifiedArrayManager() = default;
 
       /*!
        * \brief Constructs a UnifiedArrayManager with zero elements
-       *        and \p allocator for host memory allocations.
+       *        and \p allocator for unified memory allocations.
        *
-       * \param allocator Allocator used for host memory allocations.
+       * \param allocator Allocator used for unified memory allocations.
        */
       explicit UnifiedArrayManager(const umpire::Allocator& allocator)
         : m_storage{StorageType(AllocatorType(allocator))}
@@ -67,7 +60,7 @@ namespace chai::expt
 
       /*!
        * \brief Constructs a UnifiedArrayManager with \p size elements
-       *        using the default allocator for host memory allocations.
+       *        using the default allocator for unified memory allocations.
        *
        * \param size Number of elements to allocate.
        */
@@ -78,10 +71,10 @@ namespace chai::expt
 
       /*!
        * \brief Constructs a UnifiedArrayManager with \p size elements
-       *        using \p allocator for host memory allocations.
+       *        using \p allocator for unified memory allocations.
        *
        * \param size Number of elements to allocate.
-       * \param allocator Allocator used for host memory allocations.
+       * \param allocator Allocator used for unified memory allocations.
        */
       UnifiedArrayManager(std::size_t size,
                        const umpire::Allocator& allocator)
@@ -134,7 +127,7 @@ namespace chai::expt
 
     private:
       /*!
-       * \brief Underlying host storage for the managed elements.
+       * \brief Underlying unified memory storage for the managed elements.
        */
       StorageType m_storage{AllocatorType(::umpire::ResourceManager::getInstance().getAllocator("UM"))};
 
