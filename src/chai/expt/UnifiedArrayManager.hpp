@@ -65,7 +65,7 @@ namespace chai::expt
        * \param size Number of elements to allocate.
        */
       explicit UnifiedArrayManager(std::size_t size)
-        : m_storage{StorageType(size, AllocatorType(::umpire::ResourceManager::getInstance().getAllocator("HOST")))}
+        : m_storage{StorageType(size, AllocatorType(::umpire::ResourceManager::getInstance().getAllocator("UM")))}
       {
       }
 
