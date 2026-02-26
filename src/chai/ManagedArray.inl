@@ -304,7 +304,7 @@ CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::reset()
 {
   if (m_resource_manager == nullptr) {
-     m_resource_manager = ArrayManager::getInstance();
+     return;
   }
   m_resource_manager->resetTouch(m_pointer_record);
 }
@@ -319,7 +319,7 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::registerTouch(ExecutionSpace space) {
   if (m_resource_manager == nullptr) {
-     m_resource_manager = ArrayManager::getInstance();
+     return;
   }
   if (m_active_pointer && (m_pointer_record == nullptr || m_pointer_record == &ArrayManager::s_null_record)) {
      CHAI_LOG(Warning,"registerTouch called on ManagedArray with nullptr pointer record.");
@@ -333,9 +333,6 @@ CHAI_INLINE
 CHAI_HOST_DEVICE
 typename ManagedArray<T>::T_non_const ManagedArray<T>::pick(size_t i) const { 
   #if !defined(CHAI_DEVICE_COMPILE)
-      if (m_resource_manager == nullptr) {
-        m_resource_manager = ArrayManager::getInstance();
-      }
     #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
       if (m_resource_manager->isGPUSimMode()) {
         return (T_non_const)(m_active_pointer[i]);
@@ -364,9 +361,6 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST_DEVICE void ManagedArray<T>::set(size_t i, T val) const { 
   #if !defined(CHAI_DEVICE_COMPILE)
-      if (m_resource_manager == nullptr) {
-        m_resource_manager = ArrayManager::getInstance();
-      }
     #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
       if (m_resource_manager->isGPUSimMode()) {
         m_active_pointer[i] = val;
