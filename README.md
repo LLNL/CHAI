@@ -55,9 +55,11 @@ Produced at the Lawrence Livermore National Laboratory
 All rights reserved.
 
 Unlimited Open Source - BSD Distribution
+`LLNL-CODE-705877`
+`OCEC-16-189`
 
-For release details and restrictions, please read the LICENSE file.
-It is also linked here: [LICENSE](./LICENSE)
+For release details and restrictions, please read the following:
+- [LICENSE](./LICENSE)
+- [COPYRIGHT](./COPYRIGHT)
+- [NOTICE](./NOTICE)
 
-- `LLNL-CODE-705877`
-- `OCEC-16-189`
