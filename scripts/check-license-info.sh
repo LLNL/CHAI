@@ -15,13 +15,19 @@ RED="\033[1;31m"
 GREEN="\033[1;32m"
 NOCOLOR="\033[0m"
 
-files_no_license=$(grep -rL "the CHAI LICENSE file" . \
+files_no_license=$(grep -rL "SPDX-License-Identifier: BSD-3-Clause" . \
    --exclude-dir=.git \
    --exclude-dir=blt \
    --exclude-dir=umpire \
    --exclude-dir=raja \
    --exclude-dir=radiuss-spack-configs \
-   --exclude-dir=uberenv)
+   --exclude-dir=uberenv \
+   --exclude=.gitmodules \
+   --exclude=.mailmap \
+   --exclude=LICENSE \
+   --exclude=COPYRIGHT \
+   --exclude=NOTICE \
+   --exclude=*.json)
 
 if [ $files_no_license ]; then
   print "${RED} [!] Some files are missing license text: ${NOCOLOR}"
