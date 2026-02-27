@@ -36,6 +36,7 @@ files_no_license=$(grep -rL "SPDX-License-Identifier: BSD-3-Clause" . \
    --exclude=LICENSE \
    --exclude=COPYRIGHT \
    --exclude=NOTICE \
+   --exclude=license.txt \
    --exclude=*.json)
 
 echo $files_no_license | xargs $LIC_CMD -f scripts/license.txt 
