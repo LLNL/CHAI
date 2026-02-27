@@ -50,7 +50,7 @@ Contributors include:
 ## Release
 
 Copyright (c) 2016-26, Lawrence Livermore National Security, LLC.
-Produced at the Lawrence Livermore National Laboratory
+Produced at the Lawrence Livermore National Laboratory.
 
 All rights reserved.
 
