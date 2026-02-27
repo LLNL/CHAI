@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+
 ##############################################################################
 # Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
 # contributors. See the CHAI LICENSE and COPYRIGHT files for details.
