@@ -3,7 +3,7 @@
 # Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
 # contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 #
-# SPDX-License-Identifier: (MIT)
+# SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
 
 # This is used for the ~*tpl* line to ignore files in bundled tpls

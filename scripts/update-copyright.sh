@@ -4,12 +4,12 @@
 # Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
 # contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 #
-# SPDX-License-Identifier: (MIT)
+# SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
 
 #=============================================================================
 # Change the copyright date in all files that contain the text
-# "the CHAI LICENSE file", which is part of the copyright statement at the
+# "See the CHAI LICENSE", which is part of the copyright statement at the
 # top of each CHAI file. We use this to distinguish CHAI files from ones
 # that we do not own (e.g., other repos included as submodules), which we
 # do not want to modify. Note that this file and *.git files are omitted
@@ -47,18 +47,18 @@ for i in `cat files2change`
 do
     echo $i
     cp $i $i.sed.bak
-    sed "s/Copyright (c) \([0-9]\{4\}\)-[0-9]\{2\},/Copyright (c) 2016-25,/" $i.sed.bak > $i
+    sed "s/Copyright (c) \([0-9]\{4\}\)-[0-9]\{2\},/Copyright (c) 2016-26,/" $i.sed.bak > $i
 done
 
 echo LICENSE
 cp LICENSE LICENSE.sed.bak
-sed "s/Copyright (c) \([0-9]\{4\}\)-[0-9]\{4\}/Copyright (c) 2016-25/" LICENSE.sed.bak > LICENSE
+sed "s/Copyright (c) \([0-9]\{4\}\)-[0-9]\{4\}/Copyright (c) 2016-26/" LICENSE.sed.bak > LICENSE
 
 for i in README.md CONTRIBUTING.md
 do 
     echo $i
     cp $i $i.sed.bak
-    sed "s/\([0-9]\{4\}\)-[0-9]\{2\}/2016-25/" $i.sed.bak > $i
+    sed "s/\([0-9]\{4\}\)-[0-9]\{2\}/2016-26/" $i.sed.bak > $i
 done
 
 #=============================================================================
