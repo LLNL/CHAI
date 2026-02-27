@@ -53,7 +53,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'CHAI'
-copyright = u'Copyright (c) 2016-26, Lawrence Livermore National Security, LLC.'
+copyright = u'Copyright (c) 2016-26, Lawrence Livermore National Security, LLC and other CHAI contributors.'
 author = u''
 
 # The version info for the project you're documenting, acts as replacement for
