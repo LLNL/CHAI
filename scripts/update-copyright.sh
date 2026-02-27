@@ -38,7 +38,7 @@
 #=============================================================================
 # First find all the files we want to modify
 #=============================================================================
-grep -rl "See the CHAI LICENSE" . --exclude-dir=.git --exclude-dir=blt --exclude-dir=umpire --exclude-dir=raja --exclude-dir=radiuss-spack-configs --exclude-dir=uberenv --exclude=update-copyright.sh > files2change
+grep -rl "Copyright (c) [0-9]\{4\}-[0-9]\{2\}" . --exclude-dir=.git --exclude-dir=blt --exclude-dir=umpire --exclude-dir=raja --exclude-dir=radiuss-spack-configs --exclude-dir=uberenv --exclude=update-copyright.sh > files2change
 
 #=============================================================================
 # Replace the old copyright dates with new dates
@@ -47,7 +47,7 @@ for i in `cat files2change`
 do
     echo $i
     cp $i $i.sed.bak
-    sed "s/Copyright (c) \([0-9]\{4\}\)-[0-9]\{2\},/Copyright (c) 2016-26,/" $i.sed.bak > $i
+    sed "s/Copyright (c) \([0-9]\{4\}\)-[0-9]\{2\},/Copyright (c) 2016-27,/" $i.sed.bak > $i
 done
 
 #=============================================================================
