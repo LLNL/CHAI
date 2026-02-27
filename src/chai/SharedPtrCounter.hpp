@@ -1,6 +1,6 @@
 
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
+// Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
 // contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
