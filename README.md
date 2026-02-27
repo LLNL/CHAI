@@ -1,7 +1,6 @@
 [comment]: # (#################################################################)
-[comment]: # (Copyright 2016-25, Lawrence Livermore National Security, LLC)
-[comment]: # (and CHAI project contributors. See the CHAI LICENSE file for)
-[comment]: # (details.)
+[comment]: # (Copyright Lawrence Livermore National Security, LLC and other CHAI)
+[comment]: # (contributors. See the CHAI LICENSE and COPYRIGHT files for details.)
 [comment]: # 
 [comment]: # (# SPDX-License-Identifier: BSD-3-Clause)
 [comment]: # (#################################################################)
@@ -50,7 +49,7 @@ Contributors include:
 
 ## Release
 
-Copyright (c) 2016, Lawrence Livermore National Security, LLC.
+Copyright (c) 2016-26, Lawrence Livermore National Security, LLC.
 Produced at the Lawrence Livermore National Laboratory
 
 All rights reserved.
