@@ -1,17 +1,19 @@
 Intellectual Property Notice
 ------------------------------
 
+This file is part of CHAI.
+For details, see https://github.com/llnl/CHAI
+
 CHAI is produced at the Lawrence Livermore National Laboratory.
+See NOTICE file.
 
 Unlimited Open Source - BSD Distribution
 LLNL-CODE-705877
 OCEC-16-189
 
-This file is part of CHAI.
-For details, see https://github.com/llnl/CHAI
-
 CHAI licensed under the BSD 3-Clause license
 (BSD-3-Clause or https://opensource.org/licenses/BSD-3-Clause).
+See LICENSE file.
 
 Copyrights and patents in the CHAI project are retained by contributors.
 No copyright assignment is required to contribute to CHAI.
@@ -38,7 +40,6 @@ views and opinions of authors expressed herein do not necessarily state or
 reflect those of the United States Government or Lawrence Livermore National
 Security, LLC, and shall not be used for advertising or product endorsement
 purposes.
-
 
 SPDX usage
 ------------
