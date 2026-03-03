@@ -79,30 +79,73 @@ namespace chai::expt {
       void setContext(ExecutionContext context)
       {
         s_context = std::move(context);
-
-        std::visit(
-          [this](const auto& ctx) {
-            if constexpr (std::is_same_v<std::decay_t<decltype(ctx)>, HostContext>)
-            {
-              (void)ctx;
-            }
+      }
 
 #if defined(CHAI_ENABLE_CUDA)
-            if constexpr (std::is_same_v<std::decay_t<decltype(ctx)>, CudaContext>)
-            {
-              s_stream_synchronized[StreamKey::cuda(ctx.stream)] = false;
-            }
+      /*!
+       * \brief Mark a CUDA stream as requiring synchronization.
+       */
+      void markStreamUnsynchronized(cudaStream_t stream)
+      {
+        s_stream_synchronized[StreamKey::cuda(stream)] = false;
+      }
+
+      /*!
+       * \brief Synchronize a specific CUDA stream (no-op if already synchronized).
+       */
+      void synchronizeStream(cudaStream_t stream)
+      {
+        const StreamKey key = StreamKey::cuda(stream);
+        if (isKeySynchronized(key))
+        {
+          return;
+        }
+
+        CAMP_CUDA_API_INVOKE_AND_CHECK(cudaStreamSynchronize, stream);
+        s_stream_synchronized[key] = true;
+      }
+
+      /*!
+       * \brief Query whether a specific CUDA stream is synchronized.
+       */
+      bool isStreamSynchronized(cudaStream_t stream) const
+      {
+        return isKeySynchronized(StreamKey::cuda(stream));
+      }
 #endif
 
 #if defined(CHAI_ENABLE_HIP)
-            if constexpr (std::is_same_v<std::decay_t<decltype(ctx)>, HipContext>)
-            {
-              s_stream_synchronized[StreamKey::hip(ctx.stream)] = false;
-            }
-#endif
-          },
-          *s_context);
+      /*!
+       * \brief Mark a HIP stream as requiring synchronization.
+       */
+      void markStreamUnsynchronized(hipStream_t stream)
+      {
+        s_stream_synchronized[StreamKey::hip(stream)] = false;
       }
+
+      /*!
+       * \brief Synchronize a specific HIP stream (no-op if already synchronized).
+       */
+      void synchronizeStream(hipStream_t stream)
+      {
+        const StreamKey key = StreamKey::hip(stream);
+        if (isKeySynchronized(key))
+        {
+          return;
+        }
+
+        CAMP_HIP_API_INVOKE_AND_CHECK(hipStreamSynchronize, stream);
+        s_stream_synchronized[key] = true;
+      }
+
+      /*!
+       * \brief Query whether a specific HIP stream is synchronized.
+       */
+      bool isStreamSynchronized(hipStream_t stream) const
+      {
+        return isKeySynchronized(StreamKey::hip(stream));
+      }
+#endif
 
       /*!
        * \brief Synchronize the current context (no-op if already synchronized).
@@ -126,30 +169,14 @@ namespace chai::expt {
 #if defined(CHAI_ENABLE_CUDA)
             if constexpr (std::is_same_v<std::decay_t<decltype(ctx)>, CudaContext>)
             {
-              const StreamKey key = StreamKey::cuda(ctx.stream);
-              if (s_stream_synchronized[key])
-              {
-                return;
-              }
-
-              CAMP_CUDA_API_INVOKE_AND_CHECK(cudaStreamSynchronize, ctx.stream);
-
-              s_stream_synchronized[key] = true;
+              synchronizeStream(ctx.stream);
             }
 #endif
 
 #if defined(CHAI_ENABLE_HIP)
             if constexpr (std::is_same_v<std::decay_t<decltype(ctx)>, HipContext>)
             {
-              const StreamKey key = StreamKey::hip(ctx.stream);
-              if (s_stream_synchronized[key])
-              {
-                return;
-              }
-
-              CAMP_HIP_API_INVOKE_AND_CHECK(hipStreamSynchronize, ctx.stream);
-
-              s_stream_synchronized[key] = true;
+              synchronizeStream(ctx.stream);
             }
 #endif
           },
@@ -176,14 +203,14 @@ namespace chai::expt {
 #if defined(CHAI_ENABLE_CUDA)
             if constexpr (std::is_same_v<std::decay_t<decltype(ctx)>, CudaContext>)
             {
-              return s_stream_synchronized[StreamKey::cuda(ctx.stream)];
+              return isStreamSynchronized(ctx.stream);
             }
 #endif
 
 #if defined(CHAI_ENABLE_HIP)
             if constexpr (std::is_same_v<std::decay_t<decltype(ctx)>, HipContext>)
             {
-              return s_stream_synchronized[StreamKey::hip(ctx.stream)];
+              return isStreamSynchronized(ctx.stream);
             }
 #endif
 
@@ -245,6 +272,12 @@ namespace chai::expt {
           return a.backend == b.backend && a.handle == b.handle;
         }
       };
+
+      bool isKeySynchronized(const StreamKey& key) const
+      {
+        const auto it = s_stream_synchronized.find(key);
+        return it == s_stream_synchronized.end() ? true : it->second;
+      }
 
       /*!
        * \brief Default constructor.

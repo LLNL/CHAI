@@ -40,8 +40,11 @@ TEST(ContextManager, HOST) {
 TEST(ContextManager, CUDA) {
   ::chai::expt::ContextManager& contextManager = ::chai::expt::ContextManager::getInstance();
   contextManager.reset();
-  contextManager.setContext(::chai::expt::CudaContext{});
+  cudaStream_t stream = 0;
+  contextManager.setContext(::chai::expt::CudaContext{stream});
   EXPECT_TRUE(contextManager.hasContext());
+  EXPECT_TRUE(contextManager.isSynchronized());
+  contextManager.markStreamUnsynchronized(stream);
   EXPECT_FALSE(contextManager.isSynchronized());
   contextManager.synchronize();
   EXPECT_TRUE(contextManager.isSynchronized());
@@ -54,8 +57,11 @@ TEST(ContextManager, CUDA) {
 TEST(ContextManager, HIP) {
   ::chai::expt::ContextManager& contextManager = ::chai::expt::ContextManager::getInstance();
   contextManager.reset();
-  contextManager.setContext(::chai::expt::HipContext{});
+  hipStream_t stream = 0;
+  contextManager.setContext(::chai::expt::HipContext{stream});
   EXPECT_TRUE(contextManager.hasContext());
+  EXPECT_TRUE(contextManager.isSynchronized());
+  contextManager.markStreamUnsynchronized(stream);
   EXPECT_FALSE(contextManager.isSynchronized());
   contextManager.synchronize();
   EXPECT_TRUE(contextManager.isSynchronized());
