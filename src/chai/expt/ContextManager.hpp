@@ -12,6 +12,8 @@
 #include "chai/expt/Context.hpp"
 #include "camp/helpers.hpp"
 
+#include <optional>
+
 #if defined(CHAI_ENABLE_CUDA)
 #include <cuda_runtime.h>
 #elif defined(CHAI_ENABLE_HIP)
@@ -50,9 +52,9 @@ namespace chai::expt {
       ContextManager& operator=(const ContextManager&) = delete;
 
       /*!
-       * \brief Get the current context.
+       * \brief Get the current context, if one is set.
        */
-      Context getContext() const
+      std::optional<Context> getContext() const
       {
         return m_context;
       }
@@ -109,7 +111,7 @@ namespace chai::expt {
        */
       void reset()
       {
-        m_context = Context::NONE;
+        m_context.reset();
         m_device_synchronized = true;
       }
 
@@ -124,9 +126,9 @@ namespace chai::expt {
       /*!
        * \brief Current context for the application.
        *
-       * Defaults to NONE until explicitly set.
+       * Defaults to unset until explicitly set.
        */
-      Context m_context{Context::NONE};
+      std::optional<Context> m_context{};
 
       /*!
        * \brief Device synchronization state.
