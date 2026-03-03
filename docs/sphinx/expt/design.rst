@@ -16,9 +16,13 @@ CHAI provides data structures that implicitly manage coherence across multiple e
 Context
 -------
 
-Currently, there are two execution contexts that are handled by CHAI. These are represented in the `Context` enum class.
-The `HOST` enum value represents synchronous execution on a CPU. The `DEVICE` enum value represents asynchronous execution on a GPU.
-Both NVIDIA and AMD GPUs are supported.
+CHAI tracks the current execution context as a richer object that includes:
+
+- Where execution occurs (host CPU or a specific GPU stream).
+- Whether the policy is synchronous or asynchronous.
+
+On the host, the default policy is synchronous. On GPUs, the default policy is asynchronous.
+Both NVIDIA (CUDA) and AMD (HIP) GPUs are supported.
 
 --------------
 ContextManager
@@ -29,21 +33,30 @@ When an application enters an execution context, it uses `ContextManager` to set
 tracks which contexts may need synchronization. CHAI data structures can query `ContextManager` to update data coherence and
 inform `ContextManager` of needed synchronization or synchronization that has been performed.
 
-Note: It is much faster for `ContextManager` to track synchronization than to repeatedly call `cudaDeviceSynchronize()` or `hipDeviceSynchronize()`.
+Note: It is much faster for `ContextManager` to track synchronization than to repeatedly call device-wide synchronization.
 
 .. code-block:: cpp
 
   #include "chai/expt/ContextManager.hpp"
+  #include "chai/expt/ExecutionContext.hpp"
    
   ::chai::expt::ContextManager& contextManager = ::chai::expt::ContextManager::getInstance();
 
-  contextManager.setContext(::chai::expt::Context::HOST);
+  contextManager.setContext(::chai::expt::HostContext{});
   // Use CHAI data structures in the HOST context...
-  contextManager.setContext(::chai::expt::Context::NONE);
+  contextManager.clearContext();
 
-  contextManager.setContext(::chai::expt::Context::DEVICE);
-  // Use CHAI data structures in the DEVICE context...
-  contextManager.setContext(::chai::expt::Context::NONE);
+#if defined(CHAI_ENABLE_CUDA)
+  cudaStream_t stream = 0;  // default stream (example)
+  contextManager.setContext(::chai::expt::CudaContext{stream});
+  // Use CHAI data structures in the CUDA device context...
+  contextManager.clearContext();
+#elif defined(CHAI_ENABLE_HIP)
+  hipStream_t stream = 0;  // default stream (example)
+  contextManager.setContext(::chai::expt::HipContext{stream});
+  // Use CHAI data structures in the HIP device context...
+  contextManager.clearContext();
+#endif
    
 ------------
 ContextGuard
@@ -56,16 +69,26 @@ the active context and then resets it upon destruction. This is the recommended 
 .. code-block:: cpp
 
   #include "chai/expt/ContextGuard.hpp"
+  #include "chai/expt/ExecutionContext.hpp"
 
   {
-    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::HOST};
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::HostContext{}};
     // Use CHAI data structures in the HOST context...
   }
 
+#if defined(CHAI_ENABLE_CUDA)
   {
-    ::chai::expt::ContextGuard contextGuard{::chai::expt::Context::DEVICE};
-    // Use CHAI data structures in the DEVICE context...
+    cudaStream_t stream = 0;  // default stream (example)
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::CudaContext{stream}};
+    // Use CHAI data structures in the CUDA device context...
   }
+#elif defined(CHAI_ENABLE_HIP)
+  {
+    hipStream_t stream = 0;  // default stream (example)
+    ::chai::expt::ContextGuard contextGuard{::chai::expt::HipContext{stream}};
+    // Use CHAI data structures in the HIP device context...
+  }
+#endif
 
 -----------------
 ContextRAJAPlugin
@@ -92,7 +115,7 @@ may be handled by CHAI.
   constexpr int BLOCK_SIZE = 256;
 
   ::RAJA::forall<::RAJA::cuda_exec_async<BLOCK_SIZE>>(::RAJA::TypedRangeSegment<int>(0, N), [=] __device__ (int i) {
-    // Use CHAI data structures in the DEVICE context...
+    // Use CHAI data structures in the CUDA device stream context...
   });
 
 -------------------
@@ -131,7 +154,7 @@ shallow copies.
   constexpr int BLOCK_SIZE = 256;
 
   ::RAJA::forall<::RAJA::cuda_exec_async<BLOCK_SIZE>>(::RAJA::TypedRangeSegment<int>(0, N), [=] __device__ (int i) {
-    a[i] -= 1;  // Use CHAI data structures in the DEVICE context...
+    a[i] -= 1;  // Use CHAI data structures in the CUDA device stream context...
   });
 
   a.free();
@@ -174,7 +197,7 @@ counted since clean up cannot be triggered from the device.
   constexpr int BLOCK_SIZE = 256;
 
   ::RAJA::forall<::RAJA::cuda_exec_async<BLOCK_SIZE>>(::RAJA::TypedRangeSegment<int>(0, N), [=] __device__ (int i) {
-    a[i] -= 1;  // Use CHAI data structures in the DEVICE context...
+    a[i] -= 1;  // Use CHAI data structures in the CUDA device stream context...
   });
 
 ----------------

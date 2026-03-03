@@ -35,7 +35,7 @@ endif ()
 if(CHAI_ENABLE_EXPERIMENTAL)
   set(chai_headers
     ${chai_headers}
-    expt/Context.hpp
+    expt/ExecutionContext.hpp
     expt/ContextGuard.hpp
     expt/ContextManager.hpp
     expt/HostArrayManager.hpp

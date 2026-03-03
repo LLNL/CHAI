@@ -7,6 +7,7 @@
 
 #include "chai/config.hpp"
 #include "chai/expt/ContextManager.hpp"
+#include "chai/expt/ExecutionContext.hpp"
 #include "gtest/gtest.h"
 
 // Test that getInstance returns the same object at the same place in memory
@@ -16,30 +17,48 @@ TEST(ContextManager, SingletonInstance) {
   EXPECT_EQ(&contextManager1, &contextManager2);
 }
 
-// Test that the default context is NONE
+// Test that the default context is unset
 TEST(ContextManager, DefaultContext) {
   ::chai::expt::ContextManager& contextManager = ::chai::expt::ContextManager::getInstance();
-  EXPECT_EQ(contextManager.getContext(), ::chai::expt::Context::NONE);
+  contextManager.reset();
+  EXPECT_FALSE(contextManager.hasContext());
 }
 
 // Test setting the HOST context
 TEST(ContextManager, HOST) {
   ::chai::expt::ContextManager& contextManager = ::chai::expt::ContextManager::getInstance();
-  ::chai::expt::Context context = ::chai::expt::Context::HOST;
-  contextManager.setContext(context);
-  EXPECT_EQ(contextManager.getContext(), context);
-  EXPECT_EQ(contextManager.isSynchronized(context), true);
-  contextManager.setContext(::chai::expt::Context::NONE);
+  contextManager.reset();
+  contextManager.setContext(::chai::expt::HostContext{});
+  EXPECT_TRUE(contextManager.hasContext());
+  EXPECT_TRUE(contextManager.isSynchronized());
+  contextManager.clearContext();
+  EXPECT_FALSE(contextManager.hasContext());
 }
 
-// Test setting the DEVICE context
-TEST(ContextManager, DEVICE) {
+// Test setting a CUDA device stream context
+#if defined(CHAI_ENABLE_CUDA)
+TEST(ContextManager, CUDA) {
   ::chai::expt::ContextManager& contextManager = ::chai::expt::ContextManager::getInstance();
-  ::chai::expt::Context context = ::chai::expt::Context::DEVICE;
-  contextManager.setContext(context);
-  EXPECT_EQ(contextManager.getContext(), context);
-  EXPECT_EQ(contextManager.isSynchronized(context), false);
-  contextManager.setDeviceSynchronized(true);
-  EXPECT_EQ(contextManager.isSynchronized(context), true);
-  contextManager.setContext(::chai::expt::Context::NONE);
+  contextManager.reset();
+  contextManager.setContext(::chai::expt::CudaContext{});
+  EXPECT_TRUE(contextManager.hasContext());
+  EXPECT_FALSE(contextManager.isSynchronized());
+  contextManager.synchronize();
+  EXPECT_TRUE(contextManager.isSynchronized());
+  contextManager.clearContext();
 }
+#endif
+
+// Test setting a HIP device stream context
+#if defined(CHAI_ENABLE_HIP)
+TEST(ContextManager, HIP) {
+  ::chai::expt::ContextManager& contextManager = ::chai::expt::ContextManager::getInstance();
+  contextManager.reset();
+  contextManager.setContext(::chai::expt::HipContext{});
+  EXPECT_TRUE(contextManager.hasContext());
+  EXPECT_FALSE(contextManager.isSynchronized());
+  contextManager.synchronize();
+  EXPECT_TRUE(contextManager.isSynchronized());
+  contextManager.clearContext();
+}
+#endif

@@ -6,37 +6,33 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include "chai/config.hpp"
-#include "chai/expt/Context.hpp"
+#include "chai/expt/ExecutionContext.hpp"
 #include "chai/expt/ContextManager.hpp"
 #include "chai/expt/ContextRAJAPlugin.hpp"
 
 namespace chai::expt {
   void ContextRAJAPlugin::preCapture(const ::RAJA::util::PluginContext& p) {
-    Context context = Context::NONE;
-
     switch (p.platform) {
       case ::RAJA::Platform::host:
-        context = Context::HOST;
+        ContextManager::getInstance().setContext(HostContext{});
         break;
 #if defined(CHAI_ENABLE_CUDA)
       case ::RAJA::Platform::cuda:
-        context = Context::DEVICE;
+        ContextManager::getInstance().setContext(CudaContext{});
         break;
 #endif
 #if defined(CHAI_ENABLE_HIP)
       case ::RAJA::Platform::hip:
-        context = Context::DEVICE;
+        ContextManager::getInstance().setContext(HipContext{});
         break;
 #endif
       default:
-        context = Context::NONE;
+        ContextManager::getInstance().clearContext();
         break;
     }
-
-    ContextManager::getInstance().setContext(context);
   }
 
   void ContextRAJAPlugin::postCapture(const ::RAJA::util::PluginContext&) {
-    ContextManager::getInstance().setContext(Context::NONE);
+    ContextManager::getInstance().clearContext();
   }
 }  // namespace chai::expt
