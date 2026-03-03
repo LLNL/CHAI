@@ -134,6 +134,8 @@ public:
   /*!
    * \brief Allocate data for the ManagedArray in the specified space.
    *
+   * Once a ManagedArray is allocated, it will have a valid resource manager.
+   *
    * \param elems Number of elements to allocate.
    * \param space Execution space in which to allocate data.
    * \param cback User defined callback for memory events (alloc, free, move)
@@ -289,6 +291,7 @@ public:
    * \brief Return the value of element i in the ManagedArray.
    * ExecutionSpace space to the current one
    *
+   * \pre ManagedArray must be allocated
    * \param index The index of the element to be fetched
    * \param space The index of the element to be fetched
    * \return The value of the i-th element in the ManagedArray.
@@ -299,6 +302,7 @@ public:
   /*!
    * \brief Set the value of element i in the ManagedArray to be val.
    *
+   * \pre ManagedArray must be allocated
    * \param index The index of the element to be set
    * \param val Source location of the value
    * \tparam T The type of data value in ManagedArray.
