@@ -48,3 +48,7 @@ if (CHAI_ENABLE_MANAGED_PTR)
     NAME managed_ptr_benchmarks
     COMMAND managed_ptr_benchmarks)
 endif ()
+
+if (CHAI_ENABLE_EXPERIMENTAL)
+  add_subdirectory(expt)
+endif ()
