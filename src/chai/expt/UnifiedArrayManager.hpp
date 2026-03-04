@@ -90,7 +90,16 @@ namespace chai::expt
        */
       void resize(std::size_t new_size)
       {
+        // TODO: Investigate resize in the last modified space.
+        Context context = Context::HOST;
+
+        if (context != m_modified)
+        {
+          ContextManager::getInstance().synchronize(m_modified);
+        }
+
         m_storage.resize(new_size);
+        m_modified = context;
       }
 
       /*!
@@ -121,6 +130,10 @@ namespace chai::expt
         if (touch)
         {
           m_modified = context;
+        }
+        else
+        {
+          m_modified = Context::NONE;
         }
 
         return m_storage.empty() ? nullptr : m_storage.data();
