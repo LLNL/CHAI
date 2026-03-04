@@ -170,6 +170,125 @@ TEST_F(UnifiedArrayManagerTest, HostReadWrite)
   }
 }
 
+TEST_F(UnifiedArrayManagerTest, DefaultConstructorAndResizeToZero)
+{
+  ::chai::expt::UnifiedArrayManager<int> manager{};
+  EXPECT_EQ(manager.size(), 0);
+
+  {
+    ContextGuard guard{Context::HOST};
+    EXPECT_EQ(manager.data(false), nullptr);
+    EXPECT_EQ(manager.data(true), nullptr);
+  }
+
+  manager.resize(0);
+  EXPECT_EQ(manager.size(), 0);
+
+  {
+    ContextGuard guard{Context::HOST};
+    EXPECT_EQ(manager.data(false), nullptr);
+  }
+}
+
+TEST_F(UnifiedArrayManagerTest, ResizeGrowsAndValueInitializesNewElements)
+{
+  constexpr std::size_t N0 = 8;
+  constexpr std::size_t N1 = 16;
+
+  ::chai::expt::UnifiedArrayManager<int> manager{N0};
+
+  {
+    ContextGuard guard{Context::HOST};
+    int* data = manager.data(true);
+    ASSERT_NE(data, nullptr);
+    for (std::size_t i = 0; i < N0; ++i)
+    {
+      data[i] = static_cast<int>(i + 10);
+    }
+  }
+
+  manager.resize(N1);
+  EXPECT_EQ(manager.size(), N1);
+
+  {
+    ContextGuard guard{Context::HOST};
+    int* data = manager.data(false);
+    ASSERT_NE(data, nullptr);
+
+    for (std::size_t i = 0; i < N0; ++i)
+    {
+      EXPECT_EQ(data[i], static_cast<int>(i + 10));
+    }
+
+    for (std::size_t i = N0; i < N1; ++i)
+    {
+      EXPECT_EQ(data[i], 0);
+    }
+  }
+}
+
+TEST_F(UnifiedArrayManagerTest, ResizeShrinksPreservesPrefix)
+{
+  constexpr std::size_t N0 = 16;
+  constexpr std::size_t N1 = 6;
+
+  ::chai::expt::UnifiedArrayManager<int> manager{N0};
+
+  {
+    ContextGuard guard{Context::HOST};
+    int* data = manager.data(true);
+    ASSERT_NE(data, nullptr);
+    for (std::size_t i = 0; i < N0; ++i)
+    {
+      data[i] = static_cast<int>(i);
+    }
+  }
+
+  manager.resize(N1);
+  EXPECT_EQ(manager.size(), N1);
+
+  {
+    ContextGuard guard{Context::HOST};
+    int* data = manager.data(false);
+    ASSERT_NE(data, nullptr);
+    for (std::size_t i = 0; i < N1; ++i)
+    {
+      EXPECT_EQ(data[i], static_cast<int>(i));
+    }
+  }
+}
+
+TEST_F(UnifiedArrayManagerTest, UsesProvidedAllocator)
+{
+  constexpr std::size_t N = 32;
+  auto& rm = ::umpire::ResourceManager::getInstance();
+  umpire::Allocator allocator = rm.getAllocator("UM");
+
+  ::chai::expt::UnifiedArrayManager<int> manager{N, allocator};
+  EXPECT_EQ(manager.size(), N);
+
+  {
+    ContextGuard guard{Context::HOST};
+    int* data = manager.data(true);
+    ASSERT_NE(data, nullptr);
+    for (std::size_t i = 0; i < N; ++i)
+    {
+      EXPECT_EQ(data[i], 0);
+      data[i] = static_cast<int>(i * 2);
+    }
+  }
+
+  {
+    ContextGuard guard{Context::HOST};
+    int* data = manager.data(false);
+    ASSERT_NE(data, nullptr);
+    for (std::size_t i = 0; i < N; ++i)
+    {
+      EXPECT_EQ(data[i], static_cast<int>(i * 2));
+    }
+  }
+}
+
 TEST_F(UnifiedArrayManagerTest, DeviceReadDoesNotSynchronizeOnHostAccess)
 {
   constexpr std::size_t N = 256;
@@ -218,6 +337,37 @@ TEST_F(UnifiedArrayManagerTest, DeviceReadDoesNotSynchronizeOnHostAccess)
   free_managed(samples);
 }
 
+TEST_F(UnifiedArrayManagerTest, HostToDeviceAccessDoesNotSynchronizeDevice)
+{
+  constexpr std::size_t N = 64;
+  ::chai::expt::UnifiedArrayManager<int> manager{N};
+  ContextManager& contextManager = ContextManager::getInstance();
+
+  {
+    ContextGuard guard{Context::HOST};
+    int* data = manager.data(true);
+    ASSERT_NE(data, nullptr);
+    for (std::size_t i = 0; i < N; ++i)
+    {
+      data[i] = static_cast<int>(i);
+    }
+  }
+
+  {
+    ContextGuard guard{Context::DEVICE};
+    const int* data = manager.data(false);
+    ASSERT_NE(data, nullptr);
+  }
+
+  EXPECT_FALSE(contextManager.isSynchronized(Context::DEVICE));
+
+  {
+    ContextGuard guard{Context::HOST};
+    (void)manager.data(false);
+    EXPECT_FALSE(contextManager.isSynchronized(Context::DEVICE));
+  }
+}
+
 TEST_F(UnifiedArrayManagerTest, DeviceWriteSynchronizesOnHostAccess)
 {
   constexpr std::size_t N = 256;
@@ -259,4 +409,3 @@ TEST_F(UnifiedArrayManagerTest, DeviceWriteSynchronizesOnHostAccess)
     }
   }
 }
-
