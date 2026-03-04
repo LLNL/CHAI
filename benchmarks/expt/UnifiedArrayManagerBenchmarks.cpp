@@ -117,7 +117,7 @@ namespace {
     benchmark::ClobberMemory();
   }
 
-  static void unified_arraymanager_host_write(benchmark::State& state)
+  static void UnifiedArrayManagerHostWrite(benchmark::State& state)
   {
     reset_context();
     const std::size_t size = static_cast<std::size_t>(state.range(0));
@@ -133,7 +133,7 @@ namespace {
     state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(size));
   }
 
-  static void unified_arraymanager_device_read_after_host_write(benchmark::State& state)
+  static void UnifiedArrayManagerDeviceReadAfterHostWrite(benchmark::State& state)
   {
     reset_context();
     const std::size_t size = static_cast<std::size_t>(state.range(0));
@@ -170,7 +170,7 @@ namespace {
 #endif
   }
 
-  static void unified_arraymanager_device_write_then_host_read_sync(benchmark::State& state)
+  static void UnifiedArrayManagerDeviceWriteThenHostReadSync(benchmark::State& state)
   {
     reset_context();
     const std::size_t size = static_cast<std::size_t>(state.range(0));
@@ -199,8 +199,8 @@ namespace {
   }
 }  // namespace
 
-BENCHMARK(unified_arraymanager_host_write)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
-BENCHMARK(unified_arraymanager_device_read_after_host_write)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
-BENCHMARK(unified_arraymanager_device_write_then_host_read_sync)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
+BENCHMARK(UnifiedArrayManagerHostWrite)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
+BENCHMARK(UnifiedArrayManagerDeviceReadAfterHostWrite)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
+BENCHMARK(UnifiedArrayManagerDeviceWriteThenHostReadSync)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
 
 BENCHMARK_MAIN();
