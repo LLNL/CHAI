@@ -1,9 +1,10 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
-// project contributors. See the CHAI LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
+// contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
+
 #ifndef CHAI_UNIFIED_ARRAY_MANAGER_HPP
 #define CHAI_UNIFIED_ARRAY_MANAGER_HPP
 
