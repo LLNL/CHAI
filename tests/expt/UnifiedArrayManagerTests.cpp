@@ -140,7 +140,7 @@ namespace {
   };
 }  // namespace
 
-TEST_F(UnifiedArrayManagerTest, DefaultConstructorAndResizeToZero)
+TEST_F(UnifiedArrayManagerTest, DefaultConstructor)
 {
   ::chai::expt::UnifiedArrayManager<int> manager{};
   EXPECT_EQ(manager.size(), 0);
@@ -150,6 +150,17 @@ TEST_F(UnifiedArrayManagerTest, DefaultConstructorAndResizeToZero)
     EXPECT_EQ(manager.data(false), nullptr);
     EXPECT_EQ(manager.data(true), nullptr);
   }
+}
+
+TEST_F(UnifiedArrayManagerTest, ResizeToZero)
+{
+  ::chai::expt::UnifiedArrayManager<int> manager{10};
+  EXPECT_EQ(manager.size(), 10);
+
+  {
+    ContextGuard guard{Context::HOST};
+    EXPECT_NE(manager.data(false), nullptr);
+  }
 
   manager.resize(0);
   EXPECT_EQ(manager.size(), 0);
@@ -157,6 +168,7 @@ TEST_F(UnifiedArrayManagerTest, DefaultConstructorAndResizeToZero)
   {
     ContextGuard guard{Context::HOST};
     EXPECT_EQ(manager.data(false), nullptr);
+    EXPECT_EQ(manager.data(true), nullptr);
   }
 }
 
