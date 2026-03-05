@@ -153,6 +153,37 @@ TEST_F(UnifiedArrayManagerTest, DefaultConstructor)
   }
 }
 
+TEST_F(UnifiedArrayManagerTest, AllocatorConstructor)
+{
+  constexpr std::size_t N = 32;
+  auto& rm = ::umpire::ResourceManager::getInstance();
+  umpire::Allocator allocator = rm.getAllocator("UM");
+
+  UnifiedArrayManager<int> manager{N, allocator};
+  EXPECT_EQ(manager.size(), N);
+
+  {
+    ContextGuard guard{Context::HOST};
+    int* data = manager.data(true);
+    ASSERT_NE(data, nullptr);
+    for (std::size_t i = 0; i < N; ++i)
+    {
+      EXPECT_EQ(data[i], 0);
+      data[i] = static_cast<int>(i * 2);
+    }
+  }
+
+  {
+    ContextGuard guard{Context::HOST};
+    int* data = manager.data(false);
+    ASSERT_NE(data, nullptr);
+    for (std::size_t i = 0; i < N; ++i)
+    {
+      EXPECT_EQ(data[i], static_cast<int>(i * 2));
+    }
+  }
+}
+
 TEST_F(UnifiedArrayManagerTest, ResizeToZero)
 {
   UnifiedArrayManager<int> manager{10};
@@ -173,7 +204,38 @@ TEST_F(UnifiedArrayManagerTest, ResizeToZero)
   }
 }
 
-TEST_F(UnifiedArrayManagerTest, ResizeGrowsAndValueInitializesNewElements)
+TEST_F(UnifiedArrayManagerTest, ResizeSmaller)
+{
+  constexpr std::size_t N0 = 16;
+  constexpr std::size_t N1 = 6;
+
+  UnifiedArrayManager<int> manager{N0};
+
+  {
+    ContextGuard guard{Context::HOST};
+    int* data = manager.data(true);
+    ASSERT_NE(data, nullptr);
+    for (std::size_t i = 0; i < N0; ++i)
+    {
+      data[i] = static_cast<int>(i);
+    }
+  }
+
+  manager.resize(N1);
+  EXPECT_EQ(manager.size(), N1);
+
+  {
+    ContextGuard guard{Context::HOST};
+    int* data = manager.data(false);
+    ASSERT_NE(data, nullptr);
+    for (std::size_t i = 0; i < N1; ++i)
+    {
+      EXPECT_EQ(data[i], static_cast<int>(i));
+    }
+  }
+}
+
+TEST_F(UnifiedArrayManagerTest, ResizeLarger)
 {
   constexpr std::size_t N0 = 8;
   constexpr std::size_t N1 = 16;
@@ -209,71 +271,6 @@ TEST_F(UnifiedArrayManagerTest, ResizeGrowsAndValueInitializesNewElements)
     }
   }
 }
-
-TEST_F(UnifiedArrayManagerTest, ResizeShrinksPreservesPrefix)
-{
-  constexpr std::size_t N0 = 16;
-  constexpr std::size_t N1 = 6;
-
-  UnifiedArrayManager<int> manager{N0};
-
-  {
-    ContextGuard guard{Context::HOST};
-    int* data = manager.data(true);
-    ASSERT_NE(data, nullptr);
-    for (std::size_t i = 0; i < N0; ++i)
-    {
-      data[i] = static_cast<int>(i);
-    }
-  }
-
-  manager.resize(N1);
-  EXPECT_EQ(manager.size(), N1);
-
-  {
-    ContextGuard guard{Context::HOST};
-    int* data = manager.data(false);
-    ASSERT_NE(data, nullptr);
-    for (std::size_t i = 0; i < N1; ++i)
-    {
-      EXPECT_EQ(data[i], static_cast<int>(i));
-    }
-  }
-}
-
-TEST_F(UnifiedArrayManagerTest, UsesProvidedAllocator)
-{
-  constexpr std::size_t N = 32;
-  auto& rm = ::umpire::ResourceManager::getInstance();
-  umpire::Allocator allocator = rm.getAllocator("UM");
-
-  UnifiedArrayManager<int> manager{N, allocator};
-  EXPECT_EQ(manager.size(), N);
-
-  {
-    ContextGuard guard{Context::HOST};
-    int* data = manager.data(true);
-    ASSERT_NE(data, nullptr);
-    for (std::size_t i = 0; i < N; ++i)
-    {
-      EXPECT_EQ(data[i], 0);
-      data[i] = static_cast<int>(i * 2);
-    }
-  }
-
-  {
-    ContextGuard guard{Context::HOST};
-    int* data = manager.data(false);
-    ASSERT_NE(data, nullptr);
-    for (std::size_t i = 0; i < N; ++i)
-    {
-      EXPECT_EQ(data[i], static_cast<int>(i * 2));
-    }
-  }
-}
-
-// Read/write matrix tests. These are placed at the end of the file so that
-// constructor/resize/allocator behavior is tested first.
 
 TEST_F(UnifiedArrayManagerTest, HostReadThenHostRead)
 {
