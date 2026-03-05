@@ -29,6 +29,7 @@ namespace {
   using ::chai::expt::Context;
   using ::chai::expt::ContextGuard;
   using ::chai::expt::ContextManager;
+  using ::chai::expt::UnifiedArrayManager;
 
   inline void device_synchronize()
   {
@@ -155,6 +156,40 @@ namespace {
     ContextManager::getInstance().reset();
   }
 
+  inline void reset_context_outside_timing(benchmark::State& state)
+  {
+    state.PauseTiming();
+    reset_context();
+    state.ResumeTiming();
+  }
+
+  template <typename T>
+  T* malloc_managed(std::size_t count)
+  {
+    T* ptr = nullptr;
+
+#if defined(CHAI_ENABLE_CUDA)
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMallocManaged, (void**)&ptr, sizeof(T) * count);
+#elif defined(CHAI_ENABLE_HIP)
+    CAMP_HIP_API_INVOKE_AND_CHECK(hipMallocManaged, (void**)&ptr, sizeof(T) * count);
+#else
+    static_cast<void>(count);
+#endif
+
+    return ptr;
+  }
+
+  inline void free_managed(void* ptr)
+  {
+#if defined(CHAI_ENABLE_CUDA)
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaFree, ptr);
+#elif defined(CHAI_ENABLE_HIP)
+    CAMP_HIP_API_INVOKE_AND_CHECK(hipFree, ptr);
+#else
+    static_cast<void>(ptr);
+#endif
+  }
+
   inline void host_fill(::chai::expt::UnifiedArrayManager<std::int32_t>& manager, std::size_t size)
   {
     ContextGuard guard{Context::HOST};
@@ -164,6 +199,92 @@ namespace {
       data[i] = static_cast<std::int32_t>(i);
     }
     benchmark::ClobberMemory();
+  }
+
+  inline void host_read_sum(const std::int32_t* data, std::size_t size)
+  {
+    std::int64_t sum = 0;
+    for (std::size_t i = 0; i < size; ++i)
+    {
+      sum += static_cast<std::int64_t>(data[i]);
+    }
+    benchmark::DoNotOptimize(sum);
+  }
+
+  static void UnifiedArrayManagerHostReadThenHostRead(benchmark::State& state)
+  {
+    const std::size_t size = static_cast<std::size_t>(state.range(0));
+
+    for (auto _ : state)
+    {
+      reset_context_outside_timing(state);
+      UnifiedArrayManager<std::int32_t> manager{size};
+
+      {
+        ContextGuard guard{Context::HOST};
+        const std::int32_t* data = manager.data(false);
+        host_read_sum(data, size);
+      }
+
+      {
+        ContextGuard guard{Context::HOST};
+        const std::int32_t* data = manager.data(false);
+        host_read_sum(data, size);
+      }
+    }
+
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(size));
+  }
+
+  static void UnifiedArrayManagerHostWriteThenHostRead(benchmark::State& state)
+  {
+    const std::size_t size = static_cast<std::size_t>(state.range(0));
+
+    for (auto _ : state)
+    {
+      reset_context_outside_timing(state);
+      UnifiedArrayManager<std::int32_t> manager{size};
+
+      host_fill(manager, size);
+
+      {
+        ContextGuard guard{Context::HOST};
+        const std::int32_t* data = manager.data(false);
+        host_read_sum(data, size);
+      }
+    }
+
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(size));
+  }
+
+  static void UnifiedArrayManagerHostReadThenDeviceRead(benchmark::State& state)
+  {
+    const std::size_t size = static_cast<std::size_t>(state.range(0));
+
+    std::int32_t* out = malloc_managed<std::int32_t>(size);
+
+    for (auto _ : state)
+    {
+      reset_context_outside_timing(state);
+      UnifiedArrayManager<std::int32_t> manager{size};
+
+      {
+        ContextGuard guard{Context::HOST};
+        const std::int32_t* data = manager.data(false);
+        host_read_sum(data, size);
+      }
+
+      {
+        ContextGuard guard{Context::DEVICE};
+        const std::int32_t* data = manager.data(false);
+        launch_copy(data, out, size);
+      }
+      device_synchronize();
+      benchmark::DoNotOptimize(out[0]);
+    }
+
+    free_managed(out);
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(size));
   }
 
   static void UnifiedArrayManagerHostWrite(benchmark::State& state)
@@ -257,38 +378,27 @@ namespace {
 
   static void UnifiedArrayManagerHostWriteThenDeviceRead(benchmark::State& state)
   {
-    reset_context();
     const std::size_t size = static_cast<std::size_t>(state.range(0));
 
-    ::chai::expt::UnifiedArrayManager<std::int32_t> manager{size};
-
-    std::int32_t* out = nullptr;
-#if defined(CHAI_ENABLE_CUDA)
-    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMallocManaged, (void**)&out, sizeof(std::int32_t));
-#elif defined(CHAI_ENABLE_HIP)
-    CAMP_HIP_API_INVOKE_AND_CHECK(hipMallocManaged, (void**)&out, sizeof(std::int32_t));
-#endif
-    *out = 0;
+    std::int32_t* out = malloc_managed<std::int32_t>(size);
 
     for (auto _ : state)
     {
+      reset_context_outside_timing(state);
+      UnifiedArrayManager<std::int32_t> manager{size};
       host_fill(manager, size);
       {
         ContextGuard guard{Context::DEVICE};
         const std::int32_t* data = manager.data(false);
-        launch_touch(data, size, out);
+        launch_copy(data, out, size);
       }
       device_synchronize();
-      benchmark::DoNotOptimize(*out);
+      benchmark::DoNotOptimize(out[0]);
     }
 
     state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(size));
 
-#if defined(CHAI_ENABLE_CUDA)
-    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaFree, (void*)out);
-#elif defined(CHAI_ENABLE_HIP)
-    CAMP_HIP_API_INVOKE_AND_CHECK(hipFree, (void*)out);
-#endif
+    free_managed(out);
   }
 
   static void UnifiedArrayManagerHostWriteThenDeviceWrite(benchmark::State& state)
@@ -315,41 +425,128 @@ namespace {
 
   static void UnifiedArrayManagerDeviceReadThenHostRead(benchmark::State& state)
   {
-    reset_context();
     const std::size_t size = static_cast<std::size_t>(state.range(0));
 
-    ::chai::expt::UnifiedArrayManager<std::int32_t> manager{size};
-    host_fill(manager, size);
-
-    std::int32_t* out = nullptr;
-#if defined(CHAI_ENABLE_CUDA)
-    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaMallocManaged, (void**)&out, sizeof(std::int32_t));
-#elif defined(CHAI_ENABLE_HIP)
-    CAMP_HIP_API_INVOKE_AND_CHECK(hipMallocManaged, (void**)&out, sizeof(std::int32_t));
-#endif
-    *out = 0;
+    std::int32_t* out = malloc_managed<std::int32_t>(size);
 
     for (auto _ : state)
     {
       {
-        ContextGuard guard{Context::DEVICE};
-        const std::int32_t* data = manager.data(false);
-        launch_touch(data, size, out);
+        reset_context_outside_timing(state);
+        UnifiedArrayManager<std::int32_t> manager{size};
+
+        {
+          ContextGuard guard{Context::DEVICE};
+          const std::int32_t* data = manager.data(false);
+          launch_copy(data, out, size);
+        }
+
+        {
+          ContextGuard guard{Context::HOST};
+          const std::int32_t* data = manager.data(false);
+          host_read_sum(data, size);
+        }
+
+        // Ensure no work is still in-flight before manager destruction.
+        device_synchronize();
       }
-      device_synchronize();
+      benchmark::DoNotOptimize(out[0]);
+    }
+
+    free_managed(out);
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(size));
+  }
+
+  static void UnifiedArrayManagerDeviceWriteThenHostRead(benchmark::State& state)
+  {
+    const std::size_t size = static_cast<std::size_t>(state.range(0));
+
+    for (auto _ : state)
+    {
+      reset_context_outside_timing(state);
+      UnifiedArrayManager<std::int32_t> manager{size};
+
+      {
+        ContextGuard guard{Context::DEVICE};
+        std::int32_t* data = manager.data(true);
+        launch_add_constant(data, size, 1);
+      }
 
       {
         ContextGuard guard{Context::HOST};
         const std::int32_t* data = manager.data(false);
-        benchmark::DoNotOptimize(data[0]);
+        host_read_sum(data, size);
       }
+
+      device_synchronize();
     }
 
-#if defined(CHAI_ENABLE_CUDA)
-    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaFree, (void*)out);
-#elif defined(CHAI_ENABLE_HIP)
-    CAMP_HIP_API_INVOKE_AND_CHECK(hipFree, (void*)out);
-#endif
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(size));
+  }
+
+  static void UnifiedArrayManagerDeviceReadThenDeviceRead(benchmark::State& state)
+  {
+    const std::size_t size = static_cast<std::size_t>(state.range(0));
+
+    std::int32_t* out0 = malloc_managed<std::int32_t>(size);
+    std::int32_t* out1 = malloc_managed<std::int32_t>(size);
+
+    for (auto _ : state)
+    {
+      reset_context_outside_timing(state);
+      UnifiedArrayManager<std::int32_t> manager{size};
+
+      {
+        ContextGuard guard{Context::DEVICE};
+        const std::int32_t* data = manager.data(false);
+        launch_copy(data, out0, size);
+      }
+
+      {
+        ContextGuard guard{Context::DEVICE};
+        const std::int32_t* data = manager.data(false);
+        launch_copy(data, out1, size);
+      }
+
+      device_synchronize();
+      benchmark::DoNotOptimize(out0[0]);
+      benchmark::DoNotOptimize(out1[0]);
+    }
+
+    free_managed(out0);
+    free_managed(out1);
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(size));
+  }
+
+  static void UnifiedArrayManagerDeviceWriteThenDeviceRead(benchmark::State& state)
+  {
+    const std::size_t size = static_cast<std::size_t>(state.range(0));
+
+    std::int32_t* out = malloc_managed<std::int32_t>(size);
+
+    for (auto _ : state)
+    {
+      reset_context_outside_timing(state);
+      UnifiedArrayManager<std::int32_t> manager{size};
+
+      {
+        ContextGuard guard{Context::DEVICE};
+        std::int32_t* data = manager.data(true);
+        launch_add_constant(data, size, 1);
+      }
+
+      {
+        ContextGuard guard{Context::DEVICE};
+        const std::int32_t* data = manager.data(false);
+        launch_copy(data, out, size);
+      }
+
+      device_synchronize();
+      benchmark::DoNotOptimize(out[0]);
+    }
+
+    free_managed(out);
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(size));
   }
 
   static void UnifiedArrayManagerDeviceReadThenHostWrite(benchmark::State& state)
@@ -630,9 +827,15 @@ BENCHMARK(UnifiedArrayManagerDeviceDataAccess)->RangeMultiplier(2)->Range(1 << 1
 BENCHMARK(UnifiedArrayManagerHostRead)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
 BENCHMARK(UnifiedArrayManagerDeviceRead)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
 BENCHMARK(UnifiedArrayManagerDeviceWrite)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
+BENCHMARK(UnifiedArrayManagerHostReadThenHostRead)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
+BENCHMARK(UnifiedArrayManagerHostWriteThenHostRead)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
+BENCHMARK(UnifiedArrayManagerHostReadThenDeviceRead)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
 BENCHMARK(UnifiedArrayManagerHostWriteThenDeviceRead)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
 BENCHMARK(UnifiedArrayManagerHostWriteThenDeviceWrite)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
 BENCHMARK(UnifiedArrayManagerDeviceReadThenHostRead)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
+BENCHMARK(UnifiedArrayManagerDeviceWriteThenHostRead)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
+BENCHMARK(UnifiedArrayManagerDeviceReadThenDeviceRead)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
+BENCHMARK(UnifiedArrayManagerDeviceWriteThenDeviceRead)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
 BENCHMARK(UnifiedArrayManagerDeviceReadThenHostWrite)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
 BENCHMARK(UnifiedArrayManagerDeviceWriteThenHostWrite)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
 BENCHMARK(UnifiedArrayManagerHostWrite)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
