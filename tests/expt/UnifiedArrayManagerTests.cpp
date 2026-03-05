@@ -27,6 +27,7 @@ namespace {
   using ::chai::expt::Context;
   using ::chai::expt::ContextGuard;
   using ::chai::expt::ContextManager;
+  using ::chai::expt::UnifiedArrayManager;
 
   template <typename T>
   T* malloc_managed(std::size_t count)
@@ -142,7 +143,7 @@ namespace {
 
 TEST_F(UnifiedArrayManagerTest, DefaultConstructor)
 {
-  ::chai::expt::UnifiedArrayManager<int> manager{};
+  UnifiedArrayManager<int> manager{};
   EXPECT_EQ(manager.size(), 0);
 
   {
@@ -154,7 +155,7 @@ TEST_F(UnifiedArrayManagerTest, DefaultConstructor)
 
 TEST_F(UnifiedArrayManagerTest, ResizeToZero)
 {
-  ::chai::expt::UnifiedArrayManager<int> manager{10};
+  UnifiedArrayManager<int> manager{10};
   EXPECT_EQ(manager.size(), 10);
 
   {
@@ -177,7 +178,7 @@ TEST_F(UnifiedArrayManagerTest, ResizeGrowsAndValueInitializesNewElements)
   constexpr std::size_t N0 = 8;
   constexpr std::size_t N1 = 16;
 
-  ::chai::expt::UnifiedArrayManager<int> manager{N0};
+  UnifiedArrayManager<int> manager{N0};
 
   {
     ContextGuard guard{Context::HOST};
@@ -214,7 +215,7 @@ TEST_F(UnifiedArrayManagerTest, ResizeShrinksPreservesPrefix)
   constexpr std::size_t N0 = 16;
   constexpr std::size_t N1 = 6;
 
-  ::chai::expt::UnifiedArrayManager<int> manager{N0};
+  UnifiedArrayManager<int> manager{N0};
 
   {
     ContextGuard guard{Context::HOST};
@@ -246,7 +247,7 @@ TEST_F(UnifiedArrayManagerTest, UsesProvidedAllocator)
   auto& rm = ::umpire::ResourceManager::getInstance();
   umpire::Allocator allocator = rm.getAllocator("UM");
 
-  ::chai::expt::UnifiedArrayManager<int> manager{N, allocator};
+  UnifiedArrayManager<int> manager{N, allocator};
   EXPECT_EQ(manager.size(), N);
 
   {
@@ -276,82 +277,58 @@ TEST_F(UnifiedArrayManagerTest, UsesProvidedAllocator)
 
 TEST_F(UnifiedArrayManagerTest, HostReadThenHostRead)
 {
+  // Set up
   constexpr std::size_t N = 128;
-  ::chai::expt::UnifiedArrayManager<int> manager{N};
+  UnifiedArrayManager<int> manager{N};
 
+  // Host read
   {
     ContextGuard guard{Context::HOST};
     const int* data = manager.data(false);
     ASSERT_NE(data, nullptr);
+
     for (std::size_t i = 0; i < N; ++i)
     {
       EXPECT_EQ(data[i], 0);
     }
   }
 
+  // Host read
   {
     ContextGuard guard{Context::HOST};
     const int* data = manager.data(false);
     ASSERT_NE(data, nullptr);
+
     for (std::size_t i = 0; i < N; ++i)
     {
       EXPECT_EQ(data[i], 0);
     }
-  }
-}
-
-TEST_F(UnifiedArrayManagerTest, HostReadThenHostWrite)
-{
-  constexpr std::size_t N = 128;
-  ::chai::expt::UnifiedArrayManager<int> manager{N};
-
-  int* host_ptr = nullptr;
-
-  {
-    ContextGuard guard{Context::HOST};
-    host_ptr = manager.data(false);
-    ASSERT_NE(host_ptr, nullptr);
-    for (std::size_t i = 0; i < N; ++i)
-    {
-      EXPECT_EQ(host_ptr[i], 0);
-    }
-  }
-
-  {
-    ContextGuard guard{Context::HOST};
-    int* data = manager.data(true);
-    ASSERT_NE(data, nullptr);
-    for (std::size_t i = 0; i < N; ++i)
-    {
-      data[i] = static_cast<int>(i);
-    }
-  }
-
-  for (std::size_t i = 0; i < N; ++i)
-  {
-    EXPECT_EQ(host_ptr[i], static_cast<int>(i));
   }
 }
 
 TEST_F(UnifiedArrayManagerTest, HostReadThenDeviceRead)
 {
+  // Set up
   constexpr std::size_t N = 256;
-  ::chai::expt::UnifiedArrayManager<int> manager{N};
-  ContextManager& contextManager = ContextManager::getInstance();
+  UnifiedArrayManager<int> manager{N};
 
+  // Host read
   {
     ContextGuard guard{Context::HOST};
     const int* data = manager.data(false);
     ASSERT_NE(data, nullptr);
+
     for (std::size_t i = 0; i < N; ++i)
     {
       EXPECT_EQ(data[i], 0);
     }
   }
 
+  // Set up
   int* out = malloc_managed<int>(N);
   ASSERT_NE(out, nullptr);
 
+  // Device read
   {
     ContextGuard guard{Context::DEVICE};
     const int* data = manager.data(false);
@@ -359,66 +336,43 @@ TEST_F(UnifiedArrayManagerTest, HostReadThenDeviceRead)
     launch_copy(data, out, N);
   }
 
-  contextManager.synchronize(Context::DEVICE);
+  // Synchronize
+  device_synchronize_raw();
+
+  // Check result
   for (std::size_t i = 0; i < N; ++i)
   {
     EXPECT_EQ(out[i], 0);
   }
 
+  // Clean up
   free_managed(out);
-}
-
-TEST_F(UnifiedArrayManagerTest, HostReadThenDeviceWrite)
-{
-  constexpr std::size_t N = 256;
-  ::chai::expt::UnifiedArrayManager<int> manager{N};
-  ContextManager& contextManager = ContextManager::getInstance();
-
-  int* host_ptr = nullptr;
-
-  {
-    ContextGuard guard{Context::HOST};
-    host_ptr = manager.data(false);
-    ASSERT_NE(host_ptr, nullptr);
-    for (std::size_t i = 0; i < N; ++i)
-    {
-      EXPECT_EQ(host_ptr[i], 0);
-    }
-  }
-
-  {
-    ContextGuard guard{Context::DEVICE};
-    int* data = manager.data(true);
-    ASSERT_NE(data, nullptr);
-    launch_increment(data, N);
-  }
-
-  contextManager.synchronize(Context::DEVICE);
-  for (std::size_t i = 0; i < N; ++i)
-  {
-    EXPECT_EQ(host_ptr[i], 1);
-  }
 }
 
 TEST_F(UnifiedArrayManagerTest, HostWriteThenHostRead)
 {
+  // Set up
   constexpr std::size_t N = 128;
-  ::chai::expt::UnifiedArrayManager<int> manager{N};
+  UnifiedArrayManager<int> manager{N};
 
+  // Host write
   {
     ContextGuard guard{Context::HOST};
     int* data = manager.data(true);
     ASSERT_NE(data, nullptr);
+
     for (std::size_t i = 0; i < N; ++i)
     {
       data[i] = static_cast<int>(i);
     }
   }
 
+  // Host read
   {
     ContextGuard guard{Context::HOST};
     const int* data = manager.data(false);
     ASSERT_NE(data, nullptr);
+
     for (std::size_t i = 0; i < N; ++i)
     {
       EXPECT_EQ(data[i], static_cast<int>(i));
@@ -426,61 +380,29 @@ TEST_F(UnifiedArrayManagerTest, HostWriteThenHostRead)
   }
 }
 
-TEST_F(UnifiedArrayManagerTest, HostWriteThenHostWrite)
-{
-  constexpr std::size_t N = 128;
-  ::chai::expt::UnifiedArrayManager<int> manager{N};
-
-  {
-    ContextGuard guard{Context::HOST};
-    int* data = manager.data(true);
-    ASSERT_NE(data, nullptr);
-    for (std::size_t i = 0; i < N; ++i)
-    {
-      data[i] = static_cast<int>(i);
-    }
-  }
-
-  {
-    ContextGuard guard{Context::HOST};
-    int* data = manager.data(true);
-    ASSERT_NE(data, nullptr);
-    for (std::size_t i = 0; i < N; ++i)
-    {
-      data[i] = -static_cast<int>(i);
-    }
-  }
-
-  {
-    ContextGuard guard{Context::HOST};
-    const int* data = manager.data(false);
-    ASSERT_NE(data, nullptr);
-    for (std::size_t i = 0; i < N; ++i)
-    {
-      EXPECT_EQ(data[i], -static_cast<int>(i));
-    }
-  }
-}
-
 TEST_F(UnifiedArrayManagerTest, HostWriteThenDeviceRead)
 {
+  // Set up
   constexpr std::size_t N = 256;
-  ::chai::expt::UnifiedArrayManager<int> manager{N};
-  ContextManager& contextManager = ContextManager::getInstance();
+  UnifiedArrayManager<int> manager{N};
 
+  // Host write
   {
     ContextGuard guard{Context::HOST};
     int* data = manager.data(true);
     ASSERT_NE(data, nullptr);
+
     for (std::size_t i = 0; i < N; ++i)
     {
       data[i] = static_cast<int>(i);
     }
   }
 
+  // Set up
   int* out = malloc_managed<int>(N);
   ASSERT_NE(out, nullptr);
 
+  // Device read
   {
     ContextGuard guard{Context::DEVICE};
     const int* data = manager.data(false);
@@ -488,37 +410,70 @@ TEST_F(UnifiedArrayManagerTest, HostWriteThenDeviceRead)
     launch_copy(data, out, N);
   }
 
-  // Since the array was not touched in DEVICE, a later host access should not
-  // trigger synchronization.
-  EXPECT_FALSE(contextManager.isSynchronized(Context::DEVICE));
+  // Synchronize
+  device_synchronize_raw();
 
-  contextManager.synchronize(Context::DEVICE);
+  // Check result
   for (std::size_t i = 0; i < N; ++i)
   {
     EXPECT_EQ(out[i], static_cast<int>(i));
   }
 
+  // Clean up
   free_managed(out);
 }
 
-TEST_F(UnifiedArrayManagerTest, HostWriteThenDeviceWrite)
+TEST_F(UnifiedArrayManagerTest, DeviceReadThenHostRead)
 {
+  // Set up
   constexpr std::size_t N = 256;
-  ::chai::expt::UnifiedArrayManager<int> manager{N};
-  ContextManager& contextManager = ContextManager::getInstance();
+  UnifiedArrayManager<int> manager{N};
 
-  int* host_ptr = nullptr;
+  int* out = malloc_managed<int>(N);
+  ASSERT_NE(out, nullptr);
 
+  // Device read
+  {
+    ContextGuard guard{Context::DEVICE};
+    const int* data = manager.data(false);
+    ASSERT_NE(data, nullptr);
+    launch_copy(data, out, N);
+  }
+
+  // Host read (implies synchronize)
   {
     ContextGuard guard{Context::HOST};
-    host_ptr = manager.data(true);
-    ASSERT_NE(host_ptr, nullptr);
+    const int* data = manager.data(false);
+    ASSERT_NE(data, nullptr);
+
     for (std::size_t i = 0; i < N; ++i)
     {
-      host_ptr[i] = static_cast<int>(i);
+      EXPECT_EQ(data[i], 0);
     }
   }
 
+  // Synchronize
+  // Note: The host read should have caused a synchronize, but the following
+  //       checks should independent of whether than part works.
+  device_synchronize_raw();
+
+  // Checks
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    EXPECT_EQ(out[i], 0);
+  }
+
+  // Clean up
+  free_managed(out);
+}
+
+TEST_F(UnifiedArrayManagerTest, DeviceWriteThenHostRead)
+{
+  // Set up
+  constexpr std::size_t N = 256;
+  UnifiedArrayManager<int> manager{N};
+
+  // Device write
   {
     ContextGuard guard{Context::DEVICE};
     int* data = manager.data(true);
@@ -526,106 +481,31 @@ TEST_F(UnifiedArrayManagerTest, HostWriteThenDeviceWrite)
     launch_increment(data, N);
   }
 
-  contextManager.synchronize(Context::DEVICE);
-  for (std::size_t i = 0; i < N; ++i)
-  {
-    EXPECT_EQ(host_ptr[i], static_cast<int>(i + 1));
-  }
-}
-
-TEST_F(UnifiedArrayManagerTest, DeviceReadThenHostRead)
-{
-  constexpr std::size_t N = 256;
-  ::chai::expt::UnifiedArrayManager<int> manager{N};
-  ContextManager& contextManager = ContextManager::getInstance();
-
-  int* out = malloc_managed<int>(N);
-  ASSERT_NE(out, nullptr);
-
-  {
-    ContextGuard guard{Context::DEVICE};
-    const int* data = manager.data(false);
-    ASSERT_NE(data, nullptr);
-    launch_copy(data, out, N);
-  }
-
-  // Ensure kernel completion without updating ContextManager's sync state.
-  device_synchronize_raw();
-  for (std::size_t i = 0; i < N; ++i)
-  {
-    EXPECT_EQ(out[i], 0);
-  }
-
+  // Host read
   {
     ContextGuard guard{Context::HOST};
     const int* data = manager.data(false);
     ASSERT_NE(data, nullptr);
+
     for (std::size_t i = 0; i < N; ++i)
     {
-      EXPECT_EQ(data[i], 0);
-    }
-    EXPECT_FALSE(contextManager.isSynchronized(Context::DEVICE));
-  }
-
-  free_managed(out);
-}
-
-TEST_F(UnifiedArrayManagerTest, DeviceReadThenHostWrite)
-{
-  constexpr std::size_t N = 256;
-  ::chai::expt::UnifiedArrayManager<int> manager{N};
-  ContextManager& contextManager = ContextManager::getInstance();
-
-  {
-    ContextGuard guard{Context::HOST};
-    int* data = manager.data(true);
-    ASSERT_NE(data, nullptr);
-    for (std::size_t i = 0; i < N; ++i)
-    {
-      data[i] = static_cast<int>(i);
+      EXPECT_EQ(data[i], 1);
     }
   }
-
-  int* out = malloc_managed<int>(N);
-  ASSERT_NE(out, nullptr);
-
-  {
-    ContextGuard guard{Context::DEVICE};
-    const int* data = manager.data(false);
-    ASSERT_NE(data, nullptr);
-    launch_copy(data, out, N);
-  }
-
-  EXPECT_FALSE(contextManager.isSynchronized(Context::DEVICE));
-  device_synchronize_raw();
-
-  // Since the array was not touched in DEVICE, host write should not synchronize DEVICE.
-  {
-    ContextGuard guard{Context::HOST};
-    int* data = manager.data(true);
-    ASSERT_NE(data, nullptr);
-    data[0] = -7;
-    EXPECT_FALSE(contextManager.isSynchronized(Context::DEVICE));
-  }
-
-  for (std::size_t i = 0; i < N; ++i)
-  {
-    EXPECT_EQ(out[i], static_cast<int>(i));
-  }
-
-  free_managed(out);
 }
 
 TEST_F(UnifiedArrayManagerTest, DeviceReadThenDeviceRead)
 {
+  // Set up
   constexpr std::size_t N = 256;
-  ::chai::expt::UnifiedArrayManager<int> manager{N};
+  UnifiedArrayManager<int> manager{N};
 
   int* out0 = malloc_managed<int>(N);
   int* out1 = malloc_managed<int>(N);
   ASSERT_NE(out0, nullptr);
   ASSERT_NE(out1, nullptr);
 
+  // Device read
   {
     ContextGuard guard{Context::DEVICE};
     const int* data = manager.data(false);
@@ -633,6 +513,7 @@ TEST_F(UnifiedArrayManagerTest, DeviceReadThenDeviceRead)
     launch_copy(data, out0, N);
   }
 
+  // Device read
   {
     ContextGuard guard{Context::DEVICE};
     const int* data = manager.data(false);
@@ -640,142 +521,26 @@ TEST_F(UnifiedArrayManagerTest, DeviceReadThenDeviceRead)
     launch_copy(data, out1, N);
   }
 
+  // Synchronize
   device_synchronize_raw();
+
+  // Checks
   for (std::size_t i = 0; i < N; ++i)
   {
     EXPECT_EQ(out0[i], 0);
     EXPECT_EQ(out1[i], 0);
   }
 
+  // Clean up
   free_managed(out0);
   free_managed(out1);
 }
 
-TEST_F(UnifiedArrayManagerTest, DeviceReadThenDeviceWrite)
-{
-  constexpr std::size_t N = 256;
-  ::chai::expt::UnifiedArrayManager<int> manager{N};
-
-  int* out_after = malloc_managed<int>(N);
-  ASSERT_NE(out_after, nullptr);
-
-  {
-    ContextGuard guard{Context::DEVICE};
-    const int* data = manager.data(false);
-    ASSERT_NE(data, nullptr);
-    launch_copy(data, out_after, N);
-  }
-
-  device_synchronize_raw();
-  for (std::size_t i = 0; i < N; ++i)
-  {
-    EXPECT_EQ(out_after[i], 0);
-  }
-
-  {
-    ContextGuard guard{Context::DEVICE};
-    int* data = manager.data(true);
-    ASSERT_NE(data, nullptr);
-    launch_increment(data, N);
-    launch_copy(data, out_after, N);
-  }
-
-  device_synchronize_raw();
-  for (std::size_t i = 0; i < N; ++i)
-  {
-    EXPECT_EQ(out_after[i], 1);
-  }
-
-  free_managed(out_after);
-}
-
-TEST_F(UnifiedArrayManagerTest, DeviceWriteThenHostRead)
-{
-  constexpr std::size_t N = 256;
-  ::chai::expt::UnifiedArrayManager<int> manager{N};
-  ContextManager& contextManager = ContextManager::getInstance();
-
-  {
-    ContextGuard guard{Context::HOST};
-    int* data = manager.data(true);
-    ASSERT_NE(data, nullptr);
-    for (std::size_t i = 0; i < N; ++i)
-    {
-      data[i] = static_cast<int>(i);
-    }
-  }
-
-  {
-    ContextGuard guard{Context::DEVICE};
-    int* data = manager.data(true);
-    ASSERT_NE(data, nullptr);
-    launch_increment(data, N);
-  }
-
-  EXPECT_FALSE(contextManager.isSynchronized(Context::DEVICE));
-
-  // Since the most recent modification was in DEVICE, host access synchronizes first.
-  {
-    ContextGuard guard{Context::HOST};
-    const int* data = manager.data(false);
-    ASSERT_NE(data, nullptr);
-    EXPECT_TRUE(contextManager.isSynchronized(Context::DEVICE));
-    for (std::size_t i = 0; i < N; ++i)
-    {
-      EXPECT_EQ(data[i], static_cast<int>(i + 1));
-    }
-  }
-}
-
-TEST_F(UnifiedArrayManagerTest, DeviceWriteThenHostWrite)
-{
-  constexpr std::size_t N = 256;
-  ::chai::expt::UnifiedArrayManager<int> manager{N};
-  ContextManager& contextManager = ContextManager::getInstance();
-
-  {
-    ContextGuard guard{Context::HOST};
-    int* data = manager.data(true);
-    ASSERT_NE(data, nullptr);
-    for (std::size_t i = 0; i < N; ++i)
-    {
-      data[i] = 0;
-    }
-  }
-
-  {
-    ContextGuard guard{Context::DEVICE};
-    int* data = manager.data(true);
-    ASSERT_NE(data, nullptr);
-    launch_increment(data, N);
-  }
-
-  EXPECT_FALSE(contextManager.isSynchronized(Context::DEVICE));
-
-  // Host write should synchronize first because the most recent modification was in DEVICE.
-  {
-    ContextGuard guard{Context::HOST};
-    int* data = manager.data(true);
-    ASSERT_NE(data, nullptr);
-    EXPECT_TRUE(contextManager.isSynchronized(Context::DEVICE));
-    data[0] = 42;
-  }
-
-  {
-    ContextGuard guard{Context::HOST};
-    const int* data = manager.data(false);
-    ASSERT_NE(data, nullptr);
-    EXPECT_EQ(data[0], 42);
-  }
-}
-
 TEST_F(UnifiedArrayManagerTest, DeviceWriteThenDeviceRead)
 {
+  // Set up
   constexpr std::size_t N = 256;
-  ::chai::expt::UnifiedArrayManager<int> manager{N};
-
-  int* out = malloc_managed<int>(N);
-  ASSERT_NE(out, nullptr);
+  UnifiedArrayManager<int> manager{N};
 
   {
     ContextGuard guard{Context::DEVICE};
@@ -783,6 +548,10 @@ TEST_F(UnifiedArrayManagerTest, DeviceWriteThenDeviceRead)
     ASSERT_NE(data, nullptr);
     launch_increment(data, N);
   }
+
+  // Set up
+  int* out = malloc_managed<int>(N);
+  ASSERT_NE(out, nullptr);
 
   {
     ContextGuard guard{Context::DEVICE};
@@ -791,43 +560,14 @@ TEST_F(UnifiedArrayManagerTest, DeviceWriteThenDeviceRead)
     launch_copy(data, out, N);
   }
 
+  // Synchronize
   device_synchronize_raw();
+
   for (std::size_t i = 0; i < N; ++i)
   {
     EXPECT_EQ(out[i], 1);
   }
 
-  free_managed(out);
-}
-
-TEST_F(UnifiedArrayManagerTest, DeviceWriteThenDeviceWrite)
-{
-  constexpr std::size_t N = 256;
-  ::chai::expt::UnifiedArrayManager<int> manager{N};
-
-  int* out = malloc_managed<int>(N);
-  ASSERT_NE(out, nullptr);
-
-  {
-    ContextGuard guard{Context::DEVICE};
-    int* data = manager.data(true);
-    ASSERT_NE(data, nullptr);
-    launch_increment(data, N);
-  }
-
-  {
-    ContextGuard guard{Context::DEVICE};
-    int* data = manager.data(true);
-    ASSERT_NE(data, nullptr);
-    launch_increment(data, N);
-    launch_copy(data, out, N);
-  }
-
-  device_synchronize_raw();
-  for (std::size_t i = 0; i < N; ++i)
-  {
-    EXPECT_EQ(out[i], 2);
-  }
-
+  // Clean up
   free_managed(out);
 }
