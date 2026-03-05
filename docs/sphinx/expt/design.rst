@@ -216,3 +216,54 @@ be extra careful to avoid using it on the device.
   {
     a[i] = i;
   }
+
+------------------
+UnifiedArrayManager
+------------------
+
+``UnifiedArrayManager`` manages a single contiguous array allocated from Umpire's
+unified (managed) memory allocator (``UM``). Since unified memory is accessible
+from both CPU and GPU, CHAI can provide a single pointer value that is valid in
+both the ``HOST`` and ``DEVICE`` contexts.
+
+``UnifiedArrayManager`` relies on :ref:`ContextManager <experimental_design>` to
+avoid unnecessary full device synchronizations and to ensure correctness when
+switching between contexts:
+
+- ``data(touch=false)`` returns a pointer suitable for read access in the current
+  context and synchronizes with the most recent modifying context (if needed).
+- ``data(touch=true)`` indicates the caller will modify the array in the current
+  context; it performs any required synchronization first, then records the
+  current context as the most recently modified context.
+
+Like ``HostArrayManager``, ``UnifiedArrayManager`` performs value initialization
+of each element on the host (numeric types are initialized to zero).
+
+.. code-block:: cpp
+
+  #include "chai/expt/Context.hpp"
+  #include "chai/expt/ContextGuard.hpp"
+  #include "chai/expt/UnifiedArrayManager.hpp"
+
+  const std::size_t N = 1000000;
+  ::chai::expt::UnifiedArrayManager<int> a{N};
+
+  {
+    ::chai::expt::ContextGuard guard{::chai::expt::Context::HOST};
+    int* p = a.data(true);
+    for (std::size_t i = 0; i < N; ++i) { p[i] = static_cast<int>(i); }
+  }
+
+  {
+    ::chai::expt::ContextGuard guard{::chai::expt::Context::DEVICE};
+    int* p = a.data(true);
+    // Launch a CUDA/HIP kernel that writes through p...
+  }
+
+  {
+    ::chai::expt::ContextGuard guard{::chai::expt::Context::HOST};
+    // If the most recent modification was on DEVICE, this call synchronizes first.
+    const int* p = a.data(false);
+    // Read through p...
+  }
+
