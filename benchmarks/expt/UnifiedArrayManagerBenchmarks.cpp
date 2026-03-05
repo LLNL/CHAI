@@ -287,6 +287,185 @@ namespace {
     state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(size));
   }
 
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+  static void RawUnifiedMemoryHostReadThenHostRead(benchmark::State& state)
+  {
+    const std::size_t size = static_cast<std::size_t>(state.range(0));
+
+    for (auto _ : state)
+    {
+      std::int32_t* data = malloc_managed<std::int32_t>(size);
+
+      host_read_sum(data, size);
+      host_read_sum(data, size);
+
+      free_managed(data);
+    }
+
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(size));
+  }
+
+  static void RawUnifiedMemoryHostWriteThenHostRead(benchmark::State& state)
+  {
+    const std::size_t size = static_cast<std::size_t>(state.range(0));
+
+    for (auto _ : state)
+    {
+      std::int32_t* data = malloc_managed<std::int32_t>(size);
+
+      for (std::size_t i = 0; i < size; ++i)
+      {
+        data[i] = static_cast<std::int32_t>(i);
+      }
+      benchmark::ClobberMemory();
+
+      host_read_sum(data, size);
+
+      free_managed(data);
+    }
+
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(size));
+  }
+
+  static void RawUnifiedMemoryHostReadThenDeviceRead(benchmark::State& state)
+  {
+    const std::size_t size = static_cast<std::size_t>(state.range(0));
+
+    std::int32_t* out = malloc_managed<std::int32_t>(size);
+
+    for (auto _ : state)
+    {
+      std::int32_t* data = malloc_managed<std::int32_t>(size);
+
+      host_read_sum(data, size);
+
+      launch_copy(data, out, size);
+      device_synchronize();
+      benchmark::DoNotOptimize(out[0]);
+
+      free_managed(data);
+    }
+
+    free_managed(out);
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(size));
+  }
+
+  static void RawUnifiedMemoryHostWriteThenDeviceRead(benchmark::State& state)
+  {
+    const std::size_t size = static_cast<std::size_t>(state.range(0));
+
+    std::int32_t* out = malloc_managed<std::int32_t>(size);
+
+    for (auto _ : state)
+    {
+      std::int32_t* data = malloc_managed<std::int32_t>(size);
+
+      for (std::size_t i = 0; i < size; ++i)
+      {
+        data[i] = static_cast<std::int32_t>(i);
+      }
+      benchmark::ClobberMemory();
+
+      launch_copy(data, out, size);
+      device_synchronize();
+      benchmark::DoNotOptimize(out[0]);
+
+      free_managed(data);
+    }
+
+    free_managed(out);
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(size));
+  }
+
+  static void RawUnifiedMemoryDeviceReadThenHostRead(benchmark::State& state)
+  {
+    const std::size_t size = static_cast<std::size_t>(state.range(0));
+
+    std::int32_t* out = malloc_managed<std::int32_t>(size);
+
+    for (auto _ : state)
+    {
+      std::int32_t* data = malloc_managed<std::int32_t>(size);
+
+      launch_copy(data, out, size);
+      device_synchronize();
+
+      host_read_sum(data, size);
+
+      free_managed(data);
+    }
+
+    free_managed(out);
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(size));
+  }
+
+  static void RawUnifiedMemoryDeviceWriteThenHostRead(benchmark::State& state)
+  {
+    const std::size_t size = static_cast<std::size_t>(state.range(0));
+
+    for (auto _ : state)
+    {
+      std::int32_t* data = malloc_managed<std::int32_t>(size);
+
+      launch_add_constant(data, size, 1);
+      device_synchronize();
+
+      host_read_sum(data, size);
+
+      free_managed(data);
+    }
+
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(size));
+  }
+
+  static void RawUnifiedMemoryDeviceReadThenDeviceRead(benchmark::State& state)
+  {
+    const std::size_t size = static_cast<std::size_t>(state.range(0));
+
+    std::int32_t* out0 = malloc_managed<std::int32_t>(size);
+    std::int32_t* out1 = malloc_managed<std::int32_t>(size);
+
+    for (auto _ : state)
+    {
+      std::int32_t* data = malloc_managed<std::int32_t>(size);
+
+      launch_copy(data, out0, size);
+      launch_copy(data, out1, size);
+      device_synchronize();
+      benchmark::DoNotOptimize(out0[0]);
+      benchmark::DoNotOptimize(out1[0]);
+
+      free_managed(data);
+    }
+
+    free_managed(out0);
+    free_managed(out1);
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(size));
+  }
+
+  static void RawUnifiedMemoryDeviceWriteThenDeviceRead(benchmark::State& state)
+  {
+    const std::size_t size = static_cast<std::size_t>(state.range(0));
+
+    std::int32_t* out = malloc_managed<std::int32_t>(size);
+
+    for (auto _ : state)
+    {
+      std::int32_t* data = malloc_managed<std::int32_t>(size);
+
+      launch_add_constant(data, size, 1);
+      launch_copy(data, out, size);
+      device_synchronize();
+      benchmark::DoNotOptimize(out[0]);
+
+      free_managed(data);
+    }
+
+    free_managed(out);
+    state.SetItemsProcessed(state.iterations() * static_cast<std::int64_t>(size));
+  }
+#endif
+
   static void UnifiedArrayManagerHostWrite(benchmark::State& state)
   {
     reset_context();
@@ -840,6 +1019,18 @@ BENCHMARK(UnifiedArrayManagerDeviceReadThenHostWrite)->RangeMultiplier(2)->Range
 BENCHMARK(UnifiedArrayManagerDeviceWriteThenHostWrite)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
 BENCHMARK(UnifiedArrayManagerHostWrite)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
 BENCHMARK(UnifiedArrayManagerDeviceReadAfterHostWrite)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
+
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+BENCHMARK(RawUnifiedMemoryHostReadThenHostRead)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
+BENCHMARK(RawUnifiedMemoryHostWriteThenHostRead)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
+BENCHMARK(RawUnifiedMemoryHostReadThenDeviceRead)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
+BENCHMARK(RawUnifiedMemoryHostWriteThenDeviceRead)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
+BENCHMARK(RawUnifiedMemoryDeviceReadThenHostRead)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
+BENCHMARK(RawUnifiedMemoryDeviceWriteThenHostRead)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
+BENCHMARK(RawUnifiedMemoryDeviceReadThenDeviceRead)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
+BENCHMARK(RawUnifiedMemoryDeviceWriteThenDeviceRead)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
+#endif
+
 BENCHMARK(UnifiedArrayManagerDeviceCopyAfterHostWrite)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
 BENCHMARK(UnifiedArrayManagerHostReadAfterDeviceWriteAlreadySynced)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
 BENCHMARK(UnifiedArrayManagerHostReadAfterDeviceWriteImplicitSync)->RangeMultiplier(2)->Range(1 << 10, 1 << 22);
