@@ -56,18 +56,6 @@ namespace {
   }
 
 #if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-  __global__ void read_samples_kernel(const int* data,
-                                      std::size_t size,
-                                      int* out_samples /* length 3 */)
-  {
-    if (blockIdx.x == 0 && threadIdx.x == 0)
-    {
-      out_samples[0] = data[0];
-      out_samples[1] = data[size / 2];
-      out_samples[2] = data[size - 1];
-    }
-  }
-
   __global__ void increment_kernel(int* data, std::size_t size)
   {
     const std::size_t i = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
@@ -77,21 +65,21 @@ namespace {
     }
   }
 
-  inline void launch_read_samples(const int* data, std::size_t size, int* out_samples)
+  __global__ void copy_kernel(const int* in, int* out, std::size_t size)
+  {
+    const std::size_t i = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+    if (i < size)
+    {
+      out[i] = in[i];
+    }
+  }
+
+  inline void device_synchronize_raw()
   {
 #if defined(CHAI_ENABLE_CUDA)
-    read_samples_kernel<<<1, 1>>>(data, size, out_samples);
-    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaGetLastError);
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaDeviceSynchronize);
 #elif defined(CHAI_ENABLE_HIP)
-    hipLaunchKernelGGL(read_samples_kernel,
-                       dim3(1),
-                       dim3(1),
-                       0,
-                       0,
-                       data,
-                       size,
-                       out_samples);
-    CAMP_HIP_API_INVOKE_AND_CHECK(hipGetLastError);
+    CAMP_HIP_API_INVOKE_AND_CHECK(hipDeviceSynchronize);
 #endif
   }
 
@@ -110,6 +98,27 @@ namespace {
                        0,
                        0,
                        data,
+                       size);
+    CAMP_HIP_API_INVOKE_AND_CHECK(hipGetLastError);
+#endif
+  }
+
+  inline void launch_copy(const int* in, int* out, std::size_t size)
+  {
+    constexpr int BLOCK_SIZE = 256;
+    const int grid_size = static_cast<int>((size + BLOCK_SIZE - 1) / BLOCK_SIZE);
+
+#if defined(CHAI_ENABLE_CUDA)
+    copy_kernel<<<grid_size, BLOCK_SIZE>>>(in, out, size);
+    CAMP_CUDA_API_INVOKE_AND_CHECK(cudaGetLastError);
+#elif defined(CHAI_ENABLE_HIP)
+    hipLaunchKernelGGL(copy_kernel,
+                       dim3(grid_size),
+                       dim3(BLOCK_SIZE),
+                       0,
+                       0,
+                       in,
+                       out,
                        size);
     CAMP_HIP_API_INVOKE_AND_CHECK(hipGetLastError);
 #endif
@@ -306,14 +315,14 @@ TEST_F(UnifiedArrayManagerTest, DeviceReadDoesNotSynchronizeOnHostAccess)
     }
   }
 
-  int* samples = malloc_managed<int>(3);
-  ASSERT_NE(samples, nullptr);
+  int* out = malloc_managed<int>(N);
+  ASSERT_NE(out, nullptr);
 
   {
     ContextGuard guard{Context::DEVICE};
     const int* data = manager.data(false);
     ASSERT_NE(data, nullptr);
-    launch_read_samples(data, N, samples);
+    launch_copy(data, out, N);
   }
 
   // The DEVICE context has been entered, but we haven't synchronized yet.
@@ -330,11 +339,12 @@ TEST_F(UnifiedArrayManagerTest, DeviceReadDoesNotSynchronizeOnHostAccess)
   // We still need to synchronize before reading the kernel output.
   contextManager.synchronize(Context::DEVICE);
   EXPECT_TRUE(contextManager.isSynchronized(Context::DEVICE));
-  EXPECT_EQ(samples[0], 0);
-  EXPECT_EQ(samples[1], static_cast<int>(N / 2));
-  EXPECT_EQ(samples[2], static_cast<int>(N - 1));
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    EXPECT_EQ(out[i], static_cast<int>(i));
+  }
 
-  free_managed(samples);
+  free_managed(out);
 }
 
 TEST_F(UnifiedArrayManagerTest, HostToDeviceAccessDoesNotSynchronizeDevice)
@@ -379,11 +389,14 @@ TEST_F(UnifiedArrayManagerTest, HostReadThenDeviceRead)
     ContextGuard guard{Context::HOST};
     const int* data = manager.data(false);
     ASSERT_NE(data, nullptr);
-    EXPECT_EQ(data[0], 0);
+    for (std::size_t i = 0; i < N; ++i)
+    {
+      EXPECT_EQ(data[i], 0);
+    }
   }
 
-  int* samples = malloc_managed<int>(3);
-  ASSERT_NE(samples, nullptr);
+  int* out = malloc_managed<int>(N);
+  ASSERT_NE(out, nullptr);
 
   // Device read without touching does not require device synchronization, and does not
   // cause later host access to synchronize the device.
@@ -391,7 +404,7 @@ TEST_F(UnifiedArrayManagerTest, HostReadThenDeviceRead)
     ContextGuard guard{Context::DEVICE};
     const int* data = manager.data(false);
     ASSERT_NE(data, nullptr);
-    launch_read_samples(data, N, samples);
+    launch_copy(data, out, N);
   }
 
   EXPECT_FALSE(contextManager.isSynchronized(Context::DEVICE));
@@ -403,11 +416,12 @@ TEST_F(UnifiedArrayManagerTest, HostReadThenDeviceRead)
   }
 
   contextManager.synchronize(Context::DEVICE);
-  EXPECT_EQ(samples[0], 0);
-  EXPECT_EQ(samples[1], 0);
-  EXPECT_EQ(samples[2], 0);
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    EXPECT_EQ(out[i], 0);
+  }
 
-  free_managed(samples);
+  free_managed(out);
 }
 
 TEST_F(UnifiedArrayManagerTest, HostReadThenDeviceWriteThenHostReadSynchronizes)
@@ -458,17 +472,21 @@ TEST_F(UnifiedArrayManagerTest, DeviceReadThenHostWriteDoesNotSynchronize)
     }
   }
 
-  int* samples = malloc_managed<int>(3);
-  ASSERT_NE(samples, nullptr);
+  int* out = malloc_managed<int>(N);
+  ASSERT_NE(out, nullptr);
 
   {
     ContextGuard guard{Context::DEVICE};
     const int* data = manager.data(false);
     ASSERT_NE(data, nullptr);
-    launch_read_samples(data, N, samples);
+    launch_copy(data, out, N);
   }
 
   EXPECT_FALSE(contextManager.isSynchronized(Context::DEVICE));
+
+  // Ensure the read kernel has completed before performing host writes, but do not
+  // update ContextManager's synchronization state.
+  device_synchronize_raw();
 
   // Since the array was not touched in DEVICE, host write should not synchronize DEVICE.
   {
@@ -479,12 +497,12 @@ TEST_F(UnifiedArrayManagerTest, DeviceReadThenHostWriteDoesNotSynchronize)
     EXPECT_FALSE(contextManager.isSynchronized(Context::DEVICE));
   }
 
-  contextManager.synchronize(Context::DEVICE);
-  EXPECT_EQ(samples[0], 0);
-  EXPECT_EQ(samples[1], static_cast<int>(N / 2));
-  EXPECT_EQ(samples[2], static_cast<int>(N - 1));
+  for (std::size_t i = 0; i < N; ++i)
+  {
+    EXPECT_EQ(out[i], static_cast<int>(i));
+  }
 
-  free_managed(samples);
+  free_managed(out);
 }
 
 TEST_F(UnifiedArrayManagerTest, DeviceWriteThenHostWriteSynchronizes)
