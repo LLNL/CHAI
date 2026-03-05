@@ -306,6 +306,37 @@ TEST_F(UnifiedArrayManagerTest, HostReadThenHostRead)
   }
 }
 
+TEST_F(UnifiedArrayManagerTest, HostWriteThenHostRead)
+{
+  // Set up
+  constexpr std::size_t N = 128;
+  UnifiedArrayManager<int> manager{N};
+
+  // Host write
+  {
+    ContextGuard guard{Context::HOST};
+    int* data = manager.data(true);
+    ASSERT_NE(data, nullptr);
+
+    for (std::size_t i = 0; i < N; ++i)
+    {
+      data[i] = static_cast<int>(i);
+    }
+  }
+
+  // Host read
+  {
+    ContextGuard guard{Context::HOST};
+    const int* data = manager.data(false);
+    ASSERT_NE(data, nullptr);
+
+    for (std::size_t i = 0; i < N; ++i)
+    {
+      EXPECT_EQ(data[i], static_cast<int>(i));
+    }
+  }
+}
+
 TEST_F(UnifiedArrayManagerTest, HostReadThenDeviceRead)
 {
   // Set up
@@ -347,37 +378,6 @@ TEST_F(UnifiedArrayManagerTest, HostReadThenDeviceRead)
 
   // Clean up
   free_managed(out);
-}
-
-TEST_F(UnifiedArrayManagerTest, HostWriteThenHostRead)
-{
-  // Set up
-  constexpr std::size_t N = 128;
-  UnifiedArrayManager<int> manager{N};
-
-  // Host write
-  {
-    ContextGuard guard{Context::HOST};
-    int* data = manager.data(true);
-    ASSERT_NE(data, nullptr);
-
-    for (std::size_t i = 0; i < N; ++i)
-    {
-      data[i] = static_cast<int>(i);
-    }
-  }
-
-  // Host read
-  {
-    ContextGuard guard{Context::HOST};
-    const int* data = manager.data(false);
-    ASSERT_NE(data, nullptr);
-
-    for (std::size_t i = 0; i < N; ++i)
-    {
-      EXPECT_EQ(data[i], static_cast<int>(i));
-    }
-  }
 }
 
 TEST_F(UnifiedArrayManagerTest, HostWriteThenDeviceRead)
@@ -440,7 +440,7 @@ TEST_F(UnifiedArrayManagerTest, DeviceReadThenHostRead)
     launch_copy(data, out, N);
   }
 
-  // Host read (implies synchronize)
+  // Host read
   {
     ContextGuard guard{Context::HOST};
     const int* data = manager.data(false);
@@ -542,6 +542,7 @@ TEST_F(UnifiedArrayManagerTest, DeviceWriteThenDeviceRead)
   constexpr std::size_t N = 256;
   UnifiedArrayManager<int> manager{N};
 
+  // Device write
   {
     ContextGuard guard{Context::DEVICE};
     int* data = manager.data(true);
@@ -553,6 +554,7 @@ TEST_F(UnifiedArrayManagerTest, DeviceWriteThenDeviceRead)
   int* out = malloc_managed<int>(N);
   ASSERT_NE(out, nullptr);
 
+  // Device read
   {
     ContextGuard guard{Context::DEVICE};
     const int* data = manager.data(false);
@@ -563,6 +565,7 @@ TEST_F(UnifiedArrayManagerTest, DeviceWriteThenDeviceRead)
   // Synchronize
   device_synchronize_raw();
 
+  // Checks
   for (std::size_t i = 0; i < N; ++i)
   {
     EXPECT_EQ(out[i], 1);
@@ -571,3 +574,4 @@ TEST_F(UnifiedArrayManagerTest, DeviceWriteThenDeviceRead)
   // Clean up
   free_managed(out);
 }
+
