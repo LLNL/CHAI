@@ -43,7 +43,7 @@ namespace {
 
   BENCHMARK(UnifiedArrayManager_SizeConstruct)
     ->Arg(0)
-    ->RangeMultiplier(4)
+    ->RangeMultiplier(8)
     ->Range(1, 1 << 20);
 
   static void UnifiedArrayManager_FirstData_HostConst(benchmark::State& state)
@@ -68,7 +68,7 @@ namespace {
 
   BENCHMARK(UnifiedArrayManager_FirstData_HostConst)
     ->Arg(0)
-    ->RangeMultiplier(4)
+    ->RangeMultiplier(8)
     ->Range(1, 1 << 20);
 
   static void UnifiedArrayManager_FirstData_Host(benchmark::State& state)
@@ -93,7 +93,7 @@ namespace {
 
   BENCHMARK(UnifiedArrayManager_FirstData_Host)
     ->Arg(0)
-    ->RangeMultiplier(4)
+    ->RangeMultiplier(8)
     ->Range(1, 1 << 20);
 
   static void UnifiedArrayManager_FirstData_DeviceConst(benchmark::State& state)
@@ -118,7 +118,7 @@ namespace {
 
   BENCHMARK(UnifiedArrayManager_FirstData_DeviceConst)
     ->Arg(0)
-    ->RangeMultiplier(4)
+    ->RangeMultiplier(8)
     ->Range(1, 1 << 20);
 
   static void UnifiedArrayManager_FirstData_Device(benchmark::State& state)
@@ -143,7 +143,7 @@ namespace {
 
   BENCHMARK(UnifiedArrayManager_FirstData_Device)
     ->Arg(0)
-    ->RangeMultiplier(4)
+    ->RangeMultiplier(8)
     ->Range(1, 1 << 20);
 }  // namespace
 
