@@ -8,6 +8,8 @@
 #ifndef CHAI_UNIFIED_ARRAY_MANAGER_HPP
 #define CHAI_UNIFIED_ARRAY_MANAGER_HPP
 
+#include "chai/expt/Context.hpp"
+#include "chai/expt/ContextManager.hpp"
 #include "umpire/ResourceManager.hpp"
 #include "umpire/TypedAllocator.hpp"
 #include <cstddef>
