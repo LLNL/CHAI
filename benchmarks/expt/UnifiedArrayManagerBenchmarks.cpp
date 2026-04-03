@@ -81,7 +81,7 @@ namespace {
     ->RangeMultiplier(8)
     ->Range(1, 1 << 20);
 
-  static void UnifiedArrayManager_HostReadThenHostRead(benchmark::State& state)
+  static void UnifiedArrayManager_AfterHostRead_DataHostRead(benchmark::State& state)
   {
     UnifiedArrayManager_DataSequence(state,
                                      /*initial_context=*/Context::HOST,
@@ -90,10 +90,10 @@ namespace {
                                      /*call_touch=*/false);
   }
 
-  BENCHMARK(UnifiedArrayManager_HostReadThenHostRead)
+  BENCHMARK(UnifiedArrayManager_AfterHostRead_DataHostRead)
     ->Unit(benchmark::kNanosecond);
 
-  static void UnifiedArrayManager_HostWriteThenHostRead(benchmark::State& state)
+  static void UnifiedArrayManager_AfterHostWrite_DataHostRead(benchmark::State& state)
   {
     UnifiedArrayManager_DataSequence(state,
                                      /*initial_context=*/Context::HOST,
@@ -102,10 +102,10 @@ namespace {
                                      /*call_touch=*/false);
   }
 
-  BENCHMARK(UnifiedArrayManager_HostWriteThenHostRead)
+  BENCHMARK(UnifiedArrayManager_AfterHostWrite_DataHostRead)
     ->Unit(benchmark::kNanosecond);
 
-  static void UnifiedArrayManager_HostReadThenDeviceRead(benchmark::State& state)
+  static void UnifiedArrayManager_AfterHostRead_DataDeviceRead(benchmark::State& state)
   {
     UnifiedArrayManager_DataSequence(state,
                                      /*initial_context=*/Context::HOST,
@@ -114,10 +114,10 @@ namespace {
                                      /*call_touch=*/false);
   }
 
-  BENCHMARK(UnifiedArrayManager_HostReadThenDeviceRead)
+  BENCHMARK(UnifiedArrayManager_AfterHostRead_DataDeviceRead)
     ->Unit(benchmark::kNanosecond);
 
-  static void UnifiedArrayManager_HostWriteThenDeviceRead(benchmark::State& state)
+  static void UnifiedArrayManager_AfterHostWrite_DataDeviceRead(benchmark::State& state)
   {
     UnifiedArrayManager_DataSequence(state,
                                      /*initial_context=*/Context::HOST,
@@ -126,10 +126,10 @@ namespace {
                                      /*call_touch=*/false);
   }
 
-  BENCHMARK(UnifiedArrayManager_HostWriteThenDeviceRead)
+  BENCHMARK(UnifiedArrayManager_AfterHostWrite_DataDeviceRead)
     ->Unit(benchmark::kNanosecond);
 
-  static void UnifiedArrayManager_DeviceReadThenHostRead(benchmark::State& state)
+  static void UnifiedArrayManager_AfterDeviceRead_DataHostRead(benchmark::State& state)
   {
     UnifiedArrayManager_DataSequence(state,
                                      /*initial_context=*/Context::DEVICE,
@@ -138,10 +138,10 @@ namespace {
                                      /*call_touch=*/false);
   }
 
-  BENCHMARK(UnifiedArrayManager_DeviceReadThenHostRead)
+  BENCHMARK(UnifiedArrayManager_AfterDeviceRead_DataHostRead)
     ->Unit(benchmark::kNanosecond);
 
-  static void UnifiedArrayManager_DeviceWriteThenHostRead(benchmark::State& state)
+  static void UnifiedArrayManager_AfterDeviceWrite_DataHostRead(benchmark::State& state)
   {
     UnifiedArrayManager_DataSequence(state,
                                      /*initial_context=*/Context::DEVICE,
@@ -150,10 +150,10 @@ namespace {
                                      /*call_touch=*/false);
   }
 
-  BENCHMARK(UnifiedArrayManager_DeviceWriteThenHostRead)
+  BENCHMARK(UnifiedArrayManager_AfterDeviceWrite_DataHostRead)
     ->Unit(benchmark::kNanosecond);
 
-  static void UnifiedArrayManager_DeviceReadThenDeviceRead(benchmark::State& state)
+  static void UnifiedArrayManager_AfterDeviceRead_DataDeviceRead(benchmark::State& state)
   {
     UnifiedArrayManager_DataSequence(state,
                                      /*initial_context=*/Context::DEVICE,
@@ -162,10 +162,10 @@ namespace {
                                      /*call_touch=*/false);
   }
 
-  BENCHMARK(UnifiedArrayManager_DeviceReadThenDeviceRead)
+  BENCHMARK(UnifiedArrayManager_AfterDeviceRead_DataDeviceRead)
     ->Unit(benchmark::kNanosecond);
 
-  static void UnifiedArrayManager_DeviceWriteThenDeviceRead(benchmark::State& state)
+  static void UnifiedArrayManager_AfterDeviceWrite_DataDeviceRead(benchmark::State& state)
   {
     UnifiedArrayManager_DataSequence(state,
                                      /*initial_context=*/Context::DEVICE,
@@ -174,7 +174,7 @@ namespace {
                                      /*call_touch=*/false);
   }
 
-  BENCHMARK(UnifiedArrayManager_DeviceWriteThenDeviceRead)
+  BENCHMARK(UnifiedArrayManager_AfterDeviceWrite_DataDeviceRead)
     ->Unit(benchmark::kNanosecond);
 }  // namespace
 
