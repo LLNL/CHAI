@@ -251,7 +251,9 @@ of each element on the host (numeric types are initialized to zero).
   {
     ::chai::expt::ContextGuard guard{::chai::expt::Context::HOST};
     int* p = a.data(true);
-    for (std::size_t i = 0; i < N; ++i) { p[i] = static_cast<int>(i); }
+    for (std::size_t i = 0; i < N; ++i) {
+      p[i] = static_cast<int>(i);
+    }
   }
 
   {
