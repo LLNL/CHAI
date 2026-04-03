@@ -18,13 +18,15 @@ namespace {
   using ::chai::expt::ContextManager;
   using ::chai::expt::UnifiedArrayManager;
 
-  static void UnifiedArrayManager_DataAfterTouch(benchmark::State& state,
-                                                 Context initial_context,
-                                                 bool initial_touch,
-                                                 Context call_context,
-                                                 bool call_touch)
+  static void UnifiedArrayManager_Data(benchmark::State& state,
+                                       bool initialize_state,
+                                       Context initial_context,
+                                       bool initial_touch,
+                                       Context call_context,
+                                       bool call_touch,
+                                       bool device_synchronized_before_call)
   {
-    const auto size = static_cast<std::size_t>(state.range(0));
+    constexpr std::size_t size = 1;
 
     for (auto _ : state)
     {
@@ -34,6 +36,8 @@ namespace {
       contextManager.reset();
 
       UnifiedArrayManager<int> manager{size};
+
+      if (initialize_state)
       {
         ContextGuard guard{initial_context};
         int* initial_data = manager.data(/*touch=*/initial_touch);
@@ -42,6 +46,7 @@ namespace {
 
       {
         ContextGuard guard{call_context};
+        contextManager.setDeviceSynchronized(device_synchronized_before_call);
         state.ResumeTiming();  // measure only the data() call
         int* data = manager.data(/*touch=*/call_touch);
         benchmark::DoNotOptimize(data);
@@ -81,217 +86,145 @@ namespace {
     ->RangeMultiplier(8)
     ->Range(1, 1 << 20);
 
-  static void UnifiedArrayManager_FirstData_HostConst(benchmark::State& state)
+  static void UnifiedArrayManager_FirstData_HostNoTouch(benchmark::State& state)
   {
-    const auto size = static_cast<std::size_t>(state.range(0));
-
-    for (auto _ : state)
-    {
-      state.PauseTiming();
-      UnifiedArrayManager<int> manager{size};
-      state.ResumeTiming();
-
-      {
-        ContextGuard guard{Context::HOST};
-        int* data = manager.data(/*touch=*/false);
-        benchmark::DoNotOptimize(data);
-      }
-    }
-
-    state.SetItemsProcessed(state.iterations());
+    UnifiedArrayManager_Data(state,
+                             /*initialize_state=*/false,
+                             /*initial_context=*/Context::NONE,
+                             /*initial_touch=*/false,
+                             /*call_context=*/Context::HOST,
+                             /*call_touch=*/false,
+                             /*device_synchronized_before_call=*/true);
   }
 
-  BENCHMARK(UnifiedArrayManager_FirstData_HostConst)
-    ->Arg(0)
-    ->RangeMultiplier(8)
-    ->Range(1, 1 << 20);
+  BENCHMARK(UnifiedArrayManager_FirstData_HostNoTouch)
+    ->Unit(benchmark::kNanosecond);
 
   static void UnifiedArrayManager_FirstData_Host(benchmark::State& state)
   {
-    const auto size = static_cast<std::size_t>(state.range(0));
-
-    for (auto _ : state)
-    {
-      state.PauseTiming();
-      UnifiedArrayManager<int> manager{size};
-      state.ResumeTiming();
-
-      {
-        ContextGuard guard{Context::HOST};
-        int* data = manager.data(/*touch=*/true);
-        benchmark::DoNotOptimize(data);
-      }
-    }
-
-    state.SetItemsProcessed(state.iterations());
+    UnifiedArrayManager_Data(state,
+                             /*initialize_state=*/false,
+                             /*initial_context=*/Context::NONE,
+                             /*initial_touch=*/false,
+                             /*call_context=*/Context::HOST,
+                             /*call_touch=*/true,
+                             /*device_synchronized_before_call=*/true);
   }
 
   BENCHMARK(UnifiedArrayManager_FirstData_Host)
-    ->Arg(0)
-    ->RangeMultiplier(8)
-    ->Range(1, 1 << 20);
+    ->Unit(benchmark::kNanosecond);
 
-  static void UnifiedArrayManager_FirstData_DeviceConst(benchmark::State& state)
+  static void UnifiedArrayManager_FirstData_DeviceNoTouch(benchmark::State& state)
   {
-    const auto size = static_cast<std::size_t>(state.range(0));
-
-    for (auto _ : state)
-    {
-      state.PauseTiming();
-      UnifiedArrayManager<int> manager{size};
-      state.ResumeTiming();
-
-      {
-        ContextGuard guard{Context::DEVICE};
-        int* data = manager.data(/*touch=*/false);
-        benchmark::DoNotOptimize(data);
-      }
-    }
-
-    state.SetItemsProcessed(state.iterations());
+    UnifiedArrayManager_Data(state,
+                             /*initialize_state=*/false,
+                             /*initial_context=*/Context::NONE,
+                             /*initial_touch=*/false,
+                             /*call_context=*/Context::DEVICE,
+                             /*call_touch=*/false,
+                             /*device_synchronized_before_call=*/true);
   }
 
-  BENCHMARK(UnifiedArrayManager_FirstData_DeviceConst)
-    ->Arg(0)
-    ->RangeMultiplier(8)
-    ->Range(1, 1 << 20);
+  BENCHMARK(UnifiedArrayManager_FirstData_DeviceNoTouch)
+    ->Unit(benchmark::kNanosecond);
 
   static void UnifiedArrayManager_FirstData_Device(benchmark::State& state)
   {
-    const auto size = static_cast<std::size_t>(state.range(0));
-
-    for (auto _ : state)
-    {
-      state.PauseTiming();
-      UnifiedArrayManager<int> manager{size};
-      state.ResumeTiming();
-
-      {
-        ContextGuard guard{Context::DEVICE};
-        int* data = manager.data(/*touch=*/true);
-        benchmark::DoNotOptimize(data);
-      }
-    }
-
-    state.SetItemsProcessed(state.iterations());
+    UnifiedArrayManager_Data(state,
+                             /*initialize_state=*/false,
+                             /*initial_context=*/Context::NONE,
+                             /*initial_touch=*/false,
+                             /*call_context=*/Context::DEVICE,
+                             /*call_touch=*/true,
+                             /*device_synchronized_before_call=*/true);
   }
 
   BENCHMARK(UnifiedArrayManager_FirstData_Device)
-    ->Arg(0)
-    ->RangeMultiplier(8)
-    ->Range(1, 1 << 20);
+    ->Unit(benchmark::kNanosecond);
 
-  static void UnifiedArrayManager_DataAfterHostTouch_HostConst(benchmark::State& state)
+  static void UnifiedArrayManager_DataAfterHostTouch_HostNoTouch(benchmark::State& state)
   {
-    UnifiedArrayManager_DataAfterTouch(state,
-                                       /*initial_context=*/Context::HOST,
-                                       /*initial_touch=*/true,
-                                       /*call_context=*/Context::HOST,
-                                       /*call_touch=*/false);
+    UnifiedArrayManager_Data(state,
+                             /*initialize_state=*/true,
+                             /*initial_context=*/Context::HOST,
+                             /*initial_touch=*/true,
+                             /*call_context=*/Context::HOST,
+                             /*call_touch=*/false,
+                             /*device_synchronized_before_call=*/true);
   }
 
-  BENCHMARK(UnifiedArrayManager_DataAfterHostTouch_HostConst)
-    ->Arg(0)
-    ->RangeMultiplier(8)
-    ->Range(1, 1 << 20);
+  BENCHMARK(UnifiedArrayManager_DataAfterHostTouch_HostNoTouch)
+    ->Unit(benchmark::kNanosecond);
 
   static void UnifiedArrayManager_DataAfterHostTouch_Host(benchmark::State& state)
   {
-    UnifiedArrayManager_DataAfterTouch(state,
-                                       /*initial_context=*/Context::HOST,
-                                       /*initial_touch=*/true,
-                                       /*call_context=*/Context::HOST,
-                                       /*call_touch=*/true);
+    UnifiedArrayManager_Data(state,
+                             /*initialize_state=*/true,
+                             /*initial_context=*/Context::HOST,
+                             /*initial_touch=*/true,
+                             /*call_context=*/Context::HOST,
+                             /*call_touch=*/true,
+                             /*device_synchronized_before_call=*/true);
   }
 
   BENCHMARK(UnifiedArrayManager_DataAfterHostTouch_Host)
-    ->Arg(0)
-    ->RangeMultiplier(8)
-    ->Range(1, 1 << 20);
-
-  static void UnifiedArrayManager_DataAfterHostTouch_DeviceConst(benchmark::State& state)
-  {
-    UnifiedArrayManager_DataAfterTouch(state,
-                                       /*initial_context=*/Context::HOST,
-                                       /*initial_touch=*/true,
-                                       /*call_context=*/Context::DEVICE,
-                                       /*call_touch=*/false);
-  }
-
-  BENCHMARK(UnifiedArrayManager_DataAfterHostTouch_DeviceConst)
-    ->Arg(0)
-    ->RangeMultiplier(8)
-    ->Range(1, 1 << 20);
+    ->Unit(benchmark::kNanosecond);
 
   static void UnifiedArrayManager_DataAfterHostTouch_Device(benchmark::State& state)
   {
-    UnifiedArrayManager_DataAfterTouch(state,
-                                       /*initial_context=*/Context::HOST,
-                                       /*initial_touch=*/true,
-                                       /*call_context=*/Context::DEVICE,
-                                       /*call_touch=*/true);
+    UnifiedArrayManager_Data(state,
+                             /*initialize_state=*/true,
+                             /*initial_context=*/Context::HOST,
+                             /*initial_touch=*/true,
+                             /*call_context=*/Context::DEVICE,
+                             /*call_touch=*/true,
+                             /*device_synchronized_before_call=*/true);
   }
 
   BENCHMARK(UnifiedArrayManager_DataAfterHostTouch_Device)
-    ->Arg(0)
-    ->RangeMultiplier(8)
-    ->Range(1, 1 << 20);
+    ->Unit(benchmark::kNanosecond);
 
-  static void UnifiedArrayManager_DataAfterDeviceTouch_HostConst(benchmark::State& state)
+  static void UnifiedArrayManager_DataAfterDeviceTouch_HostSynchronized(benchmark::State& state)
   {
-    UnifiedArrayManager_DataAfterTouch(state,
-                                       /*initial_context=*/Context::DEVICE,
-                                       /*initial_touch=*/true,
-                                       /*call_context=*/Context::HOST,
-                                       /*call_touch=*/false);
+    UnifiedArrayManager_Data(state,
+                             /*initialize_state=*/true,
+                             /*initial_context=*/Context::DEVICE,
+                             /*initial_touch=*/true,
+                             /*call_context=*/Context::HOST,
+                             /*call_touch=*/true,
+                             /*device_synchronized_before_call=*/true);
   }
 
-  BENCHMARK(UnifiedArrayManager_DataAfterDeviceTouch_HostConst)
-    ->Arg(0)
-    ->RangeMultiplier(8)
-    ->Range(1, 1 << 20);
+  BENCHMARK(UnifiedArrayManager_DataAfterDeviceTouch_HostSynchronized)
+    ->Unit(benchmark::kNanosecond);
 
-  static void UnifiedArrayManager_DataAfterDeviceTouch_Host(benchmark::State& state)
+  static void UnifiedArrayManager_DataAfterDeviceTouch_HostUnsynchronized(benchmark::State& state)
   {
-    UnifiedArrayManager_DataAfterTouch(state,
-                                       /*initial_context=*/Context::DEVICE,
-                                       /*initial_touch=*/true,
-                                       /*call_context=*/Context::HOST,
-                                       /*call_touch=*/true);
+    UnifiedArrayManager_Data(state,
+                             /*initialize_state=*/true,
+                             /*initial_context=*/Context::DEVICE,
+                             /*initial_touch=*/true,
+                             /*call_context=*/Context::HOST,
+                             /*call_touch=*/true,
+                             /*device_synchronized_before_call=*/false);
   }
 
-  BENCHMARK(UnifiedArrayManager_DataAfterDeviceTouch_Host)
-    ->Arg(0)
-    ->RangeMultiplier(8)
-    ->Range(1, 1 << 20);
-
-  static void UnifiedArrayManager_DataAfterDeviceTouch_DeviceConst(benchmark::State& state)
-  {
-    UnifiedArrayManager_DataAfterTouch(state,
-                                       /*initial_context=*/Context::DEVICE,
-                                       /*initial_touch=*/true,
-                                       /*call_context=*/Context::DEVICE,
-                                       /*call_touch=*/false);
-  }
-
-  BENCHMARK(UnifiedArrayManager_DataAfterDeviceTouch_DeviceConst)
-    ->Arg(0)
-    ->RangeMultiplier(8)
-    ->Range(1, 1 << 20);
+  BENCHMARK(UnifiedArrayManager_DataAfterDeviceTouch_HostUnsynchronized)
+    ->Unit(benchmark::kNanosecond);
 
   static void UnifiedArrayManager_DataAfterDeviceTouch_Device(benchmark::State& state)
   {
-    UnifiedArrayManager_DataAfterTouch(state,
-                                       /*initial_context=*/Context::DEVICE,
-                                       /*initial_touch=*/true,
-                                       /*call_context=*/Context::DEVICE,
-                                       /*call_touch=*/true);
+    UnifiedArrayManager_Data(state,
+                             /*initialize_state=*/true,
+                             /*initial_context=*/Context::DEVICE,
+                             /*initial_touch=*/true,
+                             /*call_context=*/Context::DEVICE,
+                             /*call_touch=*/true,
+                             /*device_synchronized_before_call=*/true);
   }
 
   BENCHMARK(UnifiedArrayManager_DataAfterDeviceTouch_Device)
-    ->Arg(0)
-    ->RangeMultiplier(8)
-    ->Range(1, 1 << 20);
+    ->Unit(benchmark::kNanosecond);
 }  // namespace
 
 BENCHMARK_MAIN();
