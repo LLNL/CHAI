@@ -295,7 +295,7 @@ byte-wise copies between them, it is intended for trivially copyable element
 types.
 
 This manager is useful when an application wants explicit mirrored allocations
-in host and device memory rather than Umpire unified memory.
+in host and device memory rather than unified memory.
 
 .. code-block:: cpp
 
