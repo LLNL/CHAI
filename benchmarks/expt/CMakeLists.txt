@@ -23,6 +23,15 @@ endif ()
 
 if (CHAI_ENABLE_CUDA OR CHAI_ENABLE_HIP)
   blt_add_executable(
+    NAME DualArrayManagerBenchmarks
+    SOURCES DualArrayManagerBenchmarks.cpp
+    DEPENDS_ON ${chai_expt_benchmark_depends})
+
+  blt_add_benchmark(
+    NAME DualArrayManagerBenchmarks
+    COMMAND DualArrayManagerBenchmarks)
+
+  blt_add_executable(
     NAME UnifiedArrayManagerBenchmarks
     SOURCES UnifiedArrayManagerBenchmarks.cpp
     DEPENDS_ON ${chai_expt_benchmark_depends})
