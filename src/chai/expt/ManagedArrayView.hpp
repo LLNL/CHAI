@@ -178,7 +178,7 @@ namespace chai::expt
        */
       ManagerType* m_manager{nullptr};
 
-      /// Needed for the converviting constructor
+      /// Needed for the converting constructor
       template <typename OtherElementType, typename OtherManagerType>
       friend class ManagedArrayView;
   };  // class ManagedArrayView
