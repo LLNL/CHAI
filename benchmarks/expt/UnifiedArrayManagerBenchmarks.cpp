@@ -24,7 +24,7 @@ namespace {
                                                Context call_context,
                                                bool call_touch)
   {
-    constexpr std::size_t size = 1;
+    const auto size = static_cast<std::size_t>(state.range(0));
 
     for (auto _ : state)
     {
@@ -50,6 +50,7 @@ namespace {
     }
 
     state.SetItemsProcessed(state.iterations());
+    state.SetBytesProcessed(state.iterations() * size * sizeof(int));
   }
 
   static void UnifiedArrayManager_DefaultConstruct(benchmark::State& state)
@@ -91,6 +92,9 @@ namespace {
   }
 
   BENCHMARK(UnifiedArrayManager_AfterHostRead_DataHostRead)
+    ->Arg(0)
+    ->RangeMultiplier(8)
+    ->Range(1, 1 << 20)
     ->Unit(benchmark::kNanosecond);
 
   static void UnifiedArrayManager_AfterHostWrite_DataHostRead(benchmark::State& state)
@@ -103,6 +107,9 @@ namespace {
   }
 
   BENCHMARK(UnifiedArrayManager_AfterHostWrite_DataHostRead)
+    ->Arg(0)
+    ->RangeMultiplier(8)
+    ->Range(1, 1 << 20)
     ->Unit(benchmark::kNanosecond);
 
   static void UnifiedArrayManager_AfterHostRead_DataDeviceRead(benchmark::State& state)
@@ -115,6 +122,9 @@ namespace {
   }
 
   BENCHMARK(UnifiedArrayManager_AfterHostRead_DataDeviceRead)
+    ->Arg(0)
+    ->RangeMultiplier(8)
+    ->Range(1, 1 << 20)
     ->Unit(benchmark::kNanosecond);
 
   static void UnifiedArrayManager_AfterHostWrite_DataDeviceRead(benchmark::State& state)
@@ -127,6 +137,9 @@ namespace {
   }
 
   BENCHMARK(UnifiedArrayManager_AfterHostWrite_DataDeviceRead)
+    ->Arg(0)
+    ->RangeMultiplier(8)
+    ->Range(1, 1 << 20)
     ->Unit(benchmark::kNanosecond);
 
   static void UnifiedArrayManager_AfterDeviceRead_DataHostRead(benchmark::State& state)
@@ -139,6 +152,9 @@ namespace {
   }
 
   BENCHMARK(UnifiedArrayManager_AfterDeviceRead_DataHostRead)
+    ->Arg(0)
+    ->RangeMultiplier(8)
+    ->Range(1, 1 << 20)
     ->Unit(benchmark::kNanosecond);
 
   static void UnifiedArrayManager_AfterDeviceWrite_DataHostRead(benchmark::State& state)
@@ -151,6 +167,9 @@ namespace {
   }
 
   BENCHMARK(UnifiedArrayManager_AfterDeviceWrite_DataHostRead)
+    ->Arg(0)
+    ->RangeMultiplier(8)
+    ->Range(1, 1 << 20)
     ->Unit(benchmark::kNanosecond);
 
   static void UnifiedArrayManager_AfterDeviceRead_DataDeviceRead(benchmark::State& state)
@@ -163,6 +182,9 @@ namespace {
   }
 
   BENCHMARK(UnifiedArrayManager_AfterDeviceRead_DataDeviceRead)
+    ->Arg(0)
+    ->RangeMultiplier(8)
+    ->Range(1, 1 << 20)
     ->Unit(benchmark::kNanosecond);
 
   static void UnifiedArrayManager_AfterDeviceWrite_DataDeviceRead(benchmark::State& state)
@@ -175,6 +197,9 @@ namespace {
   }
 
   BENCHMARK(UnifiedArrayManager_AfterDeviceWrite_DataDeviceRead)
+    ->Arg(0)
+    ->RangeMultiplier(8)
+    ->Range(1, 1 << 20)
     ->Unit(benchmark::kNanosecond);
 }  // namespace
 
