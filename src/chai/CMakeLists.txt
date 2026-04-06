@@ -42,6 +42,7 @@ if(CHAI_ENABLE_EXPERIMENTAL)
     expt/HostSharedPointer.hpp
     expt/ManagedArrayPointer.hpp
     expt/ManagedArraySharedPointer.hpp
+    expt/ManagedArrayView.hpp
     expt/UnifiedArrayManager.hpp
     ManagedSharedPtr.hpp
     SharedPtrCounter.hpp

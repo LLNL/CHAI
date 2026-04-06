@@ -178,6 +178,50 @@ counted since clean up cannot be triggered from the device.
   });
 
 ----------------
+ManagedArrayView
+----------------
+
+This class provides a uniform interface for viewing different types of memory
+across multiple backends. It has shallow-copy semantics, which allows it to be
+passed by value to a CUDA or HIP kernel. When copy constructed, it queries the
+array manager to update the cached size and pointer from the array manager.
+Unlike ``ManagedArrayPointer``, this class is non-owning: it cannot allocate,
+resize, or free the underlying data, and the referenced manager must outlive
+the view.
+
+.. code-block:: cpp
+
+  #include "chai/expt/ContextRAJAPlugin.hpp"
+  #include "chai/expt/ManagedArrayView.hpp"
+  #include "chai/expt/UnifiedArrayManager.hpp"
+  #include "RAJA/RAJA.hpp"
+
+  static ::RAJA::util::PluginRegistry::add<chai::expt::ContextRAJAPlugin> P(
+    "CHAIContextPlugin",
+    "Plugin that integrates CHAI context management with RAJA.");
+
+  // It's recommended to use an alias so that it is easy to swap out the array manager.
+  template <typename T>
+  using UnifiedArrayManager = ::chai::expt::UnifiedArrayManager<T>;
+
+  template <typename T>
+  using ManagedArrayView = ::chai::expt::ManagedArrayView<T, UnifiedArrayManager<T>>;
+
+  const std::size_t N = 1000000;
+  UnifiedArrayManager<int> manager{N};
+  ManagedArrayView<int> a{manager};
+
+  ::RAJA::forall<::RAJA::seq_exec>(::RAJA::TypedRangeSegment<int>(0, N), [=] (int i) {
+    a[i] = i;  // Use CHAI data structures in the HOST context...
+  });
+
+  constexpr int BLOCK_SIZE = 256;
+
+  ::RAJA::forall<::RAJA::cuda_exec_async<BLOCK_SIZE>>(::RAJA::TypedRangeSegment<int>(0, N), [=] __device__ (int i) {
+    a[i] -= 1;  // Use CHAI data structures in the DEVICE context...
+  });
+
+----------------
 HostArrayManager
 ----------------
 
@@ -268,4 +312,3 @@ of each element on the host (numeric types are initialized to zero).
     const int* p = a.data(false);
     // Read through p...
   }
-
