@@ -1,6 +1,6 @@
 ##############################################################################
-# Copyright (c) 2016-26, Lawrence Livermore National Security, LLC and CHAI
-# project contributors. See the CHAI LICENSE file for details.
+# Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
+# contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
@@ -57,4 +57,50 @@ if(CHAI_ENABLE_EXPERIMENTAL_RAJA_PLUGIN)
   blt_add_test(
     NAME ContextRAJAPluginTests
     COMMAND ContextRAJAPluginTests)
+endif()
+
+blt_add_executable(
+  NAME ManagedArrayPointerTests
+  SOURCES ManagedArrayPointerTests.cpp
+  HEADERS ${chai_expt_test_headers}
+  INCLUDES ${PROJECT_BINARY_DIR}/include
+  DEPENDS_ON ${chai_expt_test_depends})
+
+blt_add_test(
+  NAME ManagedArrayPointerTests
+  COMMAND ManagedArrayPointerTests)
+
+blt_add_executable(
+  NAME HostArrayPointerTests
+  SOURCES HostArrayPointerTests.cpp
+  HEADERS ${chai_expt_test_headers}
+  INCLUDES ${PROJECT_BINARY_DIR}/include
+  DEPENDS_ON ${chai_expt_test_depends})
+
+blt_add_test(
+  NAME HostArrayPointerTests
+  COMMAND HostArrayPointerTests)
+
+blt_add_executable(
+  NAME HostArraySharedPointerTests
+  SOURCES HostArraySharedPointerTests.cpp
+  HEADERS ${chai_expt_test_headers}
+  INCLUDES ${PROJECT_BINARY_DIR}/include
+  DEPENDS_ON ${chai_expt_test_depends})
+
+blt_add_test(
+  NAME HostArraySharedPointerTests
+  COMMAND HostArraySharedPointerTests)
+
+if(ENABLE_CUDA OR ENABLE_HIP)
+  blt_add_executable(
+    NAME UnifiedArrayManagerTests
+    SOURCES UnifiedArrayManagerTests.cpp
+    HEADERS ${chai_expt_test_headers}
+    INCLUDES ${PROJECT_BINARY_DIR}/include
+    DEPENDS_ON ${chai_expt_test_depends})
+
+  blt_add_test(
+    NAME UnifiedArrayManagerTests
+    COMMAND UnifiedArrayManagerTests)
 endif()

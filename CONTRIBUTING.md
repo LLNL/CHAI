@@ -1,3 +1,10 @@
+[comment]: # (#################################################################)
+[comment]: # (Copyright Lawrence Livermore National Security, LLC and other CHAI)
+[comment]: # (contributors. See the CHAI LICENSE and COPYRIGHT files for details.)
+[comment]: # 
+[comment]: # (# SPDX-License-Identifier: BSD-3-Clause)
+[comment]: # (#################################################################)
+
 # Contributing to CHAI
 
 This document is intented for developers who want to add new features or

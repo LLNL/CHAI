@@ -1,6 +1,6 @@
 ##############################################################################
-# Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
-# project contributors. See the CHAI LICENSE file for details.
+# Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
+# contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
@@ -53,7 +53,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'CHAI'
-copyright = u'2016-2018, Lawrence Livermore National Security, LLC.'
+copyright = u'Copyright (c) 2016-26, Lawrence Livermore National Security, LLC and other CHAI contributors.'
 author = u''
 
 # The version info for the project you're documenting, acts as replacement for
