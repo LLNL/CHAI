@@ -1,6 +1,6 @@
 ##############################################################################
-# Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
-# project contributors. See the CHAI LICENSE file for details.
+# Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
+# contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
@@ -47,4 +47,8 @@ if (CHAI_ENABLE_MANAGED_PTR)
   blt_add_benchmark(
     NAME managed_ptr_benchmarks
     COMMAND managed_ptr_benchmarks)
+endif ()
+
+if (CHAI_ENABLE_EXPERIMENTAL)
+  add_subdirectory(expt)
 endif ()
