@@ -91,3 +91,16 @@ blt_add_executable(
 blt_add_test(
   NAME HostArraySharedPointerTests
   COMMAND HostArraySharedPointerTests)
+
+if(ENABLE_CUDA OR ENABLE_HIP)
+  blt_add_executable(
+    NAME UnifiedArrayManagerTests
+    SOURCES UnifiedArrayManagerTests.cpp
+    HEADERS ${chai_expt_test_headers}
+    INCLUDES ${PROJECT_BINARY_DIR}/include
+    DEPENDS_ON ${chai_expt_test_depends})
+
+  blt_add_test(
+    NAME UnifiedArrayManagerTests
+    COMMAND UnifiedArrayManagerTests)
+endif()
