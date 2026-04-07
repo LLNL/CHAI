@@ -71,6 +71,17 @@ blt_add_test(
   COMMAND ManagedArrayPointerTests)
 
 blt_add_executable(
+  NAME ManagedArrayViewTests
+  SOURCES ManagedArrayViewTests.cpp
+  HEADERS ${chai_expt_test_headers}
+  INCLUDES ${PROJECT_BINARY_DIR}/include
+  DEPENDS_ON ${chai_expt_test_depends})
+
+blt_add_test(
+  NAME ManagedArrayViewTests
+  COMMAND ManagedArrayViewTests)
+
+blt_add_executable(
   NAME HostArrayPointerTests
   SOURCES HostArrayPointerTests.cpp
   HEADERS ${chai_expt_test_headers}
@@ -80,6 +91,17 @@ blt_add_executable(
 blt_add_test(
   NAME HostArrayPointerTests
   COMMAND HostArrayPointerTests)
+
+blt_add_executable(
+  NAME HostArrayViewTests
+  SOURCES HostArrayViewTests.cpp
+  HEADERS ${chai_expt_test_headers}
+  INCLUDES ${PROJECT_BINARY_DIR}/include
+  DEPENDS_ON ${chai_expt_test_depends})
+
+blt_add_test(
+  NAME HostArrayViewTests
+  COMMAND HostArrayViewTests)
 
 blt_add_executable(
   NAME HostArraySharedPointerTests
