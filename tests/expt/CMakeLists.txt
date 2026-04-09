@@ -116,6 +116,17 @@ blt_add_test(
 
 if(ENABLE_CUDA OR ENABLE_HIP)
   blt_add_executable(
+    NAME DualArrayManagerTests
+    SOURCES DualArrayManagerTests.cpp
+    HEADERS ${chai_expt_test_headers}
+    INCLUDES ${PROJECT_BINARY_DIR}/include
+    DEPENDS_ON ${chai_expt_test_depends})
+
+  blt_add_test(
+    NAME DualArrayManagerTests
+    COMMAND DualArrayManagerTests)
+
+  blt_add_executable(
     NAME UnifiedArrayManagerTests
     SOURCES UnifiedArrayManagerTests.cpp
     HEADERS ${chai_expt_test_headers}

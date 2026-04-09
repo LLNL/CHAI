@@ -312,3 +312,62 @@ of each element on the host (numeric types are initialized to zero).
     const int* p = a.data(false);
     // Read through p...
   }
+
+----------------
+DualArrayManager
+----------------
+
+``DualArrayManager`` manages separate host and device allocations and keeps them
+coherent explicitly. Unlike ``UnifiedArrayManager``, it does not rely on a
+single unified-memory pointer that is valid in both contexts. Instead, it
+allocates storage lazily in the requested context and copies data between the
+two allocations when the authoritative copy lives in the other context.
+
+``DualArrayManager`` relies on :ref:`ContextManager <experimental_design>` in
+the same way as ``UnifiedArrayManager``:
+
+- ``data(touch=false)`` returns a pointer suitable for read access in the
+  current context and synchronizes with the most recent modifying context when
+  needed.
+- ``data(touch=true)`` indicates the caller will modify the array in the current
+  context; it performs any required synchronization first, then records the
+  current context as authoritative.
+
+``DualArrayManager`` also performs value initialization of each element when a
+new allocation is created. Since it uses raw host/device allocations and
+byte-wise copies between them, it is intended for trivially copyable element
+types.
+
+This manager is useful when an application wants explicit mirrored allocations
+in host and device memory rather than unified memory.
+
+.. code-block:: cpp
+
+  #include "chai/expt/Context.hpp"
+  #include "chai/expt/ContextGuard.hpp"
+  #include "chai/expt/DualArrayManager.hpp"
+
+  const std::size_t N = 1000000;
+  ::chai::expt::DualArrayManager<int> a{N};
+
+  {
+    ::chai::expt::ContextGuard guard{::chai::expt::Context::HOST};
+    int* p = a.data(true);
+    for (std::size_t i = 0; i < N; ++i) {
+      p[i] = static_cast<int>(i);
+    }
+  }
+
+  {
+    ::chai::expt::ContextGuard guard{::chai::expt::Context::DEVICE};
+    int* p = a.data(true);
+    // If the most recent modification was on HOST, this call copies to DEVICE first.
+    // Launch a CUDA/HIP kernel that writes through p...
+  }
+
+  {
+    ::chai::expt::ContextGuard guard{::chai::expt::Context::HOST};
+    // If the most recent modification was on DEVICE, this call synchronizes and copies first.
+    const int* p = a.data(false);
+    // Read through p...
+  }
