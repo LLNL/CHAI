@@ -6,6 +6,8 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "gtest/gtest.h"
 
+#define CHAI_USE_VAR(x) static_cast<void>(x)
+
 #define GPU_TEST(X, Y)              \
   static void gpu_test_##X##Y();    \
   TEST(X, Y) { gpu_test_##X##Y(); } \
@@ -872,6 +874,8 @@ public:
    // Virtual function to manipulate an array of objects
    CHAI_HOST_DEVICE virtual void setArrayValues(int size, int value) {
       // Base implementation does nothing
+      CHAI_USE_VAR(size);
+      CHAI_USE_VAR(value);
    }
    
    CHAI_HOST_DEVICE virtual int getTypeID() const { return 0; }
@@ -919,6 +923,7 @@ TEST(managed_ptr, polymorphic_with_ManagedArray_unpacker)
    // Use virtual function to modify array through the member pointer
    const int base_value = 10;
    forall( sequential(), 0, 1,[=](int i ) {
+      CHAI_USE_VAR(i);
       poly_ptr->setArrayValues(size, base_value);
    });
 
