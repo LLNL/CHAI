@@ -39,4 +39,13 @@ if (CHAI_ENABLE_CUDA OR CHAI_ENABLE_HIP)
   blt_add_benchmark(
     NAME UnifiedArrayManagerBenchmarks
     COMMAND UnifiedArrayManagerBenchmarks)
+
+  blt_add_executable(
+    NAME SyncOverheadBenchmarks
+    SOURCES SyncOverheadBenchmarks.cpp
+    DEPENDS_ON ${chai_expt_benchmark_depends})
+
+  blt_add_benchmark(
+    NAME SyncOverheadBenchmarks
+    COMMAND SyncOverheadBenchmarks)
 endif ()

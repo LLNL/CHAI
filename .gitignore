@@ -16,4 +16,5 @@ Win32/x64/
 *.aps
 *.orig
 *.code-workspace
+.codex
 slirp.out
