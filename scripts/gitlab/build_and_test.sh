@@ -116,12 +116,12 @@ then
     if [[ -n ${raja_version} ]]
     then
         extra_variants="${extra_variants} +raja"
-        extra_deps="${extra_deps} ^raja@${raja_version}"
+        extra_deps="${extra_deps} ^raja@git.${raja_version}=develop"
     fi
 
     if [[ -n ${umpire_version} ]]
     then
-        extra_deps="${extra_deps} ^umpire@${umpire_version}"
+        extra_deps="${extra_deps} ^umpire@git.${umpire_version}=develop"
     fi
 
     [[ -n ${extra_variants} ]] && spec="${spec} ${extra_variants}"
