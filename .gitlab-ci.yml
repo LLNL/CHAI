@@ -237,4 +237,4 @@ trigger-care:
     UPDATE_CHAI: ${CI_COMMIT_SHA}
   trigger:
     project: radiuss/multi-project/care-trigger
-    branch: woptim/multi-project-ci
+    branch: develop
