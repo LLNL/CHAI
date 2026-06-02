@@ -24,7 +24,7 @@ variables:
   # Project specific variants for dane
   PROJECT_DANE_VARIANTS: "~shared +raja tests=basic "
   # Project specific deps for dane
-  PROJECT_DANE_DEPS: "^raja~examples~exercises cxxstd=20 ^fmt@11.1.0"
+  PROJECT_DANE_DEPS: "^raja~examples~exercises cxxstd=20 ^fmt@12.1.0"
 
   # Matrix (SLURM) allocation settings
   MATRIX_SHARED_ALLOC: "--exclusive --partition=pci --time=7 --nodes=1"
@@ -49,7 +49,7 @@ variables:
   # Project specific variants for tioga
   PROJECT_TIOGA_VARIANTS: "~shared +raja tests=basic "
   # Project specific deps for tioga
-  PROJECT_TIOGA_DEPS: "^raja~examples~exercises ^fmt@11.2.0"
+  PROJECT_TIOGA_DEPS: "^raja~examples~exercises ^fmt@12.1.0"
 
   # Tuolumne (flux) allocation settings
   TUOLUMNE_SHARED_ALLOC: "--queue=pci --exclusive --time-limit=16m --nodes=1"
@@ -57,4 +57,4 @@ variables:
   # Project specific variants for tuolumne
   PROJECT_TUOLUMNE_VARIANTS: "~shared +raja tests=basic "
   # Project specific deps for tuolumne
-  PROJECT_TUOLUMNE_DEPS: "^raja~examples~exercises ^fmt@12.0.0"
+  PROJECT_TUOLUMNE_DEPS: "^raja~examples~exercises ^fmt@12.1.0"
