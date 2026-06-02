@@ -24,7 +24,7 @@ variables:
   # Project specific variants for dane
   PROJECT_DANE_VARIANTS: "~shared +raja tests=basic "
   # Project specific deps for dane
-  PROJECT_DANE_DEPS: "^raja~examples~exercises "
+  PROJECT_DANE_DEPS: "^raja~examples~exercises ^fmt@11.2.0:"
 
   # Matrix (SLURM) allocation settings
   MATRIX_SHARED_ALLOC: "--exclusive --partition=pci --time=7 --nodes=1"
