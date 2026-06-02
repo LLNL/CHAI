@@ -12,7 +12,12 @@ in this file.
 
 The format of this file is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Version 2025.12.0] = Release date 2025-12-22
+## [Unreleased] - Release date yyyy-mm-dd
+
+### Changed
+- Made a ManagedArray constructor explicit to prevent unwanted implicit conversions. 
+
+## [Version 2025.12.0] - Release date 2025-12-22
 
 ### Fixed
 - Fixed compiler error related to using a lambda as a default function argument.
