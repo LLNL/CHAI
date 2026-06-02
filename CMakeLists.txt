@@ -33,8 +33,9 @@ set(BLT_CXX_STD c++20 CACHE STRING "")
 
 if(("${BLT_CXX_STD}" STREQUAL "c++98") OR
    ("${BLT_CXX_STD}" STREQUAL "c++11") OR
-   ("${BLT_CXX_STD}" STREQUAL "c++14"))
-   message(FATAL_ERROR "CHAI requires a minimum C++ standard of c++17. Please set BLT_CXX_STD appropriately.")
+   ("${BLT_CXX_STD}" STREQUAL "c++14") OR
+   ("${BLT_CXX_STD}" STREQUAL "c++17"))
+   message(FATAL_ERROR "CHAI requires a minimum C++ standard of c++20. Please set BLT_CXX_STD appropriately.")
 endif()
 
 if (NOT BLT_LOADED)
