@@ -29,7 +29,7 @@ message(STATUS "Using CMake version ${CMAKE_VERSION}")
 ################################
 # BLT
 ################################
-set(BLT_CXX_STD c++17 CACHE STRING "")
+set(BLT_CXX_STD c++20 CACHE STRING "")
 
 if(("${BLT_CXX_STD}" STREQUAL "c++98") OR
    ("${BLT_CXX_STD}" STREQUAL "c++11") OR
