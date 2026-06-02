@@ -12,7 +12,7 @@ Repo:
   # Set to [pipeline] for overall pipeline status only
   # Set to [jobs] for individual job statuses only
   # Set to [pipeline, jobs] to report both
-  check_types: [pipeline, jobs]
+  check_types: [pipeline]
 
   # Delete branches from destination when source PR is closed
   delete_closed: true
@@ -23,6 +23,5 @@ Repo:
   # Post message when draft sync is disabled
   sync_drafts_msg: true
 
-  # Optional: create GitLab MRs from GitHub PRs
-  # allows developers to create synthetic merge commits using GitLab's merged results pipelines feature
+  # Disable creation of GitLab MRs from GitHub PRs
   create_mr: false
