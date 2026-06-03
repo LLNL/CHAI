@@ -12,13 +12,14 @@ in this file.
 
 The format of this file is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased] = Release date yyyy-mm-dd
+## [Unreleased] - Release date yyyy-mm-dd
 
 ### Changed
 - CHAI now requires C++20 as the minimum C++ standard.
 - CHAI now requires CUDA 12 as the minimum CUDA version when CUDA is enabled.
+- Made a ManagedArray constructor explicit to prevent unwanted implicit conversions.
 
-## [Version 2025.12.0] = Release date 2025-12-22
+## [Version 2025.12.0] - Release date 2025-12-22
 
 ### Fixed
 - Fixed compiler error related to using a lambda as a default function argument.
