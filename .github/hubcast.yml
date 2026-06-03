@@ -12,7 +12,7 @@ Repo:
   # Set to [pipeline] for overall pipeline status only
   # Set to [jobs] for individual job statuses only
   # Set to [pipeline, jobs] to report both
-  check_types: [pipeline]
+  check_types: [jobs]
 
   # Delete branches from destination when source PR is closed
   delete_closed: true
