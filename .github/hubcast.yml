@@ -1,0 +1,27 @@
+Repo:
+  # Destination organization
+  dest_org: RADIUSS
+
+  # Destination repository
+  dest_name: CHAI
+
+  # Name of the CI check as reported back to GitHub
+  check_name: gitlab-ci
+
+  # Optional: granularity of CI statuses reported to GitHub (default: [pipeline])
+  # Set to [pipeline] for overall pipeline status only
+  # Set to [jobs] for individual job statuses only
+  # Set to [pipeline, jobs] to report both
+  check_types: [pipeline]
+
+  # Delete branches from destination when source PR is closed
+  delete_closed: true
+
+  # Sync draft PRs/MRs
+  sync_drafts: false
+
+  # Post message when draft sync is disabled
+  sync_drafts_msg: true
+
+  # Disable creation of GitLab MRs from GitHub PRs
+  create_mr: false
