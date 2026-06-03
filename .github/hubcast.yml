@@ -18,7 +18,7 @@ Repo:
   delete_closed: true
 
   # Sync draft PRs/MRs
-  sync_drafts: true
+  sync_drafts: false
 
   # Post message when draft sync is disabled
   sync_drafts_msg: true
