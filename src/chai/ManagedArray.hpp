@@ -98,7 +98,9 @@ public:
    * \param elems Number of elements in the array.
    * \param space Execution space in which to allocate the array.
    */
-  CHAI_HOST_DEVICE ManagedArray(size_t elems, ExecutionSpace space = get_default_space());
+  CHAI_HOST_DEVICE explicit ManagedArray(
+      size_t elems,
+      ExecutionSpace space = get_default_space());
 
   ManagedArray(
       size_t elems,
