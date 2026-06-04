@@ -1,12 +1,11 @@
 [comment]: # (#################################################################)
-[comment]: # (Copyright 2016-24, Lawrence Livermore National Security, LLC)
-[comment]: # (and CHAI project contributors. See the CHAI LICENSE file for)
-[comment]: # (details.)
+[comment]: # (Copyright Lawrence Livermore National Security, LLC and other CHAI)
+[comment]: # (contributors. See the CHAI LICENSE and COPYRIGHT files for details.)
 [comment]: # 
 [comment]: # (# SPDX-License-Identifier: BSD-3-Clause)
 [comment]: # (#################################################################)
 
-# CHAI v2023.06.0
+# CHAI
 
 [![Azure Build Status](https://dev.azure.com/davidbeckingsale/CHAI/_apis/build/status/LLNL.CHAI?branchName=develop)](https://dev.azure.com/davidbeckingsale/CHAI/_build/latest?definitionId=2&branchName=develop)
 [![Build Status](https://travis-ci.org/LLNL/CHAI.svg?branch=develop)](https://travis-ci.org/LLNL/CHAI)
@@ -50,15 +49,17 @@ Contributors include:
 
 ## Release
 
-Copyright (c) 2016, Lawrence Livermore National Security, LLC.
-Produced at the Lawrence Livermore National Laboratory
+Copyright (c) 2016-26, Lawrence Livermore National Security, LLC.
+Produced at the Lawrence Livermore National Laboratory.
 
 All rights reserved.
 
 Unlimited Open Source - BSD Distribution
+`LLNL-CODE-705877`
+`OCEC-16-189`
 
-For release details and restrictions, please read the LICENSE file.
-It is also linked here: [LICENSE](./LICENSE)
+For release details and restrictions, please read the following:
+- [LICENSE](./LICENSE)
+- [COPYRIGHT](./COPYRIGHT)
+- [NOTICE](./NOTICE)
 
-- `LLNL-CODE-705877`
-- `OCEC-16-189`

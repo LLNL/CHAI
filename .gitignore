@@ -1,3 +1,10 @@
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
+# contributors. See the CHAI LICENSE and COPYRIGHT files for details.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+##############################################################################
+
 build*/
 install*/
 .vscode/
@@ -8,3 +15,6 @@ Win32/.vs/
 Win32/x64/
 *.aps
 *.orig
+*.code-workspace
+slirp.out
+.codex

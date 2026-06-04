@@ -1,6 +1,6 @@
 ##############################################################################
-# Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
-# project contributors. See the CHAI LICENSE file for details.
+# Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
+# contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
@@ -15,6 +15,7 @@ set (chai_headers
   ArrayManager.hpp
   ArrayManager.inl
   ChaiMacros.hpp
+  DeviceHelpers.hpp
   ExecutionSpaces.hpp
   ManagedArray.hpp
   ManagedArray.inl
@@ -22,14 +23,38 @@ set (chai_headers
   PointerRecord.hpp
   Types.hpp)
 
-if (NOT CHAI_ENABLE_MANAGER)
+set (chai_sources
+  ArrayManager.cpp)
+
+if(NOT CHAI_ENABLE_MANAGER)
   set(chai_headers
     ${chai_headers}
     ManagedArray_thin.inl)
 endif ()
 
-set (chai_sources
-  ArrayManager.cpp)
+if(CHAI_ENABLE_EXPERIMENTAL)
+  set(chai_headers
+    ${chai_headers}
+    expt/Context.hpp
+    expt/ContextGuard.hpp
+    expt/ContextManager.hpp
+    expt/DualArrayManager.hpp
+    expt/HostArrayManager.hpp
+    expt/HostSharedPointer.hpp
+    expt/ManagedArrayPointer.hpp
+    expt/ManagedArraySharedPointer.hpp
+    expt/ManagedArrayView.hpp
+    expt/UnifiedArrayManager.hpp
+    ManagedSharedPtr.hpp
+    SharedPtrCounter.hpp
+    SharedPtrManager.hpp
+    SharedPtrManager.inl
+    SharedPointerRecord.hpp)
+
+  set (chai_sources
+    ${chai_sources}
+    SharedPtrManager.cpp)
+endif()
 
 set (chai_depends
   umpire)
@@ -66,6 +91,16 @@ if (CHAI_ENABLE_RAJA_PLUGIN)
       cuda)
   endif ()
 endif ()
+
+if (CHAI_ENABLE_EXPERIMENTAL_RAJA_PLUGIN)
+  set (chai_headers
+    ${chai_headers}
+    expt/ContextRAJAPlugin.hpp)
+
+  set (chai_sources
+    ${chai_sources}
+    expt/ContextRAJAPlugin.cpp)
+endif()
 
 blt_add_library(
   NAME chai

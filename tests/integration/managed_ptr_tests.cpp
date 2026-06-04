@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
-// project contributors. See the CHAI LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
+// contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
@@ -327,19 +327,19 @@ TEST(managed_ptr, managed_array_of_managed_ptr)
   delete[] expectedValues;
 }
 
-#ifdef CHAI_GPUCC
+#if defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
 
 template <typename T>
-__global__ void deviceNew(T** arr) {
+CHAI_GLOBAL void deviceNew(T** arr) {
    *arr = new T[5];
 }
 
 template <typename T>
-__global__ void deviceDelete(T** arr) {
+CHAI_GLOBAL void deviceDelete(T** arr) {
    delete[] *arr;
 }
 
-__global__ void passObjectToKernel(chai::ManagedArray<int> arr) {
+CHAI_GLOBAL void passObjectToKernel(const chai::ManagedArray<int> arr) {
    arr[0] = -1;
 }
 
@@ -440,6 +440,8 @@ GPU_TEST(managed_ptr, pass_object_to_kernel)
   chai::ArrayManager* manager = chai::ArrayManager::getInstance();
   manager->setExecutionSpace(chai::GPU);
   passObjectToKernel<<<1, 1>>>(array);
+  manager->setExecutionSpace(chai::CPU);
+  manager->syncIfNeeded();
   array.move(chai::CPU);
   ASSERT_EQ(array[0], -1);
 
@@ -481,11 +483,7 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_array_and_callback)
      array[i] = expectedValue;
   });
 
-#if defined(CHAI_ENABLE_IMPLICIT_CONVERSIONS)
-  auto cpuPointer = new RawArrayClass(array);
-#else
   auto cpuPointer = new RawArrayClass(array.data());
-#endif
   auto gpuPointer = chai::make_on_device<RawArrayClass>(chai::unpack(array));
 
   auto callback = [=] (chai::Action action, chai::ExecutionSpace space, void*) mutable -> bool {
@@ -526,7 +524,7 @@ GPU_TEST(managed_ptr, gpu_class_with_managed_array)
 
   chai::ManagedArray<int> array(1, chai::CPU);
 
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
      array[0] = expectedValue;
   });
 
@@ -553,7 +551,7 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_ptr)
 
   chai::ManagedArray<int> array(1, chai::CPU);
 
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
      array[0] = expectedValue;
   });
 
@@ -646,7 +644,7 @@ GPU_TEST(managed_ptr, static_pointer_cast)
 
   chai::ManagedArray<int> array(1, chai::CPU);
 
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
      array[0] = expectedValue;
   });
 
@@ -679,7 +677,7 @@ GPU_TEST(managed_ptr, dynamic_pointer_cast)
 
   chai::ManagedArray<int> array(1, chai::CPU);
 
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
      array[0] = expectedValue;
   });
 
@@ -712,7 +710,7 @@ GPU_TEST(managed_ptr, const_pointer_cast)
 
   chai::ManagedArray<int> array(1, chai::CPU);
 
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
      array[0] = expectedValue;
   });
 
@@ -745,7 +743,7 @@ GPU_TEST(managed_ptr, reinterpret_pointer_cast)
 
   chai::ManagedArray<int> array(1, chai::CPU);
 
-  forall(sequential(), 0, 1, [=] (int i) {
+  forall(sequential(), 0, 1, [=] (int) {
      array[0] = expectedValue;
   });
 
@@ -774,6 +772,220 @@ GPU_TEST(managed_ptr, reinterpret_pointer_cast)
 
 #endif
 
+class TestArrayObject {
+public:
+   CHAI_HOST_DEVICE TestArrayObject() : m_value(-1) {}
+   CHAI_HOST_DEVICE TestArrayObject(int value) : m_value(value) {}
+   CHAI_HOST_DEVICE virtual ~TestArrayObject() {}
+   
+   CHAI_HOST_DEVICE int getValue() const { return m_value; }
+   CHAI_HOST_DEVICE void setValue(int value) { m_value = value; }
+
+private:
+   int m_value;
+};
+
+TEST(managed_ptr, ManagedArray_of_managed_ptr_unpacker)
+{
+  const int size = 5;
+  chai::ManagedArray<chai::managed_ptr<TestArrayObject>> array_of_ptrs(size);
+  
+  // Fill with some test values
+  forall(sequential(), 0, size, [=] (int i) {
+    array_of_ptrs[i] = chai::make_managed<TestArrayObject>(i * 10);
+  });
+  
+  // Test unpack operation
+  auto unpacker = chai::unpack(array_of_ptrs);
+  TestArrayObject** raw_ptrs = unpacker.data();
+  
+  // Verify values can be accessed through the raw pointers
+  forall(sequential(), 0, size, [=] (int i) {
+    EXPECT_EQ(raw_ptrs[i]->getValue(), i * 10);
+    
+    // Test modification through raw pointers
+    raw_ptrs[i]->setValue(i * 20);
+    EXPECT_EQ(array_of_ptrs[i]->getValue(), i * 20);
+  });
+  
+  // Clean up
+  forall(sequential(), 0, size, [=] (int i) {
+    array_of_ptrs[i].free();
+  });
+  array_of_ptrs.free();
+}
+
+#ifdef CHAI_GPUCC
+
+GPU_TEST(managed_ptr, gpu_ManagedArray_of_managed_ptr_unpacker)
+{
+  const int size = 5;
+  chai::ManagedArray<chai::managed_ptr<TestArrayObject>> array_of_ptrs(size);
+  
+  // Fill with some test values
+  forall(sequential(), 0, size, [=] (int i) {
+    array_of_ptrs[i] = chai::make_managed<TestArrayObject>(i * 10);
+  });
+  
+  // Create results array to verify GPU access
+  chai::ManagedArray<int> results(size, chai::GPU);
+  // Create results array to verify GPU access
+  chai::ManagedArray<int> results2(size, chai::GPU);
+  
+  // Test on GPU
+  auto unpacker = chai::unpack(array_of_ptrs);
+  
+  forall(gpu(), 0, size, [=] __device__ (int i) {
+    TestArrayObject** raw_ptrs = unpacker.data();
+    results[i] = raw_ptrs[i]->getValue();
+    
+    // Modify through raw pointers on device
+    raw_ptrs[i]->setValue(i * 20);
+    results2[i] = array_of_ptrs[i]->getValue();
+  });
+  
+  // Verify results
+  forall(sequential(), 0, size, [=] (int i) {
+    EXPECT_EQ(results[i], i * 10);
+    
+    // After GPU execution, check that values were modified
+    EXPECT_EQ(results2[i], i * 20);
+  });
+  
+  // Clean up
+  results.free();
+  results2.free();
+  forall(sequential(), 0, size, [=] (int i) {
+    array_of_ptrs[i].free();
+  });
+  array_of_ptrs.free();
+}
+
+#endif
+
+// Class hierarchy for testing polymorphic behavior
+class ABase {
+public:
+   CHAI_HOST_DEVICE ABase() {}
+   CHAI_HOST_DEVICE virtual ~ABase() {}
+   
+   // Virtual function to manipulate an array of objects
+   CHAI_HOST_DEVICE virtual void setArrayValues(int size, int value) {
+      // Base implementation does nothing
+   }
+   
+   CHAI_HOST_DEVICE virtual int getTypeID() const { return 0; }
+};
+
+class BDerived : public ABase {
+public:
+   // Constructor that takes a TestArrayObject**
+   CHAI_HOST_DEVICE BDerived(TestArrayObject** objects) : ABase(), m_objects(objects) {}
+   CHAI_HOST_DEVICE virtual ~BDerived() {}
+   
+   // Override to implement array manipulation on member array
+   CHAI_HOST_DEVICE virtual void setArrayValues(int size, int value) override {
+      for (int i = 0; i < size; i++) {
+         m_objects[i]->setValue(value * (i + 1));
+      }
+   }
+   
+   CHAI_HOST_DEVICE virtual int getTypeID() const override { return 1; }
+   
+private:
+   TestArrayObject** m_objects; // Member array of TestArrayObject pointers
+};
+
+TEST(managed_ptr, polymorphic_with_ManagedArray_unpacker)
+{
+   // Create array of managed pointers
+   const int size = 5;
+   chai::ManagedArray<chai::managed_ptr<TestArrayObject>> array_of_objects(size);
+   
+   // Initialize array
+   forall( sequential(), 0, size ,[=](int i ) {
+      array_of_objects[i] = chai::make_managed<TestArrayObject>(0);
+   });
+   
+   // Create unpacker and keep it alive for the duration of the test
+   auto unpacker = chai::unpack(array_of_objects);
+   
+   // Create derived object with the unpacker
+   chai::managed_ptr<ABase> poly_ptr = chai::make_managed<BDerived>(unpacker.data());
+   
+   // Verify correct polymorphic behavior
+   EXPECT_EQ(poly_ptr->getTypeID(), 1);
+   
+   // Use virtual function to modify array through the member pointer
+   const int base_value = 10;
+   forall( sequential(), 0, 1,[=](int i ) {
+      poly_ptr->setArrayValues(size, base_value);
+   });
+
+   // Verify values set by polymorphic method
+   forall( sequential(), 0, size ,[=](int i ) {
+      EXPECT_EQ(array_of_objects[i]->getValue(), base_value * (i + 1));
+   });
+   
+   // Cleanup
+   forall( sequential(), 0, size ,[=](int i ) {
+      array_of_objects[i].free();
+   });
+   array_of_objects.free();
+   poly_ptr.free();
+}
+
+#ifdef CHAI_GPUCC
+
+GPU_TEST(managed_ptr, gpu_polymorphic_with_ManagedArray_unpacker)
+{
+   // Create array of managed pointers
+   const int size = 5;
+   chai::ManagedArray<chai::managed_ptr<TestArrayObject>> array_of_objects(size);
+   
+   // Initialize array
+   forall( sequential(), 0, size ,[=](int i ) {
+      array_of_objects[i] = chai::make_managed<TestArrayObject>(0);
+   });
+   
+   // Create unpacker and keep it alive for the duration of the test
+   auto unpacker = chai::unpack(array_of_objects);
+   
+   // Create derived object with the unpacker
+   chai::managed_ptr<ABase> poly_ptr = chai::make_managed<BDerived>(unpacker);
+   
+   // Use virtual function on device
+   const int base_value = 10;
+   
+   forall(gpu(), 0, 1, [=] __device__ (int) {
+      // Call polymorphic method on device to modify the array through member pointer
+      poly_ptr->setArrayValues(size, base_value);
+   });
+   
+   // Test results on device
+   auto results_unpacker = chai::unpack(array_of_objects);
+   chai::ManagedArray<int> results(size, chai::GPU);
+   
+   forall(gpu(), 0, size, [=] __device__ (int i) {
+      TestArrayObject** raw_ptrs = results_unpacker.data();
+      results[i] = raw_ptrs[i]->getValue();
+   });
+   
+   // Verify results
+   forall( sequential(), 0, size ,[=](int i ) {
+      EXPECT_EQ(results[i], base_value * (i + 1));
+   });
+   
+   // Cleanup
+   results.free();
+   forall( sequential(), 0, size ,[=](int i ) {
+      array_of_objects[i].free();
+   });
+   array_of_objects.free();
+   poly_ptr.free();
+}
+
+#endif
 #if 0 // TODO: Enable if/when ManagedArrays of managed_ptrs can be handled correctly.
 
 class RawArrayOfPointersClass {

@@ -1,15 +1,14 @@
 ##############################################################################
-# Copyright (c) 2022-24, Lawrence Livermore National Security, LLC and RADIUSS
-# project contributors. See the CHAI LICENSE file for details.
+# Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
+# contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 #
-# SPDX-License-Identifier: (MIT)
+# SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
 
 # Override reproducer section to define project specific variables.
-.corona_reproducer_vars: &corona_reproducer_vars
-    - |
-      echo -e "export MODULE_LIST=\"${MODULE_LIST}\""
-      echo -e "export SPEC=\"${SPEC//\"/\\\"}\""
+.corona_reproducer_vars:
+  script:
+    - !reference [.reproducer_vars, script]
 
 ########################
 # Overridden shared jobs

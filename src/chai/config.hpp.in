@@ -1,16 +1,14 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
-// project contributors. See the CHAI LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
+// contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
 #ifndef CHAI_config_HPP
 #define CHAI_config_HPP
 
-#cmakedefine CHAI_ENABLE_PICK
 #cmakedefine CHAI_ENABLE_CUDA 
 #cmakedefine CHAI_ENABLE_HIP 
-#cmakedefine CHAI_ENABLE_IMPLICIT_CONVERSIONS
 #cmakedefine CHAI_ENABLE_MANAGER
 #cmakedefine CHAI_THIN_GPU_ALLOCATE
 #cmakedefine CHAI_ENABLE_UM
@@ -21,5 +19,9 @@
 #cmakedefine CHAI_ENABLE_RAJA_PLUGIN
 #cmakedefine CHAI_ENABLE_GPU_SIMULATION_MODE
 #cmakedefine CHAI_ENABLE_PINNED
+
+#define CHAI_VERSION_MAJOR @Chai_VERSION_MAJOR@
+#define CHAI_VERSION_MINOR @Chai_VERSION_MINOR@
+#define CHAI_VERSION_PATCH @Chai_VERSION_PATCH@
 
 #endif // CHAI_config_HPP

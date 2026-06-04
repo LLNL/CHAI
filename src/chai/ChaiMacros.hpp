@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
-// project contributors. See the CHAI LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
+// contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
@@ -11,6 +11,10 @@
 
 #include "umpire/util/Macros.hpp"
 
+#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
+#define CHAI_ENABLE_DEVICE
+#endif
+
 #if defined(CHAI_ENABLE_CUDA)
 
 #include <cuda_runtime_api.h>
@@ -18,6 +22,7 @@
 #define CHAI_HOST __host__
 #define CHAI_DEVICE __device__
 #define CHAI_HOST_DEVICE __device__ __host__
+#define CHAI_GLOBAL __global__
 
 #define gpuMemcpyKind cudaMemcpyKind
 #define gpuMemcpyHostToHost cudaMemcpyHostToHost
@@ -25,6 +30,13 @@
 #define gpuMemcpyDeviceToHost cudaMemcpyDeviceToHost
 #define gpuMemcpyDeviceToDevice cudaMemcpyDeviceToDevice
 #define gpuMemcpyDefault cudaMemcpyDefault
+
+#define gpuSuccess cudaSuccess
+#define gpuError_t cudaError_t
+#define gpuGetErrorString cudaGetErrorString
+#define gpuPeekAtLastError cudaPeekAtLastError
+#define gpuDeviceSynchronize cudaDeviceSynchronize
+
 
 // NOTE: Cannot have if defined(__HIPCC__) in the condition below, since __HIPCC__ comes from the included header hip_runtime below.
 #elif defined(CHAI_ENABLE_HIP)
@@ -34,6 +46,7 @@
 #define CHAI_HOST __host__
 #define CHAI_DEVICE __device__
 #define CHAI_HOST_DEVICE __device__ __host__
+#define CHAI_GLOBAL __global__
 
 #define gpuMemcpyKind hipMemcpyKind
 #define gpuMemcpyHostToHost hipMemcpyHostToHost
@@ -42,11 +55,18 @@
 #define gpuMemcpyDeviceToDevice hipMemcpyDeviceToDevice
 #define gpuMemcpyDefault hipMemcpyDefault
 
+#define gpuSuccess hipSuccess
+#define gpuError_t hipError_t
+#define gpuGetErrorString hipGetErrorString
+#define gpuPeekAtLastError hipPeekAtLastError
+#define gpuDeviceSynchronize hipDeviceSynchronize
+
 #else
 
 #define CHAI_HOST
 #define CHAI_DEVICE
 #define CHAI_HOST_DEVICE
+#define CHAI_GLOBAL
 
 #define gpuMemcpyKind int
 #define gpuMemcpyHostToHost 0
@@ -88,5 +108,11 @@
 
 #endif
 #endif
+
+namespace chai
+{
+template <typename... T>
+CHAI_HOST_DEVICE CHAI_INLINE void CHAI_UNUSED_VAR(T &&...) noexcept {}
+} // namespace chai
 
 #endif  // CHAI_ChaiMacros_HPP

@@ -1,17 +1,17 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
-// project contributors. See the CHAI LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
+// contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
 #ifndef CHAI_ArrayManager_HPP
 #define CHAI_ArrayManager_HPP
 
-#include "chai/config.hpp"
 #include "chai/ChaiMacros.hpp"
 #include "chai/ExecutionSpaces.hpp"
-#include "chai/PointerRecord.hpp"
 #include "chai/Types.hpp"
+
+#include "chai/PointerRecord.hpp"
 
 #if defined(CHAI_ENABLE_RAJA_PLUGIN)
 #include "chai/pluginLinker.hpp"
@@ -22,99 +22,12 @@
 #include "umpire/Allocator.hpp"
 #include "umpire/util/MemoryMap.hpp"
 
-#if defined(CHAI_ENABLE_CUDA)
-#include <cuda_runtime_api.h>
-#endif
-#if defined(CHAI_ENABLE_HIP)
-#include "hip/hip_runtime_api.h"
-#endif
+
+#include "chai/DeviceHelpers.hpp"
+
 
 namespace chai
 {
-// CHAI_GPU_ERROR_CHECK macro
-#if defined(CHAI_ENABLE_CUDA) || defined(CHAI_ENABLE_HIP)
-
-#ifdef CHAI_ENABLE_GPU_ERROR_CHECKING
-
-#ifdef CHAI_ENABLE_CUDA
-inline void gpuErrorCheck(cudaError_t code, const char *file, int line, bool abort=true)
-{
-   if (code != cudaSuccess) {
-      fprintf(stderr, "[CHAI] GPU Error: %s %s %d\n", cudaGetErrorString(code), file, line);
-      if (abort) {
-         exit(code);
-      }
-   }
-}
-#elif defined(CHAI_ENABLE_HIP)
-inline void gpuErrorCheck(hipError_t code, const char *file, int line, bool abort=true)
-{
-   if (code != hipSuccess) {
-      fprintf(stderr, "[CHAI] GPU Error: %s %s %d\n", hipGetErrorString(code), file, line);
-      if (abort) {
-         exit(code);
-      }
-   }
-}
-#endif
-
-
-#define CHAI_GPU_ERROR_CHECK(code) { gpuErrorCheck((code), __FILE__, __LINE__); }
-#else // CHAI_ENABLE_GPU_ERROR_CHECKING
-#define CHAI_GPU_ERROR_CHECK(code) code
-#endif // CHAI_ENABLE_GPU_ERROR_CHECKING
-
-#endif
-
-// wrapper for hip/cuda synchronize
-inline void synchronize() {
-#if defined (CHAI_ENABLE_HIP) &&!defined(__HIP_DEVICE_COMPILE__)
-   CHAI_GPU_ERROR_CHECK(hipDeviceSynchronize());
-#elif defined (CHAI_ENABLE_CUDA) &&!defined(__CUDA_ARCH__)
-   CHAI_GPU_ERROR_CHECK(cudaDeviceSynchronize());
-#endif
-}
-
-#if defined(CHAI_GPUCC)
-
-// wrapper for hip/cuda free
-CHAI_HOST inline void gpuFree(void* buffer) {
-#if defined (CHAI_ENABLE_HIP)
-   CHAI_GPU_ERROR_CHECK(hipFree(buffer));
-#elif defined (CHAI_ENABLE_CUDA)
-   CHAI_GPU_ERROR_CHECK(cudaFree(buffer));
-#endif
-}
-
-// wrapper for hip/cuda malloc
-CHAI_HOST inline void gpuMalloc(void** devPtr, size_t size) {
-#if defined (CHAI_ENABLE_HIP)
-   CHAI_GPU_ERROR_CHECK(hipMalloc(devPtr, size));
-#elif defined (CHAI_ENABLE_CUDA)
-   CHAI_GPU_ERROR_CHECK(cudaMalloc(devPtr, size));
-#endif
-}
-
-// wrapper for hip/cuda managed malloc
-CHAI_HOST inline void gpuMallocManaged(void** devPtr, size_t size) {
-#if defined (CHAI_ENABLE_HIP)
-   CHAI_GPU_ERROR_CHECK(hipMallocManaged(devPtr, size));
-#elif defined (CHAI_ENABLE_CUDA)
-   CHAI_GPU_ERROR_CHECK(cudaMallocManaged(devPtr, size));
-#endif
-}
-
-// wrapper for hip/cuda mem copy
-CHAI_HOST inline void  gpuMemcpy(void* dst, const void* src, size_t count, gpuMemcpyKind kind) {
-#if defined (CHAI_ENABLE_HIP)
-   CHAI_GPU_ERROR_CHECK(hipMemcpy(dst, src, count, kind));
-#elif defined (CHAI_ENABLE_CUDA)
-   CHAI_GPU_ERROR_CHECK(cudaMemcpy(dst, src, count, kind));
-#endif
-}
-
-#endif //#if defined(CHAI_GPUCC)
-
 /*!
  * \brief Singleton that manages caching and movement of ManagedArray objects.
  *
@@ -245,13 +158,11 @@ public:
    */
   CHAISHAREDDLL_API void free(PointerRecord* pointer, ExecutionSpace space = NONE);
 
-#if defined(CHAI_ENABLE_PICK)
   template <typename T>
-   T_non_const<T> pick(T* src_ptr, size_t index);
+  T_non_const<T> pick(T* src_ptr, size_t index);
 
   template <typename T>
-   void set(T* dst_ptr, size_t index, const T& val);
-#endif
+  void set(T* dst_ptr, size_t index, const T& val);
 
   /*!
    * \brief Get the size of the given pointer.
@@ -385,6 +296,15 @@ public:
    * \return The allocator for the given space.
    */
   umpire::Allocator getAllocator(ExecutionSpace space);
+
+  /*!
+   * \brief Get the allocator for an allocator id
+   *
+   * \param allocator_id id for the allocator
+   *
+   * \return The allocator for the given allocator id.
+   */
+  umpire::Allocator getAllocator(int allocator_id);
   
  /*!
    * \brief Turn callbacks on.
@@ -432,6 +352,12 @@ protected:
    */
   ArrayManager();
 
+  /*!
+   * \brief Destruct a new ArrayManager.
+   *
+   * The destructor is a protected member.
+   */
+  ~ArrayManager();
 
 
 private:

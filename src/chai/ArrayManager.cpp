@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-24, Lawrence Livermore National Security, LLC and CHAI
-// project contributors. See the CHAI LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
+// contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
@@ -37,7 +37,14 @@ ArrayManager::ArrayManager() :
 {
   m_pointer_map.clear();
   m_current_execution_space = NONE;
+#if defined(CHAI_THIN_GPU_ALLOCATE)
+  m_default_allocation_space = GPU;
+#else
   m_default_allocation_space = CPU;
+#endif
+
+  m_allocators[NONE] =
+      new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
 
   m_allocators[CPU] =
       new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
@@ -53,8 +60,13 @@ ArrayManager::ArrayManager() :
 #endif
 
 #if defined(CHAI_ENABLE_UM)
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+  m_allocators[UM] =
+      new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
+#else
   m_allocators[UM] =
       new umpire::Allocator(m_resource_manager.getAllocator("UM"));
+#endif
 #endif
 
 #if defined(CHAI_ENABLE_PINNED)
@@ -66,6 +78,13 @@ ArrayManager::ArrayManager() :
       new umpire::Allocator(m_resource_manager.getAllocator("HOST"));
 #endif
 #endif
+}
+
+ArrayManager::~ArrayManager() {
+  for (size_t i = 0; i < NUM_EXECUTION_SPACES; ++i) {
+    if (m_allocators[i])
+      delete m_allocators[i];
+  }
 }
 
 void ArrayManager::registerPointer(
@@ -163,7 +182,7 @@ void * ArrayManager::frontOfAllocation(void * pointer) {
 void ArrayManager::setExecutionSpace(ExecutionSpace space)
 {
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
-   if (isGPUSimMode()) {
+   if (isGPUSimMode() && chai::NONE != space) {
       space = chai::GPU;
    }
 #endif
@@ -276,6 +295,9 @@ void ArrayManager::move(PointerRecord* record, ExecutionSpace space)
 
 #if defined(CHAI_ENABLE_UM)
   if (record->m_last_space == UM) {
+    if (space == CPU) {
+      syncIfNeeded();
+    }
     return;
   }
 #endif
@@ -322,6 +344,7 @@ void ArrayManager::allocate(
   auto alloc = m_resource_manager.getAllocator(pointer_record->m_allocators[space]);
 
   pointer_record->m_pointers[space] = alloc.allocate(size);
+
   callback(pointer_record, ACTION_ALLOC, space);
   registerPointer(pointer_record, space);
 
@@ -473,8 +496,8 @@ PointerRecord* ArrayManager::makeManaged(void* pointer,
   pointer_record->m_size = size;
   pointer_record->m_user_callback = [] (const PointerRecord*, Action, ExecutionSpace) {};
   
-  for (int space = CPU; space < NUM_EXECUTION_SPACES; ++space) {
-    pointer_record->m_allocators[space] = getAllocatorId(ExecutionSpace(space));
+  for (int iSpace = CPU; iSpace < NUM_EXECUTION_SPACES; ++iSpace) {
+    pointer_record->m_allocators[iSpace] = getAllocatorId(ExecutionSpace(iSpace));
   }
 
   if (pointer && size > 0) {
@@ -592,22 +615,29 @@ void ArrayManager::evict(ExecutionSpace space, ExecutionSpace destinationSpace) 
          // Get the pointer record
          auto record = *entry.second;
 
-         // Move the data and register the touches
-         move(record, destinationSpace);
-         registerTouch(record, destinationSpace);
-
-         // If the destinationSpace is ever allowed to be NONE, then we will need to
-         // update the touch in the eviction space and make sure the last space is not
-         // the eviction space.
-
-         // Mark record for eviction later in this routine
-         pointersToEvict.push_back(record);
+         // only evict if the pointers are different, same pointers
+         // implies UM or PINNED
+         if (record->m_pointers[space] != record->m_pointers[destinationSpace]) {
+            // Mark record for eviction later in this routine
+            pointersToEvict.push_back(record);
+         }
       }
    }
 
-   // This must be done in a second pass because free erases from m_pointer_map,
-   // which would invalidate the iterator in the above loop
+   // This must be done in a second pass because free erases from m_pointer_map
+   // and move has the potential to allocate, both of which which would
+   // invalidate the iterator in the above loop. Additionally, m_pointer_map
+   // is guarded by a mutex, so modifying it in the above loop (via move and/or
+   // free) creates deadlock.
    for (const auto& entry : pointersToEvict) {
+      // Move the data and register the touches
+      move(entry, destinationSpace);
+      registerTouch(entry, destinationSpace);
+
+      // If the destinationSpace is ever allowed to be NONE, then we will need to
+      // update the touch in the eviction space and make sure the last space is not
+      // the eviction space.
+
       free(entry, space);
    }
 }
