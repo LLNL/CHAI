@@ -53,6 +53,9 @@ ci_registry_image=${CI_REGISTRY_IMAGE:-"czregistry.llnl.gov:5050/radiuss/chai"}
 export ci_registry_user=${CI_REGISTRY_USER:-"${USER}"}
 export ci_registry_token=${CI_JOB_TOKEN:-"${registry_token}"}
 
+raja_version=${UPDATE_RAJA:-""}
+umpire_version=${UPDATE_UMPIRE:-""}
+
 ###############################################################################
 # HELPER FUNCTIONS
 ###############################################################################
@@ -98,9 +101,6 @@ format_elapsed_hms ()
     local elapsed="${1}"
     printf '%02d:%02d:%02d' $((elapsed / 3600)) $(((elapsed % 3600) / 60)) $((elapsed % 60))
 }
-
-raja_version=${UPDATE_RAJA:-""}
-umpire_version=${UPDATE_UMPIRE:-""}
 
 # Track script start time for elapsed time calculations
 script_start_time=$(date +%s)
@@ -377,7 +377,7 @@ then
     section_start "clean" "Cleaning working directory" "collapsed"
 
     # Map CPU core allocations
-    declare -A core_counts=(["lassen"]=40 ["poodle"]=28 ["dane"]=28 ["matrix"]=28 ["corona"]=32 ["rzansel"]=48 ["tioga"]=32 ["tuolumne"]=48)
+    declare -A core_counts=(["dane"]=28 ["matrix"]=28 ["corona"]=32 ["rzansel"]=48 ["tioga"]=32 ["tuolumne"]=48)
 
     # If building, then delete everything first
     # NOTE: 'cmake --build . -j core_counts' attempts to reduce individual build resources.
@@ -406,7 +406,14 @@ then
         section_end
     else
         status=$?
-        section_end ; print_error "CMake configuration failed"
+        section_end ; print_error "CMake configuration failed, dumping output..."
+
+        $cmake_exe \
+          -C ${hostconfig_path} \
+          ${cmake_options} \
+          -DCMAKE_INSTALL_PREFIX=${install_dir} \
+          ${project_dir} --debug-output --trace-expand
+
         exit ${status}
     fi
 
