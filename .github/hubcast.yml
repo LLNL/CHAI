@@ -8,11 +8,8 @@ Repo:
   # Name of the CI check as reported back to GitHub
   check_name: gitlab-ci
 
-  # Optional: granularity of CI statuses reported to GitHub (default: [pipeline])
-  # Set to [pipeline] for overall pipeline status only
-  # Set to [jobs] for individual job statuses only
-  # Set to [pipeline, jobs] to report both
-  check_types: [jobs]
+  # Report status of pipeline, child pipelines, and individual jobs
+  check_types: [pipeline, child-pipelines, jobs]
 
   # Delete branches from destination when source PR is closed
   delete_closed: true
