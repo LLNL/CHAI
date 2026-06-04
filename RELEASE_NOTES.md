@@ -17,6 +17,7 @@ The format of this file is based on [Keep a Changelog](http://keepachangelog.com
 ### Changed
 - CHAI now requires C++20 as the minimum C++ standard.
 - CHAI now requires CUDA 12 as the minimum CUDA version when CUDA is enabled.
+- CHAI now requires ROCm 6 as the minimum ROCm version when ROCm is enabled.
 - Made a ManagedArray constructor explicit to prevent unwanted implicit conversions.
 
 ## [Version 2025.12.0] - Release date 2025-12-22
