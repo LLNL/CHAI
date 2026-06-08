@@ -2,7 +2,7 @@
 
 ##############################################################################
 # Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
-# contributors. See the CARE LICENSE and COPYRIGHT files for details.
+# contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
