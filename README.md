@@ -49,7 +49,7 @@ Contributors include:
 
 ## Release
 
-Copyright (c) 2016-26, Lawrence Livermore National Security, LLC.
+Copyright (c) 2016-2026, Lawrence Livermore National Security, LLC and other CHAI contributors.
 Produced at the Lawrence Livermore National Laboratory.
 
 All rights reserved.
