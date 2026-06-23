@@ -76,6 +76,13 @@ template <typename T>
 class ManagedArray : public CHAICopyable
 {
 public:
+  using size_type = size_t;
+  using value_type = T;
+  using reference = T&;
+  using const_reference = const T&;
+  using pointer = T*;
+  using const_pointer = const T*;
+
   using T_non_const = typename std::remove_const<T>::type;
 
   CHAI_HOST_DEVICE ManagedArray();
