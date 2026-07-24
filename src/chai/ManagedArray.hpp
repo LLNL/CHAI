@@ -15,6 +15,7 @@
 
 #include "umpire/Allocator.hpp"
 
+#include <concepts>
 #include <cstddef>
 
 namespace chai
@@ -135,8 +136,17 @@ public:
 
   /*!
    * \brief Construct a ManagedArray from a nullptr.
+   *
+   * \note The constraint prevents overload ambiguity between this
+   *       constructor and the size_t constructor when constructing
+   *       with the integer literal 0. Additionally, the constraint
+   *       is a workaround for a nvcc bug where overload resolution
+   *       can incorrectly report an ambiguity between this constructor
+   *       and the size_t constructor.
+   *
+   * \todo Consider removing this constructor.
    */
-  CHAI_HOST_DEVICE ManagedArray(std::nullptr_t other);
+  CHAI_HOST_DEVICE ManagedArray(std::same_as<std::nullptr_t> auto) : ManagedArray() {}
 
   CHAI_HOST ManagedArray(PointerRecord* record, ExecutionSpace space);
 

@@ -69,21 +69,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(size_t elems, ExecutionSpace spac
 #endif
 }
 
-
-template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t)
-    : m_active_pointer(nullptr),
-      m_active_base_pointer(nullptr),
-      m_resource_manager(nullptr),
-      m_size(0),
-      m_offset(0),
-      m_pointer_record(nullptr),
-      m_allocator_id(-1),
-      m_is_slice(false)
-{
-}
-
-
 template<typename T>
 CHAI_INLINE
 CHAI_HOST ManagedArray<T>::ManagedArray(PointerRecord* record, ExecutionSpace space):
