@@ -141,8 +141,7 @@ public:
    *       and the size_t constructor when constructing with the literal 0.
    *       Additionally, the constraint is a workaround for a nvcc bug where
    *       overload resolution can incorrectly report an ambiguity between this
-   *       constructor and the size_t constructor, for example when constructing
-   *       from a const int within a function template.
+   *       constructor and the size_t constructor.
    *
    * \todo Consider removing this constructor.
    */
