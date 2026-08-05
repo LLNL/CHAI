@@ -56,14 +56,8 @@ if(CHAI_ENABLE_EXPERIMENTAL)
     SharedPtrManager.cpp)
 endif()
 
-if (TARGET umpire::umpire)
-  set(UMPIRE_TARGET umpire::umpire)
-else()
-  set(UMPIRE_TARGET umpire)
-endif()
-
 set (chai_depends
-  ${UMPIRE_TARGET})
+  umpire)
 
 if (CHAI_ENABLE_CUDA)
   set (chai_depends
