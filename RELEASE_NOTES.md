@@ -16,10 +16,15 @@ The format of this file is based on [Keep a Changelog](http://keepachangelog.com
 
 ### Changed
 - CHAI now requires C++20 as the minimum C++ standard.
-- CHAI now requires CUDA 12 as the minimum CUDA version when CUDA is enabled.
 - CHAI now requires ROCm 6 as the minimum ROCm version when ROCm is enabled.
+- CHAI now requires CUDA 12 as the minimum CUDA version when CUDA is enabled.
 - Updated BLT to v0.7.2.
+- Updated RAJA to v2026.07.0.
+- Updated Umpire to v2026.07.0.
 - Made a ManagedArray constructor explicit to prevent unwanted implicit conversions.
+- Added size\_type, value\_type, reference, const\_reference, pointer, and const\_pointer typenames to ManagedArray.
+- In CUDA builds, prevent resource manager from being created during construction of an empty ManagedArray.
+- Added experimental re-implementation of CHAI. See docs/sphinx/expt/design.rst for details. It is still subject to change and has some limitations, but is anticipated to be more performant and flexible.
 
 ## [Version 2025.12.0] - Release date 2025-12-22
 
