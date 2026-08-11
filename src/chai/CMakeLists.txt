@@ -57,7 +57,7 @@ if(CHAI_ENABLE_EXPERIMENTAL)
 endif()
 
 set (chai_depends
-  umpire)
+  ${CHAI_UMPIRE_TARGET})
 
 if (CHAI_ENABLE_CUDA)
   set (chai_depends
