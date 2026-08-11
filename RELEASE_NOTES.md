@@ -12,7 +12,7 @@ in this file.
 
 The format of this file is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Version 2026.07.0] - Release date 2025-08-05
+## [Version 2026.07.0] - Release date 2025-08-11
 
 ### Changed
 - CHAI now requires C++20 as the minimum C++ standard.
