@@ -1,9 +1,9 @@
-###############################################################################
-# Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
-# project contributors. See the CHAI LICENSE file for details.
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
+# contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 #
-# SPDX-License-Identifier: (MIT)
-###############################################################################
+# SPDX-License-Identifier: BSD-3-Clause
+##############################################################################
 
 # DESCRIPTION:
 ###############################################################################
@@ -72,11 +72,11 @@ include:
     file: 'id_tokens.yml'
 
   # Base pipeline templates and utilities
-  - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/base-pipeline@woptim/migrate-to-components
+  - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/base-pipeline@2026.6.0
     inputs:
       github_project_name: $GITHUB_PROJECT_NAME
       github_project_org: $GITHUB_PROJECT_ORG
-      github_token: $GITHUB_TOKEN
+      github_token: $RSCI_GITHUB_STATUS_TOKEN
 
   # Local custom variables (used for component inputs and forwarded to child pipelines)
   - local: '.gitlab/custom-variables.yml'
@@ -86,7 +86,7 @@ include:
 ###############################################################################
 # We organize the build-and-test stage with sub-pipelines. Each sub-pipeline
 # corresponds to a test batch on a given machine.
-#
+
 # Note: .machine-check template is provided by the base-pipeline component
 # and includes better error handling, validation, and GitHub status reporting.
 # Trigger a build-and-test pipeline for each machine.
@@ -116,13 +116,15 @@ generate-job-lists:
 # DANE
 dane-up-check:
   extends: [.dane, .machine-check]
+  variables:
+    ASSOCIATED_CHILD_PIPELINE: "dane-build-and-test"
 
 dane-build-and-test:
   extends: [.dane, .build-and-test]
   needs: [dane-up-check, generate-job-lists]
   trigger:
     include:
-      - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/dane-pipeline@woptim/migrate-to-components
+      - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/dane-pipeline@2026.6.0
         inputs:
           job_cmd: $JOB_CMD
           shared_alloc: $DANE_SHARED_ALLOC
@@ -136,13 +138,15 @@ dane-build-and-test:
 # MATRIX
 matrix-up-check:
   extends: [.matrix, .machine-check]
+  variables:
+    ASSOCIATED_CHILD_PIPELINE: "matrix-build-and-test"
 
 matrix-build-and-test:
   extends: [.matrix, .build-and-test]
   needs: [matrix-up-check, generate-job-lists]
   trigger:
     include:
-      - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/matrix-pipeline@woptim/migrate-to-components
+      - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/matrix-pipeline@2026.6.0
         inputs:
           job_cmd: $JOB_CMD
           shared_alloc: $MATRIX_SHARED_ALLOC
@@ -156,13 +160,15 @@ matrix-build-and-test:
 # CORONA
 corona-up-check:
   extends: [.corona, .machine-check]
+  variables:
+    ASSOCIATED_CHILD_PIPELINE: "corona-build-and-test"
 
 corona-build-and-test:
   extends: [.corona, .build-and-test]
   needs: [corona-up-check, generate-job-lists]
   trigger:
     include:
-      - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/corona-pipeline@woptim/migrate-to-components
+      - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/corona-pipeline@2026.6.0
         inputs:
           job_cmd: $JOB_CMD
           shared_alloc: $CORONA_SHARED_ALLOC
@@ -176,13 +182,15 @@ corona-build-and-test:
 # TIOGA
 tioga-up-check:
   extends: [.tioga, .machine-check]
+  variables:
+    ASSOCIATED_CHILD_PIPELINE: "tioga-build-and-test"
 
 tioga-build-and-test:
   extends: [.tioga, .build-and-test]
   needs: [tioga-up-check, generate-job-lists]
   trigger:
     include:
-      - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/tioga-pipeline@woptim/migrate-to-components
+      - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/tioga-pipeline@2026.6.0
         inputs:
           job_cmd: $JOB_CMD
           shared_alloc: $TIOGA_SHARED_ALLOC
@@ -196,13 +204,15 @@ tioga-build-and-test:
 # TUOLUMNE
 tuolumne-up-check:
   extends: [.tuolumne, .machine-check]
+  variables:
+    ASSOCIATED_CHILD_PIPELINE: "tuolumne-build-and-test"
 
 tuolumne-build-and-test:
   extends: [.tuolumne, .build-and-test]
   needs: [tuolumne-up-check, generate-job-lists]
   trigger:
     include:
-      - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/tuolumne-pipeline@woptim/migrate-to-components
+      - component: $CI_SERVER_FQDN/radiuss/radiuss-shared-ci/tuolumne-pipeline@2026.6.0
         inputs:
           job_cmd: $JOB_CMD
           shared_alloc: $TUOLUMNE_SHARED_ALLOC
@@ -213,15 +223,18 @@ tuolumne-build-and-test:
       - artifact: 'tuolumne-jobs.yml'
         job: 'generate-job-lists'
 
-
-## If testing develop branch, trigger RAJA downstream tests with this version of CHAI.
-# trigger-raja:
-#   stage: multi-project
-#   rules:
-#     - if: '$CI_COMMIT_BRANCH == "develop" || $MULTI_PROJECT == "ON"'
-#   variables:
-#     UPDATE_CHAI: develop
-#   trigger:
-#     project: radiuss/raja
-#     branch: develop
-#     strategy: depend
+# MULTI-PROJECT PIPELINE
+trigger-care:
+  stage: multi-project
+  rules:
+    - if: $MULTI_PROJECT != "OFF"
+      when: manual
+    - when: never
+  allow_failure: true
+  inherit:
+    variables: false
+  variables:
+    UPDATE_CHAI: ${CI_COMMIT_SHA}
+  trigger:
+    project: radiuss/multi-project/care-trigger
+    branch: develop

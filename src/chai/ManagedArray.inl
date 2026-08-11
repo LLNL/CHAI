@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
-// project contributors. See the CHAI LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
+// contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
@@ -25,7 +25,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray():
   m_is_slice(false)
 {
 #if !defined(CHAI_DEVICE_COMPILE)
-  m_resource_manager = ArrayManager::getInstance();
   m_pointer_record = &ArrayManager::s_null_record;
 #endif
 }
@@ -37,6 +36,7 @@ ManagedArray<T>::ManagedArray(
     std::initializer_list<umpire::Allocator> allocators):
   ManagedArray()
 {
+  m_resource_manager = ArrayManager::getInstance();
   m_pointer_record = new PointerRecord();
   int i = 0;
   for (int s = CPU; s < NUM_EXECUTION_SPACES; ++s) {
@@ -72,13 +72,6 @@ ManagedArray<T>::ManagedArray(
   ManagedArray(spaces, allocators)
 {
   this->allocate(elems, space);
-}
-
-template<typename T>
-CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t) :
-  ManagedArray()
-{
 }
 
 template<typename T>
@@ -169,6 +162,9 @@ CHAI_HOST void ManagedArray<T>::allocate(
     const UserCallback& cback) 
 {
   if(!m_is_slice) {
+     if (m_resource_manager == nullptr) {
+       m_resource_manager = ArrayManager::getInstance();
+     }
      if (elems > 0) {
        CHAI_LOG(Debug, "Allocating array of size " << elems << " in space " << space);
 
@@ -300,6 +296,9 @@ template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::reset()
 {
+  if (m_resource_manager == nullptr) {
+     return;
+  }
   m_resource_manager->resetTouch(m_pointer_record);
 }
 
@@ -312,6 +311,9 @@ CHAI_HOST_DEVICE size_t ManagedArray<T>::size() const {
 template<typename T>
 CHAI_INLINE
 CHAI_HOST void ManagedArray<T>::registerTouch(ExecutionSpace space) {
+  if (m_resource_manager == nullptr) {
+     return;
+  }
   if (m_active_pointer && (m_pointer_record == nullptr || m_pointer_record == &ArrayManager::s_null_record)) {
      CHAI_LOG(Warning,"registerTouch called on ManagedArray with nullptr pointer record.");
      m_pointer_record = m_resource_manager->makeManaged((void *)m_active_base_pointer,m_size,space,true);
@@ -556,7 +558,7 @@ ManagedArray<T>::operator= (std::nullptr_t) {
   m_offset = 0;
   #if !defined(CHAI_DEVICE_COMPILE)
   m_pointer_record = &ArrayManager::s_null_record;
-  m_resource_manager = ArrayManager::getInstance();
+  m_resource_manager = nullptr;
   #else
   m_pointer_record = nullptr;
   m_resource_manager = nullptr;

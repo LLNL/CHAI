@@ -1,11 +1,11 @@
 ##############################################################################
-# Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
-# project contributors. See the CHAI LICENSE file for details.
+# Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
+# contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
 set (chai_unit_test_depends
-     chai umpire gtest)
+     chai ${CHAI_UMPIRE_TARGET} gtest)
      
 blt_list_append(TO chai_unit_test_depends ELEMENTS cuda IF ${CHAI_ENABLE_CUDA})
 blt_list_append(TO chai_unit_test_depends ELEMENTS blt::hip IF ${CHAI_ENABLE_HIP})

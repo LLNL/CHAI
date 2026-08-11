@@ -1,7 +1,6 @@
 [comment]: # (#################################################################)
-[comment]: # (Copyright 2016-24, Lawrence Livermore National Security, LLC)
-[comment]: # (and CHAI project contributors. See the CHAI LICENSE file for)
-[comment]: # (details.)
+[comment]: # (Copyright Lawrence Livermore National Security, LLC and other CHAI)
+[comment]: # (contributors. See the CHAI LICENSE and COPYRIGHT files for details.)
 [comment]: # 
 [comment]: # (# SPDX-License-Identifier: BSD-3-Clause)
 [comment]: # (#################################################################)
@@ -13,7 +12,21 @@ in this file.
 
 The format of this file is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Version 2025.12.0] = Release date 2025-12-22
+## [Version 2026.07.0] - Release date 2025-08-05
+
+### Changed
+- CHAI now requires C++20 as the minimum C++ standard.
+- CHAI now requires ROCm 6 as the minimum ROCm version when ROCm is enabled.
+- CHAI now requires CUDA 12 as the minimum CUDA version when CUDA is enabled.
+- Updated BLT to v0.7.2.
+- Updated RAJA to v2026.07.0.
+- Updated Umpire to v2026.07.1.
+- Made a ManagedArray constructor explicit to prevent unwanted implicit conversions.
+- Added size\_type, value\_type, reference, const\_reference, pointer, and const\_pointer typenames to ManagedArray.
+- In CUDA builds, prevent resource manager from being created during construction of an empty ManagedArray.
+- Added experimental re-implementation of CHAI. See docs/sphinx/expt/design.rst for details. It is still subject to change and has some limitations, but is anticipated to be more performant and flexible.
+
+## [Version 2025.12.0] - Release date 2025-12-22
 
 ### Fixed
 - Fixed compiler error related to using a lambda as a default function argument.

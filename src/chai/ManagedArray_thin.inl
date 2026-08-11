@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
-// project contributors. See the CHAI LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
+// contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
@@ -68,21 +68,6 @@ CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(size_t elems, ExecutionSpace spac
   this->allocate(elems, space);
 #endif
 }
-
-
-template <typename T>
-CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t)
-    : m_active_pointer(nullptr),
-      m_active_base_pointer(nullptr),
-      m_resource_manager(nullptr),
-      m_size(0),
-      m_offset(0),
-      m_pointer_record(nullptr),
-      m_allocator_id(-1),
-      m_is_slice(false)
-{
-}
-
 
 template<typename T>
 CHAI_INLINE

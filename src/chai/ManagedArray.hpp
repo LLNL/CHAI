@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
-// project contributors. See the CHAI LICENSE file for details.
+// Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
+// contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 //
 // SPDX-License-Identifier: BSD-3-Clause
 //////////////////////////////////////////////////////////////////////////////
@@ -15,6 +15,7 @@
 
 #include "umpire/Allocator.hpp"
 
+#include <concepts>
 #include <cstddef>
 
 namespace chai
@@ -76,6 +77,13 @@ template <typename T>
 class ManagedArray : public CHAICopyable
 {
 public:
+  using size_type = size_t;
+  using value_type = T;
+  using reference = T&;
+  using const_reference = const T&;
+  using pointer = T*;
+  using const_pointer = const T*;
+
   using T_non_const = typename std::remove_const<T>::type;
 
   CHAI_HOST_DEVICE ManagedArray();
@@ -98,7 +106,9 @@ public:
    * \param elems Number of elements in the array.
    * \param space Execution space in which to allocate the array.
    */
-  CHAI_HOST_DEVICE ManagedArray(size_t elems, ExecutionSpace space = get_default_space());
+  CHAI_HOST_DEVICE explicit ManagedArray(
+      size_t elems,
+      ExecutionSpace space = get_default_space());
 
   ManagedArray(
       size_t elems,
@@ -126,13 +136,24 @@ public:
 
   /*!
    * \brief Construct a ManagedArray from a nullptr.
+   *
+   * \note The constraint prevents overload ambiguity between this
+   *       constructor and the size_t constructor when constructing
+   *       with the integer literal 0. Additionally, the constraint
+   *       is a workaround for a nvcc bug where overload resolution
+   *       can incorrectly report an ambiguity between this constructor
+   *       and the size_t constructor.
+   *
+   * \todo Consider removing this constructor.
    */
-  CHAI_HOST_DEVICE ManagedArray(std::nullptr_t other);
+  CHAI_HOST_DEVICE ManagedArray(std::same_as<std::nullptr_t> auto) : ManagedArray() {}
 
   CHAI_HOST ManagedArray(PointerRecord* record, ExecutionSpace space);
 
   /*!
    * \brief Allocate data for the ManagedArray in the specified space.
+   *
+   * Once a ManagedArray is allocated, it will have a valid resource manager.
    *
    * \param elems Number of elements to allocate.
    * \param space Execution space in which to allocate data.
@@ -289,6 +310,7 @@ public:
    * \brief Return the value of element i in the ManagedArray.
    * ExecutionSpace space to the current one
    *
+   * \pre ManagedArray must be allocated
    * \param index The index of the element to be fetched
    * \param space The index of the element to be fetched
    * \return The value of the i-th element in the ManagedArray.
@@ -299,6 +321,7 @@ public:
   /*!
    * \brief Set the value of element i in the ManagedArray to be val.
    *
+   * \pre ManagedArray must be allocated
    * \param index The index of the element to be set
    * \param val Source location of the value
    * \tparam T The type of data value in ManagedArray.

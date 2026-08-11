@@ -1,6 +1,6 @@
 ############################################################################
-# Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
-# project contributors. See the CHAI LICENSE file for details.
+# Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
+# contributors. See the CHAI LICENSE and COPYRIGHT files for details.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 ############################################################################
@@ -16,6 +16,7 @@ option(CHAI_ENABLE_UM "Use CUDA unified (managed) memory" Off)
 option(CHAI_THIN_GPU_ALLOCATE "Single memory space model" Off)
 option(CHAI_ENABLE_PINNED "Use pinned host memory" Off)
 option(CHAI_ENABLE_RAJA_PLUGIN "Build plugin to set RAJA execution spaces" On)
+option(CHAI_ENABLE_EXPERIMENTAL_RAJA_PLUGIN "Build experimental plugin to integrate CHAI context with RAJA" Off)
 option(CHAI_ENABLE_GPU_ERROR_CHECKING "Enable GPU error checking" On)
 option(CHAI_ENABLE_MANAGED_PTR "Enable managed_ptr" On)
 option(CHAI_DEBUG "Enable Debug Logging." Off)

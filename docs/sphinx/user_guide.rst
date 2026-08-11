@@ -1,6 +1,6 @@
 ..
-    # Copyright (c) 2016-25, Lawrence Livermore National Security, LLC and CHAI
-    # project contributors. See the CHAI LICENSE file for details.
+    # Copyright (c) Lawrence Livermore National Security, LLC and other CHAI
+    # contributors. See the CHAI LICENSE and COPYRIGHT files for details.
     #
     # SPDX-License-Identifier: BSD-3-Clause
 
@@ -150,16 +150,16 @@ OK, so we didn't do all the work for you, but we definitely gave you a leg up. W
 
    class MyBaseClass {
       public:
-         CARE_HOST_DEVICE MyBaseClass() {}
-         CARE_HOST_DEVICE virtual ~MyBaseClass() {}
-         CARE_HOST_DEVICE virtual int getValue() const = 0;
+         CHAI_HOST_DEVICE MyBaseClass() {}
+         CHAI_HOST_DEVICE virtual ~MyBaseClass() {}
+         CHAI_HOST_DEVICE virtual int getValue() const = 0;
    };
 
    class MyDerivedClass : public MyBaseClass {
       public:
-         CARE_HOST_DEVICE MyDerivedClass(int value) : MyBaseClass(), m_value(value) {}
-         CARE_HOST_DEVICE ~MyDerivedClass() {}
-         CARE_HOST_DEVICE int getValue() const { return m_value; }
+         CHAI_HOST_DEVICE MyDerivedClass(int value) : MyBaseClass(), m_value(value) {}
+         CHAI_HOST_DEVICE ~MyDerivedClass() {}
+         CHAI_HOST_DEVICE int getValue() const { return m_value; }
 
       private:
          int m_value;
@@ -171,19 +171,19 @@ Now you may rightfully ask, what happens when this class contains raw pointers? 
 
    class MyBaseClass {
       public:
-         CARE_HOST_DEVICE MyBaseClass() {}
-         CARE_HOST_DEVICE virtual ~MyBaseClass() {}
-         CARE_HOST_DEVICE virtual int getScalarValue() const = 0;
-         CARE_HOST_DEVICE virtual int getArrayValue(int index) const = 0;
+         CHAI_HOST_DEVICE MyBaseClass() {}
+         CHAI_HOST_DEVICE virtual ~MyBaseClass() {}
+         CHAI_HOST_DEVICE virtual int getScalarValue() const = 0;
+         CHAI_HOST_DEVICE virtual int getArrayValue(int index) const = 0;
    };
 
    class MyDerivedClass : public MyBaseClass {
       public:
-         CARE_HOST_DEVICE MyDerivedClass(int scalarValue, int* arrayValue)
+         CHAI_HOST_DEVICE MyDerivedClass(int scalarValue, int* arrayValue)
             : MyBaseClass(), m_scalarValue(scalarValue), m_arrayValue(arrayValue) {}
-         CARE_HOST_DEVICE ~MyDerivedClass() {}
-         CARE_HOST_DEVICE int getScalarValue() const { return m_scalarValue; }
-         CARE_HOST_DEVICE int getArrayValue() const { return m_arrayValue; }
+         CHAI_HOST_DEVICE ~MyDerivedClass() {}
+         CHAI_HOST_DEVICE int getScalarValue() const { return m_scalarValue; }
+         CHAI_HOST_DEVICE int getArrayValue() const { return m_arrayValue; }
 
       private:
          int m_scalarValue;
