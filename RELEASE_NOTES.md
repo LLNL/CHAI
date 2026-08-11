@@ -20,7 +20,7 @@ The format of this file is based on [Keep a Changelog](http://keepachangelog.com
 - CHAI now requires CUDA 12 as the minimum CUDA version when CUDA is enabled.
 - Updated BLT to v0.7.2.
 - Updated RAJA to v2026.07.0.
-- Updated Umpire to v2026.07.0.
+- Updated Umpire to v2026.07.1.
 - Made a ManagedArray constructor explicit to prevent unwanted implicit conversions.
 - Added size\_type, value\_type, reference, const\_reference, pointer, and const\_pointer typenames to ManagedArray.
 - In CUDA builds, prevent resource manager from being created during construction of an empty ManagedArray.
