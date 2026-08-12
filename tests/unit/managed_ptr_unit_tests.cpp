@@ -16,6 +16,8 @@
 #include "chai/ManagedArray.hpp"
 #include "chai/managed_ptr.hpp"
 
+#include "umpire/ResourceManager.hpp"
+
 #include "../src/util/forall.hpp"
 
 // Standard library headers
@@ -70,6 +72,20 @@ class TestDerived : public TestBase {
 
    private:
       int m_value;
+};
+
+namespace {
+int destroy_tracker_count = 0;
+}
+
+class DestroyTrackerBase {
+   public:
+      virtual ~DestroyTrackerBase() { ++destroy_tracker_count; }
+};
+
+class DestroyTrackerDerived : public DestroyTrackerBase {
+   public:
+      ~DestroyTrackerDerived() override { destroy_tracker_count += 10; }
 };
 
 TEST(managed_ptr, default_constructor)
@@ -144,6 +160,30 @@ TEST(managed_ptr, make_managed)
   EXPECT_TRUE(nullptr != derived);
 
   derived.free();
+}
+
+TEST(managed_ptr, make_on_host_uses_cpu_allocator)
+{
+  chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
+  auto expectedAllocator = arrayManager->getAllocator(chai::CPU);
+
+  TestDerived* pointer = chai::make_on_host<TestDerived>(3);
+
+  auto& resourceManager = umpire::ResourceManager::getInstance();
+  ASSERT_TRUE(resourceManager.hasAllocator(pointer));
+  EXPECT_EQ(resourceManager.getAllocator(pointer).getId(), expectedAllocator.getId());
+
+  chai::destroy_on_host(pointer);
+}
+
+TEST(managed_ptr, destroy_on_host_base_pointer_uses_concrete_destructor)
+{
+  destroy_tracker_count = 0;
+
+  DestroyTrackerBase* pointer = chai::make_on_host<DestroyTrackerDerived>();
+  chai::destroy_on_host(pointer);
+
+  EXPECT_EQ(destroy_tracker_count, 11);
 }
 
 TEST(managed_ptr, copy_constructor)
@@ -635,6 +675,20 @@ GPU_TEST(managed_ptr, gpu_new_and_delete_on_device_2)
 
   chai::managed_ptr<Simple> test({chai::GPU}, {gpuPointer});
   test.free();
+}
+
+GPU_TEST(managed_ptr, make_on_device_uses_gpu_allocator)
+{
+  chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
+  auto expectedAllocator = arrayManager->getAllocator(chai::GPU);
+
+  Simple* gpuPointer = chai::make_on_device<Simple>();
+
+  auto& resourceManager = umpire::ResourceManager::getInstance();
+  ASSERT_TRUE(resourceManager.hasAllocator(gpuPointer));
+  EXPECT_EQ(resourceManager.getAllocator(gpuPointer).getId(), expectedAllocator.getId());
+
+  chai::destroy_on_device(gpuPointer);
 }
 
 GPU_TEST(managed_ptr, simple_gpu_cpu_and_gpu_pointer_constructor)
