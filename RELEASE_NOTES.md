@@ -14,6 +14,9 @@ The format of this file is based on [Keep a Changelog](http://keepachangelog.com
 
 ## [Unreleased] - Release date YYYY-MM-DD
 
+### Changed
+- The `isSlice` function can now be called on `const chai::ManagedArray<T>`.
+
 ## [Version 2026.07.0] - Release date 2025-08-11
 
 ### Changed
