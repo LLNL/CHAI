@@ -1388,6 +1388,11 @@ CHAI_HOST ManagedArrayOfManagedPtrUnpacker<T> unpack(const chai::ManagedArray<ch
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
       // Construct on the GPU first to take advantage of asynchrony
       T* gpuPointer = make_on_device<T>(args...);
+
+      // Host construction may consume arguments initialized asynchronously by
+      // device construction. Complete that work before callers can release
+      // the pooled allocations backing those arguments.
+      synchronize();
 #endif
 
       // Construct on the CPU
