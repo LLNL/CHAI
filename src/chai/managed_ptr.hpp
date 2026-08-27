@@ -32,6 +32,9 @@
 
 
 namespace chai {
+   template <typename T>
+   CHAI_HOST void destroy_on_host(T* cpuPointer);
+
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
    template <typename T>
    CHAI_HOST void destroy_on_device(T* gpuPointer);
@@ -183,6 +186,15 @@ namespace chai {
                      break;
                }
             }
+
+            m_pointer_record->m_cpu_destroy = [] (void* pointer) {
+               destroy_on_host(static_cast<U*>(pointer));
+            };
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+            m_pointer_record->m_gpu_destroy = [] (void* pointer) {
+               destroy_on_device(static_cast<U*>(pointer));
+            };
+#endif
          }
 
          ///
@@ -233,6 +245,15 @@ namespace chai {
                      break;
                }
             }
+
+            m_pointer_record->m_cpu_destroy = [] (void* pointer) {
+               destroy_on_host(static_cast<U*>(pointer));
+            };
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+            m_pointer_record->m_gpu_destroy = [] (void* pointer) {
+               destroy_on_device(static_cast<U*>(pointer));
+            };
+#endif
          }
 
          ///

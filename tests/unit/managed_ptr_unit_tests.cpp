@@ -186,6 +186,29 @@ TEST(managed_ptr, destroy_on_host_base_pointer_uses_concrete_destructor)
   EXPECT_EQ(destroy_tracker_count, 11);
 }
 
+TEST(managed_ptr, pointer_constructor_uses_registered_destroyer)
+{
+  destroy_tracker_count = 0;
+
+  DestroyTrackerDerived* pointer = chai::make_on_host<DestroyTrackerDerived>();
+  chai::managed_ptr<DestroyTrackerBase> base({chai::CPU}, {pointer});
+  base.free();
+
+  EXPECT_EQ(destroy_tracker_count, 11);
+}
+
+TEST(managed_ptr, callback_pointer_constructor_uses_registered_destroyer)
+{
+  destroy_tracker_count = 0;
+
+  DestroyTrackerDerived* pointer = chai::make_on_host<DestroyTrackerDerived>();
+  chai::managed_ptr<DestroyTrackerBase> base(
+      {chai::CPU}, {pointer}, [](chai::Action, chai::ExecutionSpace, void*) { return false; });
+  base.free();
+
+  EXPECT_EQ(destroy_tracker_count, 11);
+}
+
 TEST(managed_ptr, copy_constructor)
 {
   const int expectedValue = rand();
