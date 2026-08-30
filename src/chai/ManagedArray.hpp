@@ -328,7 +328,7 @@ public:
    */
   CHAI_HOST_DEVICE void set(size_t i, T val) const;
 
-#ifndef CHAI_DISABLE_RM
+#if defined(CHAI_ENABLE_MANAGER)
   /*!
    * \brief Assign a user-defined callback triggerd upon memory migration.
    *
@@ -386,7 +386,7 @@ public:
     m_pointer_record = other.m_pointer_record;
     m_allocator_id = other.m_allocator_id;
     m_is_slice = other.m_is_slice;
-#ifndef CHAI_DISABLE_RM
+#if defined(CHAI_ENABLE_MANAGER)
 #if !defined(CHAI_DEVICE_COMPILE)
   // if we can, ensure elems is based off the pointer_record size out of paranoia
   if (m_pointer_record != nullptr && !m_is_slice) {
@@ -405,7 +405,7 @@ public:
 private:
   // The following are only used by ManagedArray.inl, but for template
   // shenanigan reasons need to be defined here.
-#if !defined(CHAI_DISABLE_RM)
+#if defined(CHAI_ENABLE_MANAGER)
   // if T is a CHAICopyable, then it is important to initialize all the
   // elements with default constructors, since it is extremely easy to
   // trigger a moveInnerImpl, which expects inner values to be initialized.
@@ -500,7 +500,7 @@ ManagedArray<T> makeManagedArray(T* data,
                                  ExecutionSpace space,
                                  bool owned)
 {
-#if !defined(CHAI_DISABLE_RM)
+#if defined(CHAI_ENABLE_MANAGER)
   ArrayManager* manager = ArrayManager::getInstance();
 
   // First, try and find an existing PointerRecord for the pointer
@@ -590,9 +590,9 @@ CHAI_INLINE CHAI_HOST_DEVICE ManagedArray<T> ManagedArray<T>::slice( size_t offs
 
 }  // end of namespace chai
 
-#if defined(CHAI_DISABLE_RM)
-#include "chai/ManagedArray_thin.inl"
-#else
+#if defined(CHAI_ENABLE_MANAGER)
 #include "chai/ManagedArray.inl"
+#else
+#include "chai/ManagedArray_thin.inl"
 #endif
 #endif  // CHAI_ManagedArray_HPP

@@ -26,7 +26,7 @@ set (chai_headers
 set (chai_sources
   ArrayManager.cpp)
 
-if(CHAI_DISABLE_RM)
+if(NOT CHAI_ENABLE_MANAGER)
   set(chai_headers
     ${chai_headers}
     ManagedArray_thin.inl)

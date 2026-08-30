@@ -16,7 +16,7 @@ TEST(ArrayManager, Constructor)
   ASSERT_NE(rm, nullptr);
 }
 
-#ifndef CHAI_DISABLE_RM
+#if defined(CHAI_ENABLE_MANAGER)
 
 TEST(ArrayManager, getPointerMap)
 {
@@ -183,4 +183,4 @@ TEST(ArrayManager, controlGlobalCallback)
   ASSERT_TRUE(callbacksAreOn);
 }
 
-#endif // !CHAI_DISABLE_RM
+#endif // defined(CHAI_ENABLE_MANAGER)

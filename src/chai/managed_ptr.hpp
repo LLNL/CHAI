@@ -11,7 +11,7 @@
 
 #if defined(CHAI_ENABLE_MANAGED_PTR)
 
-#if !defined(CHAI_DISABLE_RM) || defined(CHAI_THIN_GPU_ALLOCATE)
+#if defined(CHAI_ENABLE_MANAGER) || defined(CHAI_THIN_GPU_ALLOCATE)
 #include "chai/ArrayManager.hpp"
 #endif
 
@@ -630,7 +630,7 @@ namespace chai {
          ///    with the ACTION_MOVE event.
          ///
          CHAI_HOST void move() const {
-#if !defined(CHAI_DISABLE_RM)
+#if defined(CHAI_ENABLE_MANAGER)
             if (m_pointer_record) {
                ExecutionSpace newSpace = ArrayManager::getInstance()->getExecutionSpace();
 
@@ -1085,7 +1085,7 @@ CHAI_HOST ManagedArrayOfManagedPtrUnpacker<T> unpack(const chai::ManagedArray<ch
    template <typename T,
              typename... Args>
    CHAI_HOST T* make_on_host(Args&&... args) {
-#if !defined(CHAI_DISABLE_RM)
+#if defined(CHAI_ENABLE_MANAGER)
       // Get the ArrayManager and save the current execution space
       chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
       ExecutionSpace currentSpace = arrayManager->getExecutionSpace();
@@ -1098,7 +1098,7 @@ CHAI_HOST ManagedArrayOfManagedPtrUnpacker<T> unpack(const chai::ManagedArray<ch
       // Create on the host
       T* cpuPointer = new T(detail::processArguments(args)...);
 
-#if !defined(CHAI_DISABLE_RM)
+#if defined(CHAI_ENABLE_MANAGER)
       // Set the execution space back to the previous value
       arrayManager->setExecutionSpace(currentSpace);
 #endif
@@ -1133,7 +1133,7 @@ CHAI_HOST ManagedArrayOfManagedPtrUnpacker<T> unpack(const chai::ManagedArray<ch
    template <typename T,
              typename... Args>
    CHAI_HOST T* make_on_device(Args... args) {
-#if !defined(CHAI_DISABLE_RM)
+#if defined(CHAI_ENABLE_MANAGER)
       // Get the ArrayManager and save the current execution space
       chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
       ExecutionSpace currentSpace = arrayManager->getExecutionSpace();
@@ -1171,7 +1171,7 @@ CHAI_HOST ManagedArrayOfManagedPtrUnpacker<T> unpack(const chai::ManagedArray<ch
       free(cpuBuffer);
       gpuFree(gpuBuffer);
 
-#if !defined(CHAI_DISABLE_RM)
+#if defined(CHAI_ENABLE_MANAGER)
       // Set the execution space back to the previous value
       arrayManager->setExecutionSpace(currentSpace);
 #endif
