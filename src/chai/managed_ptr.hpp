@@ -1415,16 +1415,7 @@ CHAI_HOST ManagedPtrOfPointerTableUnpacker<T> unpack_pointer_table(
 
       T* cpuPointer = detail::allocate_from_space<T>(CPU);
 
-      try {
-         ::new (static_cast<void*>(cpuPointer)) T(detail::processArguments(args)...);
-      }
-      catch (...) {
-#if !defined(CHAI_DISABLE_RM)
-         arrayManager->setExecutionSpace(currentSpace);
-#endif
-         detail::deallocate_umpire_allocation(cpuPointer);
-         throw;
-      }
+      ::new (static_cast<void*>(cpuPointer)) T(detail::processArguments(args)...);
 
       detail::register_destroyer(static_cast<void*>(cpuPointer), [] (void* pointer) {
          static_cast<T*>(pointer)->~T();
