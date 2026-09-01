@@ -179,34 +179,40 @@ TEST(managed_ptr, make_on_host_uses_cpu_allocator)
   chai::destroy_on_host(pointer);
 }
 
-TEST(managed_ptr, destroy_on_host_base_pointer_uses_concrete_destructor)
+TEST(managed_ptr, destroy_on_host_uses_concrete_destructor)
 {
   destroy_tracker_count = 0;
 
-  DestroyTrackerBase* pointer = chai::make_on_host<DestroyTrackerDerived>();
+  DestroyTrackerDerived* pointer = chai::make_on_host<DestroyTrackerDerived>();
   chai::destroy_on_host(pointer);
 
   EXPECT_EQ(destroy_tracker_count, 11);
 }
 
-TEST(managed_ptr, pointer_constructor_uses_registered_destroyer)
-{
-  destroy_tracker_count = 0;
-
-  DestroyTrackerDerived* pointer = chai::make_on_host<DestroyTrackerDerived>();
-  chai::managed_ptr<DestroyTrackerBase> base({chai::CPU}, {pointer});
-  base.free();
-
-  EXPECT_EQ(destroy_tracker_count, 11);
-}
-
-TEST(managed_ptr, callback_pointer_constructor_uses_registered_destroyer)
+TEST(managed_ptr, pointer_constructor_uses_explicit_deleter)
 {
   destroy_tracker_count = 0;
 
   DestroyTrackerDerived* pointer = chai::make_on_host<DestroyTrackerDerived>();
   chai::managed_ptr<DestroyTrackerBase> base(
-      {chai::CPU}, {pointer}, [](chai::Action, chai::ExecutionSpace, void*) { return false; });
+      {chai::CPU},
+      {pointer},
+      {[] (void* ptr) { chai::destroy_on_host(static_cast<DestroyTrackerDerived*>(ptr)); }});
+  base.free();
+
+  EXPECT_EQ(destroy_tracker_count, 11);
+}
+
+TEST(managed_ptr, callback_pointer_constructor_uses_explicit_deleter)
+{
+  destroy_tracker_count = 0;
+
+  DestroyTrackerDerived* pointer = chai::make_on_host<DestroyTrackerDerived>();
+  chai::managed_ptr<DestroyTrackerBase> base(
+      {chai::CPU},
+      {pointer},
+      [](chai::Action, chai::ExecutionSpace, void*) { return false; },
+      {[] (void* ptr) { chai::destroy_on_host(static_cast<DestroyTrackerDerived*>(ptr)); }});
   base.free();
 
   EXPECT_EQ(destroy_tracker_count, 11);
@@ -603,7 +609,14 @@ GPU_TEST(managed_ptr, gpu_nullptr_constructor)
 GPU_TEST(managed_ptr, gpu_gpu_pointer_constructor)
 {
   TestDerived* gpuPointer = chai::make_on_device<TestDerived>(3);
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
+  chai::managed_ptr<TestDerived> derived(
+      {chai::GPU},
+      {gpuPointer},
+      {[] (void* pointer) { chai::destroy_on_device(static_cast<TestDerived*>(pointer)); }});
+#else
   chai::managed_ptr<TestDerived> derived({chai::GPU}, {gpuPointer});
+#endif
 
   EXPECT_EQ(derived.get(), nullptr);
   EXPECT_FALSE(derived);
@@ -725,7 +738,17 @@ GPU_TEST(managed_ptr, simple_gpu_cpu_and_gpu_pointer_constructor)
   Simple* gpuPointer = chai::make_on_device<Simple>(3);
   Simple* cpuPointer = new Simple(4);
 
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
+  chai::managed_ptr<Simple> simple(
+      {chai::GPU, chai::CPU},
+      {gpuPointer, cpuPointer},
+      {
+          [] (void* pointer) { chai::destroy_on_device(static_cast<Simple*>(pointer)); },
+          [] (void* pointer) { delete static_cast<Simple*>(pointer); }
+      });
+#else
   chai::managed_ptr<Simple> simple({chai::GPU, chai::CPU}, {gpuPointer, cpuPointer});
+#endif
 
   EXPECT_EQ(simple->getValue(), 4);
 
@@ -749,7 +772,17 @@ GPU_TEST(managed_ptr, gpu_cpu_and_gpu_pointer_constructor)
   TestDerived* gpuPointer = chai::make_on_device<TestDerived>(3);
   TestDerived* cpuPointer = new TestDerived(4);
 
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
+  chai::managed_ptr<TestDerived> derived(
+      {chai::GPU, chai::CPU},
+      {gpuPointer, cpuPointer},
+      {
+          [] (void* pointer) { chai::destroy_on_device(static_cast<TestDerived*>(pointer)); },
+          [] (void* pointer) { delete static_cast<TestDerived*>(pointer); }
+      });
+#else
   chai::managed_ptr<TestDerived> derived({chai::GPU, chai::CPU}, {gpuPointer, cpuPointer});
+#endif
 
   EXPECT_EQ(derived->getValue(), 4);
   EXPECT_NE(derived.get(), nullptr);

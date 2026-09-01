@@ -501,9 +501,20 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_array_and_callback)
      }
   };
 
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
+  auto managedPointer = chai::managed_ptr<RawArrayClass>(
+      {chai::CPU, chai::GPU},
+      {cpuPointer, gpuPointer},
+      callback,
+      {
+          [] (void* pointer) { delete static_cast<RawArrayClass*>(pointer); },
+          [] (void* pointer) { chai::destroy_on_device(static_cast<RawArrayClass*>(pointer)); }
+      });
+#else
   auto managedPointer = chai::managed_ptr<RawArrayClass>({chai::CPU, chai::GPU},
                                                          {cpuPointer, gpuPointer},
                                                          callback);
+#endif
 
   chai::ManagedArray<int> results(1, chai::GPU);
 
@@ -1018,4 +1029,3 @@ TEST(managed_ptr, class_with_raw_array_of_pointers)
 }
 
 #endif
-
