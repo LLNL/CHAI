@@ -191,18 +191,18 @@ namespace chai {
 #endif
                      ++i;
                      break;
-#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
                   case GPU:
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
                      m_gpu_pointer = pointers.begin()[i];
 #if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
                      m_pointer_record->m_gpu_owned_pointer = static_cast<void*>(pointers.begin()[i]);
 #endif
+#endif
                      ++i;
                      break;
-#endif
                   default:
-                     ++i;
                      printf("[CHAI] WARNING: Execution space not supported by chai::managed_ptr!\n");
+                     ++i;
                      break;
                }
             }
