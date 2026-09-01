@@ -20,20 +20,26 @@
 #include "chai/ManagedArray.hpp"
 #include "chai/Types.hpp"
 
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
 #include "umpire/ResourceManager.hpp"
+#endif
 
 // Standard libary headers
 #include <cstddef>
 #include <functional>
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
 #include <memory>
 #include <mutex>
 #include <new>
 #include <unordered_map>
+#endif
 
 
 namespace chai {
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
    template <typename T>
    CHAI_HOST void destroy_on_host(T* cpuPointer);
+#endif
 
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
    template <typename T>
@@ -58,9 +64,11 @@ namespace chai {
 
       ExecutionSpace m_last_space = NONE; /// The last space executed in
       std::function<bool(Action, ExecutionSpace, void*)> m_callback; /// Callback to handle events
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
       std::function<void(void*)> m_cpu_destroy; /// Concrete destroyer for CPU allocations
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
       std::function<void(void*)> m_gpu_destroy; /// Concrete destroyer for GPU allocations
+#endif
 #endif
    };
 
@@ -187,6 +195,7 @@ namespace chai {
                }
             }
 
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
             m_pointer_record->m_cpu_destroy = [] (void* pointer) {
                destroy_on_host(static_cast<U*>(pointer));
             };
@@ -194,6 +203,7 @@ namespace chai {
             m_pointer_record->m_gpu_destroy = [] (void* pointer) {
                destroy_on_device(static_cast<U*>(pointer));
             };
+#endif
 #endif
          }
 
@@ -246,6 +256,7 @@ namespace chai {
                }
             }
 
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
             m_pointer_record->m_cpu_destroy = [] (void* pointer) {
                destroy_on_host(static_cast<U*>(pointer));
             };
@@ -253,6 +264,7 @@ namespace chai {
             m_pointer_record->m_gpu_destroy = [] (void* pointer) {
                destroy_on_device(static_cast<U*>(pointer));
             };
+#endif
 #endif
          }
 
@@ -585,24 +597,32 @@ namespace chai {
                                                        voidPointer)) {
                         switch (execSpace) {
                            case CPU:
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
                               if (m_pointer_record->m_cpu_destroy) {
                                  m_pointer_record->m_cpu_destroy(voidPointer);
                               }
                               else {
                                  delete pointer;
                               }
+#else
+                              delete pointer;
+#endif
                               m_cpu_pointer = nullptr;
                               break;
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
                            case GPU:
                            {
                               if (pointer) {
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
                                  if (m_pointer_record->m_gpu_destroy) {
                                     m_pointer_record->m_gpu_destroy(voidPointer);
                                  }
                                  else {
                                     destroy_on_device(temp);
                                  }
+#else
+                                 destroy_on_device(temp);
+#endif
                                  m_gpu_pointer = nullptr;
                               }
 
@@ -620,30 +640,40 @@ namespace chai {
                   for (int space = NUM_EXECUTION_SPACES-1; space >= NONE; --space) {
                      ExecutionSpace execSpace = static_cast<ExecutionSpace>(space);
                      T* pointer = get(execSpace, false);
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
                      using T_non_const = typename std::remove_const<T>::type;
                      T_non_const* temp = const_cast<T_non_const*>(pointer);
                      void* voidPointer = static_cast<void*>(temp);
+#endif
 
                      switch (execSpace) {
                         case CPU:
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
                            if (m_pointer_record->m_cpu_destroy) {
                               m_pointer_record->m_cpu_destroy(voidPointer);
                            }
                            else {
                               delete pointer;
                            }
+#else
+                           delete pointer;
+#endif
                            m_cpu_pointer = nullptr;
                            break;
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
                         case GPU:
                         {
                            if (pointer) {
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
                               if (m_pointer_record->m_gpu_destroy) {
                                  m_pointer_record->m_gpu_destroy(voidPointer);
                               }
                               else {
                                  destroy_on_device(pointer);
                               }
+#else
+                              destroy_on_device(pointer);
+#endif
                               m_gpu_pointer = nullptr;
                            }
 
@@ -957,6 +987,7 @@ namespace chai {
          bool m_ownsData = false; //!< Flag indicating if this object owns the data and should clean up
    };
 
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
    ///
    /// @brief Non-owning host/device view of a persistent table of raw pointers.
    ///
@@ -1126,9 +1157,11 @@ namespace chai {
       private:
          std::shared_ptr<PointerTable<T>> m_table;
    };
+#endif
 
    namespace detail {
 
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
       using destroyer_type = std::function<void(void*)>;
 
       CHAI_HOST inline std::unordered_map<void*, destroyer_type>& destroyer_map()
@@ -1186,6 +1219,7 @@ namespace chai {
             allocator.deallocate(static_cast<void*>(pointer));
          }
       }
+#endif
 
       ///
       /// @author Alan Dayton
@@ -1246,6 +1280,7 @@ namespace chai {
          return arg.data();
       }
 
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
       ///
       /// @brief Extracts the execution-space pointer table from a PointerTableView.
       ///
@@ -1253,15 +1288,18 @@ namespace chai {
       CHAI_HOST_DEVICE T** processArguments(const PointerTableView<T>& arg) {
          return arg.data();
       }
+#endif
 
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
 
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
       template <typename T,
                 typename... Args>
       CHAI_GLOBAL void emplace_on_device(T* gpuPointer, Args... args)
       {
          ::new (static_cast<void*>(gpuPointer)) T(processArguments(args)...);
       }
+#endif
 
       ///
       /// @author Alan Dayton
@@ -1281,6 +1319,7 @@ namespace chai {
          *gpuPointer = new T(processArguments(args)...);
       }
 
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
       template <typename T>
       CHAI_GLOBAL void destroy_in_place_on_device(T* gpuPointer)
       {
@@ -1288,6 +1327,7 @@ namespace chai {
             gpuPointer->~T();
          }
       }
+#endif
 
       ///
       /// @author Alan Dayton
@@ -1377,6 +1417,7 @@ CHAI_HOST ManagedArrayOfManagedPtrUnpacker<T> unpack(const chai::ManagedArray<ch
    return ManagedArrayOfManagedPtrUnpacker<T>(arg);
 }
 
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
 ///
 /// @brief Creates a persistent Umpire-backed pointer table for managed pointers.
 ///
@@ -1389,6 +1430,7 @@ CHAI_HOST ManagedPtrOfPointerTableUnpacker<T> unpack_pointer_table(
 {
    return ManagedPtrOfPointerTableUnpacker<T>(arg);
 }
+#endif
 
    ///
    /// @author Alan Dayton
@@ -1404,8 +1446,8 @@ CHAI_HOST ManagedPtrOfPointerTableUnpacker<T> unpack_pointer_table(
    template <typename T,
              typename... Args>
    CHAI_HOST T* make_on_host(Args&&... args) {
-      chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
 #if !defined(CHAI_DISABLE_RM)
+      chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
       ExecutionSpace currentSpace = arrayManager->getExecutionSpace();
 
       // Set the execution space so that ManagedArrays and managed_ptrs
@@ -1413,13 +1455,15 @@ CHAI_HOST ManagedPtrOfPointerTableUnpacker<T> unpack_pointer_table(
       arrayManager->setExecutionSpace(CPU);
 #endif
 
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
       T* cpuPointer = detail::allocate_from_space<T>(CPU);
-
       ::new (static_cast<void*>(cpuPointer)) T(detail::processArguments(args)...);
-
       detail::register_destroyer(static_cast<void*>(cpuPointer), [] (void* pointer) {
          static_cast<T*>(pointer)->~T();
       });
+#else
+      T* cpuPointer = new T(detail::processArguments(args)...);
+#endif
 
 #if !defined(CHAI_DISABLE_RM)
       // Set the execution space back to the previous value
@@ -1439,6 +1483,7 @@ CHAI_HOST ManagedPtrOfPointerTableUnpacker<T> unpack_pointer_table(
    ///
    template <typename T>
    CHAI_HOST void destroy_on_host(T* cpuPointer) {
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
       if (detail::is_umpire_allocation(cpuPointer)) {
          auto destroyer = detail::release_destroyer(static_cast<void*>(cpuPointer));
          if (destroyer) {
@@ -1452,6 +1497,9 @@ CHAI_HOST ManagedPtrOfPointerTableUnpacker<T> unpack_pointer_table(
       else {
          delete cpuPointer;
       }
+#else
+      delete cpuPointer;
+#endif
    }
 
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
@@ -1468,6 +1516,7 @@ CHAI_HOST ManagedPtrOfPointerTableUnpacker<T> unpack_pointer_table(
    template <typename T,
              typename... Args>
    CHAI_HOST T* make_on_device(Args... args) {
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
       chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
 #if !defined(CHAI_DISABLE_RM)
       ExecutionSpace currentSpace = arrayManager->getExecutionSpace();
@@ -1512,6 +1561,42 @@ CHAI_HOST ManagedPtrOfPointerTableUnpacker<T> unpack_pointer_table(
 
       // Return the GPU pointer
       return gpuPointer;
+#else
+#if !defined(CHAI_DISABLE_RM)
+      chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
+      ExecutionSpace currentSpace = arrayManager->getExecutionSpace();
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+      arrayManager->setGPUSimMode(true);
+#endif
+
+      arrayManager->setExecutionSpace(GPU);
+#endif
+
+      T** gpuBuffer;
+      gpuMalloc((void**)(&gpuBuffer), sizeof(T*));
+
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+      detail::make_on_device(gpuBuffer, args...);
+      arrayManager->setGPUSimMode(false);
+#elif defined(__CUDACC__) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+      detail::make_on_device<<<1, 1>>>(gpuBuffer, args...);
+#elif defined(__HIPCC__) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+      hipLaunchKernelGGL(detail::make_on_device, 1, 1, 0, 0, gpuBuffer, args...);
+#endif
+
+      T** cpuBuffer = (T**) malloc(sizeof(T*));
+      gpuMemcpy(cpuBuffer, gpuBuffer, sizeof(T*), gpuMemcpyDeviceToHost);
+      T* gpuPointer = cpuBuffer[0];
+
+      free(cpuBuffer);
+      gpuFree(gpuBuffer);
+
+#if !defined(CHAI_DISABLE_RM)
+      arrayManager->setExecutionSpace(currentSpace);
+#endif
+
+      return gpuPointer;
+#endif
    }
 
    ///
@@ -1523,6 +1608,7 @@ CHAI_HOST ManagedPtrOfPointerTableUnpacker<T> unpack_pointer_table(
    ///
    template <typename T>
    CHAI_HOST void destroy_on_device(T* gpuPointer) {
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
       if (gpuPointer == nullptr) {
          return;
       }
@@ -1575,6 +1661,18 @@ CHAI_HOST ManagedPtrOfPointerTableUnpacker<T> unpack_pointer_table(
          synchronize();
          detail::deallocate_umpire_allocation(gpuPointer);
       }
+#else
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+      chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
+      arrayManager->setGPUSimMode(true);
+      detail::destroy_on_device(gpuPointer);
+      arrayManager->setGPUSimMode(false);
+#elif defined(__CUDACC__) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+      detail::destroy_on_device<<<1, 1>>>(gpuPointer);
+#elif defined(__HIPCC__) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+      hipLaunchKernelGGL(detail::destroy_on_device, 1, 1, 0, 0, gpuPointer);
+#endif
+#endif
    }
 
 #endif
@@ -1594,15 +1692,18 @@ CHAI_HOST ManagedPtrOfPointerTableUnpacker<T> unpack_pointer_table(
       // Construct on the GPU first to take advantage of asynchrony
       T* gpuPointer = make_on_device<T>(args...);
 
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
       // Host construction may consume arguments initialized asynchronously by
       // device construction. Complete that work before callers can release
       // the pooled allocations backing those arguments.
       synchronize();
 #endif
+#endif
 
       // Construct on the CPU
       T* cpuPointer = make_on_host<T>(args...);
 
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
       // Construct the managed_ptr and retain concrete destroyers so converted
       // managed_ptr<Base> instances still destroy the most-derived object.
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
@@ -1617,6 +1718,13 @@ CHAI_HOST ManagedPtrOfPointerTableUnpacker<T> unpack_pointer_table(
          destroy_on_host(static_cast<T*>(pointer));
       };
       return result;
+#else
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+      return managed_ptr<T>({CPU, GPU}, {cpuPointer, gpuPointer});
+#else
+      return managed_ptr<T>({CPU}, {cpuPointer});
+#endif
+#endif
    }
 
    ///

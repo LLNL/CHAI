@@ -16,7 +16,9 @@
 #include "chai/ManagedArray.hpp"
 #include "chai/managed_ptr.hpp"
 
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
 #include "umpire/ResourceManager.hpp"
+#endif
 
 #include "../src/util/forall.hpp"
 
@@ -74,6 +76,7 @@ class TestDerived : public TestBase {
       int m_value;
 };
 
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
 namespace {
 int destroy_tracker_count = 0;
 }
@@ -208,6 +211,7 @@ TEST(managed_ptr, callback_pointer_constructor_uses_registered_destroyer)
 
   EXPECT_EQ(destroy_tracker_count, 11);
 }
+#endif
 
 TEST(managed_ptr, copy_constructor)
 {
@@ -700,6 +704,7 @@ GPU_TEST(managed_ptr, gpu_new_and_delete_on_device_2)
   test.free();
 }
 
+#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
 GPU_TEST(managed_ptr, make_on_device_uses_gpu_allocator)
 {
   chai::ArrayManager* arrayManager = chai::ArrayManager::getInstance();
@@ -713,6 +718,7 @@ GPU_TEST(managed_ptr, make_on_device_uses_gpu_allocator)
 
   chai::destroy_on_device(gpuPointer);
 }
+#endif
 
 GPU_TEST(managed_ptr, simple_gpu_cpu_and_gpu_pointer_constructor)
 {
