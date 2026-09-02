@@ -134,7 +134,8 @@ TEST(managed_ptr, nullptr_constructor)
 TEST(managed_ptr, cpu_pointer_constructor)
 {
   TestDerived* cpuPointer = new TestDerived(3);
-  chai::managed_ptr<TestDerived> derived({chai::CPU}, {cpuPointer});
+  chai::managed_ptr<TestDerived> derived(
+      {chai::CPU}, {cpuPointer}, {chai::delete_on_host_deleter<TestDerived>()});
 
   EXPECT_EQ(derived->getValue(), 3);
 
@@ -447,7 +448,8 @@ TEST(managed_ptr, conversion_copy_assignment_operator_from_host_ptr_constructed)
 TEST(managed_ptr, static_pointer_cast)
 {
   TestDerived* cpuPointer = new TestDerived(3);
-  chai::managed_ptr<TestDerived> derived({chai::CPU}, {cpuPointer});
+  chai::managed_ptr<TestDerived> derived(
+      {chai::CPU}, {cpuPointer}, {chai::delete_on_host_deleter<TestDerived>()});
 
   auto base = chai::static_pointer_cast<TestBase>(derived);
 
@@ -466,7 +468,8 @@ TEST(managed_ptr, static_pointer_cast)
 TEST(managed_ptr, dynamic_pointer_cast)
 {
   TestDerived* cpuPointer = new TestDerived(3);
-  chai::managed_ptr<TestBase> base({chai::CPU}, {cpuPointer});
+  chai::managed_ptr<TestBase> base(
+      {chai::CPU}, {cpuPointer}, {chai::delete_on_host_deleter<TestDerived>()});
 
   auto derived = chai::dynamic_pointer_cast<TestDerived>(base);
 
@@ -485,7 +488,8 @@ TEST(managed_ptr, dynamic_pointer_cast)
 TEST(managed_ptr, const_pointer_cast)
 {
   TestDerived* cpuPointer = new TestDerived(3);
-  chai::managed_ptr<const TestBase> base({chai::CPU}, {cpuPointer});
+  chai::managed_ptr<const TestBase> base(
+      {chai::CPU}, {cpuPointer}, {chai::delete_on_host_deleter<TestDerived>()});
 
   auto nonConstBase = chai::const_pointer_cast<TestBase>(base);
 
@@ -504,7 +508,8 @@ TEST(managed_ptr, const_pointer_cast)
 TEST(managed_ptr, reinterpret_pointer_cast)
 {
   TestDerived* cpuPointer = new TestDerived(3);
-  chai::managed_ptr<TestBase> base({chai::CPU}, {cpuPointer});
+  chai::managed_ptr<TestBase> base(
+      {chai::CPU}, {cpuPointer}, {chai::delete_on_host_deleter<TestDerived>()});
 
   auto derived = chai::reinterpret_pointer_cast<TestDerived>(base);
 
@@ -609,14 +614,10 @@ GPU_TEST(managed_ptr, gpu_nullptr_constructor)
 GPU_TEST(managed_ptr, gpu_gpu_pointer_constructor)
 {
   TestDerived* gpuPointer = chai::make_on_device<TestDerived>(3);
-#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
   chai::managed_ptr<TestDerived> derived(
       {chai::GPU},
       {gpuPointer},
-      {[] (void* pointer) { chai::destroy_on_device(static_cast<TestDerived*>(pointer)); }});
-#else
-  chai::managed_ptr<TestDerived> derived({chai::GPU}, {gpuPointer});
-#endif
+      {chai::destroy_on_device_deleter<TestDerived>()});
 
   EXPECT_EQ(derived.get(), nullptr);
   EXPECT_FALSE(derived);
@@ -713,7 +714,8 @@ GPU_TEST(managed_ptr, gpu_new_and_delete_on_device_2)
   // Free host side memory
   free(cpuPointerHolder);
 
-  chai::managed_ptr<Simple> test({chai::GPU}, {gpuPointer});
+  chai::managed_ptr<Simple> test(
+      {chai::GPU}, {gpuPointer}, {chai::delete_on_device_deleter<Simple>()});
   test.free();
 }
 
@@ -738,17 +740,13 @@ GPU_TEST(managed_ptr, simple_gpu_cpu_and_gpu_pointer_constructor)
   Simple* gpuPointer = chai::make_on_device<Simple>(3);
   Simple* cpuPointer = new Simple(4);
 
-#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
   chai::managed_ptr<Simple> simple(
       {chai::GPU, chai::CPU},
       {gpuPointer, cpuPointer},
       {
-          [] (void* pointer) { chai::destroy_on_device(static_cast<Simple*>(pointer)); },
-          [] (void* pointer) { delete static_cast<Simple*>(pointer); }
+          chai::destroy_on_device_deleter<Simple>(),
+          chai::delete_on_host_deleter<Simple>()
       });
-#else
-  chai::managed_ptr<Simple> simple({chai::GPU, chai::CPU}, {gpuPointer, cpuPointer});
-#endif
 
   EXPECT_EQ(simple->getValue(), 4);
 
@@ -772,17 +770,13 @@ GPU_TEST(managed_ptr, gpu_cpu_and_gpu_pointer_constructor)
   TestDerived* gpuPointer = chai::make_on_device<TestDerived>(3);
   TestDerived* cpuPointer = new TestDerived(4);
 
-#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
   chai::managed_ptr<TestDerived> derived(
       {chai::GPU, chai::CPU},
       {gpuPointer, cpuPointer},
       {
-          [] (void* pointer) { chai::destroy_on_device(static_cast<TestDerived*>(pointer)); },
-          [] (void* pointer) { delete static_cast<TestDerived*>(pointer); }
+          chai::destroy_on_device_deleter<TestDerived>(),
+          chai::delete_on_host_deleter<TestDerived>()
       });
-#else
-  chai::managed_ptr<TestDerived> derived({chai::GPU, chai::CPU}, {gpuPointer, cpuPointer});
-#endif
 
   EXPECT_EQ(derived->getValue(), 4);
   EXPECT_NE(derived.get(), nullptr);

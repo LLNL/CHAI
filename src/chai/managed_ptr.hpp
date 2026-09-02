@@ -34,18 +34,17 @@
 
 
 namespace chai {
+   using managed_ptr_deleter = std::function<void(void*)>;
+
+   template <typename T>
+   CHAI_HOST void destroy_on_host(T* cpuPointer);
+
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
    template <typename T>
    CHAI_HOST void destroy_on_device(T* gpuPointer);
 
-#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
    template <typename T>
    CHAI_HOST void delete_on_device(T* gpuPointer);
-#endif
-#endif
-
-#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
-   using managed_ptr_deleter = std::function<void(void*)>;
 #endif
 
    struct managed_ptr_record {
@@ -66,13 +65,11 @@ namespace chai {
 
       ExecutionSpace m_last_space = NONE; /// The last space executed in
       std::function<bool(Action, ExecutionSpace, void*)> m_callback; /// Callback to handle events
-#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
       void* m_cpu_owned_pointer = nullptr; /// Original CPU pointer passed to its deleter
       managed_ptr_deleter m_cpu_deleter; /// Concrete deleter for CPU allocations
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
       void* m_gpu_owned_pointer = nullptr; /// Original GPU pointer passed to its deleter
       managed_ptr_deleter m_gpu_deleter; /// Concrete deleter for GPU allocations
-#endif
 #endif
    };
 
@@ -155,8 +152,7 @@ namespace chai {
          ///
          /// @author Alan Dayton
          ///
-         /// Constructs a managed_ptr from the given pointers. U* must be convertible
-         ///    to T*.
+         /// Direct construction without explicit ownership information is forbidden.
          ///
          /// @pre spaces.size() == pointers.size()
          ///
@@ -165,59 +161,7 @@ namespace chai {
          ///
          template <typename U>
          managed_ptr(std::initializer_list<ExecutionSpace> spaces,
-                     std::initializer_list<U*> pointers) :
-            m_cpu_pointer(nullptr),
-#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-            m_gpu_pointer(nullptr),
-#endif
-            m_pointer_record(new managed_ptr_record())
-         {
-            static_assert(std::is_convertible<U*, T*>::value,
-                          "U* must be convertible to T*.");
-
-            // TODO: In c++14 convert to a static_assert
-            if (spaces.size() != pointers.size()) {
-               printf("[CHAI] WARNING: The number of spaces is different than the number of pointers given!\n");
-            }
-
-            int i = 0;
-
-            for (const auto& space : spaces) {
-               switch (space) {
-                  case CPU:
-                     m_cpu_pointer = pointers.begin()[i];
-#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
-                     m_pointer_record->m_cpu_owned_pointer = static_cast<void*>(pointers.begin()[i]);
-#endif
-                     ++i;
-                     break;
-                  case GPU:
-#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-                     m_gpu_pointer = pointers.begin()[i];
-#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
-                     m_pointer_record->m_gpu_owned_pointer = static_cast<void*>(pointers.begin()[i]);
-#endif
-#endif
-                     ++i;
-                     break;
-                  default:
-                     printf("[CHAI] WARNING: Execution space not supported by chai::managed_ptr!\n");
-                     ++i;
-                     break;
-               }
-            }
-
-#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
-            m_pointer_record->m_cpu_deleter = [] (void* pointer) {
-               delete static_cast<U*>(pointer);
-            };
-#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-            m_pointer_record->m_gpu_deleter = [] (void* pointer) {
-               delete_on_device(static_cast<U*>(pointer));
-            };
-#endif
-#endif
-         }
+                     std::initializer_list<U*> pointers) = delete;
 
          ///
          /// @author Alan Dayton
@@ -234,61 +178,8 @@ namespace chai {
          template <typename U>
          CHAI_HOST managed_ptr(std::initializer_list<ExecutionSpace> spaces,
                                std::initializer_list<U*> pointers,
-                               std::function<bool(Action, ExecutionSpace, void*)> callback) :
-            m_cpu_pointer(nullptr),
-#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-            m_gpu_pointer(nullptr),
-#endif
-            m_pointer_record(new managed_ptr_record(callback))
-         {
-            static_assert(std::is_convertible<U*, T*>::value,
-                          "U* must be convertible to T*.");
+                               std::function<bool(Action, ExecutionSpace, void*)> callback) = delete;
 
-            // TODO: In c++14 convert to a static_assert
-            if (spaces.size() != pointers.size()) {
-               printf("[CHAI] WARNING: The number of spaces is different than the number of pointers given.\n");
-            }
-
-            int i = 0;
-
-            for (const auto& space : spaces) {
-               switch (space) {
-                  case CPU:
-                     m_cpu_pointer = pointers.begin()[i];
-#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
-                     m_pointer_record->m_cpu_owned_pointer = static_cast<void*>(pointers.begin()[i]);
-#endif
-                     ++i;
-                     break;
-#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-                  case GPU:
-                     m_gpu_pointer = pointers.begin()[i];
-#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
-                     m_pointer_record->m_gpu_owned_pointer = static_cast<void*>(pointers.begin()[i]);
-#endif
-                     ++i;
-                     break;
-#endif
-                  default:
-                     ++i;
-                     printf("[CHAI] WARNING: Execution space not supported by chai::managed_ptr!\n");
-                     break;
-               }
-            }
-
-#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
-            m_pointer_record->m_cpu_deleter = [] (void* pointer) {
-               delete static_cast<U*>(pointer);
-            };
-#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-            m_pointer_record->m_gpu_deleter = [] (void* pointer) {
-               delete_on_device(static_cast<U*>(pointer));
-            };
-#endif
-#endif
-         }
-
-#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
          ///
          /// @brief Constructs a managed_ptr with an explicit deleter for each pointer.
          ///
@@ -362,7 +253,6 @@ namespace chai {
          {
             m_pointer_record->set_callback(callback);
          }
-#endif
 
          ///
          /// @author Alan Dayton
@@ -693,24 +583,16 @@ namespace chai {
                                                        voidPointer)) {
                         switch (execSpace) {
                            case CPU:
-#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
                               if (pointer) {
                                  m_pointer_record->m_cpu_deleter(m_pointer_record->m_cpu_owned_pointer);
                               }
-#else
-                              delete pointer;
-#endif
                               m_cpu_pointer = nullptr;
                               break;
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
                            case GPU:
                            {
                               if (pointer) {
-#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
                                  m_pointer_record->m_gpu_deleter(m_pointer_record->m_gpu_owned_pointer);
-#else
-                                 destroy_on_device(temp);
-#endif
                                  m_gpu_pointer = nullptr;
                               }
 
@@ -731,24 +613,16 @@ namespace chai {
 
                      switch (execSpace) {
                         case CPU:
-#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
                            if (pointer) {
                               m_pointer_record->m_cpu_deleter(m_pointer_record->m_cpu_owned_pointer);
                            }
-#else
-                           delete pointer;
-#endif
                            m_cpu_pointer = nullptr;
                            break;
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
                         case GPU:
                         {
                            if (pointer) {
-#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
                               m_pointer_record->m_gpu_deleter(m_pointer_record->m_gpu_owned_pointer);
-#else
-                              destroy_on_device(pointer);
-#endif
                               m_gpu_pointer = nullptr;
                            }
 
@@ -1649,7 +1523,6 @@ CHAI_HOST ManagedPtrOfPointerTableUnpacker<T> unpack_pointer_table(
 #endif
    }
 
-#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
    ///
    /// @brief Deletes an object allocated by a device-side new expression.
    ///
@@ -1668,8 +1541,41 @@ CHAI_HOST ManagedPtrOfPointerTableUnpacker<T> unpack_pointer_table(
       hipLaunchKernelGGL(detail::destroy_on_device, 1, 1, 0, 0, gpuPointer);
 #endif
    }
+
 #endif
 
+   ///
+   /// @brief Returns a deleter for an object created by make_on_host.
+   ///
+   template <typename T>
+   CHAI_HOST managed_ptr_deleter destroy_on_host_deleter() {
+      return [] (void* pointer) { destroy_on_host(static_cast<T*>(pointer)); };
+   }
+
+   ///
+   /// @brief Returns a deleter for an object created by a host new expression.
+   ///
+   template <typename T>
+   CHAI_HOST managed_ptr_deleter delete_on_host_deleter() {
+      return [] (void* pointer) { delete static_cast<T*>(pointer); };
+   }
+
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+   ///
+   /// @brief Returns a deleter for an object created by make_on_device.
+   ///
+   template <typename T>
+   CHAI_HOST managed_ptr_deleter destroy_on_device_deleter() {
+      return [] (void* pointer) { destroy_on_device(static_cast<T*>(pointer)); };
+   }
+
+   ///
+   /// @brief Returns a deleter for an object created by a device-side new expression.
+   ///
+   template <typename T>
+   CHAI_HOST managed_ptr_deleter delete_on_device_deleter() {
+      return [] (void* pointer) { delete_on_device(static_cast<T*>(pointer)); };
+   }
 #endif
 
    ///
@@ -1698,7 +1604,6 @@ CHAI_HOST ManagedPtrOfPointerTableUnpacker<T> unpack_pointer_table(
       // Construct on the CPU
       T* cpuPointer = make_on_host<T>(args...);
 
-#if defined(CHAI_UMPIRE_BACKED_MANAGED_PTR)
       // Construct the managed_ptr and retain concrete deleters so converted
       // managed_ptr<Base> instances still destroy the most-derived object.
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
@@ -1706,23 +1611,16 @@ CHAI_HOST ManagedPtrOfPointerTableUnpacker<T> unpack_pointer_table(
          {CPU, GPU},
          {cpuPointer, gpuPointer},
          {
-            [] (void* pointer) { destroy_on_host(static_cast<T*>(pointer)); },
-            [] (void* pointer) { destroy_on_device(static_cast<T*>(pointer)); }
+            destroy_on_host_deleter<T>(),
+            destroy_on_device_deleter<T>()
          });
 #else
       managed_ptr<T> result(
          {CPU},
          {cpuPointer},
-         {[] (void* pointer) { destroy_on_host(static_cast<T*>(pointer)); }});
+         {destroy_on_host_deleter<T>()});
 #endif
       return result;
-#else
-#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-      return managed_ptr<T>({CPU, GPU}, {cpuPointer, gpuPointer});
-#else
-      return managed_ptr<T>({CPU}, {cpuPointer});
-#endif
-#endif
    }
 
    ///
