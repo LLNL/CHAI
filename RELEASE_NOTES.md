@@ -16,6 +16,13 @@ The format of this file is based on [Keep a Changelog](http://keepachangelog.com
 
 ### Changed
 - The `isSlice` function can now be called on `const chai::ManagedArray<T>`.
+- `chai::make_managed` now uses placement construction with the Umpire
+  allocators configured on `chai::ArrayManager`. The new
+  `chai::allocate_managed` factory accepts allocators explicitly. As a result,
+  these factory functions no longer invoke class-specific ordinary
+  `operator new` or `operator delete`; an `ACTION_FREE` callback that handles
+  cleanup must destroy the object and return its storage to the matching
+  allocator rather than call `delete`.
 
 ## [Version 2026.07.0] - Release date 2025-08-11
 

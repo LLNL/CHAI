@@ -16,6 +16,9 @@
 #include "chai/ManagedArray.hpp"
 #include "chai/managed_ptr.hpp"
 
+#include "umpire/ResourceManager.hpp"
+#include "umpire/strategy/NamingShim.hpp"
+
 #include "../src/util/forall.hpp"
 
 // Standard library headers
@@ -71,6 +74,133 @@ class TestDerived : public TestBase {
    private:
       int m_value;
 };
+
+class AllocatorTracked {
+   public:
+      CHAI_HOST_DEVICE AllocatorTracked(int value, int* destructionCount) :
+         m_value(value),
+         m_destruction_count(destructionCount)
+      {
+      }
+
+      CHAI_HOST_DEVICE ~AllocatorTracked() {
+#if !defined(CHAI_DEVICE_COMPILE)
+         if (m_destruction_count) {
+            ++(*m_destruction_count);
+         }
+#endif
+      }
+
+      CHAI_HOST_DEVICE int getValue() const { return m_value; }
+
+   private:
+      int m_value;
+      int* m_destruction_count;
+};
+
+class AllocatorBase1 {
+   public:
+      CHAI_HOST_DEVICE virtual ~AllocatorBase1() {}
+      CHAI_HOST_DEVICE virtual int getBase1Value() const = 0;
+};
+
+class AllocatorBase2 {
+   public:
+      CHAI_HOST_DEVICE virtual ~AllocatorBase2() {}
+      CHAI_HOST_DEVICE virtual int getBase2Value() const = 0;
+};
+
+class AllocatorDerived : public AllocatorBase1, public AllocatorBase2 {
+   public:
+      CHAI_HOST_DEVICE AllocatorDerived(int value, int* destructionCount) :
+         m_value(value),
+         m_destruction_count(destructionCount)
+      {
+      }
+
+      CHAI_HOST_DEVICE ~AllocatorDerived() override {
+#if !defined(CHAI_DEVICE_COMPILE)
+         if (m_destruction_count) {
+            ++(*m_destruction_count);
+         }
+#endif
+      }
+
+      CHAI_HOST_DEVICE int getBase1Value() const override { return m_value; }
+      CHAI_HOST_DEVICE int getBase2Value() const override { return m_value; }
+
+   private:
+      int m_value;
+      int* m_destruction_count;
+};
+
+class DeviceAllocatorBase {
+   public:
+      CHAI_HOST_DEVICE virtual ~DeviceAllocatorBase() {}
+      CHAI_HOST_DEVICE virtual int getValue() const = 0;
+};
+
+class DeviceAllocatorDerived : public DeviceAllocatorBase {
+   public:
+      CHAI_HOST_DEVICE DeviceAllocatorDerived(int value, int* destructionCount) :
+         m_value(value),
+         m_destruction_count(destructionCount)
+      {
+      }
+
+      CHAI_HOST_DEVICE ~DeviceAllocatorDerived() override {
+         if (m_destruction_count) {
+            ++(*m_destruction_count);
+         }
+      }
+
+      CHAI_HOST_DEVICE int getValue() const override { return m_value; }
+
+   private:
+      int m_value;
+      int* m_destruction_count;
+};
+
+class ClassSpecificAllocation {
+   public:
+      static void* operator new(std::size_t size) {
+         ++s_new_calls;
+         return ::operator new(size);
+      }
+
+      static void operator delete(void* pointer) {
+         ++s_delete_calls;
+         ::operator delete(pointer);
+      }
+
+      CHAI_HOST_DEVICE explicit ClassSpecificAllocation(int value) :
+         m_value(value)
+      {
+      }
+
+      CHAI_HOST_DEVICE ~ClassSpecificAllocation() {}
+
+      CHAI_HOST_DEVICE int getValue() const { return m_value; }
+
+      static int s_new_calls;
+      static int s_delete_calls;
+
+   private:
+      int m_value;
+};
+
+int ClassSpecificAllocation::s_new_calls = 0;
+int ClassSpecificAllocation::s_delete_calls = 0;
+
+umpire::Allocator getManagedPtrTestHostAllocator()
+{
+  auto& resourceManager = umpire::ResourceManager::getInstance();
+  static auto allocator =
+      resourceManager.makeAllocator<umpire::strategy::NamingShim>(
+          "chai_managed_ptr_host_allocator",
+          resourceManager.getAllocator("HOST"));
+  return allocator;
+}
 
 TEST(managed_ptr, default_constructor)
 {
@@ -145,6 +275,124 @@ TEST(managed_ptr, make_managed)
 
   derived.free();
 }
+
+TEST(managed_ptr, allocate_managed_uses_cpu_allocator)
+{
+  auto allocator = getManagedPtrTestHostAllocator();
+  const auto allocationsBefore = allocator.getAllocationCount();
+  int destructionCount = 0;
+  int cpuFreeCallbacks = 0;
+
+  auto pointer = chai::allocate_managed<AllocatorTracked>(
+      {chai::CPU}, {allocator}, 17, &destructionCount);
+
+  EXPECT_EQ(pointer->getValue(), 17);
+  EXPECT_EQ(allocator.getAllocationCount(), allocationsBefore + 1);
+
+  pointer.set_callback(
+      [&cpuFreeCallbacks](chai::Action action,
+                          chai::ExecutionSpace space,
+                          void*) {
+        if (action == chai::ACTION_FREE && space == chai::CPU) {
+          ++cpuFreeCallbacks;
+        }
+        return false;
+      });
+  pointer.free();
+
+  EXPECT_EQ(cpuFreeCallbacks, 1);
+  EXPECT_EQ(destructionCount, 1);
+  EXPECT_EQ(allocator.getAllocationCount(), allocationsBefore);
+}
+
+TEST(managed_ptr, allocate_managed_callback_can_handle_cleanup)
+{
+  auto allocator = getManagedPtrTestHostAllocator();
+  const auto allocationsBefore = allocator.getAllocationCount();
+  int destructionCount = 0;
+  int handledFreeCallbacks = 0;
+
+  auto pointer = chai::allocate_managed<AllocatorTracked>(
+      {chai::CPU}, {allocator}, 23, &destructionCount);
+
+  pointer.set_callback(
+      [allocator, &handledFreeCallbacks](chai::Action action,
+                                         chai::ExecutionSpace space,
+                                         void* rawPointer) mutable {
+        if (action == chai::ACTION_FREE && space == chai::CPU) {
+          auto* object = static_cast<AllocatorTracked*>(rawPointer);
+          object->~AllocatorTracked();
+          allocator.deallocate(object);
+          ++handledFreeCallbacks;
+          return true;
+        }
+        return false;
+      });
+  pointer.free();
+
+  EXPECT_EQ(handledFreeCallbacks, 1);
+  EXPECT_EQ(destructionCount, 1);
+  EXPECT_EQ(allocator.getAllocationCount(), allocationsBefore);
+}
+
+TEST(managed_ptr, allocate_managed_bypasses_class_specific_new_and_delete)
+{
+  auto allocator = getManagedPtrTestHostAllocator();
+  ClassSpecificAllocation::s_new_calls = 0;
+  ClassSpecificAllocation::s_delete_calls = 0;
+
+  auto pointer = chai::allocate_managed<ClassSpecificAllocation>(
+      {chai::CPU}, {allocator}, 27);
+
+  EXPECT_EQ(pointer->getValue(), 27);
+  pointer.free();
+
+  EXPECT_EQ(ClassSpecificAllocation::s_new_calls, 0);
+  EXPECT_EQ(ClassSpecificAllocation::s_delete_calls, 0);
+}
+
+TEST(managed_ptr, allocate_managed_frees_original_pointer_after_conversion_and_cast)
+{
+  auto allocator = getManagedPtrTestHostAllocator();
+  const auto allocationsBefore = allocator.getAllocationCount();
+  int destructionCount = 0;
+
+  auto derived = chai::allocate_managed<AllocatorDerived>(
+      {chai::CPU}, {allocator}, 29, &destructionCount);
+  chai::managed_ptr<AllocatorBase1> base1 = derived;
+  auto base2 = chai::static_pointer_cast<AllocatorBase2>(derived);
+
+  EXPECT_EQ(base1->getBase1Value(), 29);
+  EXPECT_EQ(base2->getBase2Value(), 29);
+  EXPECT_NE(static_cast<void*>(derived.get()),
+            static_cast<void*>(base2.get()));
+
+  base2.free();
+
+  EXPECT_EQ(destructionCount, 1);
+  EXPECT_EQ(allocator.getAllocationCount(), allocationsBefore);
+}
+
+#if !defined(CHAI_DISABLE_RM) || defined(CHAI_THIN_GPU_ALLOCATE)
+TEST(managed_ptr, make_managed_uses_configured_cpu_allocator)
+{
+  auto* arrayManager = chai::ArrayManager::getInstance();
+  auto originalAllocator = arrayManager->getAllocator(chai::CPU);
+  auto configuredAllocator = getManagedPtrTestHostAllocator();
+  const auto allocationsBefore = configuredAllocator.getAllocationCount();
+
+  arrayManager->setAllocator(chai::CPU, configuredAllocator);
+  auto pointer = chai::make_managed<AllocatorTracked>(31, nullptr);
+
+  EXPECT_EQ(pointer->getValue(), 31);
+  EXPECT_EQ(configuredAllocator.getAllocationCount(), allocationsBefore + 1);
+
+  pointer.free();
+  arrayManager->setAllocator(chai::CPU, originalAllocator);
+
+  EXPECT_EQ(configuredAllocator.getAllocationCount(), allocationsBefore);
+}
+#endif
 
 TEST(managed_ptr, copy_constructor)
 {
@@ -746,6 +994,53 @@ GPU_TEST(managed_ptr, gpu_make_managed)
   array.free();
 
   derived.free();
+}
+
+GPU_TEST(managed_ptr, gpu_allocate_managed_uses_allocator)
+{
+  auto& resourceManager = umpire::ResourceManager::getInstance();
+#if defined(CHAI_ENABLE_GPU_SIMULATION_MODE)
+  auto deviceResource = resourceManager.getAllocator("HOST");
+#else
+  auto deviceResource = resourceManager.getAllocator("DEVICE");
+#endif
+  static auto deviceAllocator =
+      resourceManager.makeAllocator<umpire::strategy::NamingShim>(
+          "chai_managed_ptr_device_allocator", deviceResource);
+  auto hostAllocator = resourceManager.getAllocator("HOST");
+  const auto allocationsBefore = deviceAllocator.getAllocationCount();
+  const int expectedValue = rand();
+
+  chai::ManagedArray<int> destructionCounts(1, chai::CPU);
+  destructionCounts[0] = 0;
+  destructionCounts.move(chai::GPU);
+
+  auto derived = chai::allocate_managed<DeviceAllocatorDerived>(
+      {chai::CPU, chai::GPU}, {hostAllocator, deviceAllocator},
+      expectedValue, chai::unpack(destructionCounts));
+  chai::managed_ptr<DeviceAllocatorBase> base = derived;
+
+  EXPECT_EQ(deviceAllocator.getAllocationCount(), allocationsBefore + 1);
+
+  chai::ManagedArray<int> result(1, chai::GPU);
+  forall(gpu(), 0, 1, [=] __device__ (int i) {
+    result[i] = base->getValue();
+  });
+  result.move(chai::CPU);
+  EXPECT_EQ(result[0], expectedValue);
+  result.free();
+
+  base.free();
+
+  int gpuDestructionCount = 0;
+  chai::gpuMemcpy(&gpuDestructionCount,
+                  destructionCounts.data(chai::GPU, false),
+                  sizeof(int), gpuMemcpyDeviceToHost);
+  EXPECT_EQ(destructionCounts.data(chai::CPU, false)[0], 1);
+  EXPECT_EQ(gpuDestructionCount, 1);
+  EXPECT_EQ(deviceAllocator.getAllocationCount(), allocationsBefore);
+
+  destructionCounts.free();
 }
 
 GPU_TEST(managed_ptr, gpu_copy_constructor)
