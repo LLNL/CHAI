@@ -40,7 +40,7 @@ namespace chai {
 
    namespace detail {
 
-      /// Combines a user callback with factory-specific object cleanup.
+      /// Combines a user callback with custom-deleter object cleanup.
       struct managed_ptr_callback {
          using callback_type = std::function<bool(Action, ExecutionSpace, void*)>;
 
@@ -67,7 +67,7 @@ namespace chai {
       managed_ptr_record() = default;
 
       managed_ptr_record(std::function<bool(Action, ExecutionSpace, void*)> callback) :
-         m_callback(callback)
+         m_callback(std::move(callback))
       {
       }
 
@@ -76,10 +76,10 @@ namespace chai {
       }
 
       void set_callback(std::function<bool(Action, ExecutionSpace, void*)> callback) {
-         auto* factory_callback = m_callback.target<detail::managed_ptr_callback>();
+         auto* deleter_callback = m_callback.target<detail::managed_ptr_callback>();
 
-         if (factory_callback) {
-            factory_callback->m_user_callback = std::move(callback);
+         if (deleter_callback) {
+            deleter_callback->m_user_callback = std::move(callback);
          }
          else {
             m_callback = std::move(callback);
@@ -263,6 +263,109 @@ namespace chai {
                      break;
                }
             }
+         }
+
+         ///
+         /// @author Alan Dayton
+         ///
+         /// Constructs a managed_ptr from the given pointers and custom deleters.
+         ///    U* must be convertible to T*. Each deleter is associated with the
+         ///    pointer at the corresponding position and is called when free()
+         ///    processes that pointer's execution space.
+         ///
+         /// @pre spaces.size() == pointers.size() == deleters.size()
+         ///
+         /// @param[in] spaces A list of execution spaces
+         /// @param[in] pointers A list of pointers to take ownership of
+         /// @param[in] deleters A list of deleters for the corresponding pointers
+         ///
+         template <typename U>
+         CHAI_HOST managed_ptr(
+            std::initializer_list<ExecutionSpace> spaces,
+            std::initializer_list<U*> pointers,
+            std::initializer_list<
+               std::function<void(std::type_identity_t<U>*)>> deleters) :
+            m_cpu_pointer(nullptr),
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+            m_gpu_pointer(nullptr),
+#endif
+            m_pointer_record(nullptr)
+         {
+            static_assert(std::is_convertible<U*, T*>::value,
+                          "U* must be convertible to T*.");
+
+            if (spaces.size() != pointers.size() ||
+                spaces.size() != deleters.size()) {
+               printf("[CHAI] WARNING: The number of spaces, pointers, and deleters must be the same.\n");
+               return;
+            }
+
+            U* cpuPointer = nullptr;
+            std::function<void(U*)> cpuDeleter;
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+            U* gpuPointer = nullptr;
+            std::function<void(U*)> gpuDeleter;
+#endif
+
+            auto pointer = pointers.begin();
+            auto deleter = deleters.begin();
+            for (const auto& space : spaces) {
+               switch (space) {
+                  case CPU:
+                     cpuPointer = *pointer;
+                     cpuDeleter = *deleter;
+                     m_cpu_pointer = cpuPointer;
+                     break;
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+                  case GPU:
+                     gpuPointer = *pointer;
+                     gpuDeleter = *deleter;
+                     m_gpu_pointer = gpuPointer;
+                     break;
+#endif
+                  default:
+                     printf("[CHAI] WARNING: Execution space not supported by chai::managed_ptr!\n");
+                     break;
+               }
+
+               ++pointer;
+               ++deleter;
+            }
+
+            std::function<bool(Action, ExecutionSpace, void*)> cleanupCallback =
+               detail::managed_ptr_callback(
+                  [cpuPointer, cpuDeleter
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+                   , gpuPointer, gpuDeleter
+#endif
+                  ](Action action, ExecutionSpace space, void*) mutable {
+                     if (action != ACTION_FREE) {
+                        return false;
+                     }
+
+                     switch (space) {
+                        case CPU:
+                           if (cpuDeleter) {
+                              cpuDeleter(cpuPointer);
+                              cpuPointer = nullptr;
+                           }
+                           break;
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+                        case GPU:
+                           if (gpuDeleter) {
+                              gpuDeleter(gpuPointer);
+                              gpuPointer = nullptr;
+                           }
+                           break;
+#endif
+                        default:
+                           break;
+                     }
+
+                     return true;
+                  });
+
+            m_pointer_record = new managed_ptr_record(std::move(cleanupCallback));
          }
 
          ///
@@ -554,16 +657,16 @@ namespace chai {
          ///    callback should return true if the event has been handled (i.e. if a
          ///    callback is provided that only cleans up the device pointer, it should
          ///    return true in that case and false in every other case).
-         ///    For objects created by allocate_managed or make_managed, a callback
-         ///    that returns true for ACTION_FREE must explicitly run the destructor
-         ///    and deallocate with the matching Umpire allocator; it must not use
-         ///    delete.
+         ///    For objects owned by custom deleters, including objects created by
+         ///    allocate_managed or make_managed, a callback that returns true for
+         ///    ACTION_FREE overrides the custom deleter and takes responsibility for
+         ///    destroying and deallocating the object.
          ///
          /// @param[in] callback The callback to call when certain actions occur
          ///
          CHAI_HOST void set_callback(std::function<bool(Action, ExecutionSpace, void*)> callback) {
             if (m_pointer_record) {
-               m_pointer_record->set_callback(callback);
+               m_pointer_record->set_callback(std::move(callback));
             }
             else {
                printf("[CHAI] WARNING: No callback is allowed for managed_ptr that does not contain a valid pointer (i.e. the default or nullptr constructor was used)!\n");
@@ -577,12 +680,13 @@ namespace chai {
          ///    event in each execution space. If the callback does not handle an event
          ///    or a callback is not provided, this method destroys the host and device
          ///    objects. Objects created by allocate_managed or make_managed are returned
-         ///    to their Umpire allocators; caller-provided pointers are deleted.
+         ///    to their Umpire allocators, pointers supplied with custom deleters use
+         ///    those deleters, and other caller-provided pointers are deleted.
          ///
          CHAI_HOST void free() {
             if (m_pointer_record) {
                if (m_pointer_record->m_callback) {
-                  const bool allocatorBacked =
+                  const bool customDeleterBacked =
                      m_pointer_record->m_callback.target<detail::managed_ptr_callback>() != nullptr;
 
                   // Destroy device pointer first to take advantage of asynchrony
@@ -620,7 +724,7 @@ namespace chai {
                               break;
                         }
                      }
-                     else if (allocatorBacked) {
+                     else if (customDeleterBacked) {
                         switch (execSpace) {
                            case CPU:
                               m_cpu_pointer = nullptr;
@@ -1511,48 +1615,28 @@ CHAI_HOST ManagedArrayOfManagedPtrUnpacker<T> unpack(const chai::ManagedArray<ch
       }
 
       try {
-         std::function<bool(Action, ExecutionSpace, void*)> cleanup_callback =
-            detail::managed_ptr_callback(
-               [cpuPointer, cpuAllocator
+         std::function<void(T*)> cpuDeleter =
+            [cpuAllocator](T* pointer) mutable {
+               detail::destroy_allocated_on_host(pointer, cpuAllocator);
+            };
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-                , gpuPointer, gpuAllocator
-#endif
-               ](Action action, ExecutionSpace space, void*) mutable {
-                  if (action != ACTION_FREE) {
-                     return false;
-                  }
+         std::function<void(T*)> gpuDeleter =
+            [gpuAllocator](T* pointer) mutable {
+               detail::destroy_device_allocation(pointer, gpuAllocator);
+            };
 
-                  switch (space) {
-                     case CPU:
-                        detail::destroy_allocated_on_host(cpuPointer, cpuAllocator);
-                        cpuPointer = nullptr;
-                        break;
-#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-                     case GPU:
-                        detail::destroy_device_allocation(gpuPointer, gpuAllocator);
-                        gpuPointer = nullptr;
-                        break;
-#endif
-                     default:
-                        break;
-                  }
-
-                  return true;
-               });
-
-#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
          if (allocateOnCPU && allocateOnGPU) {
             return managed_ptr<T>({CPU, GPU}, {cpuPointer, gpuPointer},
-                                  cleanup_callback);
+                                  {cpuDeleter, gpuDeleter});
          }
 
          if (allocateOnGPU) {
-            return managed_ptr<T>({GPU}, {gpuPointer}, cleanup_callback);
+            return managed_ptr<T>({GPU}, {gpuPointer}, {gpuDeleter});
          }
 #endif
 
          if (allocateOnCPU) {
-            return managed_ptr<T>({CPU}, {cpuPointer}, cleanup_callback);
+            return managed_ptr<T>({CPU}, {cpuPointer}, {cpuDeleter});
          }
 
          return managed_ptr<T>();

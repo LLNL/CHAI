@@ -23,6 +23,7 @@
 
 // Standard library headers
 #include <cstdlib>
+#include <new>
 
 class Simple {
    public:
@@ -274,6 +275,31 @@ TEST(managed_ptr, make_managed)
   EXPECT_TRUE(nullptr != derived);
 
   derived.free();
+}
+
+TEST(managed_ptr, custom_deleter_constructor)
+{
+  auto allocator = getManagedPtrTestHostAllocator();
+  const auto allocationsBefore = allocator.getAllocationCount();
+  int destructionCount = 0;
+  int deleterCount = 0;
+
+  void* allocation = allocator.allocate(sizeof(AllocatorTracked));
+  auto* object = ::new (allocation) AllocatorTracked(13, &destructionCount);
+  chai::managed_ptr<AllocatorTracked> pointer(
+      {chai::CPU}, {object},
+      {[allocator, &deleterCount](AllocatorTracked* managedObject) mutable {
+        managedObject->~AllocatorTracked();
+        allocator.deallocate(managedObject);
+        ++deleterCount;
+      }});
+
+  EXPECT_EQ(pointer->getValue(), 13);
+  pointer.free();
+
+  EXPECT_EQ(deleterCount, 1);
+  EXPECT_EQ(destructionCount, 1);
+  EXPECT_EQ(allocator.getAllocationCount(), allocationsBefore);
 }
 
 TEST(managed_ptr, allocate_managed_uses_cpu_allocator)
