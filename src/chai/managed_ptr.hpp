@@ -189,6 +189,10 @@ namespace chai {
          CHAI_HOST managed_ptr(std::initializer_list<ExecutionSpace> spaces,
                                std::initializer_list<U*> pointers,
                                managed_ptr_callback callback) :
+            m_cpu_pointer(nullptr),
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+            m_gpu_pointer(nullptr),
+#endif
             m_pointer_record(new managed_ptr_record())
          {
             static_assert(std::is_convertible<U*, T*>::value,
@@ -204,16 +208,16 @@ namespace chai {
             for (const auto& space : spaces) {
                switch (space) {
                   case CPU:
-                     m_pointer_record->m_cpu_owned_pointer =
-                        const_cast<void *>(static_cast<const void *>(pointers.begin()[i++]));
+                     m_cpu_pointer = pointers.begin()[i++];
+                     m_pointer_record->m_cpu_owned_pointer = m_cpu_pointer;
                      m_pointer_record->m_cpu_deleter = [] (void* pointer) {
                         delete static_cast<U*>(pointer);
                      };
                      break;
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
                   case GPU:
-                     m_pointer_record->m_gpu_owned_pointer =
-                        const_cast<void *>(static_cast<const void *>(pointers.begin()[i++]));
+                     m_gpu_pointer = pointers.begin()[i++];
+                     m_pointer_record->m_gpu_owned_pointer = m_gpu_pointer;
                      m_pointer_record->m_gpu_deleter = [] (void* pointer) {
                         delete_on_device(static_cast<U*>(pointer));
                      };
@@ -252,6 +256,10 @@ namespace chai {
                                std::initializer_list<U*> pointers,
                                std::initializer_list<managed_ptr_deleter> deleters,
                                managed_ptr_callback callback = detail::cleanup_callback) :
+            m_cpu_pointer(nullptr),
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+            m_gpu_pointer(nullptr),
+#endif
             m_pointer_record(new managed_ptr_record())
          {
             static_assert(std::is_convertible<U*, T*>::value,
@@ -270,14 +278,14 @@ namespace chai {
             for (const auto& space : spaces) {
                switch (space) {
                   case CPU:
-                     m_pointer_record->m_cpu_owned_pointer =
-                        const_cast<void *>(static_cast<const void *>(pointers.begin()[i]));
+                     m_cpu_pointer = pointers.begin()[i];
+                     m_pointer_record->m_cpu_owned_pointer = m_cpu_pointer;
                      m_pointer_record->m_cpu_deleter = deleters.begin()[i++];
                      break;
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
                   case GPU:
-                     m_pointer_record->m_gpu_owned_pointer =
-                        const_cast<void *>(static_cast<const void *>(pointers.begin()[i]));
+                     m_gpu_pointer = pointers.begin()[i];
+                     m_pointer_record->m_gpu_owned_pointer = m_gpu_pointer;
                      m_pointer_record->m_gpu_deleter = deleters.begin()[i++];
                      break;
 #endif
@@ -303,6 +311,10 @@ namespace chai {
          /// @param[in] other The managed_ptr to copy
          ///
          CHAI_HOST_DEVICE managed_ptr(const managed_ptr& other) noexcept :
+            m_cpu_pointer(other.m_cpu_pointer),
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+            m_gpu_pointer(other.m_gpu_pointer),
+#endif
             m_pointer_record(other.m_pointer_record)
          {
 #if !defined(CHAI_DEVICE_COMPILE)
@@ -328,6 +340,10 @@ namespace chai {
          ///
          template <typename U>
          CHAI_HOST_DEVICE managed_ptr(const managed_ptr<U>& other) noexcept :
+            m_cpu_pointer(other.m_cpu_pointer),
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+            m_gpu_pointer(other.m_gpu_pointer),
+#endif
             m_pointer_record(other.m_pointer_record)
          {
             static_assert(std::is_convertible<U*, T*>::value,
@@ -374,13 +390,11 @@ namespace chai {
             for (const auto& space : spaces) {
                switch (space) {
                   case CPU:
-                     m_pointer_record->m_cpu_owned_pointer =
-                        const_cast<void *>(static_cast<const void *>(pointers.begin()[i++]));
+                     m_cpu_pointer = pointers.begin()[i++];
                      break;
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
                   case GPU:
-                     m_pointer_record->m_gpu_owned_pointer =
-                        const_cast<void *>(static_cast<const void *>(pointers.begin()[i++]));
+                     m_gpu_pointer = pointers.begin()[i++];
                      break;
 #endif
                   default:
@@ -405,6 +419,10 @@ namespace chai {
          ///
          CHAI_HOST_DEVICE managed_ptr& operator=(const managed_ptr& other) noexcept {
             if (this != &other) {
+               m_cpu_pointer = other.m_cpu_pointer;
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+               m_gpu_pointer = other.m_gpu_pointer;
+#endif
                m_pointer_record = other.m_pointer_record;
 
 #if !defined(CHAI_DEVICE_COMPILE)
@@ -436,6 +454,10 @@ namespace chai {
             static_assert(std::is_convertible<U*, T*>::value,
                           "U* must be convertible to T*.");
 
+            m_cpu_pointer = other.m_cpu_pointer;
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+            m_gpu_pointer = other.m_gpu_pointer;
+#endif
             m_pointer_record = other.m_pointer_record;
 
 #if !defined(CHAI_DEVICE_COMPILE)
@@ -458,19 +480,19 @@ namespace chai {
          ///
          CHAI_HOST_DEVICE inline T* get() const {
 #if defined(CHAI_DEVICE_COMPILE) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-            return static_cast<T*>(m_pointer_record->m_gpu_owned_pointer);
+            return m_gpu_pointer;
 #else
 
 #if !defined(CHAI_DEVICE_COMPILE)
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
             if (chai::ArrayManager::getInstance()->isGPUSimMode()) {
-               return static_cast<T*>(m_pointer_record->m_gpu_owned_pointer);
+               return m_gpu_pointer;
             }
 #endif
             move();
 #endif
 
-            return static_cast<T*>(m_pointer_record->m_cpu_owned_pointer);
+            return m_cpu_pointer;
 #endif
          }
 
@@ -489,10 +511,10 @@ namespace chai {
 
             switch (space) {
                case CPU:
-                  return static_cast<T*>(m_pointer_record->m_cpu_owned_pointer);
+                  return m_cpu_pointer;
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
                case GPU:
-                  return static_cast<T*>(m_pointer_record->m_gpu_owned_pointer);
+                  return m_gpu_pointer;
 #endif
                default:
                   return nullptr;
@@ -506,19 +528,19 @@ namespace chai {
          ///
          CHAI_HOST_DEVICE inline T* operator->() const {
 #if defined(CHAI_DEVICE_COMPILE) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-            return static_cast<T*>(m_pointer_record->m_gpu_owned_pointer);
+            return m_gpu_pointer;
 #else
 
 #if !defined(CHAI_DEVICE_COMPILE)
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
             if (chai::ArrayManager::getInstance()->isGPUSimMode()) {
-               return static_cast<T*>(m_pointer_record->m_gpu_owned_pointer);
+               return m_gpu_pointer;
             }
 #endif
             move();
 #endif
 
-            return static_cast<T*>(m_pointer_record->m_cpu_owned_pointer);
+            return m_cpu_pointer;
 #endif
          }
 
@@ -529,19 +551,19 @@ namespace chai {
          ///
          CHAI_HOST_DEVICE inline T& operator*() const {
 #if defined(CHAI_DEVICE_COMPILE) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
-            return *static_cast<T*>(m_pointer_record->m_gpu_owned_pointer);
+            return *m_gpu_pointer;
 #else
 
 #if !defined(CHAI_DEVICE_COMPILE)
 #if defined(CHAI_ENABLE_GPU_SIMULATION_MODE) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
             if (chai::ArrayManager::getInstance()->isGPUSimMode()) {
-               return *static_cast<T*>(m_pointer_record->m_gpu_owned_pointer);
+               return *m_gpu_pointer;
             }
 #endif
             move();
 #endif
 
-            return *static_cast<T*>(m_pointer_record->m_cpu_owned_pointer);
+            return *m_cpu_pointer;
 #endif
          }
 
@@ -611,6 +633,7 @@ namespace chai {
                            m_pointer_record->m_cpu_deleter(m_pointer_record->m_cpu_owned_pointer);
                            m_pointer_record->m_cpu_owned_pointer = nullptr;
                         }
+                        m_cpu_pointer = nullptr;
                         break;
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
                      case GPU:
@@ -619,6 +642,7 @@ namespace chai {
                            m_pointer_record->m_gpu_deleter(m_pointer_record->m_gpu_owned_pointer);
                            m_pointer_record->m_gpu_owned_pointer = nullptr;
                         }
+                        m_gpu_pointer = nullptr;
                         break;
 #endif
                      default:
@@ -632,6 +656,10 @@ namespace chai {
          }
 
       private:
+         T* m_cpu_pointer = nullptr; /// The CPU pointer
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+         T* m_gpu_pointer = nullptr; /// The GPU pointer
+#endif
          managed_ptr_record* m_pointer_record = nullptr; /// The pointer record
 
          /// Needed for the converting constructor
@@ -1741,6 +1769,10 @@ CHAI_HOST ManagedArrayOfManagedPtrUnpacker<T> unpack(const chai::ManagedArray<ch
    ///
    template <typename T>
    void swap(managed_ptr<T>& lhs, managed_ptr<T>& rhs) noexcept {
+      std::swap(lhs.m_cpu_pointer, rhs.m_cpu_pointer);
+#if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
+      std::swap(lhs.m_gpu_pointer, rhs.m_gpu_pointer);
+#endif
       std::swap(lhs.m_pointer_record, rhs.m_pointer_record);
    }
 } // namespace chai
