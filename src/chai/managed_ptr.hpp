@@ -256,6 +256,9 @@ namespace chai {
                           "U* must be convertible to T*.");
 
             // TODO: In c++14 convert to a static_assert
+            // PBR:   To use static_assert, the API must change to compile-time-sized
+            // containers (e.g. std::array) or a variadic interface, which would
+            // break existing {chai::CPU}, {pointer} calls.
             if (spaces.size() != pointers.size() || spaces.size() != deleters.size()) {
                printf("[CHAI] WARNING: The number of spaces, pointers, and deleters must be the same.\n");
                return;
@@ -355,6 +358,9 @@ namespace chai {
             m_pointer_record(other.m_pointer_record)
          {
             // TODO: In c++14 convert to a static_assert
+            // PBR:   To use static_assert, the API must change to compile-time-sized
+            // containers (e.g. std::array) or a variadic interface, which would
+            // break existing {chai::CPU}, {pointer} calls.
             if (spaces.size() != pointers.size()) {
                printf("[CHAI] WARNING: The number of spaces is different than the number of pointers given.\n");
             }
