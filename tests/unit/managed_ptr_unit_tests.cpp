@@ -146,16 +146,7 @@ TEST(managed_ptr, cpu_pointer_constructor)
   derived.free();
 }
 
-TEST(managed_ptr, legacy_cpu_pointer_constructor)
-{
-  auto pointer = chai::managed_ptr<TestDerived>(
-      {chai::CPU}, {new TestDerived(7)});
-
-  EXPECT_EQ(pointer->getValue(), 7);
-  pointer.free();
-}
-
-TEST(managed_ptr, legacy_callback_preserves_default_cleanup)
+TEST(managed_ptr, custom_callback_preserves_default_cleanup)
 {
   destroy_tracker_count = 0;
   int freeCallbacks = 0;
