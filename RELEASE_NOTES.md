@@ -12,7 +12,26 @@ in this file.
 
 The format of this file is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Version 2025.12.0] = Release date 2025-12-22
+## [Unreleased] - Release date YYYY-MM-DD
+
+### Changed
+- The `isSlice` function can now be called on `const chai::ManagedArray<T>`.
+
+## [Version 2026.07.0] - Release date 2025-08-11
+
+### Changed
+- CHAI now requires C++20 as the minimum C++ standard.
+- CHAI now requires ROCm 6 as the minimum ROCm version when ROCm is enabled.
+- CHAI now requires CUDA 12 as the minimum CUDA version when CUDA is enabled.
+- Updated BLT to v0.7.2.
+- Updated RAJA to v2026.07.0.
+- Updated Umpire to v2026.07.1.
+- Made a ManagedArray constructor explicit to prevent unwanted implicit conversions.
+- Added size\_type, value\_type, reference, const\_reference, pointer, and const\_pointer typenames to ManagedArray.
+- In CUDA builds, prevent resource manager from being created during construction of an empty ManagedArray.
+- Added experimental re-implementation of CHAI. See docs/sphinx/expt/design.rst for details. It is still subject to change and has some limitations, but is anticipated to be more performant and flexible.
+
+## [Version 2025.12.0] - Release date 2025-12-22
 
 ### Fixed
 - Fixed compiler error related to using a lambda as a default function argument.

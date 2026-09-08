@@ -17,3 +17,4 @@ Win32/x64/
 *.orig
 *.code-workspace
 slirp.out
+.codex

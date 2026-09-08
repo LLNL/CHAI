@@ -76,13 +76,6 @@ ManagedArray<T>::ManagedArray(
 
 template<typename T>
 CHAI_INLINE
-CHAI_HOST_DEVICE ManagedArray<T>::ManagedArray(std::nullptr_t) :
-  ManagedArray()
-{
-}
-
-template<typename T>
-CHAI_INLINE
 CHAI_HOST ManagedArray<T>::ManagedArray(PointerRecord* record, ExecutionSpace space):
   m_active_pointer(static_cast<T*>(record->m_pointers[space])),
   m_active_base_pointer(static_cast<T*>(record->m_pointers[space])),

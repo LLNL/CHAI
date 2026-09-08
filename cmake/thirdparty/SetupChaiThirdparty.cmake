@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ##############################################################################
 
-if (NOT TARGET umpire)
+if (NOT TARGET umpire::umpire AND NOT TARGET umpire)
   if (DEFINED umpire_DIR OR DEFINED UMPIRE_DIR)
     message(STATUS "[CHAI] Using external Umpire")
     find_package(umpire CONFIG REQUIRED NO_DEFAULT_PATH PATHS ${umpire_DIR} ${UMPIRE_DIR})
@@ -26,6 +26,14 @@ if (NOT TARGET umpire)
       add_subdirectory(${PROJECT_SOURCE_DIR}/src/tpl/umpire)
     endif ()
   endif ()
+endif ()
+
+if (TARGET umpire::umpire)
+  set(CHAI_UMPIRE_TARGET umpire::umpire)
+elseif (TARGET umpire)
+  set(CHAI_UMPIRE_TARGET umpire)
+else ()
+  message(FATAL_ERROR "[CHAI] Umpire target not found. Expected target umpire::umpire or umpire.")
 endif ()
 
 if (CHAI_ENABLE_RAJA_PLUGIN)
