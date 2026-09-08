@@ -28,6 +28,7 @@
 #include <functional>
 #include <memory>
 #include <new>
+#include <type_traits>
 #include <utility>
 
 
@@ -147,6 +148,7 @@ namespace chai {
    class managed_ptr {
       public:
          using element_type = T;
+         using non_const_element_type = typename std::remove_const<T>::type;
 
          ///
          /// @author Alan Dayton
@@ -197,19 +199,29 @@ namespace chai {
             for (const auto& space : spaces) {
                switch (space) {
                   case CPU:
-                     m_cpu_pointer = pointers.begin()[i++];
-                     m_pointer_record->m_cpu_owned_pointer = m_cpu_pointer;
+                     {
+                     U* owned_pointer = pointers.begin()[i++];
+                     m_cpu_pointer = owned_pointer;
+                     m_pointer_record->m_cpu_owned_pointer =
+                        static_cast<void *>(
+                           const_cast<typename std::remove_const<U>::type *>(owned_pointer));
                      m_pointer_record->m_cpu_deleter = [] (void* pointer) {
                         delete static_cast<U*>(pointer);
                      };
+                     }
                      break;
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
                   case GPU:
-                     m_gpu_pointer = pointers.begin()[i++];
-                     m_pointer_record->m_gpu_owned_pointer = m_gpu_pointer;
+                     {
+                     U* owned_pointer = pointers.begin()[i++];
+                     m_gpu_pointer = owned_pointer;
+                     m_pointer_record->m_gpu_owned_pointer =
+                        static_cast<void *>(
+                           const_cast<typename std::remove_const<U>::type *>(owned_pointer));
                      m_pointer_record->m_gpu_deleter = [] (void* pointer) {
                         delete_on_device(static_cast<U*>(pointer));
                      };
+                     }
                      break;
 #endif
                   default:
@@ -267,15 +279,25 @@ namespace chai {
             for (const auto& space : spaces) {
                switch (space) {
                   case CPU:
-                     m_cpu_pointer = pointers.begin()[i];
-                     m_pointer_record->m_cpu_owned_pointer = m_cpu_pointer;
+                     {
+                     U* owned_pointer = pointers.begin()[i];
+                     m_cpu_pointer = owned_pointer;
+                     m_pointer_record->m_cpu_owned_pointer =
+                        static_cast<void *>(
+                           const_cast<typename std::remove_const<U>::type *>(owned_pointer));
                      m_pointer_record->m_cpu_deleter = deleters.begin()[i++];
+                     }
                      break;
 #if (defined(CHAI_GPUCC) || defined(CHAI_ENABLE_GPU_SIMULATION_MODE)) && defined(CHAI_ENABLE_MANAGED_PTR_ON_GPU)
                   case GPU:
-                     m_gpu_pointer = pointers.begin()[i];
-                     m_pointer_record->m_gpu_owned_pointer = m_gpu_pointer;
+                     {
+                     U* owned_pointer = pointers.begin()[i];
+                     m_gpu_pointer = owned_pointer;
+                     m_pointer_record->m_gpu_owned_pointer =
+                        static_cast<void *>(
+                           const_cast<typename std::remove_const<U>::type *>(owned_pointer));
                      m_pointer_record->m_gpu_deleter = deleters.begin()[i++];
+                     }
                      break;
 #endif
                   default:
