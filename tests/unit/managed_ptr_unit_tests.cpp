@@ -80,12 +80,20 @@ int destroy_tracker_count = 0;
 
 class DestroyTrackerBase {
    public:
-      virtual ~DestroyTrackerBase() { ++destroy_tracker_count; }
+      CHAI_HOST_DEVICE virtual ~DestroyTrackerBase() {
+#if !defined(CHAI_DEVICE_COMPILE)
+         ++destroy_tracker_count;
+#endif
+      }
 };
 
 class DestroyTrackerDerived : public DestroyTrackerBase {
    public:
-      ~DestroyTrackerDerived() override { destroy_tracker_count += 10; }
+      CHAI_HOST_DEVICE ~DestroyTrackerDerived() override {
+#if !defined(CHAI_DEVICE_COMPILE)
+         destroy_tracker_count += 10;
+#endif
+      }
 };
 
 TEST(managed_ptr, default_constructor)
