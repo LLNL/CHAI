@@ -421,7 +421,8 @@ GPU_TEST(managed_ptr, gpu_build_managed_ptr)
   // Free host side memory
   free(cpuPointerHolder);
 
-  chai::managed_ptr<RawArrayClass> managedPtr({chai::GPU}, {gpuPointer});
+  chai::managed_ptr<RawArrayClass> managedPtr(
+      {chai::GPU}, {gpuPointer}, {chai::delete_on_device_deleter<RawArrayClass>()});
 
   managedPtr.free();
 }
@@ -501,9 +502,14 @@ GPU_TEST(managed_ptr, gpu_class_with_raw_array_and_callback)
      }
   };
 
-  auto managedPointer = chai::managed_ptr<RawArrayClass>({chai::CPU, chai::GPU},
-                                                         {cpuPointer, gpuPointer},
-                                                         callback);
+  auto managedPointer = chai::managed_ptr<RawArrayClass>(
+      {chai::CPU, chai::GPU},
+      {cpuPointer, gpuPointer},
+      callback,
+      {
+          chai::delete_on_host_deleter<RawArrayClass>(),
+          chai::destroy_on_device_deleter<RawArrayClass>()
+      });
 
   chai::ManagedArray<int> results(1, chai::GPU);
 
@@ -1018,4 +1024,3 @@ TEST(managed_ptr, class_with_raw_array_of_pointers)
 }
 
 #endif
-
